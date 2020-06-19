@@ -378,6 +378,13 @@ _ADD_CLANG_FORMAT(M2-engine "${CFILES}" "${HPPONLYFILES} ${CPPONLYFILES} ${HPPFI
 if(BUILD_TESTING)
   include(GoogleTest)
 
+  # See: https://github.com/catchorg/Catch2/blob/master/docs/slow-compiles.md
+  add_executable(M2-unit-tests-catch2
+    unit-tests/TestCatch.cpp
+    unit-tests/catch2/catch.hpp)
+  target_include_directories(M2-unit-tests-catch2 PRIVATE unit-tests)
+  target_precompile_headers(M2-unit-tests-catch2 PRIVATE unit-tests/catch2/catch.hpp)
+
   # TODO: overflow tests
   # TODO: break up into multiple branches
   add_executable(M2-unit-tests

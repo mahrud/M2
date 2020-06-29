@@ -1,0 +1,14 @@
+How to add syntax highlighting for packages:
+
+Load package: loadPackage "YourPackage"
+
+Find the dictionnary corresponding to the package: 
+packDict = dictionaryPath#0
+
+Find classes and add them to the "types" section:
+select(values packDict, i -> class value i === Symbol) / toString // unique
+
+Find functions and add them to the "function" section:
+select(values packDict, i -> class value i === Symbol) / toString // unique
+
+Note: single quotes ' in function names have to be escaped with another single quote ''.

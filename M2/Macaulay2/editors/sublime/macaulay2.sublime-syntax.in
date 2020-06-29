@@ -1,0 +1,84 @@
+%YAML 1.2
+---
+# https://www.sublimetext.com/docs/3/syntax.html
+# https://www.sublimetext.com/docs/3/scope_naming.html
+
+scope: source.macaulay2
+name: Macaulay2
+file_extensions: [ m2 ]
+comment: A Macaulay2 syntax highlighting scheme for Sublime Text
+
+contexts:
+
+  prototype:
+    - include: comments
+
+  comments:
+    - match: '--'
+      scope: punctuation.definition.comment.begin.macaulay2
+      push:
+        - meta_scope: comment.line.macaulay2
+        - match: "$"
+          scope: punctuation.definition.comment.end.macaulay2
+          pop: true
+
+    - match: '-\*'
+      scope: punctuation.definition.comment.begin.macaulay2
+      push:
+        - meta_scope: comment.block.macaulay2
+        - match: '\*-'
+          scope: punctuation.definition.comment.end.macaulay2
+          pop: true
+
+  constants:
+    - match: '\b((^|\s|\d+)\.|\.(\s|\d+)|(^|\s|\d+)\.(\s|\d+))\b'
+      scope: constant.numeric.float.macaulay2
+      pop: true
+    - match: '\b\d+\b'
+      scope: constant.numeric.integer.macaulay2
+      pop: true
+    - match: '\b(@M2CONSTANTS@)\b'
+      scope: constant.language.macaulay2
+      pop: true
+
+# functions should be classified at start by method/methodWithOptions and packageDefined/userDefined
+  functions:
+    - match: '\b(@M2FUNCTIONS@)\b'
+      scope: entity.name.function.macaulay2
+      pop: true
+
+  keywords:
+    - match: \b(@M2KEYWORDS@)\b
+      scope: support.function.builtin.macaulay2
+      pop: true
+
+  rings:
+    - match: '(ZZ|QQ|RR|CC|kk)(\/\d+)?'
+      scope: keyword.macaulay2
+      pop: true
+
+# strings: need to deal with toString (x) where x has quotes
+  strings:
+    - include: comments
+    - match: '"'
+      scope: punctuation.definition.string.begin.macaulay2
+      push:
+        - meta_scope: string.quoted.double.macaulay2
+        - match: '"'
+          pop: true
+    - match: '@M2STRINGS@'
+      scope: string.unquoted.macaulay2
+
+# use M2 structure to classify these in a more refined way
+  types:
+    - match: '\b(@M2DATATYPES@)\b'
+      scope: entity.name.class.macaulay2
+      pop: true
+
+  main:
+    - include: constants
+    - include: functions
+    - include: keywords
+    - include: rings
+    - include: strings
+    - include: types

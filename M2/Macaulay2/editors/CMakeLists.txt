@@ -15,6 +15,8 @@ set(M2_ARGS --script)
 ## To add to the M2-editors target, add grammar filenames here and in .gitignore.
 set(GRAMMAR_FILES
   atom/macaulay2.cson
+  sublime/macaulay2.sublime-syntax
+  sublime/macaulay2.sublime-completions
   prism/macaulay2.js
   pygments/macaulay2.py
 #  rouge/macaulay2.rb

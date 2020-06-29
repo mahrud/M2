@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Basic info -->
+	<key>comment</key>
+  <string>Created by Aaron Dall.</string>
+  <key>author</key>
+  <string>Aaron Dall</string>
+  <key>name</key>
+  <string>Macaulay2 Theme</string>
+  <!-- color theme settings -->
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <!-- General settings  -->
+        <key>background</key>
+        <string>#141414</string>
+        <key>foreground</key>
+        <string>#b0b0b0</string>
+        <key>caret</key>
+        <string>#b8b8b8</string>
+        <key>lineHighlight</key>
+        <string>#1f1f1f</string>
+
+        <!-- Brackets -->
+        <key>bracketContentsOptions</key>
+        <string>foreground underline</string>
+        <key>bracketContentsForeground</key>
+        <string>#ffaa00b7</string>
+
+        <key>bracketsOptions</key>
+        <string>underline</string>
+        <key>bracketsForeground</key>
+        <string>#ffaa00b7</string>
+
+        <!-- Tags -->
+        <key>tagsOptions</key>
+        <string>underline</string>
+        <key>tagsForeground</key>
+        <string>#ffaa00b7</string>
+
+        <!-- Find -->
+        <key>findHighlight</key>
+        <string>#b3770037</string>
+        <key>findHighlightForeground</key>
+        <string>#b0b0b0</string>
+
+
+        <!-- Gutter -->
+        <key>gutter</key>
+        <string>#0a0a0a44</string>
+        <key>gutterForeground</key>
+        <string>#b0b0b057</string>
+
+        <!-- Selection settings -->
+        <key>selection</key>
+        <string>#ffaa0037</string>
+        <key>selectionBorder</key>
+        <string>#ffaa0027</string>
+        <key>inactiveSelection</key>
+        <string>#b3770022</string>
+        <key>inactiveSelectionForeground</key>
+        <string>#b3770022</string>
+
+        <!-- Guides -->
+        <key>guide</key>
+        <string>#00ffff27</string>
+        <key>activeGuide</key>
+        <string>#ffaa0047</string>
+        <key>stackGuide</key>
+        <string>#00ffff47</string>
+
+        <!-- Highlighted Regions -->
+        <key>highlight</key>
+        <string>#ffaa0037</string>
+        <key>highlightForeground</key>
+        <string>#ffaa00b7</string>
+
+        <!-- Shadow -->
+        <key>shadow</key>
+        <string>#ffaa0030</string>
+        <key>shadowWidth</key>
+        <string>24</string>
+
+      </dict>
+    </dict>
+    <!-- Scoped Settings -->
+    <dict>
+        <key>name</key>
+        <string>Comments</string>
+        <key>scope</key>
+        <string>comment</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#ad4fff57</string>
+            <key>fontStyle</key>
+            <string>italic</string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Numbers</string>
+        <key>scope</key>
+        <string>constant.numeric</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#ffaa0077</string>
+            <key>fontStyle</key>
+            <string></string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Language Constants</string>
+        <key>scope</key>
+        <string>constant.language</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#ffaa0077</string>
+            <key>fontStyle</key>
+            <string>bold</string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Entities</string>
+        <key>scope</key>
+        <string>entity.name.type</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#00ffff77</string>
+            <key>fontStyle</key>
+            <string></string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>functions</string>
+        <key>scope</key>
+        <string>entity.name.function</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#5075caa7</string>
+            <key>fontStyle</key>
+            <string>bold</string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Classes</string>
+        <key>scope</key>
+        <string>entity.name.class</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#1b60ffa7</string>
+            <key>fontStyle</key>
+            <string></string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Built in functions</string>
+        <key>scope</key>
+        <string>support.function.builtin</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#ff2a00a7</string>
+            <key>fontStyle</key>
+            <string>italic</string>
+        </dict>
+    </dict>
+    <dict>
+        <key>name</key>
+        <string>Strings</string>
+        <key>scope</key>
+        <string>string.quoted.double</string>
+        <key>settings</key>
+        <dict>
+            <key>foreground</key>
+            <string>#ffaa00a7</string>
+            <key>fontStyle</key>
+            <string>italic</string>
+        </dict>
+    </dict>
+  </array>
+  <key>uuid</key>
+  <string>64CB9DBB-6F80-4D56-98B1-676026B6D8AF</string>
+</dict>
+
+</plist>

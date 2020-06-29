@@ -5,7 +5,7 @@
 #   - https://macromates.com/manual/en/language_grammars.html#naming_conventions
 #   - https://www.rexegg.com/regex-quickstart.html
 
-scopeName: 'source.m2'
+scopeName: 'source.macaulay2'
 name: 'Macaulay2'
 fileTypes: [ 'm2' ]
 patterns: [
@@ -22,12 +22,12 @@ repository:
       {
         match: '''(?x)(\\b|^)(@M2KEYWORDS@)\\b
         '''
-        name: 'keyword.control.m2'
+        name: 'keyword.control.macaulay2'
       }
       {
         match: '''(?x)(\\b|^)(and|not|or)\\b
         '''
-        name: 'keyword.operator.m2'
+        name: 'keyword.operator.macaulay2'
       }
     ]
   comment:
@@ -36,17 +36,17 @@ repository:
         match: '(--).*$'
         captures:
           '1':
-            name: 'punctuation.definition.comment.m2'
-        name: 'comment.line.double-dash.m2'
+            name: 'punctuation.definition.comment.macaulay2'
+        name: 'comment.line.double-dash.macaulay2'
       }
       {
         begin: '-\\*'
         beginCaptures:
-          '0': name: 'punctuation.definition.comment.begin.m2'
+          '0': name: 'punctuation.definition.comment.begin.macaulay2'
         end: '\\*-'
         endCaptures:
-          '0': name: 'punctuation.definition.comment.end.m2'
-        contentName: 'comment.block.m2'
+          '0': name: 'punctuation.definition.comment.end.macaulay2'
+        contentName: 'comment.block.macaulay2'
       }
     ]
   strings:
@@ -54,53 +54,53 @@ repository:
       {
         begin: '"'
         beginCaptures:
-          0: name: 'punctuation.definition.string.begin.m2'
+          0: name: 'punctuation.definition.string.begin.macaulay2'
         end: '"'
         endCaptures:
-          0: name: 'punctuation.definition.string.end.m2'
-        name: 'string.quoted.double.m2'
+          0: name: 'punctuation.definition.string.end.macaulay2'
+        name: 'string.quoted.double.macaulay2'
       }
       {
 #        begin: '///'
 #        beginCaptures:
-#          0: name: 'punctuation.definition.string.begin.m2'
+#          0: name: 'punctuation.definition.string.begin.macaulay2'
 #        end: '///'
 #        endCaptures:
-#          0: name: 'punctuation.definition.string.end.m2'
+#          0: name: 'punctuation.definition.string.end.macaulay2'
         match: '@M2STRINGS@'
-        name: 'string.unquoted.m2'
+        name: 'string.unquoted.macaulay2'
       }
     ]
   math:
     patterns: [
       {
         match: '(\\+|\\*)' # FIXME
-        name: 'keyword.operator.arithmetic.m2'
+        name: 'keyword.operator.arithmetic.macaulay2'
       }
       {
         match: '(?<=\\s)\\d+'
-        name: 'constant.numeric.integer.m2'
+        name: 'constant.numeric.integer.macaulay2'
       }
     ]
   'fields':
     patterns: [
       {
         match: '(ZZ|QQ)(\\/\\d+)?'
-        name: 'entity.name.type.m2'
+        name: 'entity.name.type.macaulay2'
       }
     ]
   'autogen':
     patterns: [
       {
         match: '''(?x)(\\b|^)(@M2DATATYPES@)\\b'''
-        name: 'entity.name.type.m2'
+        name: 'entity.name.type.macaulay2'
       }
       {
         match: '''(?x)(\\b|^)(@M2FUNCTIONS@)\\b'''
-        name: 'entity.name.function.m2'
+        name: 'entity.name.function.macaulay2'
       }
       {
         match: '''(?x)(\\b|^)(@M2CONSTANTS@)\\b'''
-        name: 'constant.other.m2'
+        name: 'constant.other.macaulay2'
       }
     ]

@@ -1,0 +1,5 @@
+# See https://sublime-text-unofficial-documentation.readthedocs.io/en/stable/extensibility/completions.html
+{
+    "scope": "source.macaulay2",
+    "completions": [ @M2SYMBOLS@ ]
+}

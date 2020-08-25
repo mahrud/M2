@@ -478,6 +478,8 @@ Node
       Unix command @TT "info"@ or using @TT "emacs"@
     MakePDF=>Boolean
       whether to make PDF documentation
+    MakeMarkdown=>Boolean
+      whether to make Markdown documentation
     InstallPrefix=>String
       the installation prefix for installation of the files of the package, in case encapsulation is not enabled,
       or for installation of the links to the files, in case encapsulation is enabled. The default value is the

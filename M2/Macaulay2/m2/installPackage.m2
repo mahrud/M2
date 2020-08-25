@@ -454,6 +454,42 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
     )
 
 -----------------------------------------------------------------------------
+-- install Markdown documentation for package
+-----------------------------------------------------------------------------
+-- TODO: certification, table of contents, alphabetized index
+
+installMarkdown := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts) -> (
+    topDocumentTag := makeDocumentTag(pkg#"pkgname", Package => pkg);
+    nodes := packageTagList(pkg, topDocumentTag);
+
+    markdownDirectory := replace("PKG", pkg#"pkgname", installLayout#"packagedoc") | "markdown/";
+
+    makeDirectory(installPrefix | markdownDirectory);
+    verboseLog("making markdown pages in ", minimizeFilename installPrefix | markdownDirectory);
+    for n in (topFileName, indexFileName, tocFileName) do (
+	fn := installPrefix | markdownDirectory | n;
+	if fileExists fn then (
+	    verboseLog("creating empty html page ", minimizeFilename fn);
+	    fn << close)
+	else verboseLog("html page exists: ", minimizeFilename fn));
+    -- Redefining this function call specifically for packages
+    title := "";
+    markdown HEAD := x -> concatenate("---\n",
+	"layout: package", newline,
+	"excerpt: ", title, newline,
+	"---\n");
+    scan(nodes, tag -> if not isUndocumented tag then (
+	    currentDocumentTag = tag; -- for debugging purposes
+	    fkey := format tag;
+	    fn := replace("\\.html$", ".md", concatenate htmlFilename tag);
+	    fn  = replace("/html/", "/markdown/", fn);
+	    if isSecondaryTag tag
+	    or false and fileExists fn and fileLength fn > 0 and not opts.RemakeAllDocumentation and rawDocumentationCache#?fkey then return;
+	    verboseLog("making html page for ", toString tag);
+	    title = headline fkey;
+	    fn << markdown HTML { HEAD {}, BODY { fetchProcessedDocumentation(pkg, fkey) } } << endl << close)));
+
+-----------------------------------------------------------------------------
 -- helper functions for installPackage
 -----------------------------------------------------------------------------
 
@@ -578,8 +614,8 @@ installPackage = method(
 	MakeDocumentation      => true,
 	MakeHTML               => true,
 	MakeInfo               => true,
+	MakeMarkdown           => true,
 	MakePDF                => false,
-	MakeLinks              => true,
 	-- until we get better dependency graphs between documentation
 	-- nodes, "false" here will confuse users
 	RemakeAllDocumentation => true,
@@ -796,13 +832,16 @@ installPackage Package := opts -> pkg -> (
 	if opts.MakeHTML then installHTML(pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts)
 	else verboseLog("not making documentation in HTML format");
 
+	-- make markdown documentation
+	if opts.MakeMarkdown then installMarkdown(pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts)
+	else verboseLog("not making documentation in Markdown format");
+
 	-- make pdf documentation
 	if opts.MakePDF then installPDF(pkg, installPrefix, installLayout, verboseLog)
 	else verboseLog("not making documentation in PDF format");
 
 	if chkdoc and hadDocumentationWarning then printerr("warning: ",
 	    toString numDocumentationWarnings, " warning(s) occurred in documentation for package ", toString pkg);
-
 	); -- end of opts.MakeDocumentation
 
     -- touch .installed if no errors occurred

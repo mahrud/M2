@@ -24,7 +24,7 @@ set(CLIST
   gdbm_interface.c
   )
 
-set(CXXLIST boost-regex.cpp)
+set(CXXLIST boost-regex.cpp std-thread.cpp)
 
 # CAUTION: order is important in this list
 # TODO: can there be #ifdefs in D sources?
@@ -69,6 +69,7 @@ set(DLIST
   equality.dd
   hashtables.dd
   regex.dd
+  threads.dd
   evaluate.d
   sets.dd
   mysql.d	# removed unless WITH_SQL
@@ -82,7 +83,6 @@ set(DLIST
   xmlactors.d	# removed unless WITH_XML
   actors5.d
   actors6.dd
-  threads.dd
   python.d	# removed unless WITH_PYTHON
   interface.dd interface2.d
   monoid.dd

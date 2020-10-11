@@ -1,3 +1,31 @@
-use pthread;
+-- Copyright 2020 by Mahrud Sayrafi
 
+use arithmetic;
+use common;
+use util;
+use expr;
 
+-----------------------------------------------------------------------------
+-- C++ interface functions defined in std-thread.cpp
+-----------------------------------------------------------------------------
+
+import print(str:string, n:int):int;
+
+threadLocal export myN := int(0);
+setupvarThread("myN", toExpr(myN));
+
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Exported Functions
+-----------------------------------------------------------------------------
+
+myprint(e:Expr):Expr := (
+    when e is text:stringCell do (
+	myN = myN + 1;
+	r := print(text.v, myN);
+	toExpr(r))
+    else WrongArgString(1));
+setupfun("myprint", myprint).Protected = false; -- will be overloaded

@@ -77,6 +77,8 @@ code.m2
 dotdot.m2
 local.m2
 
+threads.m2
+
 packages.m2
 examples.m2
 document.m2

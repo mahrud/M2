@@ -15,6 +15,7 @@ boost::regex regex_compile(const M2_string pattern, const int flags)
 
   /* attempt to recover a compiled expression from a map */
   auto key = ExpressionKey {strings_hash(pattern), flags};
+  // TODO: protect cache with a mutex for thread safety
   auto hit = cache.find(key);
   if (hit != cache.end()) return hit->second;
 

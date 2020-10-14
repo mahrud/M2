@@ -17,12 +17,14 @@
 #include <mutex>
 #include <thread>
 
+std::mutex print_mutex;
+
 extern "C" {
 
-int threads_print(const M2_string buffer, int n)
+void threads_print(const M2_string buffer, int n)
 {
+  std::lock_guard<std::mutex> guard(print_mutex);
   std::cout << n << ":\t" << M2_tocharstar(buffer) << std::endl;
-  return n;
 }
 
 } /* extern "C" */

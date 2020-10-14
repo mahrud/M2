@@ -20,7 +20,7 @@ while not isReady t do nothing
 assert( 4 === taskResult t )
 
 -- check whether thread local variables have separate values in separate threads
-threadVariable aaa
+threadLocal aaa
 assert( aaa === null )
 r = apply(3, i -> schedule (() -> ( aaa = i ; sleep 3 ; aaa )))
 while not all(r,isReady) do sleep 1

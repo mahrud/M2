@@ -1158,7 +1158,7 @@ export {
 	"tex",
 	"texMath",
 	"then",
-	"threadVariable",
+	"threadLocal",
 	"throw",
 	"time",
 	"times",

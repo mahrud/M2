@@ -1,7 +1,8 @@
 --		Copyright 1994,2010 by Daniel R. Grayson
 
-use equality;
 use classes;
+use databases;
+use equality;
 
 dummyapplyEEE(g:Expr,e0:Expr,e1:Expr):Expr := g;
 export applyEEEpointer := dummyapplyEEE;
@@ -36,6 +37,7 @@ mutablefun(e:Expr):Expr := Expr(toExpr(
      	  is d:DictionaryClosure do !d.dictionary.Protected
      	  is x:Database do x.Mutable
      	  else false));
+-- TODO: rename to isMutable
 setupfun("mutable",mutablefun);
 
 MutexArray := array(ThreadMutex,49);

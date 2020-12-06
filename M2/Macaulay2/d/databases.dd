@@ -1,0 +1,140 @@
+use system;
+use common;
+use util;
+
+-----------------------------------------------------------------------------
+-- C interface functions defined in gdbm_interface.c
+-----------------------------------------------------------------------------
+
+import dbmopen(filename:string,write:bool):int;
+import dbmerror():string;
+import dbmclose(handle:int):int;
+import dbmstore(handle:int,key:string,content:string):int;
+import dbmfetch(handle:int,key:string):(null or string);
+import dbmdelete(handle:int,key:string):int;
+import dbmfirst(handle:int):(null or string);
+import dbmnext(handle:int):(null or string);
+import dbmreorganize(handle:int):int;
+import dbmstrerror():string;
+
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Exported Database Functions
+-----------------------------------------------------------------------------
+
+-- previously in common, mostly used in hashtables, actors2, actors5, evaluate
+export dbmcheck(ret:int):Expr := (
+     if ret == -1 then buildErrorPacket(dbmstrerror())
+     else Expr(ZZcell(toInteger(ret))));
+
+-- TODO: define isOpen(f:Database)
+-- and export it for use in isOpen(e:Expr):Expr
+
+export dbmopenin(filename:string):Expr := (
+     mutable := false;
+     filename = expandFileName(filename);
+     handle := dbmopen(filename,mutable);
+     if handle == -1
+     then buildErrorPacket(dbmstrerror() + " : " + filename)
+     else Expr(Database(filename,nextHash(),handle,true,mutable)));
+
+export dbmopenout(filename:string):Expr := (
+     mutable := true;
+     filename = expandFileName(filename);
+     handle := dbmopen(filename,mutable);
+     if handle == -1
+     then buildErrorPacket(dbmstrerror() + " : " + filename)
+     else Expr(Database(filename,nextHash(),handle,true,mutable)));
+
+-- TODO: maybe rename to close(f:Database)
+-- and export it for use in close(g:Expr):Expr
+export dbmclose(f:Database):Expr := (
+     if !f.isopen then return buildErrorPacket("database already closed");
+     dbmclose(f.handle);
+     f.isopen = false;
+     zeroE);
+
+-- TODO: reduce dbmstore from evaluate and move it here
+export dbmstore(f:Database,key:string,content:string):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     if !f.Mutable then return buildErrorPacket("database not mutable");
+     ret := dbmstore(f.handle,key,content);
+     if 0 == ret then Expr(stringCell(content))
+     else dbmcheck(ret));
+
+export dbmquery(f:Database,key:string):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     when dbmfetch(f.handle,key)
+     is a:string do True
+     else False);
+
+export dbmfirst(f:Database):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     when dbmfirst(f.handle)
+     is a:string do Expr(stringCell(a))
+     else nullE);
+
+export dbmreorganize(f:Database):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     if !f.Mutable then return buildErrorPacket("database not mutable");
+     dbmcheck(dbmreorganize(f.handle)));
+
+--  used by keys in actors2
+export keys(f:Database):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     x := newvarstringarray(20);
+     k := dbmfirst(f.handle);
+     continue := true;
+     while continue do (
+	  when k
+	  is key:string do (
+	       append(x,key);
+	       k = dbmnext(f.handle);
+	       )
+	  else continue = false;
+	  );
+     Expr(list(new Sequence len x.n do foreach s in x.a do provide Expr(stringCell(s)))));
+
+-- previously in actors2
+dbmfirst(e:Expr):Expr := (
+     when e
+     is f:Database do dbmfirst(f)
+     else buildErrorPacket("expected a database"));
+setupfun("firstkey",dbmfirst);
+
+dbmnext(f:Database):Expr := (
+     if !f.isopen then return buildErrorPacket("database closed");
+     when dbmnext(f.handle)
+     is a:string do toExpr(a)
+     else nullE);
+dbmnext(e:Expr):Expr := (
+     when e
+     is f:Database do dbmnext(f)
+     is Sequence do WrongNumArgs(1)
+     else WrongArg(1,"a database"));
+setupfun("nextkey",dbmnext);
+
+dbmreorganize(e:Expr):Expr := (
+     when e
+     is f:Database do dbmreorganize(f)
+     else buildErrorPacket("expected a database"));
+setupfun("reorganize",dbmreorganize);
+
+dbmopenin(e:Expr):Expr := (
+     when e
+     is a:stringCell do (
+	  if notify then stderr << "--opening database " << a.v << endl;
+	  dbmopenin(a.v))
+     else buildErrorPacket("expected a string as filename"));
+setupfun("openDatabase",dbmopenin);
+
+dbmopenout(e:Expr):Expr := (
+     when e
+     is a:stringCell do (
+	  if notify then stderr << "--opening database for output " << a.v << endl;
+	  dbmopenout(a.v))
+     else buildErrorPacket("expected a string as filename"));
+setupfun("openDatabaseOut",dbmopenout);

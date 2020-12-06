@@ -67,6 +67,7 @@ set(DLIST
   classes.dd
   buckets.dd
   equality.dd
+  databases.dd
   hashtables.dd
   regex.dd
   sets.dd

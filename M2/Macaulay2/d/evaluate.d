@@ -108,6 +108,7 @@ assignvector(m:List,i:Code,rhs:Code):Expr := (
      else printErrorMessageE(i,"index not an integer")
      );
 
+-- TODO: reduce and move to databases
 dbmstore(f:Database,KEY:Code,CONTENT:Code):Expr := (
      Key := eval(KEY);
      when Key

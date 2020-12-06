@@ -24,9 +24,9 @@ void close_all_dbms(void) {
 
 #include "M2-exports.h"
 
-int system_dbmopen(M2_string filename, M2_bool mutable) {
+int databases_dbmopen(M2_string filename, M2_bool mutable_mode) {
      int gdbm_handle;
-     int flags = mutable ? GDBM_WRCREAT : GDBM_READER;
+     int flags = mutable_mode ? GDBM_WRCREAT : GDBM_READER;
      int mode = 0666;
      char *FileName = M2_tocharstar(filename);
      GDBM_FILE f = gdbm_open(FileName, 4096, flags, mode, NULL);
@@ -58,7 +58,7 @@ int system_dbmopen(M2_string filename, M2_bool mutable) {
      return gdbm_handle;
      }
 
-int system_dbmclose(int handle) {
+int databases_dbmclose(int handle) {
      gdbm_close(gdbm_files[handle]);
      gdbm_files[handle] = NULL;
      return 0;
@@ -88,28 +88,28 @@ static M2_string fromdatum_and_free(datum y) {
      return x;
      }
 
-int system_dbmstore(int handle, M2_string key, M2_string content) {
+int databases_dbmstore(int handle, M2_string key, M2_string content) {
      return gdbm_store(gdbm_files[handle],todatum(key),todatum(content),GDBM_REPLACE);
      }
 
-M2_string /* or NULL */ system_dbmfetch(int handle, M2_string key) {
+M2_string /* or NULL */ databases_dbmfetch(int handle, M2_string key) {
      return fromdatum_and_free(gdbm_fetch(gdbm_files[handle],todatum(key)));
      }
 
-int system_dbmdelete(int handle, M2_string key) {
+int databases_dbmdelete(int handle, M2_string key) {
      return gdbm_delete(gdbm_files[handle],todatum(key));
      }
 
 static datum lastkey;
 static bool hadlastkey = FALSE;
 
-M2_string /* or NULL */ system_dbmfirst(int handle) {
+M2_string /* or NULL */ databases_dbmfirst(int handle) {
      lastkey = gdbm_firstkey(gdbm_files[handle]);
      hadlastkey = TRUE;
      return fromdatum(lastkey);
      }
 
-M2_string /* or NULL */ system_dbmnext(int handle) {
+M2_string /* or NULL */ databases_dbmnext(int handle) {
      if (hadlastkey) {
 	  datum x = gdbm_nextkey(gdbm_files[handle] ,lastkey);
 	  free(lastkey.dptr);
@@ -117,15 +117,15 @@ M2_string /* or NULL */ system_dbmnext(int handle) {
 	  return fromdatum(lastkey);
 	  }
      else {
-	  return system_dbmfirst(handle);
+	  return databases_dbmfirst(handle);
 	  }
      }
 
-int system_dbmreorganize(int handle) {
+int databases_dbmreorganize(int handle) {
      return gdbm_reorganize(gdbm_files[handle]);
      }
 
-M2_string system_dbmstrerror(void) {
+M2_string databases_dbmstrerror(void) {
      return M2_tostring(gdbm_strerror(gdbm_errno));
      }
 

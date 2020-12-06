@@ -3,42 +3,6 @@ use evaluate;
 use struct;
 use sets;
 
-dbmfirst(e:Expr):Expr := (
-     when e
-     is f:Database do dbmfirst(f)
-     else buildErrorPacket("expected a database"));
-setupfun("firstkey",dbmfirst);
-dbmnext(f:Database):Expr := (
-     if !f.isopen then return buildErrorPacket("database closed");
-     when dbmnext(f.handle)
-     is a:string do toExpr(a)
-     else nullE);
-dbmnext(e:Expr):Expr := (
-     when e
-     is f:Database do dbmnext(f)
-     is Sequence do WrongNumArgs(1)
-     else WrongArg(1,"a database"));
-setupfun("nextkey",dbmnext);
-dbmreorganize(e:Expr):Expr := (
-     when e
-     is f:Database do dbmreorganize(f)
-     else buildErrorPacket("expected a database"));
-setupfun("reorganize",dbmreorganize);
-dbmopenin(e:Expr):Expr := (
-     when e
-     is a:stringCell do (
-	  if notify then stderr << "--opening database " << a.v << endl;
-	  dbmopenin(a.v))
-     else buildErrorPacket("expected a string as filename"));
-setupfun("openDatabase",dbmopenin);
-dbmopenout(e:Expr):Expr := (
-     when e
-     is a:stringCell do (
-	  if notify then stderr << "--opening database for output " << a.v << endl;
-	  dbmopenout(a.v))
-     else buildErrorPacket("expected a string as filename"));
-setupfun("openDatabaseOut",dbmopenout);
-
 keys(e:Expr):Expr := (
      when e
      is o:DictionaryClosure do keys(o.dictionary)

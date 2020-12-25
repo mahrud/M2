@@ -9,7 +9,8 @@ use expr;
 -- C++ interface functions defined in std-thread.cpp
 -----------------------------------------------------------------------------
 
-import print(str:string, n:int):void;
+import compute(str:string, n:int):void;
+import initialize(live:bool):void;
 
 threadLocal export myN := int(0);
 setupvarThread("myN", toExpr(myN));
@@ -23,9 +24,10 @@ setupvarThread("myN", toExpr(myN));
 -----------------------------------------------------------------------------
 
 myprint(e:Expr):Expr := (
+    initialize(false);
     when e is text:stringCell do (
 	myN = myN + 1;
-	print(text.v, myN);
+	compute(text.v, myN);
 	toExpr(myN))
     else WrongArgString(1));
 setupfun("myprint", myprint).Protected = false; -- will be overloaded

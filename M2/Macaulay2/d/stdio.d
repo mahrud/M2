@@ -6,7 +6,7 @@ use gmp;
 use expr;
 use stdio0;
 
-header "#include \"../system/m2fileinterface.h\"";
+header "#include \"tasks/m2fileinterface.h\"";
 --provide a constant representation of default buffer size for a file
 --this must be set the same as the bufsize in stdio0.d
 bufsize ::= 4 * 1024;

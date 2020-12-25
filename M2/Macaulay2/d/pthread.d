@@ -2,7 +2,7 @@ use M2;
 use evaluate;
 use expr;
 
-header "#include \"../system/supervisorinterface.h\"";
+header "#include \"tasks/supervisorinterface.h\"";
 
 
 taskCreatePush(f:function(TaskCellBody):null,tb:TaskCellBody) ::=  Ccode(taskPointer,

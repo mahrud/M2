@@ -41,7 +41,6 @@ add_compile_options(
 add_subdirectory(c) # rename to scc?
 add_subdirectory(d) # rename to interpreter?
 add_subdirectory(e) # rename to engine?
-add_subdirectory(system) # rename to supervisor?
 add_subdirectory(bin) # combine with engine or interpreter?
 add_subdirectory(m2) # rename to Core?
 add_subdirectory(packages)

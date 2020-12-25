@@ -112,22 +112,22 @@ interface2.o :						\
 	../../include/M2/config.h			\
 	@srcdir@/../../include/M2/math-include.h	\
 	@srcdir@/../../include/M2/gc-include.h		\
-	@srcdir@/../system/mutex.h			\
 	@srcdir@/../c/scc-core.h			\
-	@srcdir@/../system/supervisorinterface.h	\
+	@srcdir@/../d/tasks/supervisorinterface.h	\
 	@srcdir@/../e/engine.h				\
 	@srcdir@/../e/engine-includes.hpp		\
+	@srcdir@/../d/tasks/mutex.h			\
 	@srcdir@/../d/M2mem.h				\
 	@srcdir@/../d/debug.h
 
 interface.o :						\
 	../../include/M2/config.h			\
-	@srcdir@/../system/mutex.h			\
+	@srcdir@/../d/tasks/mutex.h			\
 	@srcdir@/../e/newdelete.hpp			\
 	@srcdir@/../d/M2mem.h				\
 	@srcdir@/../c/scc-core.h			\
 	@srcdir@/../d/debug.h				\
-	@srcdir@/../system/supervisorinterface.h	\
+	@srcdir@/../d/tasks/supervisorinterface.h	\
 	@srcdir@/../e/engine.h				\
 	@srcdir@/../e/engine-includes.hpp		\
 	@srcdir@/../e/ZZp.hpp				\
@@ -141,7 +141,6 @@ interface.o :						\
 	@srcdir@/../e/style.hpp				\
 	@srcdir@/../e/buffer.hpp			\
 	@srcdir@/../e/mem.hpp				\
-	@srcdir@/../e/../system/mutex.h			\
 	@srcdir@/../e/imonorder.hpp			\
 	@srcdir@/../e/aring.hpp				\
 	@srcdir@/../e/exceptions.hpp			\

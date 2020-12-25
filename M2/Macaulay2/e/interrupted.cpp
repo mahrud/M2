@@ -1,5 +1,5 @@
-#include "../system/supervisor.hpp"
-#include "../system/supervisorinterface.h"
+#include "tasks/supervisor.hpp"
+#include "tasks/supervisorinterface.h"
 #define interrupted() \
   test_Field(THREADLOCAL(interrupts_interruptedFlag, struct atomic_field))
 

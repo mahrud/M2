@@ -1,5 +1,5 @@
-#ifndef _system_supervisorinterface_h_
-#define _system_supervisorinterface_h_
+#ifndef _tasks_supervisorinterface_h_
+#define _tasks_supervisorinterface_h_
 
 #include <M2/gc-include.h>
 

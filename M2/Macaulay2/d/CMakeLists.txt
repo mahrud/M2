@@ -12,6 +12,9 @@ file(GENERATE OUTPUT distributed-packages.h CONTENT "#define DISTRIBUTED_PACKAGE
 ## Configure version.dd at the destination
 #configure_file(version.dd.in version.dd #ONLY)
 
+## Rules for building M2-supervisor
+add_subdirectory(tasks)
+
 ###############################################################################
 
 set(CLIST

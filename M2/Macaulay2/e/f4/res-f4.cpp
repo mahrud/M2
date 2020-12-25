@@ -19,8 +19,8 @@
 #if 0
 // This is test code which should be removed, or placed elsewhere!
 #include <thread>
-#include "../../system/supervisor.hpp"
-#include "../../system/supervisorinterface.h"
+#include "tasks/supervisor.hpp"
+#include "tasks/supervisorinterface.h"
 static long val[2];
 static void* testFcn1(void* vint)
 {

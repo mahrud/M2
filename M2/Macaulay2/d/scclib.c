@@ -8,7 +8,7 @@
 #include "../c/compat.c"
 #include "debug.h"
 
-#include "../system/supervisorinterface.h"
+#include "tasks/supervisorinterface.h"
 
 extern void M2_stack_trace();
 

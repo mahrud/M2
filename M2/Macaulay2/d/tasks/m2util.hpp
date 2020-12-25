@@ -1,5 +1,5 @@
-#ifndef _system_m2util_h_
-#define _system_m2util_h_
+#ifndef _tasks_m2util_h_
+#define _tasks_m2util_h_
 
 #include "mutexclass.hpp"
 

@@ -1,6 +1,5 @@
-
-#ifndef _system_m2file_h_
-#define _system_m2file_h_
+#ifndef _tasks_m2file_h_
+#define _tasks_m2file_h_
 
 #include "mutexclass.hpp"
 #include "gc_std.hpp"

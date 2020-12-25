@@ -1,5 +1,5 @@
-#ifndef _system_mutex_hpp_
-#define _system_mutex_hpp_
+#ifndef _tasks_mutex_hpp_
+#define _tasks_mutex_hpp_
 
 #include <pthread.h>
 #include <stdlib.h>

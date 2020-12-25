@@ -6,7 +6,7 @@ use gmp;
 use expr;
 use stdio0;
 
-header "#include \"../system/m2fileinterface.h\"
+header "#include \"tasks/m2fileinterface.h\"
         #include <readline/history.h>";
 
 --provide a constant representation of default buffer size for a file

@@ -9,7 +9,7 @@
 #include "engine-exports.h"                 // for M2_gbTrace
 #include "ring.hpp"                         // for Ring
 #include "ringelem.hpp"                     // for ring_elem
-#include "../system/supervisorinterface.h"  // for getAllowableThreads
+#include "tasks/supervisorinterface.h"      // for getAllowableThreads
 
 #include <cassert>                          // for assert
 #include <cstdlib>                          // for exit, size_t

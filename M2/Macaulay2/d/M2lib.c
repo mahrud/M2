@@ -5,7 +5,7 @@
 #include "M2mem.h"
 #include "types.h"
 #include "debug.h"
-#include "supervisorinterface.h"
+#include "tasks/supervisorinterface.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>

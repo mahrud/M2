@@ -157,7 +157,7 @@ static char declarations_trailer[] = "\
 
 static char code_header[] = "\
 #include \"scc-core.h\"\n\
-#include \"../system/supervisorinterface.h\"\n\
+#include \"tasks/supervisorinterface.h\"\n\
 ";
 
 static void readsetup(scope v){

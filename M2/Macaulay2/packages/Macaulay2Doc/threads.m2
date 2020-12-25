@@ -88,7 +88,7 @@ Node
     Using the functions above, essentially any parallel functionality needed can be created. 
     
     Low level C API functionality using the same scheduler also exists in the
-    Macaulay2/system directory. It works essentially the same way as the
+    @TT "Macaulay2/d/tasks"@ directory. It works essentially the same way as the
     Macaulay2 interface.
 
     Warning: Access to external libraries such as singular, etc., may not

@@ -156,7 +156,7 @@ endif
 M2INCLUDES += -I.
 M2INCLUDES += -I@srcdir@
 M2INCLUDES += -I@srcdir@/../e
-M2INCLUDES += -I@srcdir@/../system
+M2INCLUDES += -I@srcdir@/../d/tasks
 M2INCLUDES += -I@srcdir@/../../include
 
 # these are the files that need to find include files built in the current build directory

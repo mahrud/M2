@@ -68,6 +68,7 @@ Macaulay2/packages/SCSCP/docinput/Makefile
 Macaulay2/c/Makefile
 Macaulay2/d/Makefile
 Macaulay2/d/Makefile.files
+Macaulay2/d/tasks/Makefile
 Macaulay2/m2/startup.m2
 Macaulay2/bin/Makefile
 Macaulay2/bin/M2
@@ -96,7 +97,6 @@ Macaulay2/tests/ComputationsBook/solving/Makefile
 Macaulay2/tests/ComputationsBook/toricHilbertScheme/Makefile
 Macaulay2/tests/ComputationsBook/varieties/Makefile
 Macaulay2/srcdir
-Macaulay2/system/Makefile
 Macaulay2/tests/Makefile
 Macaulay2/tests/Makefile.test
 Macaulay2/tests/engine/Makefile

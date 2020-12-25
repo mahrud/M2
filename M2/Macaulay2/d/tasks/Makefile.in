@@ -2,7 +2,7 @@
 VPATH = @srcdir@
 
 all: supervisor.o m2file.o tests.o
-include ../../include/config.Makefile
+include ../../../include/config.Makefile
 
 %.dep: %.cpp
 	$(SHOW) " ** creating $@ from $<"
@@ -33,7 +33,7 @@ EcCMD = $(COMPILE.c) -E $(OUTPUT_OPTION) $<
 # endif
 # tags:: @srcdir@/TAGS
 clean :: ; rm -f *.o *.dep *.s *.E LOGFILE
-Makefile: Makefile.in; cd ../..; ./config.status Macaulay2/system/Makefile
+Makefile: Makefile.in; cd ../../..; ./config.status Macaulay2/d/tasks/Makefile
 distclean::; rm -f Makefile
 
 # how was this test file supposed to work?
@@ -43,6 +43,6 @@ tests : tests.o supervisor.o
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 # Local Variables:
-# compile-command: "make -C $M2BUILDDIR/Macaulay2/system "
+# compile-command: "make -C $M2BUILDDIR/Macaulay2/d/tasks "
 # End:
 .NOTPARALLEL:

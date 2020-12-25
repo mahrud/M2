@@ -1040,7 +1040,7 @@ tostringfun(e:Expr):Expr := (
 		    )
 	       + ">>"
 	       ))
-    is x:fileOutputSyncState do toExpr("File Output Sync State")
+    is x:FOSS do toExpr("File Output Sync State")
     is x:pointerCell do (
 	buf := newstring(20);
 	Ccode(void, "sprintf((char *)", buf, "->array, \"%p\", ", x.v, ")");

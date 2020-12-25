@@ -9,11 +9,7 @@ use stdio0;
 header "#include \"tasks/m2fileinterface.h\"
         #include <readline/history.h>";
 
---provide a constant representation of default buffer size for a file
---this must be set the same as the bufsize in stdio0.d
-bufsize ::= 4 * 1024;
-
-export newm2cfile(foss:fileOutputSyncState) ::= Ccode(m2cfile,"M2File_New(",lvalue(foss),")");
+export newm2cfile(foss:FOSS) ::= Ccode(m2cfile,"M2File_New(",lvalue(foss),")");
 
 --provide a default constructor for files
 export newFile(	
@@ -59,38 +55,28 @@ export newFile(
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         readline:bool,          -- input handled by readline()
 	fileThreadState:int     -- state of thread handling 
-):file := ( 
-foss := newFileOutputSyncState(outbuffer,outindex,outbol,hadNet,nets,bytesWritten,lastCharOut,false);
---foss:= newDefaultFileOutputSyncState();
-m2f := newm2cfile(foss);
-Ccode(void,"M2File_SetThreadMode(",lvalue(m2f),",",fileThreadState,")");
-file(nextHash(), filename,pid,error,errorMessage,listener,listenerfd,connection,numconns,input,infd,inisatty,inbuffer,inindex,insize,eof,
-promptq,prompt,reward,fulllines,bol,echo,echoindex,readline,output,outfd,outisatty,foss,newMutex,m2f)
+    ):file := (
+    foss := newFOSS(outbuffer,outindex,outbol,hadNet,nets,bytesWritten,lastCharOut,false);
+    --foss:= newDefaultFOSS();
+    m2f := newm2cfile(foss);
+    Ccode(void, "M2File_SetThreadMode(", lvalue(m2f), ",", fileThreadState, ")");
+    file(nextHash(),
+	filename, pid, error, errorMessage,
+	listener,listenerfd,connection,numconns,
+	input,infd,inisatty,inbuffer,inindex,insize,eof,
+	promptq,prompt,reward,fulllines,bol,echo,echoindex,
+	readline, -- FIXME: out of order input?
+	output,outfd,outisatty,
+	foss,newMutex,m2f));
 
-);
 
-export getFileFOSS(o:file):fileOutputSyncState := (
-    return Ccode(fileOutputSyncState,"M2File_GetState(",lvalue(o.cfile),")");
-);
-export releaseFileFOSS(o:file):void := (
-    Ccode(void,"M2File_ReleaseState(",lvalue(o.cfile),")");
-);
-export startFileInput(o:file):void := (
-    Ccode(void,"M2File_StartInput(",lvalue(o.cfile),")");
-);
-export endFileInput(o:file):void := (
-    Ccode(void,"M2File_EndInput(",lvalue(o.cfile),")");
-);
-export startFileOutput(o:file):void := (
-    Ccode(void,"M2File_StartOutput(",lvalue(o.cfile),")");
-);
-export endFileOutput(o:file):void := (
-    Ccode(void,"M2File_EndOutput(",lvalue(o.cfile),")");
-);
-export setFileThreadState(o:file, state:int):void :=
-(
-	Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",state)")
-);
+export getFileFOSS(o:file):FOSS     := Ccode(FOSS,"M2File_GetState(",     lvalue(o.cfile),")");
+export releaseFileFOSS(o:file):void := Ccode(void,"M2File_ReleaseState(", lvalue(o.cfile),")");
+export startFileInput(o:file):void  := Ccode(void,"M2File_StartInput(",   lvalue(o.cfile),")");
+export endFileInput(o:file):void    := Ccode(void,"M2File_EndInput(",     lvalue(o.cfile),")");
+export startFileOutput(o:file):void := Ccode(void,"M2File_StartOutput(",  lvalue(o.cfile),")");
+export endFileOutput(o:file):void   := Ccode(void,"M2File_EndOutput(",    lvalue(o.cfile),")");
+export setFileThreadState(o:file, state:int):void := Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",state)");
 
 export syscallErrorMessage(msg:string):string := msg + " failed: " + syserrmsg();
 export fileErrorMessage(o:file,msg:string):string := (
@@ -104,7 +90,6 @@ export clearFileError(o:file):void := (
      );
 export fileErrorMessage(o:file):string := o.errorMessage;
 export noprompt():string := "";
-newbuffer():string := new string len bufsize do provide ' ';
 export stdError := newFile(
      -- contrast with stderr, defined in errio.d
      -- intended just for top level use where nets might be printed

@@ -12,9 +12,9 @@ extern "C" {
 
   void M2File_SetThreadMode(struct M2File* file, int threadMode);
 
-  struct M2File*  M2File_New(stdio0_fileOutputSyncState fileUnsyncState); 
-  stdio0_fileOutputSyncState M2File_UnsyncState(struct M2File* file);
-  stdio0_fileOutputSyncState M2File_GetState(struct M2File* file);
+  struct M2File*  M2File_New(stdio0_FOSS fileUnsyncState);
+  stdio0_FOSS M2File_UnsyncState(struct M2File* file);
+  stdio0_FOSS M2File_GetState(struct M2File* file);
   void M2File_ReleaseState(struct M2File* file);
   void M2File_StartInput(struct M2File* file);
   void M2File_EndInput(struct M2File* file);

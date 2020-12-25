@@ -67,7 +67,7 @@ export hash(e:Expr):int := (
      is xmlNodeCell do int(123456)
      is xmlAttrCell do int(123457)
      is t:TaskCell do t.body.hash
-     is foss:fileOutputSyncState do int(123458)
+     is foss:FOSS do int(123458)
      -- cast to long first to avoid "different size" compiler warning
      is x:pointerCell do int(long(Ccode(long, x.v)))
      );

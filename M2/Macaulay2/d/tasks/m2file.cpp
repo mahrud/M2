@@ -2,17 +2,14 @@
 #include "pthread-methods.hpp"
 #include <iostream>
 
-extern "C"
-{
-extern stdio0_fileOutputSyncState stdio0_newDefaultFileOutputSyncState();
-};
+extern "C" stdio0_FOSS stdio0_newDefaultFOSS();
 
-M2File::M2File(stdio0_fileOutputSyncState fileUnsyncState):
-    currentThreadMode(0),
-    unsyncState(fileUnsyncState),
-    exclusiveChangeCondition(PTHREAD_COND_INITIALIZER),
-    recurseCount(0),
-    exclusiveRecurseCount(0)
+M2File::M2File(stdio0_FOSS fileUnsyncState)
+    : currentThreadMode(0),
+      unsyncState(fileUnsyncState),
+      exclusiveChangeCondition(PTHREAD_COND_INITIALIZER),
+      recurseCount(0),
+      exclusiveRecurseCount(0)
 {
   clearThread(exclusiveOwner);
 }
@@ -150,9 +147,9 @@ extern "C"
       }
   }
 
-  struct M2File* M2File_New(stdio0_fileOutputSyncState fileUnsyncState) { return new (GC) M2File(fileUnsyncState); } 
-  stdio0_fileOutputSyncState M2File_UnsyncState(M2File* file) { return file->unsyncState; } 
-  stdio0_fileOutputSyncState M2File_GetState(struct M2File* file)
+  struct M2File* M2File_New(stdio0_FOSS fileUnsyncState) { return new (GC) M2File(fileUnsyncState); }
+  stdio0_FOSS M2File_UnsyncState(M2File* file) { return file->unsyncState; }
+  stdio0_FOSS M2File_GetState(struct M2File* file)
   {
     //if unsync mode just return unsync state
     if(file->currentThreadMode==0)
@@ -172,7 +169,7 @@ extern "C"
 	file->m_MapMutex.lock();
 	//try to find thread id in thread states map
 	gc_map(pthread_t, struct M2FileThreadState*)::iterator it = file->threadStates.find(localId);
-	stdio0_fileOutputSyncState foss = NULL;
+	stdio0_FOSS foss = NULL;
 	if(it!=file->threadStates.end())
 	  {
 	    //case: thread id found in map, so just return associated thread state
@@ -182,7 +179,7 @@ extern "C"
 	  {
 	    //thread has not used this file yet.
 	    //create a new state.
-	    foss = stdio0_newDefaultFileOutputSyncState();
+	    foss = stdio0_newDefaultFOSS();
 	    struct M2FileThreadState* state = new (GC) M2FileThreadState();
 	    state->syncState = foss;
 	    file->threadStates[localId]=state;

@@ -415,7 +415,7 @@ export Expr := (
      pythonObjectCell or
      xmlNodeCell or xmlAttrCell or
      TaskCell or 
-     fileOutputSyncState or
+     FOSS or
      pointerCell
      );
 export fun := function(Expr):Expr;
@@ -504,7 +504,7 @@ export file := {+
      	output:bool,	        -- is output file
 	outfd:int,		-- file descriptor or -1
         outisatty:bool,
-	unsyncOutputState:fileOutputSyncState, -- default sync state to use for unsync output
+	unsyncOutputState:FOSS, -- default sync state to use for unsync output
 	 -- Mutex for synchronization and for buffering 
 	 -- Lock before output in sync output mode
 	threadSyncMutex:ThreadMutex,

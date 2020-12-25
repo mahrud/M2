@@ -13,9 +13,15 @@ export STDERR ::= 2;
 
 export iseof      (c:int ):bool := c == EOF;
 export iserror    (c:int ):bool := c == ERROR;
---fileOutputSyncStates are essentially the per thread data needed for performing synchronization functionality for a given top level file
-export fileOutputSyncState :=
-{+
+
+--provide a constant representation of default buffer size for a file
+export bufsize ::= 4 * 1024;
+--create a new buffer of size bufsize and initialize it to ' '
+export newbuffer():string := new string len bufsize do provide ' ';
+
+-- FOSS, or File Output Sync State, is the thread local data needed for
+-- performing synchronization functionality for a given top level file
+export FOSS := {+
      	-- output file stuff
 	outbuffer:string,	-- buffer
 	                        -- outbuffer . 0 is the first char in the buffer
@@ -29,9 +35,10 @@ export fileOutputSyncState :=
         bytesWritten:int,       -- bytes written so far
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-};
---provide a constructor for fileOutputSyncStates
-export newFileOutputSyncState(
+    };
+
+--provide a constructor for FOSS
+export newFOSS(
  	outbuffer:string,	-- buffer
 	                        -- outbuffer . 0 is the first char in the buffer
 	outindex:int,	        -- outbuffer.(outindex-1) is the last char
@@ -44,15 +51,8 @@ export newFileOutputSyncState(
         bytesWritten:int,       -- bytes written so far
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-):fileOutputSyncState := (
-fileOutputSyncState(outbuffer,outindex,outbol,hadNet,nets,bytesWritten,lastCharOut,capturing)
-);
---provide a constant representation of default buffer size for a file
-bufsize ::= 4 * 1024;
---create a new buffer of size bufsize and initialize it to ' '
-newbuffer():string := new string len bufsize do provide ' ';
---provide a default 'constructor' for fileOutputSyncStates. 
+    ):FOSS := FOSS(outbuffer, outindex, outbol, hadNet, nets, bytesWritten, lastCharOut, capturing);
+
+--provide a default 'constructor' for FOSS.
 --this is used by m2file.cpp to create new sync states on the fly for new threads in thread exclusive mode
-export newDefaultFileOutputSyncState():fileOutputSyncState := (
-     newFileOutputSyncState(newbuffer(),0,0,false,dummyNetList,0,-1,false) 
-     );
+export newDefaultFOSS():FOSS := newFOSS(newbuffer(),0,0,false,dummyNetList,0,-1,false);

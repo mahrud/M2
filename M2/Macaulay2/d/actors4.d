@@ -1027,7 +1027,7 @@ tostringfun(e:Expr):Expr := (
 		    )
 	       + ">>"
 	       ))
-    is x:fileOutputSyncState do toExpr("File Output Sync State")
+    is x:FOSS do toExpr("File Output Sync State")
 );
 setupfun("simpleToString",tostringfun);
 

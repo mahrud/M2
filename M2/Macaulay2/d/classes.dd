@@ -165,7 +165,7 @@ export Class(e:Expr):HashTable := (
      is RawPathTrackerCell do rawPathTrackerClass
      is RawPointArrayCell do rawPointArrayClass
      -- NAG end
-     is fileOutputSyncState do fileOutputSyncStateClass
+     is FOSS do fileOutputSyncStateClass
      );
 classfun(e:Expr):Expr := Expr(Class(e));
 setupfun("class",classfun);

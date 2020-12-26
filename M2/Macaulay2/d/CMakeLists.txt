@@ -12,9 +12,6 @@ file(GENERATE OUTPUT distributed-packages.h CONTENT "#define DISTRIBUTED_PACKAGE
 ## Configure version.dd at the destination
 #configure_file(version.dd.in version.dd #ONLY)
 
-## Rules for building M2-supervisor
-add_subdirectory(tasks)
-
 ###############################################################################
 
 set(CLIST
@@ -27,7 +24,19 @@ set(CLIST
   gdbm_interface.c
   )
 
-set(CXXLIST boost-regex.cpp std-thread.cpp)
+set(CXXLIST
+  boost-regex.cpp
+  std-thread.cpp
+  # The tasks directory contains the Macaulay2 task supervisor.
+  # TODO: m2util.hpp is not used
+  tasks/supervisorinterface.h tasks/supervisor.hpp tasks/supervisor.cpp # used .. a lot
+  tasks/m2fileinterface.h     tasks/m2file.hpp     tasks/m2file.cpp     # used by stdio.d
+  tasks/pthread-methods.hpp # used by m2file
+  tasks/gc_std.hpp          # used by m2file and supervisor
+  tasks/mutex.h             # used by mem.hpp and pthread0.d
+  tasks/mutexclass.hpp      # used by supervisor.hpp and m2file.hpp and m2util.hpp
+  tasks/tests.cpp           # TS_test is used in actors5.d
+  )
 
 # CAUTION: order is important in this list
 # TODO: can there be #ifdefs in D sources?
@@ -149,7 +158,7 @@ add_library(M2-interpreter OBJECT ${CLIST} ${CXXLIST} ${TAGS}
   $<$<BOOL:${WITH_XML}>:xml-c.c xml-c.h>
   $<$<BOOL:${WITH_PYTHON}>:python-c.c>)
 
-target_link_libraries(M2-interpreter PRIVATE M2-supervisor Boost::regex TBB::tbb quadmath
+target_link_libraries(M2-interpreter PRIVATE Boost::regex Threads::Threads TBB::tbb ${CMAKE_DL_LIBS} quadmath
   $<$<BOOL:${WITH_FFI}>:FFI::ffi>)
 
 # TODO: c.f. https://github.com/Macaulay2/M2/issues/2682
@@ -168,6 +177,8 @@ target_include_directories(M2-interpreter
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Macaulay2/e/memtailor>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Macaulay2/e/mathicgb>
     # for libraries that the interpreter needs
+    $<BUILD_INTERFACE:${ATOMICOPS_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${BDWGC_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${READLINE_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${LIBXML2_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${EIGEN3_INCLUDE_DIR}>

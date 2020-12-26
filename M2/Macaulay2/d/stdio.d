@@ -541,6 +541,10 @@ closem():void := (
 
 atend(closem);
 
+-----------------------------------------------------------------------------
+-- The three main functions
+-----------------------------------------------------------------------------
+
 export (o:file) << (n:Net) : file := (
      foss := getFileFOSS(o);
      if o.output then (
@@ -591,6 +595,8 @@ export (o:file) << (x:string) : file := (
 	  );
      releaseFileFOSS(o);
      o );
+
+-----------------------------------------------------------------------------
 
 endlfun(o:file):int := (
      if o.output then (

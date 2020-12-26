@@ -53,15 +53,14 @@ target_compile_options(M2-binary PRIVATE
   )
 
 target_link_libraries(M2-binary
-  ${Boost_stacktrace_lib}
-  M2-supervisor M2-engine M2-interpreter ${CMAKE_DL_LIBS})
+  M2-engine M2-interpreter ${Boost_stacktrace_lib} ${CMAKE_DL_LIBS})
 
 #if we have a usable link time stacktrace library, force boost to use it
 if(NOT Boost_stacktrace_header_only)
   target_compile_definitions(M2-binary PUBLIC BOOST_STACKTRACE_LINK)
 endif()
 
-# Set where the executable should be store and get its RPATH
+# Set where the executable should be stored and get its RPATH
 set_target_properties(M2-binary PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${M2_DIST_PREFIX}/${M2_INSTALL_BINDIR})
 get_target_property(INSTALL_RPATH M2-binary INSTALL_RPATH)

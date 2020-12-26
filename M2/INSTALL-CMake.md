@@ -288,7 +288,6 @@ The main targets for building Macaulay2 are:
 In addition, the following targets are available:
 - `scc1`: build the Safe C Compiler
 - `M2-interpreter`: translate `.d` and `.dd` sources into C and C++ sources
-- `M2-supervisor`: build the Macaulay2 multithreading supervisor
 - `M2-tests`: build various miscellaneous tests (currently `ComputationsBook`)
 
 ### Targets for Installing Macaulay2 Packages

@@ -58,7 +58,7 @@ endif()
 # Add source-based code coverage targets
 if(BUILD_COVERAGE)
   include(coverage)
-  foreach(_target IN ITEMS scc1 M2-interpreter M2-supervisor M2-engine M2-unit-tests M2-binary)
+  foreach(_target IN ITEMS scc1 M2-interpreter M2-engine M2-unit-tests M2-binary)
     _ADD_COVERAGE(${_target})
   endforeach()
 endif()
@@ -141,7 +141,7 @@ install(DIRECTORY
 install(EXPORT Macaulay2 NAMESPACE Macaulay2::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Macaulay2
   COMPONENT devel EXCLUDE_FROM_ALL)
-export(TARGETS M2-binary M2-engine M2-interpreter M2-supervisor
+export(TARGETS M2-binary M2-engine M2-interpreter
   NAMESPACE Macaulay2:: FILE Macaulay2Config.cmake)
 export(TARGETS mathicgb mathic memtailor
   NAMESPACE MathicGB:: FILE MathicGBConfig.cmake)

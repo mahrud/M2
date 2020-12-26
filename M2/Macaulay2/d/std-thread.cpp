@@ -12,42 +12,27 @@
 #include "strings-exports.h"
 
 #include <atomic>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <mutex>
 #include <chrono>
+#include <iostream>
+#include <mutex>
+#include <sstream>
 #include <thread>
 
-thread_local std::stringbuf outbuf, errbuf;
-thread_local std::ostream outstream(&outbuf), errstream(&errbuf);
-std::mutex stdout_mutex, stderr_mutex;
-
-void threads_initialize_stream(std::stringbuf* buf, std::ostream* stream)
-{
-  // instead of reallocating memory, skip to the beginning
-  buf->str("");
-  stream->clear();
-  stream->seekp(0);
-  stream->rdbuf(buf);
-}
+extern thread_local std::stringbuf outbuf, errbuf;
+extern thread_local std::ostream outstream, errstream;
 
 extern "C" {
 
+void streams_initialize(std::stringbuf* buf, std::ostream* stream);
+void streams_flush(int n);
+
 void threads_initialize(bool live)
 {
-  threads_initialize_stream(&outbuf, &outstream);
+  streams_initialize(&outbuf, &outstream);
   if (live)
-    threads_initialize_stream(&errbuf, &errstream);
+    streams_initialize(&errbuf, &errstream);
   else
     errstream.rdbuf(&outbuf);
-}
-
-void threads_flush(int n)
-{
-  std::lock_guard<std::mutex> stdout_guard(stdout_mutex), stderr_guard(stderr_mutex);
-  std::cout << n << " out:\n" << outbuf.str() << std::flush;
-  std::cerr << n << " err:\n" << errbuf.str() << std::flush;
 }
 
 void threads_compute(const M2_string str, int n)
@@ -60,7 +45,7 @@ void threads_compute(const M2_string str, int n)
     }
   errstream << std::endl;
   outstream << "\tstr = '" << errbuf.str() << "'" << std::endl;
-  threads_flush(n);
+  streams_flush(n);
 }
 
 } /* extern "C" */

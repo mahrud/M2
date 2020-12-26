@@ -574,7 +574,7 @@ int system_symlink(M2_string oldfilename,M2_string newfilename) {
 
 M2_string system_readfile(int fd) {
      struct stat buf;
-     size_t bufsize = 1024; // FIXME: compare with bufsize in stdio0.d
+     size_t bufsize = 1024; // FIXME: compare with bufsize in streams.dd
      char *text;
      size_t size = 0;
      if (!(ERROR == fstat(fd,&buf) || !S_ISREG(buf.st_mode) || 0 == buf.st_size)) {

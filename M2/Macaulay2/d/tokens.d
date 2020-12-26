@@ -9,7 +9,6 @@ use engine;
 use varnets;
 use expr;
 
-
 -- misc
 
 export flush(f:TokenFile):void := (f.nexttoken=NULL; flush(f.posFile););
@@ -18,6 +17,8 @@ export fileErrorMessage(f:TokenFile):string := fileErrorMessage(f.posFile);
 export fileError(f:TokenFile):bool := fileError(f.posFile);
 export clearFileError(f:TokenFile):void := clearFileError(f.posFile);
 export isatty(f:TokenFile):bool := isatty(f.posFile);
+export iseof(c:int):bool := c == EOF;
+export iserror(c:int):bool := c == ERROR;
 
 -- Expr Functions
 

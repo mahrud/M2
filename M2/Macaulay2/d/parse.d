@@ -26,7 +26,7 @@ use xml;
 use engine;
 use varnets;
 use strings1;
-use stdio0;
+use streams;
 use stdiop0;
 use pthread0;
 

@@ -4,7 +4,7 @@ use interrupts;
 use errio;
 use gmp;
 use expr;
-use stdio0;
+use streams;
 
 header "#include \"tasks/m2fileinterface.h\"
         #include <readline/history.h>";

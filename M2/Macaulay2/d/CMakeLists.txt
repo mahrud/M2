@@ -26,7 +26,7 @@ set(CLIST
 
 set(CXXLIST
   boost-regex.cpp
-  std-thread.cpp
+  std-thread.cpp std-stream.cpp
   # The tasks directory contains the Macaulay2 task supervisor.
   # TODO: m2util.hpp is not used
   tasks/supervisorinterface.h tasks/supervisor.hpp tasks/supervisor.cpp # used .. a lot
@@ -59,7 +59,7 @@ set(DLIST
   gmp.d
   engine.dd
   xml.d		# removed unless WITH_XML
-  stdio0.d
+  streams.dd
   parse.d
   expr.d
   stdio.d
@@ -125,6 +125,7 @@ endif()
 ###############################################################################
 ## Generate TAGS file
 # TODO: the order is somewhat different, is it a problem?
+# TODO: add tasks subdirectory
 
 if(ETAGS)
   set(TAGS TAGS)
@@ -132,6 +133,7 @@ if(ETAGS)
   add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/TAGS
     COMMENT "Generating d/TAGS file"
     COMMAND ${ETAGS} -o TAGS ${CLIST} ${CXXLIST} ${DLIST}
+    DEPENDS ${CLIST} ${CXXLIST} ${DLIST}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

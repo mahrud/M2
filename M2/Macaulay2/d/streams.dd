@@ -5,8 +5,9 @@ use nets;
 -- C++ interface functions defined in std-stream.cpp
 -----------------------------------------------------------------------------
 
---import compute(str:string, n:int):void;
---import initialize(live:bool):void;
+import Sflush():void;
+import Sinitialize(fd:int, live:bool):void;
+import StoString(fd:int):string;
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -14,6 +15,12 @@ use nets;
 
 -----------------------------------------------------------------------------
 -- Exported Functions
+-----------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------
+-- Legacy Functions (to be deprecated)
 -----------------------------------------------------------------------------
 
 export ERROR ::= -1;

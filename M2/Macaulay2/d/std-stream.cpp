@@ -2,6 +2,8 @@
 
 #include "strings-exports.h"
 
+#include <assert.h>
+
 #include <atomic>
 #include <fstream>
 #include <iostream>
@@ -42,31 +44,79 @@ void streams_Sinitialize(int n, bool live)
     }
 }
 
-void streams_Sflush()
+size_t streams_Sflush(int fd)
 {
-  std::lock_guard<std::mutex> stdout_guard(stdout_mutex), stderr_guard(stderr_mutex);
-  std::cout << " out:\n" << outbuf.str() << std::flush;
-  std::cerr << " err:\n" << errbuf.str() << std::flush;
-  // TODO: should we empty the buffer here?
-  outbuf.str("");
-  errbuf.str("");
+  if (fd == 1)
+    {
+      std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
+      std::cout << outbuf.str() << std::flush;
+      outbuf.str("");
+      return std::cout.tellp();
+    }
+  else if (fd == 2)
+    {
+      std::lock_guard<std::mutex> stderr_guard(stderr_mutex);
+      std::cerr << errbuf.str() << std::flush;
+      errbuf.str("");
+      return std::cerr.tellp();
+    }
+  else
+    {
+      std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
+      std::cout << " SHOULD HAVE BEEN TO FILE" << std::endl;
+    }
+  return -1;
 }
 
-M2_string streams_StoString(int n)
+size_t streams_Swrite(int fd, std::stringbuf* buf, size_t offset, size_t size)
 {
-  M2_string ret;
-  switch (n)
+  // std::ios::sync_with_stdio(false); // TODO: try this
+  if (size == 0) return 0;
+  assert(offset + size <= buf->str().size());
+  std::string str(buf->str().substr(offset, size));
+  if (fd == 1)
     {
-      case 1:
-	ret = M2_tostring(outbuf.str().c_str());
-	outbuf.str("");
-	break;
-      case 2:
-	ret = M2_tostring(errbuf.str().c_str());
-	errbuf.str("");
-	break;
+      std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
+      std::cout << str << std::flush;
     }
-  return ret;
+  else if (fd == 2)
+    {
+      std::lock_guard<std::mutex> stderr_guard(stderr_mutex);
+      std::cerr << str << std::flush;
+    }
+  else
+    {
+      std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
+      std::cout << " SHOULD HAVE BEEN TO FILE:\n" << str << std::flush;
+    }
+  buf->str("");
+  return size;
+}
+
+M2_string streams_Stostring(std::stringbuf* buf, size_t offset, size_t size)
+{
+  return M2_tostring(buf->str().substr(offset, size).c_str());
+}
+
+int streams_Sgetc(std::stringbuf* buf) { return buf->sgetc(); }
+size_t streams_Sgetn(M2_string s, size_t n, std::stringbuf* buf)
+{
+  return buf->sgetn(M2_tocharstar(s), n);
+}
+
+int streams_Sputc(char c, std::stringbuf* buf) { return buf->sputc(c); }
+size_t streams_Sputn(M2_string s, size_t n, std::stringbuf* buf)
+{
+  return buf->sputn(M2_tocharstar(s), n);
+}
+
+void streams_Sempty(std::stringbuf* buf) { return buf->str(""); }
+
+size_t streams_Slength(std::stringbuf* buf) { return buf->str().size(); }
+
+std::stringbuf* streams_Snew(M2_string str)
+{
+  return new std::stringbuf(M2_tocharstar(str));
 }
 
 } /* extern "C" */

@@ -1,13 +1,43 @@
 use arithmetic;
 use nets;
+use M2;
 
 -----------------------------------------------------------------------------
 -- C++ interface functions defined in std-stream.cpp
 -----------------------------------------------------------------------------
 
-import Sflush():void;
 import Sinitialize(fd:int, live:bool):void;
-import StoString(fd:int):string;
+
+-- defined in std-stream.cpp as typedef std::stringbuf streams_stringbuf
+export stringbuf := Type "struct stringbuf *";
+-- TODO: find a way to allow C++ here, then replace this and sgetc..sputn
+--declarations "#include <sstream>";
+--export stringbuf := Type "std::stringbuf *";
+
+-- TODO: implement string access, like an actual string
+--export (buf:stringbuf) . (n:int) : char := ...
+--export (buf:stringbuf) . (n:int) : char := ...
+
+-- TODO: get length to work on a stringbuf
+import Slength(buf:stringbuf):int;
+
+import Sflush(fd:int):size_t;
+import Stostring(buf:stringbuf, offset:int, n:int):string;
+export Stostring(buf:stringbuf, offset:int):string := Stostring(buf, offset, Slength(buf) - offset);
+export Stostring(buf:stringbuf):string := Stostring(buf, 0, Slength(buf)); -- TODO: memory inefficient
+--export Stostring(buf:stringbuf):string := tostring(Ccode(constcharstar, buf,"->str().c_str()"));
+
+import Swrite(fd:int, buf:stringbuf, offset:int, n:int):int;
+export Swrite(fd:int, buf:stringbuf, offset:int):int := Swrite(fd, buf, offset, Slength(buf) - offset);
+export Swrite(fd:int, buf:stringbuf):int := Swrite(fd, buf, 0, Slength(buf));
+
+import Sgetc(                 buf:stringbuf):int; -- := Ccode(int, buf,"->sgetc()");
+import Sgetn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sgetn(",s,",",n,")");
+import Sputc(c:char,          buf:stringbuf):int; -- := Ccode(int, buf,"->sputc(",c,")");
+import Sputn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sputn(",s,",",n,")");
+
+import Snew(str:string):stringbuf;
+export Snew():stringbuf := Snew("");
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -16,8 +46,6 @@ import StoString(fd:int):string;
 -----------------------------------------------------------------------------
 -- Exported Functions
 -----------------------------------------------------------------------------
-
-
 
 -----------------------------------------------------------------------------
 -- Legacy Functions (to be deprecated)
@@ -35,13 +63,14 @@ export STDERR ::= 2;
 --provide a constant representation of default buffer size for a file
 export bufsize ::= 4 * 1024;
 --create a new buffer of size bufsize and initialize it to ' '
-export newbuffer():string := new string len bufsize do provide ' ';
+export newinbuffer():string := new string len bufsize do provide ' ';
+export newbuffer():string := ""; -- new string len bufsize do provide ' ';
 
 -- FOSS, or File Output Sync State, is the thread local data needed for
 -- performing synchronization functionality for a given top level file
 export FOSS := {+
      	-- output file stuff
-	outbuffer:string,	-- buffer
+	outbuffer:stringbuf,	-- buffer
 	                        -- outbuffer . 0 is the first char in the buffer
 	outindex:int,	        -- outbuffer.(outindex-1) is the last char
 	outbol:int,	        -- outbuffer.outbol = first char of the current line
@@ -69,7 +98,7 @@ export newFOSS(
         bytesWritten:int,       -- bytes written so far
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-    ):FOSS := FOSS(outbuffer, outindex, outbol, hadNet, nets, bytesWritten, lastCharOut, capturing);
+    ):FOSS := FOSS(Snew(outbuffer), outindex, outbol, hadNet, nets, bytesWritten, lastCharOut, capturing);
 
 --provide a default 'constructor' for FOSS.
 --this is used by m2file.cpp to create new sync states on the fly for new threads in thread exclusive mode

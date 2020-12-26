@@ -1,9 +1,7 @@
 --		Copyright 2016 by Daniel R. Grayson
 use actors5;
 
-declarations "
-#include <chrono>
-";
+declarations "#include <chrono>";
 
 -- The typedef from this type declaration is put into the include file actors6-exports.h,
 -- so that means we can write "use actors6;" only in a *.dd file, not in a *.d file.

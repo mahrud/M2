@@ -563,7 +563,7 @@ capture(e:Expr):Expr := (
 	  --
 	  r := readeval3(stringFile,true,newStaticLocalDictionaryClosure(),false,false,true);
 	  --
-	  out := substrAlwaysCopy(foss.outbuffer,0,foss.outindex);
+	  out := Stostring(foss.outbuffer,0,foss.outindex);
 	  foss.capturing = false;
 	  foss.outbuffer = oldbuf;
 	  foss.outbol = oldbol;

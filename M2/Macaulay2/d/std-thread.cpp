@@ -24,7 +24,7 @@ extern thread_local std::ostream outstream, errstream;
 extern "C" {
 
 void streams_Sinitialize(int, bool);
-void streams_Sflush();
+size_t streams_Sflush(int);
 
 void threads_Tinitialize(bool live)
 {
@@ -42,7 +42,7 @@ void threads_Tcompute(const M2_string str, int n)
     }
   errstream << std::endl;
   outstream << "\tstr = '" << errbuf.str() << "'" << std::endl;
-  streams_Sflush();
+  streams_Sflush(1);
 }
 
 } /* extern "C" */

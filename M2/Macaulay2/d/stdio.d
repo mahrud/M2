@@ -107,7 +107,7 @@ export dummyfile := newFile("dummy",0,
 export stdIO  := newFile("stdio",  0, 
      false, "",
      false, NOFD,NOFD,0,
-     true,  STDIN ,0!=isatty(0), newbuffer(), 0,0,false,false,noprompt,noprompt,false,true,false,0,
+     true,  STDIN ,0!=isatty(0), newinbuffer(), 0,0,false,false,noprompt,noprompt,false,true,false,0,
      true,  STDOUT,0!=isatty(1), newbuffer(), 0,0,false,dummyNetList,0,-1,false,1);
 
 -- TODO: move this somewhere more appropriate
@@ -310,7 +310,7 @@ export openIn(filename:string):(file or errmsg) := (
      	  else (file or errmsg)(addfile(newFile(filename, 0, 
 	  	    false, "",
 		    false, NOFD,NOFD,0,
-		    true,  fd, 0 != isatty(fd), newbuffer(), 0, 0, false, false,noprompt,noprompt,false,true,false,0,
+		    true,  fd, 0 != isatty(fd), newinbuffer(), 0, 0, false, false,noprompt,noprompt,false,true,false,0,
 		    false, NOFD, false,           "",          0, 0, false, dummyNetList,0,-1,false,0)))));
 export openOut(filename:string):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening an output file not permitted"));
@@ -362,69 +362,32 @@ export openListener(filename:string):(file or errmsg) := (
 
 -- write the entire buffer to file or enlarge the buffer
 simpleflush(o:file):int := (
-     if o.outfd == NOFD then return ERROR;
-     -- TODO: lock mutex here?
-     startFileOutput(o);
-     foss := getFileFOSS(o);
-     --
-     if foss.capturing then (
-	  if foss.outindex == length(foss.outbuffer)
-	  then foss.outbuffer = enlarge(length(foss.outbuffer),foss.outbuffer);
-	  )
-     else (
-	  foss.outbol = 0;
-	  offset := 0;
-	  numWritten := 0;
-	  while numWritten >= 0 && offset < foss.outindex && !test(interruptedFlag) do (
-	       oldoffset := offset;
-	       numToWrite := foss.outindex - offset;
-	       Ccode(void,"assert(", numToWrite + offset <= foss.outindex, ")");
-	       numWritten = write(o.outfd,foss.outbuffer,numToWrite,offset);
-	       oldindex := foss.outindex;
-	       --
-	       Ccode(void,"assert(", oldindex == foss.outindex, ")");
-	       if test(interruptedFlag) || numWritten == ERROR then (
-		    fileErrorMessage(o,"writing");
-		    foss.outindex = 0;
-		    releaseFileFOSS(o);
-		    endFileOutput(o);
-		    return ERROR);
-		--
-	       offset = offset + numWritten;
-	       Ccode(void,"assert(", 0 <= offset && 0 <= foss.outindex - offset, ")");
-	       foss.lastCharOut = int(foss.outbuffer.(offset-1));
-	       foss.bytesWritten = foss.bytesWritten + numWritten);
-	   -- seekp
-	  for k from offset to foss.outindex-1 do foss.outbuffer.(k-offset) = foss.outbuffer.k;
-	  foss.outindex = foss.outindex - offset;
-	  Ccode(void,"assert(", 0 <= foss.outindex, ")");
-	  );
-     releaseFileFOSS(o);
-     endFileOutput(o);
-     NOERROR);
+    if o.outfd == NOFD then return ERROR;
+    foss := getFileFOSS(o);
+    if test(interruptedFlag) then (
+	fileErrorMessage(o, "writing");
+	foss.outbol = 0;
+	foss.outindex = 0;
+	releaseFileFOSS(o);
+	return ERROR);
+    -- TODO: when foss.capturing, the outfd needs to be a thread local ostream
+    written := Swrite(o.outfd, foss.outbuffer, 0, foss.outindex);
+    foss.outbol = 0;
+    foss.outindex = 0;
+    foss.bytesWritten = foss.bytesWritten + written;
+    foss.lastCharOut = int(Sgetc(foss.outbuffer)); -- TODO: offset-1?
+    releaseFileFOSS(o);
+    NOERROR);
 
-simpleout(x:string, o:file):int := (
-     foss := getFileFOSS(o);
-     i := 0;						    -- bytes of x transferred so far
-     m := length(x);
-     j := foss.outindex;
-     n := length(foss.outbuffer);
-     while i < m do (
-	  if j == n then (
-	       if simpleflush(o) == ERROR then (releaseFileFOSS(o); return ERROR);
-	       j = foss.outindex;
-               n = length(foss.outbuffer);
-	       );
-	  b := m-i;					    -- number of bytes to transfer this time
-	  if b > n-j then b = n-j;
-	  for k from 0 to b-1 do foss.outbuffer.(j+k) = x.(i+k);
-	  i = i + b;
-	  j = j + b;
-	  foss.outindex = j;
-	  foss.outbol = j;				    -- is this right?
-	  );
-     releaseFileFOSS(o);
-     NOERROR);
+simpleout(s:string, o:file):int := (
+    foss := getFileFOSS(o);
+    n := length(s);
+    Sputn(s, n, foss.outbuffer);
+    --if simpleflush(o) == ERROR then (releaseFileFOSS(o); return ERROR);
+    foss.outindex = foss.outindex + n;
+    foss.outbol = foss.outbol + n;
+    releaseFileFOSS(o);
+    NOERROR);
 
 flushnets(o:file):int := (
      foss := getFileFOSS(o);
@@ -543,53 +506,45 @@ atend(closem);
 -- The three main output functions
 -----------------------------------------------------------------------------
 
-export (o:file) << (n:Net) : file := (
+export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
-    if o.output then (
-	if !foss.hadNet then (
-	    m := foss.outindex - foss.outbol;
-	    Ccode(void,"assert(", m >= 0, ")");
-	    if m > 0 then ( 
-		-- remove the first part of the line from the buffer and add it, as a net, to the (currently empty) list of nets
-		s := toNet(new string len m do for i from foss.outbol to foss.outindex - 1 do provide foss.outbuffer.i);
-		-- Ccode(void,"printf(\"adding a string of length %d starting at %d to the list of nets\\n\",", m, ",", foss.outbol, ");");
-		foss.nets = NetList(foss.nets,s);
-		foss.outindex = foss.outbol;
-		);
-	    foss.hadNet = true;
-	    );
-	foss.nets = NetList(foss.nets,n);
+    if !foss.hadNet then (
+	m := foss.outindex - foss.outbol;
+	Ccode(void,"assert(", m >= 0, ")");
+	-- remove the first part of the line from the buffer and add it, as a net, to the (currently empty) list of nets
+	if m > 0 then
+	foss.nets = NetList(foss.nets, toNet(Stostring(foss.outbuffer, foss.outbol, m)));
+	foss.hadNet = true;
+	foss.outindex = foss.outbol;
 	);
+    foss.nets = NetList(foss.nets,n);
     releaseFileFOSS(o);
-    o);
+    o) else o;
 
-export (o:file) << (c:char) : file := (
-    if test(interruptedFlag) then return o;
+export (o:file) << (c:char) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
-    if o.output then (
-	-- TODO: simplify this by always printing as nets
-	if foss.hadNet then ( foss.nets = NetList(foss.nets,toNet(c)); )
-	else (
-	    if foss.outindex == length(foss.outbuffer) && ERROR == flushFile(o) then (releaseFileFOSS(o); return o);
-	    foss.outbuffer.(foss.outindex) = c;
-	    foss.outindex = foss.outindex + 1;
-	    );
-	);
+    -- TODO: simplify this by always printing as nets
+    -- if foss.outindex == Slength(foss.outbuffer) && ERROR == flushFile(o) then (releaseFileFOSS(o); return o);
+    if foss.hadNet then ( o << toNet(c); )
+    else ( Sputc(c, foss.outbuffer); foss.outindex = foss.outindex + 1; );
     releaseFileFOSS(o);
-    o);
+    o) else o;
 
-export (o:file) << (x:string) : file := (
+export (o:file) << (s:string) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
-    if o.output then if foss.hadNet then (o << toNet(x);) else (foreach c in x do o << c;);
+    if foss.hadNet then ( o << toNet(s); )
+    else ( foss.outindex = foss.outindex + Sputn(s, length(s), foss.outbuffer); );
     releaseFileFOSS(o);
-    o);
+    o) else o;
 
 -----------------------------------------------------------------------------
+
+export (o:file) << (f:function(file):int) : file := ( f(o); o ); -- ignoring error here
 
 endlFunction(o:file):int := if o.output then (
     foss := getFileFOSS(o);
     if foss.hadNet then if ERROR == flushnets(o) then (releaseFileFOSS(o); return ERROR);
-    o << newline;
+    flushFile(o << newline);
     foss.outbol = foss.outindex;
     releaseFileFOSS(o);
     if o.outisatty || o == stdError then simpleflush(o) else NOERROR) else return ERROR;
@@ -981,12 +936,10 @@ export fchmod(o:file,mode:int):int := (
      0);
 
 lastCharWritten(o:file):int := (
-     foss := getFileFOSS(o);
-     if foss.outindex > 0 then 
-         (releaseFileFOSS(o); int(foss.outbuffer.(foss.outindex-1)))
-     else 
-         (releaseFileFOSS(o); foss.lastCharOut)
-);
+    foss := getFileFOSS(o);
+    if foss.outindex > 0
+    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
+    else (releaseFileFOSS(o); foss.lastCharOut));
 
 export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == -1);
 

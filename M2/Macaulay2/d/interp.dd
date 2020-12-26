@@ -107,9 +107,9 @@ readeval4(file:TokenFile,printout:bool,dictionary:Dictionary,returnLastvalue:boo
 	       else (
 		    if debugLevel == 123 then stderr <<  "-- token read error" << endl;
 		    promptWanted = true;
-	       	    if fileError(file) then return buildErrorPacket(fileErrorMessage(file));
-	       	    if stopIfError || returnIfError then return buildErrorPacket("--backtrace: token read error--");
-		    if isatty(file) || file.posFile.file.fulllines then flush(file);
+		    if fileError(file) then return buildErrorPacket(fileErrorMessage(file));
+		    if stopIfError || returnIfError then return buildErrorPacket("--backtrace: token read error--");
+		    if isatty(file) || file.posFile.file.fulllines then flushToken(file);
 		    )
 	       )
 	  else (
@@ -248,7 +248,7 @@ readeval4(file:TokenFile,printout:bool,dictionary:Dictionary,returnLastvalue:boo
 			      else (
 				   -- an error occurred in localBind
 				   if isatty(file) 
-				   then flush(file)
+				   then flushToken(file)
 				   else return (
 					if lasterrmsg != dummyError
 					then Expr(lasterrmsg)
@@ -538,8 +538,8 @@ setupfun("value'",value);
 capture(e:Expr):Expr := (
      when e
      is s:stringCell do (
-	  flush(stdIO);
-	  flush(stdError);
+	  stdIO << flush;
+	  stdError << flush;
 	  oldStdError := stdError;
 	  setStdError(stdIO);
 	  oldStopIfError := stopIfError;

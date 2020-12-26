@@ -8,7 +8,7 @@ set(UNDETERMINED
   franzi-brp-test.cpp
   gb-trace.hpp
   overflow-test.cpp
-  test.dd
+  test.dd # this is a standalone program written in D language
   aring-wrap # both cpp and hpp
   points # both cpp and hpp
   )
@@ -325,6 +325,7 @@ if(ETAGS)
   add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/TAGS
     COMMENT "Generating e/TAGS file"
     COMMAND ${ETAGS} -o TAGS ${HEADERS} ${SOURCES}
+    DEPENDS ${HEADERS} ${SOURCES}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

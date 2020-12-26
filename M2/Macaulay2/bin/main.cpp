@@ -10,7 +10,7 @@
 #include "debug.h"
 
 #include <engine.h> /* to get IM2_initialize() : */
-#include "supervisorinterface.h"
+#include "tasks/supervisorinterface.h"
 
 #include <gdbm.h>
 #include <mpfr.h>

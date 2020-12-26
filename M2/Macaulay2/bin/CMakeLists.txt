@@ -46,13 +46,12 @@ add_custom_target(man COMMAND zcat ${MAN} | groff -man -Tascii DEPENDS ${MAN})
 add_executable(M2-binary timestamp.cpp main.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/startup.c ${TAGS} ${MAN})
 target_link_libraries(M2-binary
-  Boost::${Boost_stacktrace}
-  M2-engine M2-interpreter M2-supervisor ${CMAKE_DL_LIBS})
+  M2-engine M2-interpreter Boost::${Boost_stacktrace} ${CMAKE_DL_LIBS})
 
 # Force using libboost_stacktrace library
 target_compile_definitions(M2-binary PUBLIC BOOST_STACKTRACE_LINK)
 
-# Set where the executable should be store and get its RPATH
+# Set where the executable should be stored and get its RPATH
 set_target_properties(M2-binary PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${M2_DIST_PREFIX}/${M2_INSTALL_BINDIR})
 get_target_property(INSTALL_RPATH M2-binary INSTALL_RPATH)

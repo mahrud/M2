@@ -23,8 +23,8 @@ extern thread_local std::ostream outstream, errstream;
 
 extern "C" {
 
-void streams_initialize(std::stringbuf* buf, std::ostream* stream);
-void streams_flush(int n);
+void streams_Sinitialize(int, bool);
+void streams_Sflush();
 
 void threads_initialize(bool live)
 {

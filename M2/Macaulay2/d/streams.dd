@@ -1,6 +1,20 @@
 use arithmetic;
 use nets;
-use pthread0;
+
+-----------------------------------------------------------------------------
+-- C++ interface functions defined in std-stream.cpp
+-----------------------------------------------------------------------------
+
+--import compute(str:string, n:int):void;
+--import initialize(live:bool):void;
+
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Exported Functions
+-----------------------------------------------------------------------------
 
 export ERROR ::= -1;
 export NOERROR ::= 0;
@@ -10,9 +24,6 @@ export DEPRECATED := -3;				    -- deprecated syntax
 export STDIN ::= 0;
 export STDOUT ::= 1;
 export STDERR ::= 2;
-
-export iseof      (c:int ):bool := c == EOF;
-export iserror    (c:int ):bool := c == ERROR;
 
 --provide a constant representation of default buffer size for a file
 export bufsize ::= 4 * 1024;

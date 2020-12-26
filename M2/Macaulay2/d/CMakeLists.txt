@@ -27,7 +27,7 @@ set(CLIST
   gdbm_interface.c
   )
 
-set(CXXLIST boost-regex.cpp std-thread.cpp)
+set(CXXLIST boost-regex.cpp std-thread.cpp std-stream.cpp)
 
 # CAUTION: order is important in this list
 # TODO: can there be #ifdefs in D sources?
@@ -50,7 +50,7 @@ set(DLIST
   gmp.d
   engine.dd
   xml.d		# removed unless WITH_XML
-  stdio0.d
+  streams.dd
   parse.d
   expr.d
   stdio.d
@@ -109,6 +109,7 @@ endif()
 ###############################################################################
 ## Generate TAGS file
 # TODO: the order is somewhat different, is it a problem?
+# TODO: add tasks subdirectory
 
 if(ETAGS)
   set(TAGS TAGS)
@@ -116,6 +117,7 @@ if(ETAGS)
   add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/TAGS
     COMMENT "Generating d/TAGS file"
     COMMAND ${ETAGS} -o TAGS ${CLIST} ${CXXLIST} ${DLIST}
+    DEPENDS ${CLIST} ${CXXLIST} ${DLIST}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

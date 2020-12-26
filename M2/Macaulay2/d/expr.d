@@ -9,7 +9,7 @@ use xml;
 use engine;
 use varnets;
 use parse;
-use stdio0;
+use streams;
 use strings;
 --Note: scclib.c uses interrupts, so use it here so that it gets included in expr-exports.h
 use interrupts;

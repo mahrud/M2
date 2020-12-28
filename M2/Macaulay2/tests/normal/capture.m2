@@ -1,12 +1,23 @@
 -- See https://github.com/Macaulay2/M2/issues/1689
 
 -- printing nets
-(err, out) = capture " << id_(ZZ^0) << id_(ZZ^3) << id_(ZZ^2) << id_(ZZ^1);"
-assert(not err and out == "
-i1 :  << id_(ZZ^0) << id_(ZZ^3) << id_(ZZ^2) << id_(ZZ^1);
+(err, out) = capture "<< id_(ZZ^0) << id_(ZZ^3) << id_(ZZ^2) << id_(ZZ^1);"
+assert(not err and out == "\ni1 : << id_(ZZ^0) << id_(ZZ^3) << id_(ZZ^2) << id_(ZZ^1);
 0| 1 0 0 || 1 0 || 1 |
  | 0 1 0 || 0 1 |
  | 0 0 1 |
+i2 : \n")
+
+(err, out) = capture ///<< id_(ZZ^2) << id_(ZZ^1);///;
+assert(not err and out == "\ni1 : << id_(ZZ^2) << id_(ZZ^1);
+| 1 0 || 1 |
+| 0 1 |
+i2 : \n")
+
+(err, out) = capture ///<< id_(ZZ^2) << flush << id_(ZZ^1);///;
+assert(not err and out == "\ni1 : << id_(ZZ^2) << flush << id_(ZZ^1);
+| 1 0 |
+| 0 1 || 1 |
 i2 : \n")
 
 (err, out) = capture("K = ZZ/101\nA = matrix\"1,2,3,4;1,3,6,10;19,7,11,13\" ** oo", UserMode => false);

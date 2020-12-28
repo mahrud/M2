@@ -1,10 +1,14 @@
 --		Copyright 2000 by Daniel R. Grayson
 
-use getline;
-use util;
-use evaluate;
+-- TODO: move those two somewhere less crowded
+use actors5; -- for interpreterDepth and lineNumber
 
 TeXmacsEvaluate := makeProtectedSymbolClosure("TeXmacsEvaluate");
+
+export TeXmacsPrompt():string := (
+    ii := new string len interpreterDepth do provide 'i';
+    "\2prompt#" + ii + tostring(lineNumber) + " : \5\5");
+export TeXmacsReward():string := "\2verbatim:";
 
 export topLevelTeXmacs():int := (
      unsetprompt(stdIO);

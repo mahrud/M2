@@ -142,9 +142,9 @@ export wait(pid:int):int := Ccode(returns, "
 import waitNoHang(pid:array(int)):array(int);
 import select(s:array(int)):array(int);
 import hash(x:double):int;
+import dirname(s:string):string;
 import getcwd():string;
 import errfmt(filename:string,lineno:int,colno:int,loaddepth:int):string;
-threadLocal export loadDepth := ushort(0);
 import dbmopen(filename:string,write:bool):int;
 import dbmerror():string;
 import dbmclose(handle:int):int;
@@ -184,14 +184,6 @@ import handleInterruptsSetup(handleInterrupts:bool):void;
 export segmentationFault():void := Ccode(void, "*((int*)1)=0"); -- for debugging our handling of segmentation faults
 import isReady(fd:int):int;
 import hasException(fd:int):int;
-
-everytimeCell := { f:function():void, next:everytimeCell };
-dummyfun():void := nothing;
-everytimeList := everytimeCell(dummyfun,self);
-export everytime(f:function():void):void := everytimeList = everytimeCell(f,everytimeList);
-export everytimeRun():void := (
-     x := everytimeList;
-     while x.next != x do (x.f(); x = x.next;));
 
 export limitFiles(n:int):int := Ccode(returns, "
      #ifdef HAVE_SETRLIMIT

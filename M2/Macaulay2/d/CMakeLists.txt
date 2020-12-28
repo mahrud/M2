@@ -67,7 +67,6 @@ set(DLIST
   err.d
   gmp1.d
   tokens.d
-  getline.d
   lex.d
   parser.d
   binding.d

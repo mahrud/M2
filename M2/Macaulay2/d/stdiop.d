@@ -147,14 +147,14 @@ export dummyPosFile := PosFile(dummyfile,0,"-*dummy file name*-",ushort(0),ushor
 export fileError(f:PosFile):bool := fileError(f.file);
 export clearFileError(f:PosFile):void := clearFileError(f.file);
 export fileErrorMessage(f:PosFile):string := fileErrorMessage(f.file);
-export makePosFile(o:file):PosFile := PosFile(o, 0, o.filename, ushort(1), ushort(0));
+export newPosFile(o:file):PosFile := PosFile(o, 0, o.filename, ushort(1), ushort(0));
 export peek(o:PosFile, offset:int):int := (
      i := 0;
      prevchar := o.lastchar;
      c := 0;
      while (
 	  c = peek(o.file,i);
-	  if c == ERROR || c == EOF then return c;
+	  if iserror(c) || iseof(c) then return c;
 	  prevchar = c;
 	  i < offset
 	  )
@@ -179,7 +179,7 @@ tabwidth := 8;
 export getc(o:PosFile):int := (
      prevchar := o.lastchar;
      c := getc(o.file);
-     if c == ERROR || c == EOF then return c;
+     if iserror(c) || iseof(c) then return c;
      o.lastchar = c;
      if c == int('\n') then (
 	  o.line = o.line + 1;

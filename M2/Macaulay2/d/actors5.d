@@ -1182,14 +1182,14 @@ kill(e:Expr):Expr := (
      when e 
      is pid:ZZcell do if !isInt(pid) then WrongArgSmallInteger() else (
 	  id := toInt(pid);
-	  if kill(id,9) == ERROR then buildErrorPacket("can't kill process")
-	  else if wait(id) == ERROR then buildErrorPacket("process killed, but wait fails") 
+	  if iserror(kill(id,9)) then buildErrorPacket("can't kill process")
+	  else if iserror(wait(id)) then buildErrorPacket("process killed, but wait fails")
 	  else nullE
 	  )
      is f:file do (
 	  if f.pid != 0 then (
-	       if kill(f.pid,9) == ERROR then buildErrorPacket("can't kill process")
-	       else if wait(f.pid) == ERROR  then buildErrorPacket("process killed, but wait fails")
+	       if iserror(kill(f.pid,9)) then buildErrorPacket("can't kill process")
+	       else if iserror(wait(f.pid))  then buildErrorPacket("process killed, but wait fails")
 	       else (
 		    f.pid = 0;
 		    nullE
@@ -1291,7 +1291,7 @@ setupfun("fileExecutable",fileExecutable);
 
 removeDirectory(e:Expr):Expr := (
      when e is name:stringCell do
-     if rmdir(expandFileName(name.v)) == ERROR 
+     if iserror(rmdir(expandFileName(name.v)))
      then buildErrorPacket(syscallErrorMessage("removing a directory"))
      else nullE
      else WrongArgString()
@@ -1300,7 +1300,7 @@ setupfun("removeDirectory",removeDirectory);
 
 removeFile(e:Expr):Expr := (
      when e is name:stringCell do
-     if unlink(expandFileName(name.v)) == ERROR 
+     if iserror(unlink(expandFileName(name.v)))
      then buildErrorPacket(syscallErrorMessage("removing a file"))
      else nullE
      else WrongArgString()
@@ -1655,6 +1655,7 @@ getcwdfun(e:Expr):Expr := (				    -- this has to be a function, because getcwd 
      else WrongNumArgs(0));
 setupfun("currentDirectory",getcwdfun);
 
+-- TODO: move these symbols to more appropriate locations
 export debuggerHook := nullE;
 
 backtraceS := dummySymbol;
@@ -1667,6 +1668,7 @@ gbTraceS := dummySymbol;
 numTBBThreadsS := dummySymbol;
 numericalAlgebraicGeometryTraceS := dummySymbol;
 debuggerHookS := dummySymbol;
+interpreterDepthS := dummySymbol;
 lineNumberS := dummySymbol;
 allowableThreadsS := dummySymbol;
 loadDepthS := dummySymbol;
@@ -1714,6 +1716,7 @@ syms := SymbolSequence(
      (  numTBBThreadsS = setupvar("numTBBThreads",toExpr(numTBBThreads));  numTBBThreadsS  ),
      (  numericalAlgebraicGeometryTraceS = setupvar("numericalAlgebraicGeometryTrace",toExpr(numericalAlgebraicGeometryTrace));  numericalAlgebraicGeometryTraceS  ),
      (  debuggerHookS = setupvar("debuggerHook",debuggerHook);  debuggerHookS  ),
+     (  interpreterDepthS = setupvar("interpreterDepth",toExpr(interpreterDepth));  interpreterDepthS  ),
      (  lineNumberS = setupvar("lineNumber",toExpr(lineNumber));  lineNumberS  ),
      (  allowableThreadsS = setupvar("allowableThreads",toExpr(Ccode( int, " getAllowableThreads() " )));  allowableThreadsS  ),
      (  loadDepthS = setupvarThread("loadDepth",toExpr(loadDepth));  loadDepthS  ),
@@ -1744,6 +1747,9 @@ export setErrorDepth(b:ushort):void := (
      errorDepth = b;
      setGlobalVariable(errorDepthS,toExpr(b));
      );
+export setInterpreterDepth(n:int):void := (
+     interpreterDepth = n;
+     setGlobalVariable(interpreterDepthS, toExpr(interpreterDepth)));
 export setLineNumber(b:int):void := (
      if b < 0 then b = 1;				    -- start over
      lineNumber = b;
@@ -1759,11 +1765,11 @@ export setAllowableThreadsFun(b:int):void := (
      " );
      setGlobalVariable(allowableThreadsS,toExpr(b));
      );
-export setstopIfError(b:bool):void := (
+export setStopIfError(b:bool):void := (
      stopIfError = b;
      setGlobalVariable(stopIfErrorS,toExpr(b));
      );
-export sethandleInterrupts(b:bool):void := (
+export setHandleInterrupts(b:bool):void := (
      handleInterrupts = b;
      handleInterruptsSetup(b);
      setGlobalVariable(handleInterruptsS,toExpr(b));
@@ -1828,6 +1834,7 @@ store(e:Expr):Expr := (			    -- called with (symbol,newvalue)
 		    else if sym === engineDebugLevelS then (engineDebugLevel = n; e)
 		    else if sym === myNS then (myN = n; e)
 		    else if sym === recursionLimitS then (recursionLimit = n; e)
+		    else if sym === interpreterDepthS then (interpreterDepth = n; e)
 		    else if sym === lineNumberS then (lineNumber = n; e)
 		    else if sym === numTBBThreadsS then (
 			 if n < 0 then return buildErrorPacket("numTBBThreads cannot be set to negative value");
@@ -1856,6 +1863,7 @@ store(e:Expr):Expr := (			    -- called with (symbol,newvalue)
 		    if sym === debugLevelS
 		    || sym === engineDebugLevelS
 		    || sym === myNS
+		    || sym === interpreterDepthS
 		    || sym === lineNumberS
 		    || sym === allowableThreadsS
 		    || sym === printingPrecisionS
@@ -1952,7 +1960,7 @@ fileLength(e:Expr):Expr := (
      is f:file do (
 	  if f.input && f.infd != -1 then (
 	       ret := fileLength(f.infd);
-	       if ret == ERROR
+	       if iserror(ret)
 	       then Expr(buildErrorPacket(syscallErrorMessage("getting the length of a file")))
 	       else toExpr(ret))
 	  else if f.output then (
@@ -1965,7 +1973,7 @@ fileLength(e:Expr):Expr := (
 	  filename := f.v;
 	  filename = expandFileName(filename);
 	  ret := fileLength(filename);
-	  if ret == ERROR
+	  if iserror(ret)
 	  then Expr(buildErrorPacket(syscallErrorMessage("length of a file: \"" + present(filename) + "\"")))
      	  else toExpr(ret))
      else WrongArg("a string or a file"));     

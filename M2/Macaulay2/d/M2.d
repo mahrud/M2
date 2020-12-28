@@ -149,6 +149,11 @@ export numericalAlgebraicGeometryTrace := 0;
 export notify := false;
 export readonlyfiles := false;				    -- see stdio.d
 
+-- TODO: move elsewhere, along with those in expr.d and actors5.d
+export threadLocal lineNumber := 0;
+export threadLocal interpreterDepth := 0;
+export threadLocal loadDepth := ushort(0);
+
 -- Local Variables:
 -- compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d M2.o "
 -- End:

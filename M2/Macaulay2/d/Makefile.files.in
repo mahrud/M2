@@ -53,7 +53,6 @@ M2_DFILES += stdiop.d
 M2_DFILES += err.d
 M2_DFILES += gmp1.d
 M2_DFILES += tokens.d
-M2_DFILES += getline.d
 M2_DFILES += lex.d
 M2_DFILES += parser.d
 M2_DFILES += binding.d

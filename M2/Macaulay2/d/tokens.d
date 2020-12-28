@@ -11,14 +11,52 @@ use expr;
 
 -- misc
 
+export stringTokenFile(name:string,contents:string):TokenFile := (
+    TokenFile(
+	newPosFile(
+	    newFile(name,		-- filename
+		0,			-- pid
+		false,			-- error
+		"",			-- message
+		false,			-- listener
+		NOFD,			-- listenerfd
+		NOFD,			-- connection
+		0,			-- numconns
+		true,			-- input
+		NOFD,			-- infd
+		false,			-- inisatty
+		contents,		-- inbuffer
+		0,			-- inindex
+		length(contents),	-- insize
+		false,			-- eof
+		false,			-- promptq
+		noprompt,		-- prompt
+		noprompt,		-- reward
+		false,			-- fulllines
+		true,			-- bol
+		false,			-- echo
+		0,			-- echoindex
+		false,			-- output
+		NOFD,			-- outfd
+		false,			-- outisatty
+		"",			-- outbuffer
+		0,			-- outindex
+		0,			-- outbol
+		false,			-- hadNet
+		dummyNetList,		-- nets
+		0,			-- bytesWritten
+		-1,			-- lastCharOut
+		false,			-- readline
+		0			-- threadState
+		)),
+	NULL));
+
 export flushToken(f:TokenFile):void := (f.nexttoken=NULL; flushInput(f.posFile););
 export close(file:TokenFile):int := close(file.posFile);
 export fileErrorMessage(f:TokenFile):string := fileErrorMessage(f.posFile);
 export fileError(f:TokenFile):bool := fileError(f.posFile);
 export clearFileError(f:TokenFile):void := clearFileError(f.posFile);
 export isatty(f:TokenFile):bool := isatty(f.posFile);
-export iseof(c:int):bool := c == EOF;
-export iserror(c:int):bool := c == ERROR;
 
 -- Expr Functions
 
@@ -60,8 +98,8 @@ export cwd():Expr := (
      r := getcwd();
      if r === "" then buildErrorPacket("can't get current working directory: " + syserrmsg())
      else Expr(stringCell(r)));
-dummyDebuggerFun(f:Frame,c:Code):Expr := nullE;
-export debuggerFun := dummyDebuggerFun;
+dummyDebugger(f:Frame,c:Code):Expr := nullE;
+export debugger := dummyDebugger;
 export handleInterrupts := true;
 (threadLocal export stopIfError := true) = false;
 (threadLocal export debuggingMode := false) = true;

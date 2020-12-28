@@ -57,7 +57,7 @@ export baseLexNode := LexNode( char(0), NULL, NULL, NULL );
      o);
 export dumpNodes():void := stdIO << "[" << baseLexNode << "]" << endl;
 advance(node:LexNode,ch:int):(null or LexNode) := (
-     if ch == EOF || ch == ERROR then return NULL;
+     if iseof(ch) || iserror(ch) then return NULL;
      t := node.further;
      while true do (
 	  when t
@@ -115,13 +115,13 @@ getstringslashes(o:PosFile):(null or Word) := (		    -- /// ... ///
      tokenbuf << '\"';					    -- "
      while true do (
 	  ch := getc(o);
-	  if ch == ERROR then (
+	  if iserror(ch) then (
 	       if !test(interruptedFlag)
 	       then printErrorMessage(o.filename,line,column,"ERROR in string /// ... /// beginning here: " + o.file.errorMessage);
 	       empty(tokenbuf);
 	       return NULL;
 	       );
-	  if ch == EOF then (
+	  if iseof(ch) then (
 	       printErrorMessage(o.filename,line,column,"EOF in string /// ... /// beginning here");
 	       empty(tokenbuf);
 	       return NULL;
@@ -166,7 +166,7 @@ getstring(o:PosFile):(null or Word) := (
      unicode := 0;
      while true do (
 	  ch := getc(o);
-	  if ch == ERROR then (
+	  if iserror(ch) then (
 	       if !test(interruptedFlag)
 	       then printErrorMessage(o.filename,line,column,
 		    (if o.file.eof 
@@ -176,7 +176,7 @@ getstring(o:PosFile):(null or Word) := (
 	       empty(tokenbuf);
 	       return NULL;
 	       );
-	  if ch == EOF then (
+	  if iseof(ch) then (
 	       printErrorMessage(o.filename,line,column,"EOF in string beginning here");
 	       empty(tokenbuf);
 	       return NULL;
@@ -190,7 +190,7 @@ getstring(o:PosFile):(null or Word) := (
 		    printErrorMessage(o.filename,line,column,"expected " +
 			tostring(hexcoming) + " more hex digit(s)");
 		    empty(tokenbuf);
-		    while true do (ch2 := getc(o); if ch2 == EOF || ch2 == ERROR || ch2 == int('\n') then return NULL;);
+		    while true do (ch2 := getc(o); if iseof(ch2) || iserror(ch2) || ch2 == int('\n') then return NULL;);
 		    )
 	       )
 	  else if escaped
@@ -213,7 +213,7 @@ getstring(o:PosFile):(null or Word) := (
 	       else (
 		    empty(tokenbuf);
 		    printErrorMessage(o.filename,line,column,"unknown escape sequence: \\" + char(ch));
-		    while true do (ch2 := getc(o); if ch2 == EOF || ch2 == ERROR || ch2 == int('\n') then return NULL;);
+		    while true do (ch2 := getc(o); if iseof(ch2) || iserror(ch2) || ch2 == int('\n') then return NULL;);
 		    );
 	       )
 	  else if ch == delimiter then break
@@ -235,19 +235,19 @@ skipwhite(file:PosFile):int := (
 	  swcolumn = file.column;
 	  c := peek(file);
 	  d := 0;
-	  if c == ERROR then return ERROR
+	  if iserror(c) then return ERROR
 	  else if iswhite(c) then ( getc(file); )
 	  else if c == int('\n') then return 0
 	  else if (
 	       d = peek(file,1);
-	       if d == ERROR then return ERROR;
+	       if iserror(d) then return ERROR;
 	       c == int('-') && d == int('-')
 	       ) then (
  	       -- comment: -- ...
      	       getc(file); getc(file);
      	       until (
-		    c = peek(file); if c == ERROR then return c; 
-		    c == int('\n') || c == EOF
+		    c = peek(file); if iserror(c) then return c;
+		    c == int('\n') || iseof(c)
 		    ) do getc(file);
 	       )
 	  else if (
@@ -258,8 +258,8 @@ skipwhite(file:PosFile):int := (
      	       getc(file); getc(file);
      	       until (
 		    c = peek(file); 
-		    if c == ERROR then return c; 
-		    c == int('\n') || c == EOF
+		    if iserror(c) then return c;
+		    c == int('\n') || iseof(c)
 		    ) do getc(file);
 	       )
 	  else if c == int('-') && peek(file,1) == int('*') then (
@@ -267,11 +267,19 @@ skipwhite(file:PosFile):int := (
 	       getc(file); getc(file);
 	       until (
 		    c = peek(file);
-		    if c == ERROR || c == EOF then return c;
+		    if iserror(c) || iseof(c) then return c;
+		    if c == int('\n') then (
+			 if hadnewline && isatty(file) then (
+			      getc(file);
+			      return ERROR; -- user gets out with an extra NEWLINE
+			      );
+			 hadnewline = true;
+			 )
+		    else hadnewline = false;
 		    c == int('*') && (
 			 getc(file);
 			 c = peek(file);
-		    	 if c == ERROR || c == EOF then return c; 
+			 if iserror(c) || iseof(c) then return c;
 		    	 c == int('-')			    -- -
 		    	 && (
 			      getc(file);
@@ -292,11 +300,11 @@ gettoken1(file:PosFile,sawNewline:bool):Token := (
      -- warning : tokenbuf is static
      while true do (
 	  rc := skipwhite(file);
-	  if rc == ERROR then return errorToken;
-	  if rc == EOF  then (
+	  if iserror(rc) then return errorToken;
+	  if iseof(rc)  then (
 	       printErrorMessage(file.filename,swline,swcolumn,"EOF in block comment -* ... *- beginning here");
 	       -- empty(tokenbuf);
-	       -- while true do (ch2 := getc(file); if ch2 == EOF || ch2 == ERROR || ch2 == int('\n') then break;);
+	       -- while true do (ch2 := getc(file); if iseof(ch2) || iserror(ch2) || ch2 == int('\n') then break;);
      	       return errorToken;
 	       );
 	  if rc == DEPRECATED then (

@@ -106,7 +106,8 @@ int system_exec(M2_ArrayString argv) {
      return ERROR;
      }
 
-M2_string interp_dirname(M2_string s) {
+// TODO: only called once in interp; can it be removed or simplified?
+M2_string system_dirname(M2_string s) {
   char *t = M2_tocharstar(s);
   char *u = t;
   char *v = u;

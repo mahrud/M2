@@ -1,6 +1,5 @@
 -- Copyright 1994 by Daniel R. Grayson
 
-use getline;
 use actors;
 use actors2;
 use actors3;
@@ -86,7 +85,7 @@ setpgidfun(e:Expr):Expr := (
 	       when a.1 is pgid:ZZcell do
 	       if !isInt(pgid) then WrongArgSmallInteger(2) else (
 		    r := setpgid(toInt(pid),toInt(pgid));
-		    if r == ERROR
+		    if iserror(r)
 		    then buildErrorPacket("setGroupID: "+syserrmsg())
 		    else nullE)
 	       else WrongArgZZ(2)
@@ -840,7 +839,7 @@ wait(e:Expr):Expr := (
      is x:ZZcell do (
 	  if isInt(x) then (
 	       ret := wait(toInt(x));
-	       if ret == ERROR
+	       if iserror(ret)
 	       then buildErrorPacket("wait failed")
 	       else toExpr(ret)
 	       )

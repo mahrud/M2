@@ -20,7 +20,9 @@ export startFileInput(o:file):void  := Ccode(void,"M2File_StartInput(",   lvalue
 export endFileInput(o:file):void    := Ccode(void,"M2File_EndInput(",     lvalue(o.cfile),")");
 export startFileOutput(o:file):void := Ccode(void,"M2File_StartOutput(",  lvalue(o.cfile),")");
 export endFileOutput(o:file):void   := Ccode(void,"M2File_EndOutput(",    lvalue(o.cfile),")");
-export setFileThreadState(o:file, state:int):void := Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",state)");
+
+export setFileThreadState(o:file,    state:int):void := Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",",state,")");
+export setFileThreadState(o:m2cfile, state:int):void := Ccode(void,"M2File_SetThreadMode(",o,",",              state,")");
 
 -----------------------------------------------------------------------------
 --
@@ -76,7 +78,7 @@ export newFile(
     foss := newFOSS(outbuffer,outindex,outbol,hadNet,nets,outmargin,bytesWritten,lastCharOut,false);
     --foss:= newDefaultFOSS();
     m2f := newm2cfile(foss);
-    Ccode(void, "M2File_SetThreadMode(", lvalue(m2f), ",", fileThreadState, ")");
+    setFileThreadState(m2f, fileThreadState);
     file(nextHash(),
 	filename, pid, error, errorMessage,
 	listener,listenerfd,connectionfd,numconns,
@@ -343,12 +345,11 @@ flushBuffer(o:file):int := (
 	releaseFileFOSS(o);
 	return ERROR);
     -- TODO: when foss.capturing, the outfd needs to be a thread local ostream
-    Stostring(foss.outbuffer, 0, foss.outindex);
-    written := Swrite(o.outfd, foss.outbuffer, 0, foss.outindex);
+    --foss.bytesWritten = foss.bytesWritten + Swrite(o.outfd, foss.outbuffer, 0, foss.outindex);
+    foss.bytesWritten = foss.bytesWritten + Sflush(o.outfd, foss.outbuffer);
     foss.lastCharOut = int(Srewindc(foss.outbuffer));
     foss.outbol = 0;
     foss.outindex = 0;
-    foss.bytesWritten = foss.bytesWritten + written;
     Sempty(foss.outbuffer);
     releaseFileFOSS(o);
     NOERROR);
@@ -398,7 +399,6 @@ export flush(o:file):int := (
 export endl(o:file):int := if o.output then (
     foss := getFileFOSS(o);
     if iserror(flushNets(o)) then (releaseFileFOSS(o); return ERROR);
-    foss.outbol = foss.outindex;
     foss.outindex = foss.outindex + Sputn(newline, length(newline), foss.outbuffer);
     flush(o);
     foss.outmargin = 0;
@@ -415,8 +415,11 @@ lastCharWritten(o:file):int := (
 
 export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == ERROR);
 
-resetMargin(o:file):void := if o.output then (
-    foss := getFileFOSS(o); flush(o); foss.outmargin = 0; releaseFileFOSS(o); );
+-- bug: stderr << "aa" << id_(ZZ^3)
+
+resetMargins():void := (
+    foss := getFileFOSS(stdIO);    foss.outmargin = 0; releaseFileFOSS(stdIO); flush(stdIO);
+    foss  = getFileFOSS(stdError); foss.outmargin = 0; releaseFileFOSS(stdError); );
 
 export endLine(o:file):void := ( if !atEndOfLine(o) || !atEndOfLine(stdIO) then endl(o); );
 
@@ -429,11 +432,9 @@ export flushinput(o:file):void := ( o.inindex = 0; o.insize = 0; o.bol = true; )
 export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
     if !foss.hadNet then (
-	foss.hadNet = true;
 	skip := foss.outindex - foss.outbol;
-	Ccode(void,"assert(", skip >= 0, ")");
+	Ccode(void, "assert(",skip >= 0,")");
 	margin := Stostring(foss.outbuffer, foss.outbol, skip);
-	-- TODO: we used to move the outbuffer position back and add the margin again as a net
 	-- TODO: after "abc\nd" should be 1, 3, or 4? used to be 3, now is 1
 	skip = foss.outmargin;
 	foreach c in margin do
@@ -443,6 +444,10 @@ export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then 
 	else if c == '\b'     then skip = skip - 1
 	else if c == '\t'     then skip = skip + tabWidth - (skip % tabWidth);
 	-- TODO: any other special characters to consider?
+	-- we used to move the outbuffer position back and add the margin again as a net
+	-- but there isn't really a need for that anymore.
+	flush(o);
+	foss.hadNet = true;
 	foss.outmargin = skip;
 	);
     foss.nets = NetList(foss.nets,n);
@@ -655,7 +660,7 @@ export filbuf(o:file):int := (
 	  n := length(o.inbuffer) - o.insize;
 	  if o.readline then (
 	       endLine(stdIO);
-	       resetMargin(stdIO);
+	       resetMargins();
 	       initReadlineVariables();
 	       if test(interruptedFlag) then return ERROR;
 	       startFileInput(o);
@@ -665,7 +670,7 @@ export filbuf(o:file):int := (
 	  else (
 	       endLine(stdIO);
 	       if o.bol then maybeprompt(o);
-	       resetMargin(stdIO);
+	       resetMargins();
 	       if test(interruptedFlag) then return ERROR;
 	       r = (
 		    if o.infd == NOFD 

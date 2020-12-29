@@ -6,14 +6,15 @@ use M2;   -- for tostring
 -- Exported variables
 -----------------------------------------------------------------------------
 
-export STDIN      ::= 0;
-export STDOUT     ::= 1;
-export STDERR     ::= 2;
-export NOERROR    ::= 0;
-export NOFD       ::= -1;
-export ERROR      ::= -1;
-export EOF        ::= -2; -- end of file
-export DEPRECATED ::= -3; -- deprecated syntax
+export tabWidth := 8;
+
+export STDIN   ::= 0;
+export STDOUT  ::= 1;
+export STDERR  ::= 2;
+export NOERROR ::= 0;
+export NOFD    ::= -1;
+export ERROR   ::= -1;
+export EOF     ::= -2; -- end of file
 
 export iseof(c:int):bool   := c == EOF;
 export iserror(c:int):bool := c == ERROR;
@@ -39,6 +40,8 @@ export stringbuf := Type "struct stringbuf *";
 import Slength(buf:stringbuf):int;
 
 import Sflush(fd:int):size_t;
+import Sempty(buf:stringbuf):void;
+
 import Stostring(buf:stringbuf, offset:int, n:int):string;
 export Stostring(buf:stringbuf, offset:int):string := Stostring(buf, offset, Slength(buf) - offset);
 export Stostring(buf:stringbuf):string := Stostring(buf, 0, Slength(buf)); -- TODO: memory inefficient
@@ -52,6 +55,8 @@ import Sgetc(                 buf:stringbuf):int;    -- := Ccode(int, buf,"->sge
 import Sgetn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sgetn(",s,",",n,")");
 import Sputc(c:char,          buf:stringbuf):int;    -- := Ccode(int, buf,"->sputc(",c,")");
 import Sputn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sputn(",s,",",n,")");
+
+import Srewindc(buf:stringbuf):int;
 
 import Snew(str:string):stringbuf;
 export Snew():stringbuf := Snew("");
@@ -79,6 +84,7 @@ export FOSS := {+
         hadNet:bool,		-- whether a Net is present, in which case the
 	     	       	        -- buffer will be empty
 	nets:NetList,	        -- list of nets, to be printed after the outbuffer
+	outmargin:int,	        -- outbuffer.outmargin is the number of chars written on the last line
         bytesWritten:int,       -- bytes written so far
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
@@ -96,13 +102,14 @@ export newFOSS(
 	     	       	        -- buffer will be empty
 	nets:NetList,	        -- list of nets, to be printed after the outbuffer
         bytesWritten:int,       -- bytes written so far
+	outmargin:int,	        -- outbuffer.outmargin is the number of chars written on the last line
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-    ):FOSS := FOSS(Snew(outbuffer), outindex, outbol, hadNet, nets, bytesWritten, lastCharOut, capturing);
+    ):FOSS := FOSS(Snew(outbuffer), outindex, outbol, hadNet, nets, outmargin, bytesWritten, lastCharOut, capturing);
 
 --provide a default 'constructor' for FOSS.
 --this is used by m2file.cpp to create new sync states on the fly for new threads in thread exclusive mode
-export newDefaultFOSS():FOSS := newFOSS(newbuffer(),0,0,false,dummyNetList,0,-1,false);
+export newDefaultFOSS():FOSS := newFOSS(newbuffer(),0,0,false,dummyNetList,0,0,-1,false);
 
 -----------------------------------------------------------------------------
 -- Legacy Functions (to be deprecated)

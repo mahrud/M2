@@ -6,21 +6,38 @@ use gmp;
 use expr;
 use streams;
 
+-----------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------
+
 header "#include \"tasks/m2fileinterface.h\"
         #include <readline/history.h>";
 
-export newm2cfile(foss:FOSS) ::= Ccode(m2cfile,"M2File_New(",lvalue(foss),")");
+-- TODO: use import instead?
+export newm2cfile(foss:FOSS):m2cfile := Ccode(m2cfile, "M2File_New(",     lvalue(foss),   ")");
+export getFileFOSS(o:file):FOSS     := Ccode(FOSS,"M2File_GetState(",     lvalue(o.cfile),")");
+export releaseFileFOSS(o:file):void := Ccode(void,"M2File_ReleaseState(", lvalue(o.cfile),")");
+export startFileInput(o:file):void  := Ccode(void,"M2File_StartInput(",   lvalue(o.cfile),")");
+export endFileInput(o:file):void    := Ccode(void,"M2File_EndInput(",     lvalue(o.cfile),")");
+export startFileOutput(o:file):void := Ccode(void,"M2File_StartOutput(",  lvalue(o.cfile),")");
+export endFileOutput(o:file):void   := Ccode(void,"M2File_EndOutput(",    lvalue(o.cfile),")");
+export setFileThreadState(o:file, state:int):void := Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",state)");
+
+-----------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------
 
 --provide a default constructor for files
 export newFile(	
         filename:string,	-- name of file
 	pid:int,	        -- pid if it's a pipe or pair of pipes to a child process, else 0
+	-- error stuff
         error:bool,             -- a system call returned ERROR
 	errorMessage:string,    -- the error message associated to the system call that returned ERROR
 	-- listener stuff
         listener:bool,	   	-- is a listener
 	listenerfd:int,	    	-- file descriptor of listener, or -1
-	connection:int,	   	-- file descriptor of accepted connection, not made into file yet
+	connectionfd:int,   	-- file descriptor of accepted connection, not made into file yet
 	numconns:int,	        -- count connections accepted
      	-- input file stuff
      	input:bool,	        -- is input file
@@ -37,7 +54,7 @@ export newFile(
 	fulllines:bool,		-- whether to read at least up to the next newline each time input is required
         bol:bool,     	   	-- at the beginning of a line, and a prompt is needed
 	echo:bool,     	   	-- whether to echo characters read to corresponding output file
-	echoindex:int,	        --   inbuffer.echoindex is the next character to echo
+	echoindex:int,	        -- inbuffer.echoindex is the next character to echo
      	-- output file stuff
      	output:bool,	        -- is output file
 	outfd:int,		-- file descriptor or -1
@@ -51,32 +68,28 @@ export newFile(
         hadNet:bool,		-- whether a Net is present, in which case the
 	     	       	        -- buffer will be empty
 	nets:NetList,	        -- list of nets, to be printed after the outbuffer
+	outmargin:int,	        -- outbuffer.outmargin is the number of string chars on the last line
         bytesWritten:int,       -- bytes written so far
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         readline:bool,          -- input handled by readline()
 	fileThreadState:int     -- state of thread handling 
     ):file := (
-    foss := newFOSS(outbuffer,outindex,outbol,hadNet,nets,bytesWritten,lastCharOut,false);
+    foss := newFOSS(outbuffer,outindex,outbol,hadNet,nets,outmargin,bytesWritten,lastCharOut,false);
     --foss:= newDefaultFOSS();
     m2f := newm2cfile(foss);
     Ccode(void, "M2File_SetThreadMode(", lvalue(m2f), ",", fileThreadState, ")");
     file(nextHash(),
 	filename, pid, error, errorMessage,
-	listener,listenerfd,connection,numconns,
+	listener,listenerfd,connectionfd,numconns,
 	input,infd,inisatty,inbuffer,inindex,insize,eof,
 	promptq,prompt,reward,fulllines,bol,echo,echoindex,
 	readline, -- FIXME: out of order input?
 	output,outfd,outisatty,
 	foss,newMutex,m2f));
 
-
-export getFileFOSS(o:file):FOSS     := Ccode(FOSS,"M2File_GetState(",     lvalue(o.cfile),")");
-export releaseFileFOSS(o:file):void := Ccode(void,"M2File_ReleaseState(", lvalue(o.cfile),")");
-export startFileInput(o:file):void  := Ccode(void,"M2File_StartInput(",   lvalue(o.cfile),")");
-export endFileInput(o:file):void    := Ccode(void,"M2File_EndInput(",     lvalue(o.cfile),")");
-export startFileOutput(o:file):void := Ccode(void,"M2File_StartOutput(",  lvalue(o.cfile),")");
-export endFileOutput(o:file):void   := Ccode(void,"M2File_EndOutput(",    lvalue(o.cfile),")");
-export setFileThreadState(o:file, state:int):void := Ccode(void,"M2File_SetThreadMode(",lvalue(o.cfile),",state)");
+-----------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------
 
 export syscallErrorMessage(msg:string):string := msg + " failed: " + syserrmsg();
 export fileErrorMessage(o:file,msg:string):string := (
@@ -90,32 +103,35 @@ export clearFileError(o:file):void := (
      );
 export fileErrorMessage(o:file):string := o.errorMessage;
 export noprompt():string := "";
+
+-----------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------
+
+-- TODO: not thread-safe
+export openfiles := (null or FileCell)(NULL);
+
 export stdError := newFile(
      -- contrast with stderr, defined in errio.d
      -- intended just for top level use where nets might be printed
      "stderr", 0, 
      false, "",
      false,NOFD,NOFD,0,
-     false,NOFD  ,false,          "",        0,0,false,false,noprompt,noprompt,false,true,false,0,
-     true, STDERR,0!=isatty(2), newbuffer(), 0,0,false,dummyNetList,0,-1,false,1);
+     false,NOFD  ,false,        "",          0,0,false,false,noprompt,noprompt,false,true,false,0,
+     true, STDERR,0!=isatty(2), newbuffer(), 0,0,false,dummyNetList,0,0,-1,false,1);
 -- we give a way for other threads to know whether stder is there
 export dummyfile := newFile("dummy",0, 
      false, "",
      false,NOFD,NOFD,0,
-     false,NOFD,false,        "",          0,0,false,false,noprompt,noprompt,false,true,false,0,
-     false,NOFD,false,        "",	    	 0,0,false,dummyNetList,0,-1,false,0);
+     false,NOFD,false,"",0,0,false,false,noprompt,noprompt,false,true,false,0,
+     false,NOFD,false,"",0,0,false,dummyNetList,0,0,-1,false,0);
 export stdIO  := newFile("stdio",  0, 
      false, "",
      false, NOFD,NOFD,0,
      true,  STDIN ,0!=isatty(0), newinbuffer(), 0,0,false,false,noprompt,noprompt,false,true,false,0,
-     true,  STDOUT,0!=isatty(1), newbuffer(), 0,0,false,dummyNetList,0,-1,false,1);
+     true,  STDOUT,0!=isatty(1), newbuffer(), 0,0,false,dummyNetList,0,0,-1,false,1);
 
-export errmsg := {+ message:string };
-export FileCell := {file:file,next:(null or FileCell)};
-export openfiles := (null or FileCell)(NULL);
-addfile(o:file):file := (
-     openfiles = FileCell(o,openfiles);
-     o);
+addfile(o:file):file := ( openfiles = FileCell(o, openfiles); o );
 rmfile(o:file):void := (
      prevcell := (null or FileCell)(NULL);
      x := openfiles;
@@ -131,6 +147,11 @@ rmfile(o:file):void := (
 	       )));
 addfile(stdIO);
 addfile(stdError);
+
+-----------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------
+
 opensocket(filename:string,input:bool,output:bool,listener:bool):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening a socket not permitted"));
      host0 := substr(filename,1);
@@ -163,15 +184,15 @@ opensocket(filename:string,input:bool,output:bool,listener:bool):(file or errmsg
 	  input, if input then sd else NOFD, false, if input then newbuffer() else "", 
 	  0, 0, false, false,noprompt,noprompt,false, true, false,0,
 	  output, if output then sd else NOFD, false, if output then newbuffer() else "",
-	  0, 0, false, dummyNetList,0,-1,false,0))));
+	  0, 0, false, dummyNetList,0,0,-1,false,0))));
 accept(f:file,input:bool,output:bool):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: accepting a connection not permitted"));
      if !f.listener then return (file or errmsg)(errmsg("expected a listener"));
      sd := NOFD;
-     if f.connection != NOFD
+     if f.connectionfd != NOFD
      then (
-	  sd = f.connection;
-	  f.connection = NOFD;
+	  sd = f.connectionfd;
+	  f.connectionfd = NOFD;
 	  )
      else (
      	  sd = acceptBlocking(f.listenerfd);
@@ -185,7 +206,7 @@ accept(f:file,input:bool,output:bool):(file or errmsg) := (
 	  input, if input then sd else NOFD, false, if input then newbuffer() else "", 
 	  0, 0, false, false,noprompt,noprompt,false, true, false, 0,
 	  output, if output then sd else NOFD, false, if output then newbuffer() else "",
-	  0, 0, false, dummyNetList,0,-1,false,0))));
+	  0, 0, false, dummyNetList,0,0,-1,false,0))));
 
 openpipe(filename:string,input:bool,output:bool):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening a pipe not permitted"));
@@ -233,7 +254,7 @@ openpipe(filename:string,input:bool,output:bool):(file or errmsg) := (
 	  input, if input then fromChild.0 else NOFD, false, if input then newbuffer() else "", 
 	  0, 0, false, false,noprompt,noprompt,false, true, false, 0,
 	  output, if output then toChild.1 else NOFD, false, if output then newbuffer() else "",
-	  0, 0, false, dummyNetList,0,-1,false,0))));
+	  0, 0, false, dummyNetList,0,0,-1,false,0))));
 export openIn(f:file):(file or errmsg) := accept(f,true,false);
 export openOut(f:file):(file or errmsg) := accept(f,false,true);
 export openInOut(f:file):(file or errmsg) := accept(f,true,true);
@@ -262,7 +283,7 @@ export openIn(filename:string):(file or errmsg) := (
 	  	    false, "",
 		    false, NOFD,NOFD,0,
 		    true,  fd, 0 != isatty(fd), newinbuffer(), 0, 0, false, false,noprompt,noprompt,false,true,false,0,
-		    false, NOFD, false,           "",          0, 0, false, dummyNetList,0,-1,false,0)))));
+		    false, NOFD, false,           "",          0, 0, false, dummyNetList,0,0,-1,false,0)))));
 export openOut(filename:string):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening an output file not permitted"));
      if filename === "-"
@@ -280,7 +301,7 @@ export openOut(filename:string):(file or errmsg) := (
 	  	    false, "",
 		    false, NOFD,NOFD,0,
 		    false, NOFD, false,           "",          0, 0, false,false,noprompt,noprompt,false,true,false,0,
-		    true,  fd, 0 != isatty(fd), newbuffer(), 0, 0, false,dummyNetList,0,-1,false,0)))));
+		    true,  fd, 0 != isatty(fd), newbuffer(), 0, 0, false,dummyNetList,0,0,-1,false,0)))));
 export openOutAppend(filename:string):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening an output file not permitted"));
      filename = expandFileName(filename);
@@ -291,7 +312,7 @@ export openOutAppend(filename:string):(file or errmsg) := (
 	       false, "",
 	       false, NOFD,NOFD,0,
 	       false, NOFD, false,           "",          0, 0, false,false,noprompt,noprompt,false,true,false,0,
-	       true,  fd, 0 != isatty(fd), newbuffer(), 0, 0, false,dummyNetList,0,-1,false,0))));
+	       true,  fd, 0 != isatty(fd), newbuffer(), 0, 0, false,dummyNetList,0,0,-1,false,0))));
 export openInOut(filename:string):(file or errmsg) := (
      if readonlyfiles then return (file or errmsg)(errmsg("--read-only-files: opening an output file not permitted"));
      if filename === "-"
@@ -311,57 +332,94 @@ export openListener(filename:string):(file or errmsg) := (
 -- Flushing routines
 -----------------------------------------------------------------------------
 
--- write the entire buffer to file or enlarge the buffer
-simpleflush(o:file):int := (
+-- write the entire stringbuf to an ostream
+flushBuffer(o:file):int := (
     if o.outfd == NOFD then return ERROR;
     foss := getFileFOSS(o);
     if test(interruptedFlag) then (
 	fileErrorMessage(o, "writing");
+	foss.hadNet = false;
 	foss.outbol = 0;
 	foss.outindex = 0;
 	releaseFileFOSS(o);
 	return ERROR);
     -- TODO: when foss.capturing, the outfd needs to be a thread local ostream
+    Stostring(foss.outbuffer, 0, foss.outindex);
     written := Swrite(o.outfd, foss.outbuffer, 0, foss.outindex);
+    foss.lastCharOut = int(Srewindc(foss.outbuffer));
     foss.outbol = 0;
     foss.outindex = 0;
     foss.bytesWritten = foss.bytesWritten + written;
-    foss.lastCharOut = int(Sgetc(foss.outbuffer)); -- TODO: offset-1?
+    Sempty(foss.outbuffer);
     releaseFileFOSS(o);
     NOERROR);
 
-simpleout(s:string, o:file):int := (
+-- write the entire string to a stringbuf
+flushLine(s:string, o:file):int := (
     foss := getFileFOSS(o);
-    n := length(s);
-    Sputn(s, n, foss.outbuffer);
-    --if iserror(simpleflush(o)) then (releaseFileFOSS(o); return ERROR);
+    --Ccode(void, "puts(",tocharstar(tostring(n)),")");
+    --Ccode(void, "puts(",tocharstar(s),")");
+    n := Sputn(s, length(s), foss.outbuffer);
+    -- TODO: is it okay to leave flushing the streams to std::stream?
+    -- It might not reset certain variables
+    --if iserror(flushBuffer(o)) then (releaseFileFOSS(o); return ERROR);
     foss.outindex = foss.outindex + n;
     foss.outbol = foss.outbol + n;
     releaseFileFOSS(o);
     NOERROR);
 
-flushnets(o:file):int := (
-     foss := getFileFOSS(o);
-     if !foss.hadNet then return NOERROR;
-     block := HorizontalJoin(foss.nets);
-     n := length(block.body);
-     foreach line at i in block.body do (
-	 if iserror(simpleout(line, o)) then (releaseFileFOSS(o); return ERROR);
-	 if i != n - 1 then (
-	     if iserror(simpleout(newline, o)) then (releaseFileFOSS(o); return ERROR);
-	     );
-	 );
-     foss.hadNet = false;
-     foss.nets = dummyNetList;
-     releaseFileFOSS(o);
-     NOERROR);
+-- compose buffered nets into a string and write to a stringbuf
+flushNets(o:file):int := (
+    foss := getFileFOSS(o);
+    if !foss.hadNet then (releaseFileFOSS(o); return NOERROR);
+    -- we compose the nets horizontally
+    block := HorizontalJoin(foss.nets);
+    -- if there are characters already printed on the line,
+    -- the output should be appropriately shifted
+    margin := newline + new string len foss.outmargin do provide ' ';
+    foreach row at r in block.body do (
+	if 0 < r then
+	if iserror(flushLine(margin, o)) then (releaseFileFOSS(o); return ERROR);
+	if iserror(flushLine(row,    o)) then (releaseFileFOSS(o); return ERROR);
+	);
+    -- TODO: simplify this?
+    foss.outmargin = foss.outmargin + length(block.body.(length(block.body)-1));
+    foss.hadNet = false;
+    foss.nets = dummyNetList;
+    releaseFileFOSS(o);
+    NOERROR);
 
-export flushFile(o:file):int := (
+export flush(o:file):int := (
      foss := getFileFOSS(o);
-     if foss.hadNet then if iserror(flushnets(o)) then (releaseFileFOSS(o); return ERROR);
+     if iserror(flushNets(o)) then (releaseFileFOSS(o); return ERROR);
      foss.outbol = foss.outindex;
      releaseFileFOSS(o);
-     simpleflush(o));
+     flushBuffer(o));
+
+export endl(o:file):int := if o.output then (
+    foss := getFileFOSS(o);
+    if iserror(flushNets(o)) then (releaseFileFOSS(o); return ERROR);
+    foss.outbol = foss.outindex;
+    foss.outindex = foss.outindex + Sputn(newline, length(newline), foss.outbuffer);
+    flush(o);
+    foss.outmargin = 0;
+    releaseFileFOSS(o);
+    if o.outisatty || o == stdError then flushBuffer(o) else NOERROR) else return ERROR;
+
+-----------------------------------------------------------------------------
+
+lastCharWritten(o:file):int := (
+    foss := getFileFOSS(o);
+    if foss.outindex > 0
+    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
+    else (releaseFileFOSS(o); foss.lastCharOut));
+
+export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == ERROR);
+
+resetMargin(o:file):void := if o.output then (
+    foss := getFileFOSS(o); flush(o); foss.outmargin = 0; releaseFileFOSS(o); );
+
+export endLine(o:file):void := ( if !atEndOfLine(o) || !atEndOfLine(stdIO) then endl(o); );
 
 export flushinput(o:file):void := (
     o.echoindex = o.echoindex - o.insize;
@@ -371,12 +429,59 @@ export flushinput(o:file):void := (
     o.bol = true; );
 
 -----------------------------------------------------------------------------
+-- print
+-----------------------------------------------------------------------------
 
-cleanUp(o:file):void := (
-     if !o.listener && !o.input && !o.output then (
-	  rmfile(o);
-	  );
-     );
+export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then (
+    foss := getFileFOSS(o);
+    if !foss.hadNet then (
+	foss.hadNet = true;
+	skip := foss.outindex - foss.outbol;
+	Ccode(void,"assert(", skip >= 0, ")");
+	margin := Stostring(foss.outbuffer, foss.outbol, skip);
+	-- TODO: we used to move the outbuffer position back and add the margin again as a net
+	-- TODO: after "abc\nd" should be 1, 3, or 4? used to be 3, now is 1
+	skip = foss.outmargin;
+	foreach c in margin do
+	if int(c) >= int(' ') then skip = skip + 1
+	else if c == '\r'     then skip = 0
+	else if c == '\n'     then skip = 0
+	else if c == '\b'     then skip = skip - 1
+	else if c == '\t'     then skip = skip + tabWidth - (skip % tabWidth);
+	-- TODO: any other special characters to consider?
+	foss.outmargin = skip;
+	);
+    foss.nets = NetList(foss.nets,n);
+    releaseFileFOSS(o);
+    o) else o;
+
+export (o:file) << (c:char) : file := if o.output && !test(interruptedFlag) then (
+    foss := getFileFOSS(o);
+    -- TODO: simplify this by always printing as nets
+    -- if foss.outindex == Slength(foss.outbuffer) && iserror(flush(o)) then (releaseFileFOSS(o); return o);
+    if foss.hadNet then ( o << toNet(c); )
+    else ( foss.outindex = foss.outindex + 1; Sputc(c, foss.outbuffer); );
+    releaseFileFOSS(o);
+    o) else o;
+
+export (o:file) << (s:string) : file := if o.output && !test(interruptedFlag) then (
+    foss := getFileFOSS(o);
+    if foss.hadNet then ( o << toNet(s); )
+    else ( foss.outindex = foss.outindex + Sputn(s, length(s), foss.outbuffer); );
+    releaseFileFOSS(o);
+    o) else o;
+
+-- used for endl, flush, close, etc.
+export (o:file)      << (f:function(file):int) : file := ( f(o); o ); -- ignoring error here
+export (o:BasicFile) << (f:function(file):int) : int  := (
+    if f == endl  then o << basicEndl  else
+    if f == flush then o << basicFlush else ERROR);
+
+-----------------------------------------------------------------------------
+-- close
+-----------------------------------------------------------------------------
+
+cleanUp(o:file):void := ( if !o.listener && !o.input && !o.output then rmfile(o); );
 
 export closeListener(o:file):(errmsg or null) := (
      if o.listenerfd == NOFD then return errmsg("close: listener not open");
@@ -385,12 +490,12 @@ export closeListener(o:file):(errmsg or null) := (
      o.listener = false;
      cleanUp(o); 
      if haderror then return errmsg("closing listener: " + syserrmsg());
-     null());
+     NULL);
 
 export closeIn(o:file):(errmsg or null) := (
      stat := 0;
      if o.infd == NOFD then return errmsg("close: file not open");
-     if o == stdIO then return null();			    -- silently refuse to close stdIO
+     if o == stdIO then return NULL;			    -- silently refuse to close stdIO
      if o.input then flushinput(o);
      haderror := false;
      haderror = haderror || o.infd != o.outfd && iserror(close(o.infd));
@@ -405,13 +510,13 @@ export closeIn(o:file):(errmsg or null) := (
 	  if stat != 0 then return errmsg("close: process exited with code " + tostring(stat));
 	  return errmsg("closing input file: " + syserrmsg());
 	  );
-     null());
+     NULL);
 
 export closeOut(o:file):(errmsg or null) := (
      stat := 0;
      if o.outfd == NOFD then return errmsg("close: file not open");
      haderror := false;
-     haderror = haderror || iserror(flushFile(o));
+     haderror = haderror || iserror(flush(o));
      haderror = haderror || o.infd != o.outfd && iserror(close(o.outfd));
      haderror = haderror || o.infd == NOFD && (
 	  o.pid != 0 && (stat = wait(o.pid); o.pid = 0; 0 != stat) ||
@@ -424,11 +529,11 @@ export closeOut(o:file):(errmsg or null) := (
 	  if stat != 0 then return errmsg("close: process exited with code " + tostring(stat));
 	  return errmsg("closing output file: " + syserrmsg());
 	  );
-     null());
+     NULL);
 
 export close(o:file):(errmsg or null) := (
      if !o.input && !o.output && !o.listener then return (errmsg or null)(errmsg("close: file not open"));
-     stat := (errmsg or null)(null());
+     stat := (errmsg or null)(NULL);
      if o.input then (
 	  stat = closeIn(o);
 	  );
@@ -442,71 +547,17 @@ export close(o:file):(errmsg or null) := (
 	  );
      stat);
 
+-- TODO: call this at the end of process instead
 closem():void := (
      f := openfiles;
      while true do when f is null do break is fileCell:FileCell do (
-	  flushFile(fileCell.file);
+	  flush(fileCell.file);
 	  f = fileCell.next;
 	  );
      );
 
+-- TODO: nobody calls this, remove it
 atend(closem);
-
------------------------------------------------------------------------------
--- The three main output functions
------------------------------------------------------------------------------
-
-export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then (
-    foss := getFileFOSS(o);
-    if !foss.hadNet then (
-	m := foss.outindex - foss.outbol;
-	Ccode(void,"assert(", m >= 0, ")");
-	-- remove the first part of the line from the buffer and add it, as a net, to the (currently empty) list of nets
-	if m > 0 then
-	foss.nets = NetList(foss.nets, toNet(Stostring(foss.outbuffer, foss.outbol, m)));
-	foss.hadNet = true;
-	foss.outindex = foss.outbol;
-	);
-    foss.nets = NetList(foss.nets,n);
-    releaseFileFOSS(o);
-    o) else o;
-
-export (o:file) << (c:char) : file := if o.output && !test(interruptedFlag) then (
-    foss := getFileFOSS(o);
-    -- TODO: simplify this by always printing as nets
-    -- if foss.outindex == Slength(foss.outbuffer) && iserror(flushFile(o)) then (releaseFileFOSS(o); return o);
-    if foss.hadNet then ( o << toNet(c); )
-    else ( Sputc(c, foss.outbuffer); foss.outindex = foss.outindex + 1; );
-    releaseFileFOSS(o);
-    o) else o;
-
-export (o:file) << (s:string) : file := if o.output && !test(interruptedFlag) then (
-    foss := getFileFOSS(o);
-    if foss.hadNet then ( o << toNet(s); )
-    else ( foss.outindex = foss.outindex + Sputn(s, length(s), foss.outbuffer); );
-    releaseFileFOSS(o);
-    o) else o;
-
------------------------------------------------------------------------------
-
-export (o:file) << (f:function(file):int) : file := ( f(o); o ); -- ignoring error here
-
-endlFunction(o:file):int := if o.output then (
-    foss := getFileFOSS(o);
-    if foss.hadNet then if iserror(flushnets(o)) then (releaseFileFOSS(o); return ERROR);
-    flushFile(o << newline);
-    foss.outbol = foss.outindex;
-    releaseFileFOSS(o);
-    if o.outisatty || o == stdError then simpleflush(o) else NOERROR) else return ERROR;
-
-export Manipulator := {fun:function(file):int};
-export endl  := Manipulator(endlFunction);
-export flush := Manipulator(flushFile);
-
-export (o:file)      << (m:Manipulator)   : file := o << m.fun;
-export (o:BasicFile) << (m:Manipulator)   : int  := (
-    if m == endl  then o << basicEndl  else
-    if m == flush then o << basicFlush else ERROR);
 
 -----------------------------------------------------------------------------
 
@@ -610,16 +661,18 @@ export filbuf(o:file):int := (
      while true do (
 	  n := length(o.inbuffer) - o.insize;
 	  if o.readline then (
+	       endLine(stdIO);
+	       resetMargin(stdIO);
 	       initReadlineVariables();
-	       stdIO << flush;
 	       if test(interruptedFlag) then return ERROR;
 	       startFileInput(o);
 	       r = readline(o.inbuffer,n,o.insize,o.prompt());
 	       endFileInput(o);
 	       )
 	  else (
+	       endLine(stdIO);
 	       if o.bol then maybeprompt(o);
-	       stdIO << flush;
+	       resetMargin(stdIO);
 	       if test(interruptedFlag) then return ERROR;
 	       r = (
 		    if o.infd == NOFD 
@@ -876,7 +929,7 @@ export setprompt(o:file,prompt:function():string):void := ( o.promptq = true; o.
 
 export unsetprompt(o:file):void := ( o.promptq = false; o.prompt = noprompt; o.reward=noprompt; );
 
-export clean(o:file):void := flushFile(o);
+export clean(o:file):void := flush(o);
 
 export get(filename:string):StringOrError := (
      when openIn(filename)
@@ -896,20 +949,6 @@ export fchmod(o:file,mode:int):int := (
      if o.input && o.infd != -1 then if -1 == fchmod(o.infd,mode) then return -1;
      if o.output && o.outfd != -1 then if -1 == fchmod(o.outfd,mode) then return -1;
      0);
-
-lastCharWritten(o:file):int := (
-    foss := getFileFOSS(o);
-    if foss.outindex > 0
-    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
-    else (releaseFileFOSS(o); foss.lastCharOut));
-
-export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == -1);
-
-export endLine(o:file):void := (
-     if !atEndOfLine(o) || !atEndOfLine(stdIO) then o << '\n';
-     -- usually o == stderr != stdIO
-     -- we might put a needless one out in the case where o.outfd == stdIO.outfd, oh well.
-     );
 
 export (o:file) << (x:long) : file :=  o << tostring(x);
 

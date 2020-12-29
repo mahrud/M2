@@ -763,9 +763,9 @@ isReadyFun(e:Expr):Expr := (
 	  f.input && !f.eof && ( f.insize > f.inindex || isReady(f.infd) > 0 )
 	  ||
 	  f.listener && (
-	       f.connection != -1
+	       f.connectionfd != NOFD
 	       ||
-	       ( sd := acceptNonblocking(f.listenerfd); f.connection = sd; sd != -1 )
+	       ( sd := acceptNonblocking(f.listenerfd); f.connectionfd = sd; sd != NOFD )
 	       )
 	  )
      else WrongArg("a file or a task"));

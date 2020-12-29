@@ -857,6 +857,7 @@ int system_run(M2_string command){
 
 struct FUNCTION_CELL *pre_final_list, *final_list, *thread_prepare_list;
 
+// TODO: nobody calls this, so remove it
 void system_atend(void (*func)()){
      struct FUNCTION_CELL *this_final = (struct FUNCTION_CELL *)getmem(sizeof(struct FUNCTION_CELL));
      this_final -> func = func;

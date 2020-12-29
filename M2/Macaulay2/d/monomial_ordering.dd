@@ -86,7 +86,7 @@ getmaker(sym:SymbolClosure):funtypeornull := (
 	is f:fun4 do return f
 	is f:fun5 do return f
 	);
-    null());
+    NULL);
 
 export rawMonomialOrdering(e:Expr):Expr := (
     -- This routine gets an expression like this:

@@ -482,7 +482,7 @@ close(g:Expr):Expr := (
 		       mysql_close(",n,")
 		    #endif
 		    ");
-	       m.mysql = null();
+	       m.mysql = NULL;
 	       );
 	  g)
      is f:file do when close(f) is m:errmsg do buildErrorPacket(m.message) else g

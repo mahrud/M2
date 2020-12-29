@@ -149,13 +149,13 @@ export clearFileError(f:PosFile):void := clearFileError(f.file);
 export fileErrorMessage(f:PosFile):string := fileErrorMessage(f.file);
 export newPosFile(o:file):PosFile := PosFile(o, 0, o.filename, ushort(1), ushort(0));
 export peek(o:PosFile, offset:int):int := (
+     -- prevchar := o.lastchar;
      i := 0;
-     prevchar := o.lastchar;
      c := 0;
      while (
 	  c = peek(o.file,i);
 	  if iserror(c) || iseof(c) then return c;
-	  prevchar = c;
+	  -- prevchar = c;
 	  i < offset
 	  )
      do (
@@ -174,23 +174,16 @@ export openPosIn(filename:string):(PosFile or errmsg) := (
      is f:file do (PosFile or errmsg)(PosFile(f,0,absoluteFilename(f.filename), ushort(1),ushort(0)))
      is s:errmsg do (PosFile or errmsg)(s)
      );
---roundup(n:uchar,d:int):uchar := uchar(((int(n)+d-1)/d)*d);
-tabwidth := 8;
+
+-- TODO: compare with the version in stdio.d
 export getc(o:PosFile):int := (
-     prevchar := o.lastchar;
+     -- prevchar := o.lastchar;
      c := getc(o.file);
      if iserror(c) || iseof(c) then return c;
      o.lastchar = c;
-     if c == int('\n') then (
-	  o.line = o.line + 1;
-	  o.column = ushort(0);
-	  )
-     else if c == int('\t') then (
-	  o.column = ushort(((int(o.column)+8)/8)*8);
-	  )
-     else (
-	  o.column = o.column + 1;
-	  );
+     if c == int('\n') then ( o.line = o.line + 1; o.column = ushort(0); ) else
+     if c == int('\t') then ( o.column = ushort(((int(o.column)+tabWidth)/tabWidth)*tabWidth); )
+     else ( o.column = o.column + 1; );
      c );
 export flushInput(o:PosFile):void := flushinput(o.file);
 

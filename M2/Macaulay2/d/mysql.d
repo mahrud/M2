@@ -23,7 +23,7 @@ mysqlConnectionFinalizer(m:MysqlConnectionWrapper, msg:string):void := (
      is null do nothing
      is n:MysqlConnection do (
 	  Ccode(void,"mysql_close(",n,")");
-	  m.mysql = null();
+	  m.mysql = NULL;
 	  );
      );
 mysqlResultFinalizer(m:MysqlResultWrapper, msg:string):void := Ccode(void,"mysql_free_result(",m.res,")");

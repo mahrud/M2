@@ -126,7 +126,7 @@ export rawMakeMonomial(e:Expr):Expr := (
 	  when isSequenceOfPairsOfSmallIntegers(l.v) 
 	  is s:string do WrongArg(s) 
 	  else (
-	       ret := RawMonomialOrNull(null());
+	       ret := RawMonomialOrNull(NULL);
 	       Ccode(void, "
 		    try { ",ret," = EngineMonomial::make(",getReverseSequenceOfPairsOfSmallIntegers(l.v),"); }
      		    catch (const exc::engine_error& e) { ERROR(e.what()); }");

@@ -465,6 +465,7 @@ export HashTable := {+
      mutex:SpinLock
      };
 
+-- FIXME: move all of these elsewhere
 --This unfortunately needs to be here as it references HashTable which needs expr.
 
 export m2cfile := Pointer "struct M2File*";	
@@ -482,7 +483,7 @@ export file := {+
 	-- listener stuff
         listener:bool,	   	-- is a listener
 	listenerfd:int,	    	-- file descriptor of listener, or -1
-	connection:int,	   	-- file descriptor of accepted connection, not made into file yet
+	connectionfd:int,   	-- file descriptor of accepted connection, not made into file yet
 	numconns:int,	        -- count connections accepted
      	-- input file stuff
      	input:bool,	        -- is input file
@@ -511,6 +512,7 @@ export file := {+
 	-- C structure for this file that provides for thread support
 	cfile:m2cfile
 	};
+export FileCell := {file:file, next:(null or FileCell)};
 
 export PosFile := {+ file:file, lastchar:int, filename:string, line:ushort, column:ushort };
 

@@ -3,14 +3,17 @@
 -- so they can be used early in the execution of a thread, e.g., by finalizers
 -- we queue up the strings so the entire message can be written with one write() system call
 use varstrin;
+
+export errmsg := {+ message:string };
+
 export BasicFile := varstring or null;	-- there can be only one of these, but that's enough for now
 export threadLocal stderr := BasicFile(null()); -- this is safe for other threads, because it is initially 0
 i():varstring := when stderr is v:varstring do v else (t := newvarstring(200); stderr = t; t);
 export (stderr:BasicFile) << (x:char) : BasicFile := i()<<x;
 export (stderr:BasicFile) << (x:string) : BasicFile := i()<<x;
 
-export BasicManipulator := {fun:function(BasicFile):int};
-export (bf:BasicFile) << (m:BasicManipulator) : int := m.fun(bf);
+export BasicManipulator := {func:function(BasicFile):int};
+export (bf:BasicFile) << (m:BasicManipulator) : int := m.func(bf);
 flushfun(stderr:BasicFile):int := write(2,takestring(i()));
 export basicFlush := BasicManipulator(flushfun);
 endlfun(stderr:BasicFile):int := stderr << newline << basicFlush;

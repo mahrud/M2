@@ -39,7 +39,7 @@ startup(tb:TaskCellBody):null := (
      	  if notify then stderr << "--task " << tb.serialNumber << " ready, result available " << endl;
 	  );
      compilerBarrier();
-     null());
+     NULL);
 
 isFunction(e:Expr):bool := (
      when e

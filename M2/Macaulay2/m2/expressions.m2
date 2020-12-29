@@ -1192,6 +1192,7 @@ texMath VectorExpression := v -> (
     )
 
 -----------------------------------------------------------------------------
+-- TODO: move to the interpreter or startup.m2, and redefine in nets.m2
 print =  x -> (
     c := class x;
     while not c#?{topLevelMode,print} do (

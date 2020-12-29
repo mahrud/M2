@@ -39,6 +39,7 @@ export fibonacciHash(k:int,p:int):int := (
 -- hash codes for mutable objects that don't use nextHash
 export hashFromAddress(e:Expr):int := fibonacciHash(Ccode(int, "(long)",e), 9);
 
+-- TODO: where is null() defined?
 export NULL ::= null();
 
 -- scopes

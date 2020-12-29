@@ -12,53 +12,49 @@
 #include <chrono>
 #include <thread>
 
-thread_local std::stringbuf outbuf, errbuf;
-thread_local std::ostream outstream(&outbuf), errstream(&errbuf);
 std::mutex stdout_mutex, stderr_mutex;
-
-void initialize(std::stringbuf* buf, std::ostream* stream)
-{
-  // instead of reallocating memory, skip to the beginning
-  buf->str("");
-  stream->clear();
-  stream->seekp(0);
-  stream->rdbuf(buf);
-}
+thread_local std::stringstream *outstream, *errstream;
+thread_local std::stringbuf *outbuf = outstream->rdbuf(),
+                            *errbuf = errstream->rdbuf();
 
 extern "C" {
 
-// TODO: ability to use stdout or stderr instead of n
-void streams_Sinitialize(int n, bool live)
+// TODO: use std::make_unique for these two?
+// New stringstream from M2_string
+std::stringstream* streams_Sstringstream(M2_string str)
 {
-  switch (n)
-    {
-      case 1:
-        initialize(&outbuf, &outstream);
-	break;
-      case 2:
-        if (live)
-          initialize(&errbuf, &errstream);
-        else
-          errstream.rdbuf(&outbuf);
-	break;
-    }
+  return new std::stringstream(
+      M2_tocharstar(str),
+      std::ios_base::in | std::ios_base::out | std::ios_base::ate);
 }
 
-size_t streams_Sflush(int fd)
+// New stringbuf from stringstream
+std::stringbuf* streams_Sstringbuf(std::stringstream stream)
 {
+  return stream.rdbuf();
+}
+
+// Get the number of characters not yet printed
+size_t streams_Slength(std::stringstream* stream) { return stream->rdbuf()->in_avail(); }
+
+// Empty the stream, deallocating
+void streams_Sempty(std::stringstream* stream) { stream->clear(); return stream->str(""); }
+
+// Flush the buffered content to the appropriate file descriptor
+size_t streams_Sflush(int fd, std::stringstream* stream)
+{
+  if (streams_Slength(stream) == 0) return stream->tellg();
   if (fd == 1)
     {
       std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
-      std::cout << outbuf.str() << std::flush;
-      outbuf.str("");
-      return std::cout.tellp();
+      std::cout << stream->rdbuf() << std::flush;
+      return stream->tellg();
     }
   else if (fd == 2)
     {
       std::lock_guard<std::mutex> stderr_guard(stderr_mutex);
-      std::cerr << errbuf.str() << std::flush;
-      errbuf.str("");
-      return std::cerr.tellp();
+      std::cerr << stream->rdbuf() << std::flush;
+      return stream->tellg();
     }
   else
     {
@@ -68,7 +64,8 @@ size_t streams_Sflush(int fd)
   return -1;
 }
 
-size_t streams_Swrite(int fd, std::stringbuf* buf, size_t offset, size_t size)
+/*
+size_t streams_Swrite(int fd, std::stringstream* stream, size_t offset, size_t size)
 {
   // std::ios::sync_with_stdio(false); // TODO: try this
   if (size == 0) return 0;
@@ -92,35 +89,32 @@ size_t streams_Swrite(int fd, std::stringbuf* buf, size_t offset, size_t size)
   buf->pubseekoff(0, std::ios_base::beg, std::ios_base::in | std::ios_base::out);
   return size;
 }
+*/
 
-M2_string streams_Stostring(std::stringbuf* buf, size_t offset, size_t size)
+M2_string streams_Stostring(std::stringstream* stream, size_t offset, size_t size)
 {
   if (size == 0) return M2_tostring("");
-  assert(offset + size <= buf->str().size());
-  return M2_tostring(buf->str().substr(offset, size).c_str());
+  auto str = stream->rdbuf()->str();
+  assert(offset + size <= str.size());
+  return M2_tostring(str.substr(offset, size).c_str());
 }
 
-int streams_Sgetc(std::stringbuf* buf) { return buf->sgetc(); }
-size_t streams_Sgetn(M2_string s, size_t n, std::stringbuf* buf)
+int streams_Sgetc(std::stringstream* stream) { return stream->get(); }
+size_t streams_Sgetn(M2_string s, size_t n, std::stringstream* stream)
 {
-  return buf->sgetn(M2_tocharstar(s), n);
+  stream->read(M2_tocharstar(s), n);
+  return n;
 }
 
-int streams_Sputc(char c, std::stringbuf* buf) { return buf->sputc(c); }
-size_t streams_Sputn(M2_string s, size_t n, std::stringbuf* buf)
+// Get the last character printed
+int streams_Srewindc(std::stringstream* stream) { return stream->unget().get(); }
+
+int streams_Sputc(char c, std::stringstream* stream) { stream->put(c); return c; }
+size_t streams_Sputn(M2_string s, size_t n, std::stringstream* stream)
 {
-  return buf->sputn(M2_tocharstar(s), n);
-}
-
-int streams_Srewindc(std::stringbuf* buf) { buf->sungetc(); return buf->sbumpc(); }
-
-void streams_Sempty(std::stringbuf* buf) { return buf->str(""); }
-
-size_t streams_Slength(std::stringbuf* buf) { return buf->str().size(); }
-
-std::stringbuf* streams_Snew(M2_string str)
-{
-  return new std::stringbuf(M2_tocharstar(str));
+  *stream << std::string(M2_tocharstar(s)) << std::flush;
+  //  stream->rdbuf()->sputn(M2_tocharstar(s), n);
+  return n;
 }
 
 } /* extern "C" */

@@ -9,8 +9,8 @@ use expr;
 -- C++ interface functions defined in std-thread.cpp
 -----------------------------------------------------------------------------
 
-import Tcompute(str:string, n:int):void;
-import Tinitialize(live:bool):void;
+--import Tcompute(str:string, n:int):void;
+--import Tinitialize(live:bool):void;
 
 threadLocal export myN := int(0);
 setupvarThread("myN", toExpr(myN));
@@ -24,10 +24,10 @@ setupvarThread("myN", toExpr(myN));
 -----------------------------------------------------------------------------
 
 myprint(e:Expr):Expr := (
-    Tinitialize(false);
+--    Tinitialize(false);
     when e is text:stringCell do (
 	myN = myN + 1;
-	Tcompute(text.v, myN);
+--	Tcompute(text.v, myN);
 	toExpr(myN))
     else WrongArgString(1));
 setupfun("myprint", myprint).Protected = false; -- will be overloaded

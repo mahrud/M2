@@ -25,41 +25,45 @@ export iserror(c:int):bool := c == ERROR;
 
 import Sinitialize(fd:int, live:bool):void;
 
--- defined in std-stream.cpp as typedef std::stringbuf streams_stringbuf
-export stringbuf := Type "struct stringbuf *";
 -- TODO: find a way to allow C++ here, then replace this and sgetc..sputn
 --declarations "#include <sstream>";
+--export stringstream := Type "std::stringstream *";
+export stringstream := Type "struct stringstream *";
+import Sstringstream(str:string):stringstream;
+export Sstringstream():stringstream := Sstringstream("");
+
 --export stringbuf := Type "std::stringbuf *";
+export stringbuf := Type "struct stringbuf *";
+import Sstringbuf(stream:stringstream):stringbuf;
+--export Sstringbuf(str:string):stringbuf := Sstringbuf(Sstringstream(""));
 
 -- TODO: implement string access, like an actual string
 --export (buf:stringbuf) . (i:size_t) : char := ...
 --export (buf:stringbuf) . (i:size_t) : char := ...
 
--- TODO: get length to work on a stringbuf
+-- TODO: get length to work on a stringstream
 -- TODO: convert almost all int to size_t
-import Slength(buf:stringbuf):int;
+import Slength(buf:stringstream):int;
 
-import Sflush(fd:int):size_t;
-import Sempty(buf:stringbuf):void;
+import Sflush(fd:int, buf:stringstream):int;
 
-import Stostring(buf:stringbuf, offset:int, n:int):string;
-export Stostring(buf:stringbuf, offset:int):string := Stostring(buf, offset, Slength(buf) - offset);
-export Stostring(buf:stringbuf):string := Stostring(buf, 0, Slength(buf)); -- TODO: memory inefficient
---export Stostring(buf:stringbuf):string := tostring(Ccode(constcharstar, buf,"->str().c_str()"));
+--import Swrite(fd:int, buf:stringstream, offset:int, n:int):int;
+--export Swrite(fd:int, buf:stringstream, offset:int):int := Swrite(fd, buf, offset, Slength(buf) - offset);
+--export Swrite(fd:int, buf:stringstream):int := Swrite(fd, buf, 0, Slength(buf));
 
-import Swrite(fd:int, buf:stringbuf, offset:int, n:int):int;
-export Swrite(fd:int, buf:stringbuf, offset:int):int := Swrite(fd, buf, offset, Slength(buf) - offset);
-export Swrite(fd:int, buf:stringbuf):int := Swrite(fd, buf, 0, Slength(buf));
+import Sgetc(                 buf:stringstream):int;    -- := Ccode(int, buf,"->sgetc()");
+import Sgetn(s:string, n:int, buf:stringstream):int; -- := Ccode(int, buf,"->sgetn(",s,",",n,")");
+import Sputc(c:char,          buf:stringstream):int;    -- := Ccode(int, buf,"->sputc(",c,")");
+import Sputn(s:string, n:int, buf:stringstream):int; -- := Ccode(int, buf,"->sputn(",s,",",n,")");
 
-import Sgetc(                 buf:stringbuf):int;    -- := Ccode(int, buf,"->sgetc()");
-import Sgetn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sgetn(",s,",",n,")");
-import Sputc(c:char,          buf:stringbuf):int;    -- := Ccode(int, buf,"->sputc(",c,")");
-import Sputn(s:string, n:int, buf:stringbuf):int; -- := Ccode(int, buf,"->sputn(",s,",",n,")");
+import Srewindc(buf:stringstream):int;
 
-import Srewindc(buf:stringbuf):int;
+import Stostring(buf:stringstream, offset:int, n:int):string;
+export Stostring(buf:stringstream, offset:int):string := Stostring(buf, offset, Slength(buf) - offset);
+export Stostring(buf:stringstream):string := Stostring(buf, 0, Slength(buf)); -- TODO: memory inefficient
+--export Stostring(buf:stringstream):string := tostring(Ccode(constcharstar, buf,"->str().c_str()"));
 
-import Snew(str:string):stringbuf;
-export Snew():stringbuf := Snew("");
+import Sempty(buf:stringstream):void;
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -75,7 +79,7 @@ export newbuffer():string := ""; -- new string len bufsize do provide ' ';
 -- performing synchronization functionality for a given top level file
 export FOSS := {+
      	-- output file stuff
-	outbuffer:stringbuf,	-- buffer
+	outbuffer:stringstream,	-- buffer
 	                        -- outbuffer . 0 is the first char in the buffer
 	outindex:int,	        -- outbuffer.(outindex-1) is the last char
 	outbol:int,	        -- outbuffer.outbol = first char of the current line
@@ -105,7 +109,7 @@ export newFOSS(
 	outmargin:int,	        -- outbuffer.outmargin is the number of chars written on the last line
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-    ):FOSS := FOSS(Snew(outbuffer), outindex, outbol, hadNet, nets, outmargin, bytesWritten, lastCharOut, capturing);
+    ):FOSS := FOSS(Sstringstream(outbuffer), outindex, outbol, hadNet, nets, outmargin, bytesWritten, lastCharOut, capturing);
 
 --provide a default 'constructor' for FOSS.
 --this is used by m2file.cpp to create new sync states on the fly for new threads in thread exclusive mode

@@ -18,13 +18,14 @@
 #include <sstream>
 #include <thread>
 
-extern thread_local std::stringbuf outbuf, errbuf;
-extern thread_local std::ostream outstream, errstream;
+//extern thread_local std::stringstream outstream, errstream;
+//extern thread_local std::stringbuf outbuf, errbuf;
 
 extern "C" {
 
+/*
 void streams_Sinitialize(int, bool);
-size_t streams_Sflush(int);
+size_t streams_Sflush(int,std::stringbuf*);
 
 void threads_Tinitialize(bool live)
 {
@@ -42,7 +43,8 @@ void threads_Tcompute(const M2_string str, int n)
     }
   errstream << std::endl;
   outstream << "\tstr = '" << errbuf.str() << "'" << std::endl;
-  streams_Sflush(1);
+  streams_Sflush(1, &outbuf);
 }
+*/
 
 } /* extern "C" */

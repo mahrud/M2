@@ -4,6 +4,8 @@ use ctype;
 use tokens;
 use varstrin;
 
+DEPRECATED := -3; -- deprecated syntax
+
 export wordEOF := dummyWord; -- replaced later
 export wordEOC := dummyWord; -- replaced later
 export (o:file) << (w:Word) : file := o << w.name;

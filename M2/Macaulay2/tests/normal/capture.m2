@@ -20,6 +20,35 @@ assert(not err and out == "\ni1 : << id_(ZZ^2) << flush << id_(ZZ^1);
 | 0 1 || 1 |
 i2 : \n")
 
+-- TODO: what should << "abc"^n print? any new lines?
+(err, out) = capture ///<< (net id_(ZZ^1))^-1 << id_(ZZ^2);///;
+assert(not err and out == "\ni1 : << (net id_(ZZ^1))^-1 << flush << id_(ZZ^2);
+     | 1 0 |
+| 1 || 0 1 |
+i2 : \n")
+
+(err, out) = capture ///<< (net id_(ZZ^1))^-1 << flush << id_(ZZ^2);///;
+assert(not err and out == "\ni1 : << (net id_(ZZ^1))^-1 << flush << id_(ZZ^2);
+| 1 || 1 0 |
+     | 0 1 |
+i2 : \n")
+
+-*
+i22 : << id_(ZZ^1) << (net id_(ZZ^1))^1 << id_(ZZ^2)
+     | 1 |
+| 1 |     | 1 0 |
+          | 0 1 |
+
+i26 : << id_(ZZ^1) << (net id_(ZZ^1))^-1 << id_(ZZ^2)
+| 1 |     | 1 0 |
+     | 1 || 0 1 |
+
+i27 : << id_(ZZ^1) << (net id_(ZZ^1))^-1 << flush << id_(ZZ^2)
+| 1 |     
+     | 1 || 1 0 |
+          | 0 1 |
+*-
+
 (err, out) = capture("K = ZZ/101\nA = matrix\"1,2,3,4;1,3,6,10;19,7,11,13\" ** oo", UserMode => false);
 assert(not err and match(regexQuote "
 i1 : K = ZZ/101\n\no1 = K\n\no1 : QuotientRing\n

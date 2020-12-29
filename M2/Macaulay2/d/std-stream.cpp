@@ -89,12 +89,14 @@ size_t streams_Swrite(int fd, std::stringbuf* buf, size_t offset, size_t size)
       std::lock_guard<std::mutex> stdout_guard(stdout_mutex);
       std::cout << " SHOULD HAVE BEEN TO FILE:\n" << str << std::flush;
     }
-  buf->str("");
+  buf->pubseekoff(0, std::ios_base::beg, std::ios_base::in | std::ios_base::out);
   return size;
 }
 
 M2_string streams_Stostring(std::stringbuf* buf, size_t offset, size_t size)
 {
+  if (size == 0) return M2_tostring("");
+  assert(offset + size <= buf->str().size());
   return M2_tostring(buf->str().substr(offset, size).c_str());
 }
 
@@ -109,6 +111,8 @@ size_t streams_Sputn(M2_string s, size_t n, std::stringbuf* buf)
 {
   return buf->sputn(M2_tocharstar(s), n);
 }
+
+int streams_Srewindc(std::stringbuf* buf) { buf->sungetc(); return buf->sbumpc(); }
 
 void streams_Sempty(std::stringbuf* buf) { return buf->str(""); }
 

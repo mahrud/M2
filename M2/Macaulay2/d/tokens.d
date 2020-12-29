@@ -44,6 +44,7 @@ export stringTokenFile(name:string,contents:string):TokenFile := (
 		0,			-- outbol
 		false,			-- hadNet
 		dummyNetList,		-- nets
+		0,			-- outmargin
 		0,			-- bytesWritten
 		-1,			-- lastCharOut
 		false,			-- readline

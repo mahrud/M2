@@ -36,6 +36,7 @@ nextHash();
 --STDIO file hash workaround to preserve numbering scheme
 nextHash();
 
+-- TODO: where is null() defined?
 export NULL ::= null();
 
 

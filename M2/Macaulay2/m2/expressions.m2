@@ -1261,6 +1261,7 @@ showTex Thing := x -> (
 show TEX := showTex
 
 -----------------------------------------------------------------------------
+-- TODO: move to the interpreter or startup.m2, and redefine in nets.m2
 print = x -> (<< net x << endl;) -- !! one may want to modify this depending on the type of output !!
 -----------------------------------------------------------------------------
 texMath RR := x -> if not isANumber x then texMath toString x else if isInfinite x then if x>0 then texMath infinity else texMath (-infinity) else "{"|format(printingPrecision,printingAccuracy,printingLeadLimit,printingTrailLimit,"}\\cdot 10^{",x)|"}"

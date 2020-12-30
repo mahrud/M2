@@ -2,9 +2,11 @@
 -- io routines for stderr that do not depend on global variables having been initialized,
 -- so they can be used early in the execution of a thread, e.g., by finalizers
 -- we queue up the strings so the entire message can be written with one write() system call
-use varstrin;
+
+use varstrings;
 
 export errmsg := {+ message:string };
+export StringOrError := stringCell or errmsg;
 
 export BasicFile := varstring or null;	-- there can be only one of these, but that's enough for now
 export threadLocal stderr := BasicFile(null()); -- this is safe for other threads, because it is initially 0

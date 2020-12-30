@@ -25,7 +25,6 @@ use gmp;
 use xml;
 use engine;
 use varnets;
-use strings1;
 use streams;
 use stdiop0;
 use pthread0;
@@ -513,6 +512,11 @@ export file := {+
 	cfile:m2cfile
 	};
 export FileCell := {file:file, next:(null or FileCell)};
+
+export fchmod(o:file,mode:int):int := (
+    if o.input  && o.infd  != NOFD then if iserror(fchmod(o.infd,  mode)) then return ERROR;
+    if o.output && o.outfd != NOFD then if iserror(fchmod(o.outfd, mode)) then return ERROR;
+    NOERROR);
 
 export PosFile := {+ file:file, lastchar:int, filename:string, line:ushort, column:ushort };
 

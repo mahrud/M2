@@ -46,8 +46,7 @@ set(DLIST
   M2.d
   system.d
   strings.d
-  varstrin.d
-  strings1.d
+  varstrings.d
   errio.d
   vararray.d
   ctype.d
@@ -63,6 +62,7 @@ set(DLIST
   parse.d
   expr.d
   stdio.d
+  toStrings.d
   stdiop.d
   err.d
   gmp1.d

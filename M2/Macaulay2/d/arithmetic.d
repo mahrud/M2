@@ -167,6 +167,10 @@ export (x:int) / (y:double) ::= Ccode(double,"(",x," / ",y,")");
 export (x:ulong) / (y:double) ::= Ccode(double,"(",x," / ",y,")");
 export (x:double) / (y:int) ::= Ccode(double,"(",x," / ",y,")");
 
+export finite(x:double):bool := x == x && x - x == x - x;
+export  isinf(x:double):bool := x == x && x - x != x - x;
+export  isnan(x:double):bool := x != x;
+
 -- Local Variables:
 -- compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d arithmetic.o "
 -- End:

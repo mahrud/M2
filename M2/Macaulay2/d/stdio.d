@@ -104,7 +104,14 @@ export clearFileError(o:file):void := (
      o.errorMessage = "";
      );
 export fileErrorMessage(o:file):string := o.errorMessage;
+
+-----------------------------------------------------------------------------
+
 export noprompt():string := "";
+export   setprompt(o:file, prompt:function():string):void := (
+    o.promptq = true;  o.prompt =   prompt; o.reward = noprompt; );
+export unsetprompt(o:file):void := (
+    o.promptq = false; o.prompt = noprompt; o.reward = noprompt; );
 
 -----------------------------------------------------------------------------
 --
@@ -397,6 +404,9 @@ export flush(o:file):int := (
      releaseFileFOSS(o);
      flushBuffer(o));
 
+-- TODO: delete
+--export clean(o:file):int := flush(o);
+
 export endl(o:file):int := if o.output then (
     foss := getFileFOSS(o);
     if iserror(flushNets(o)) then (releaseFileFOSS(o); return ERROR);
@@ -405,24 +415,6 @@ export endl(o:file):int := if o.output then (
     foss.outmargin = 0;
     releaseFileFOSS(o);
     if o.outisatty || o == stdError then flushBuffer(o) else NOERROR) else return ERROR;
-
------------------------------------------------------------------------------
-
-lastCharWritten(o:file):int := (
-    foss := getFileFOSS(o);
-    if foss.outindex > 0
-    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
-    else (releaseFileFOSS(o); foss.lastCharOut));
-
-export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == ERROR);
-
--- bug: stderr << "aa" << id_(ZZ^3)
-
-resetMargins():void := (
-    foss := getFileFOSS(stdIO);    foss.outmargin = 0; releaseFileFOSS(stdIO); flush(stdIO);
-    foss  = getFileFOSS(stdError); foss.outmargin = 0; releaseFileFOSS(stdError); );
-
-export endLine(o:file):void := ( if !atEndOfLine(o) || !atEndOfLine(stdIO) then endl(o); );
 
 export flushinput(o:file):void := (
     o.echoindex = o.echoindex - o.insize;
@@ -636,6 +628,25 @@ export presentn(x:string):string := ( -- fix newlines and other special chars, a
 	       ))
      else x);
 
+-----------------------------------------------------------------------------
+
+lastCharWritten(o:file):int := (
+    foss := getFileFOSS(o);
+    if foss.outindex > 0
+    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
+    else (releaseFileFOSS(o); foss.lastCharOut));
+
+export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == ERROR );
+
+export endLine(o:file):void := (
+    if test(interruptedFlag)  || !atEndOfLine(stdIO)
+    || o.outfd == stdIO.outfd && !atEndOfLine(o) then flush(o); );
+
+resetMargins():void := ( flush(stdIO);
+    foss := getFileFOSS(stdIO);    foss.outmargin = 0; releaseFileFOSS(stdIO);
+    foss  = getFileFOSS(stdError); foss.outmargin = 0; releaseFileFOSS(stdError); );
+
+-- TODO: what does this do exactly?
 export filbuf(o:file):int := (
 --      if o.fulllines then (
 -- 	  stdIO << flush;
@@ -719,105 +730,10 @@ export filbuf(o:file):int := (
 	       else return r;
 	       )));
 
-putdigit(o:file,x:int):void := o << (x + if x<10 then '0' else 'a'-10) ;
-
-putneg(o:file,x:int):void := (
-     if x<0 then (
-	  q := x/10;
-	  r := x%10;
-	  if r>0 then (r=r-10;q=q+1);
-     	  putneg(o,q);
-     	  putdigit(o,-r)));
-
-export (o:file) << (x:int) : file :=  (
-   if x==0
-   then putdigit(o,0)
-   else (
-	if x<0 
-	then ( 
-	     o << '-';
-	     putneg(o,x);
-	     )
-	else putneg(o,-x);
-	);
-   o);
-
-export (o:file) << (x:short) : file := o << int(x);
-
-export (o:file) << (x:ushort) : file := o << int(x);
-
-export (o:file) << (x:uchar) : file := o << int(x);
-
-export (o:file) << (b:bool) : file := (
-     o << if b then "true" else "false");
-
-digits(o:varstring,x:double,a:int,b:int):void := (
-     x = x + 0.5 * pow(10.,double(1-a-b));
-     if x >= 10. then (x = x/10.; a = a+1; b = if b==0 then 0 else b-1);
-     while a > 0 do (
-	  putdigit(o,int(x));
-	  x = 10. * (x - double(int(x)));
-	  a = a-1;
-	  );
-     o << '.';
-     lim := pow(10.,double(-b+1));
-     while b > 0 do (
-	  if x < lim then break;
-	  putdigit(o,int(x));
-	  x = 10. * (x - double(int(x)));
-	  lim = lim * 10.;
-	  b = b-1;
-	  ));
-
-export finite(x:double):bool := x==x && x-x == x-x;
-
-export isinf(x:double):bool := x==x && x-x != x-x;
-
-export isnan(x:double):bool := x!=x;
-
-export tostring(x:bool):string := if x then "true" else "false";
-
-export tostring5(
-     x:double,						-- the number to format
-     s:int,					-- number of significant digits
-     l:int,					   -- max number leading zeroes
-     t:int,				    -- max number extra trailing digits
-     e:string			     -- separator between mantissa and exponent
-     ) : string := (
-     o := newvarstring(25);
-     if isinf(x) then return "infinity";
-     if isnan(x) then return "NotANumber";
-     if x==0. then return "0.";
-     if x<0. then (o << '-'; x=-x);
-     oldx := x;
-     i := 0;
-     if x >= 1. then (
-     	  until x < 10000000000. do ( x = x/10000000000.; i = i + 10 );
-     	  until x < 100000. do ( x = x/100000.; i = i + 5 );
-     	  until x < 100. do ( x = x/100.; i = i + 2 );
-     	  until x < 10. do ( x = x/10.; i = i + 1 );
-	  )
-     else (
-     	  until x >= 1./10000000000. do ( x = x*10000000000.; i = i - 10 );
-     	  until x >= 1./100000. do ( x = x*100000.; i = i - 5 );
-     	  until x >= 1./100. do ( x = x*100.; i = i - 2 );
-     	  until x >= 1. do ( x = x*10.; i = i - 1 );
-	  );
-     -- should rewrite this so the format it chooses is the one that takes the least space, preferring not to use the exponent when it's a tie
-     if i<0 then (
-	  if -i <= l 
-	  then digits(o,oldx,1,s-i-1)
-	  else (digits(o,x,1,s-1); o << e << tostring(i);))
-     else if i+1 > s then (
-	  if i+1-s <= t
-	  then digits(o,x,i+1,0)
-	  else (digits(o,x,1,s-1); o << e << tostring(i);))
-     else digits(o,x,i+1,s-i-1);
-     tostring(o));
-
-export tostringRR(x:double) : string := tostring5(x,6,5,5,"e");
-
-export (o:file) << (x:double) : file := o << tostringRR(x);
+-----------------------------------------------------------------------------
+-- getc, getLine, read, peek, get
+-----------------------------------------------------------------------------
+-- TODO: replace all with stringstream functions
 
 nl := if length(newline) > 0 then newline.(length(newline)-1) else '\n';
 
@@ -850,7 +766,6 @@ export getc(o:file):int := (
      endFileInput(o);
      x
 );
-export StringOrError := stringCell or errmsg;
 
 -- TODO: is 100 enough?
 tokenbuf := newvarstring(100);
@@ -880,8 +795,7 @@ export read(o:file):StringOrError := (
 	  );
      sc:=stringCell(s);
      endFileInput(o);
-     sc
-     );
+     sc);
 
 export peek(o:file,offset:int):int := (
      startFileInput(o);
@@ -900,41 +814,8 @@ export peek(o:file,offset:int):int := (
 	  );
      x := int(uchar(o.inbuffer.(o.inindex+offset)));
      endFileInput(o);
-     x
-);
-
-export peek(o:file):int := peek(o,0);
-
-someblanks := new array(string) len 20 at n do provide new string len n do provide ' ';
-
-export blanks(n:int):string := if n < length(someblanks) then someblanks.n else new string len n do provide ' ';
-
-padto(s:string,n:int):string := (
-     if n<0
-     then (
-	  n = -n;
-     	  if length(s) >= n
-     	  then s
-     	  else blanks(n-length(s)) + s
-	  )
-     else (
-     	  if length(s) >= n
-     	  then s
-     	  else s + blanks(n-length(s))
-	  )
-     );
-
-export (v:varstring) << (i:int) : varstring := v << tostring(i);
-
-export (o:file) << (s:string, n:int) : file := o << padto(s,n);
-
-export (o:file) << (i:int, n:int) : file := o << (tostring(i),n);
-
-export setprompt(o:file,prompt:function():string):void := ( o.promptq = true; o.prompt = prompt; o.reward=noprompt;);
-
-export unsetprompt(o:file):void := ( o.promptq = false; o.prompt = noprompt; o.reward=noprompt; );
-
-export clean(o:file):void := flush(o);
+     x);
+export peek(o:file):int := peek(o, 0);
 
 export get(filename:string):StringOrError := (
      when openIn(filename)
@@ -950,14 +831,8 @@ export get(filename:string):StringOrError := (
 	       do StringOrError(m)
 	       else StringOrError(stringCell(s)))));
 
-export fchmod(o:file,mode:int):int := (
-     if o.input && o.infd != -1 then if -1 == fchmod(o.infd,mode) then return -1;
-     if o.output && o.outfd != -1 then if -1 == fchmod(o.outfd,mode) then return -1;
-     0);
-
-export (o:file) << (x:long) : file :=  o << tostring(x);
-
-export (o:file) << (x:ulong) : file :=  o << tostring(x);
+-----------------------------------------------------------------------------
+-- TODO: move these elsewhere, or delete them
 
 export setIOSynchronized(e:Expr):Expr :=(
      when e
@@ -985,7 +860,6 @@ export setIOUnSynchronized(e:Expr):Expr :=(
 	  else WrongNumArgs(0))
      else WrongNumArgs(0)
 );
-
 
 -- Local Variables:
 -- compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d stdio.o "

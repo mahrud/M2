@@ -7,6 +7,9 @@
 -- into a single \n.
 use stdio;
 use expr;
+use toStrings;
+
+threadLocal export SuppressErrors := false;
 
 shorten(s:string):string := (				    -- purely textual
      -- shorten filenames like "/a/b/c/../d////e/f" to "/a/b/d/e/f"
@@ -115,15 +118,10 @@ export tostring(w:Position) : string := (
      else errfmt(verifyMinimizeFilename(w.filename),int(w.line),int(w.column + 1),int(w.loadDepth)));
 export (o:file) << (w:Position) : file := o << tostring(w);
 export (o:BasicFile) << (w:Position) : BasicFile := o << tostring(w);
-threadLocal export SuppressErrors := false;
-cleanscreen():void := (
-    stdIO << flush;
-    if stdIO.outfd == stdError.outfd && !atEndOfLine(stdIO) || test(interruptedFlag)
-    then stdIO << newline << flush;);
 
 printMessage(position:Position,message:string):void := (
      if !SuppressErrors then (
-     	  cleanscreen();
+	  endLine(stdError);
 	  stdError << position;
 	  if recursionDepth > 0 then stdError << "[" << recursionDepth << "]:";
      	  -- gettid() is not there in Solaris

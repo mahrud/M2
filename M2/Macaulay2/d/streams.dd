@@ -123,3 +123,30 @@ export newDefaultFOSS():FOSS := newFOSS(newbuffer(),0,0,false,dummyNetList,0,0,-
 export bufsize ::= 4 * 1024;
 --create a new buffer of size bufsize and initialize it to ' '
 export newinbuffer():string := new string len bufsize do provide ' ';
+
+-----------------------------------------------------------------------------
+-- TODO: deprecate, use stringbuf instead
+
+prec := 25;
+
+export tostring(i:int):string := (
+    if i == 0 then return "0";
+    s := newvarstring(prec);
+    sig := i < 0;
+    if sig then i = -i;
+    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
+    toreversestring(if sig then s << '-' else s));
+
+export tostring(i:long):string := (
+    if i == long(0) then return "0";
+    s := newvarstring(prec);
+    sgn := i < 0;
+    if sgn then i = -i;
+    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
+    toreversestring(if sgn then s << '-' else s));
+
+export tostring(i:ulong):string := (
+    if i == ulong(0) then return "0";
+    s := newvarstring(prec);
+    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
+    toreversestring(s));

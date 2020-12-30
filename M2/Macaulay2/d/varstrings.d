@@ -1,5 +1,8 @@
 --		Copyright 1994 by Daniel R. Grayson
+-- TODO: what are varstrings? can they be replaced with stringbufs?
+
 use strings;
+
 export varstring := {
      str:string,
      width:int						    -- the number of bytes in str that are used; if greater than length(str), blank padding is understood

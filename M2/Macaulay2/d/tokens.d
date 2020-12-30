@@ -6,7 +6,6 @@ use stdiop;
 use gmp1;
 use xml;
 use engine;
-use varnets;
 use expr;
 
 -- misc

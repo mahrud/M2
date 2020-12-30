@@ -4,7 +4,6 @@ needs "max.m2"
 needs "methods.m2"
 
 pad = method()
-
 pad(String,ZZ) := String => (s,n) -> concatenate(s,n-# s)
 pad(ZZ,String) := String => (n,s) -> concatenate(n-# s,s)
 pad(Net, ZZ) := (S, n) -> S | (concatenate(n - width S))^(-depth S)

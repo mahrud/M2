@@ -1,8 +1,9 @@
 --		Copyright 1994 by Daniel R. Grayson
 -- dictionary entries
+
 use ctype;
 use tokens;
-use varstrin;
+use varstrings;
 
 DEPRECATED := -3; -- deprecated syntax
 

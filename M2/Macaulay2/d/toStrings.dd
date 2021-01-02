@@ -1,5 +1,6 @@
 --		Copyright 1994 by Daniel R. Grayson
 -- definitions for tostring and o << n
+-- also see those based on std::string in streams.dd
 
 use arithmetic;
 use stdio;
@@ -107,5 +108,4 @@ tostring5(
     else digits(o, x, i + 1, s - i - 1);
     tostring(o));
 
-export   tostringRR(x:double) : string := tostring5(x,6,5,5,"e");
-export (o:file) << (x:double) : file   := o << tostringRR(x);
+export tostringRR(x:double) : string := tostring5(x,6,5,5,"e");

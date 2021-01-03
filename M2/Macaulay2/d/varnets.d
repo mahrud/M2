@@ -1,5 +1,6 @@
 --		Copyright 1994-2006 by Daniel R. Grayson
 use nets;
+use varstrings;
 -- varnets:
 -- a varnet is a net whose strings are varstrings
 -- you can make a new empty varnet

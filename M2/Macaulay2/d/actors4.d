@@ -351,14 +351,11 @@ ascii(e:Expr):Expr := (
 setupfun("ascii",ascii);
 
 utf8(v:array(int)):Expr := (
-     w := newvarstring(length(v)+10);
-     foreach i in v do (
-	  if (i &     ~0x7f) == 0 then w << char(i) else
-	  if (i &    ~0x7ff) == 0 then w << char(0xc0 | (i >> 6)) << char(0x80 | (i & 0x3f)) else
-	  if (i &   ~0xffff) == 0 then w << char(0xe0 | (i >> 12)) << char(0x80 | ((i >> 6) & 0x3f)) << char(0x80 | (i & 0x3f)) else
-	  if (i & ~0x1fffff) == 0 then w << char(0xf0 | (i >> 18)) << char(0x80 | ((i >> 12) & 0x3f)) << char(0x80 | ((i >> 6) & 0x3f)) << char(0x80 | (i & 0x3f))
-	  else ( return buildErrorPacket("encountered integer too large for utf-8 encoding"); w));
-     toExpr(takestring(w)));
+    w := newstringbuf();
+    foreach i in v do (
+	if (i & ~0x1fffff) == 0 then utf8(w, i)
+	else ( return buildErrorPacket("encountered integer too large for utf-8 encoding"); w));
+    toExpr(takestring(w)));
 
 erru():Expr := buildErrorPacket("string ended unexpectedly during utf-8 decoding");
 errb():Expr := buildErrorPacket("unexpected byte encountered in utf-8 decoding");

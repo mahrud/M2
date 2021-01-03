@@ -1,7 +1,6 @@
 --		Copyright 1996 by Daniel R. Grayson
 -- nets are 2 dimensional strings of characters
 
-use varstrings;
 use ctype;
 
 export Net := {+

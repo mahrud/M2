@@ -55,7 +55,7 @@ export hexvalue   (c:int ):int  := hexvalue(char(c));
 
 export parseString(s:string):string := (
      parseError = false;
-     v := newvarstring(length(s)-2);
+     v := newvarstring(length(s)-2); -- FIXME: convert to stringbuf, then remove utf8 above
      i := 1;
      while true do (
 	  if s.i == '\"' then break;

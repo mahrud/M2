@@ -61,8 +61,6 @@ export takereversestring(v:varstring):string := (
      s := toreversestring(v);
      empty(v);
      s);
--- export addchar(v:varstring,c:char):void := v<<c;
--- export addstring(v:varstring,s:string):void := v<<s;
 
 export hash(s:varstring):int := (
      h := 0;
@@ -70,7 +68,6 @@ export hash(s:varstring):int := (
      if n > length(s.str) then n = length(s.str);
      for i from 0 to n-1 do h = 311*h + int(s.str.i);
      h & 0x7fffffff );
-export putdigit(o:varstring,x:int):void := o << (x + if x<10 then '0' else 'a'-10) ;
 
 export varstringarray := { a:array(string), n:int };
 export newvarstringarray(m:int):varstringarray := varstringarray( new array(string) len m do provide "", 0 );

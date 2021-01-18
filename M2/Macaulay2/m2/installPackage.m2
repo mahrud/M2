@@ -70,15 +70,11 @@ initInstallDirectory := opts -> (
     installLayoutIndex)
 
 -----------------------------------------------------------------------------
--- htmlFilename
+-- filename for documentation files
 -----------------------------------------------------------------------------
--- determines the normalized filename of a key or tag
-htmlFilename = method(Dispatch => Thing)
-htmlFilename Thing       := key -> htmlFilename makeDocumentTag key
-htmlFilename DocumentTag := tag -> (
-    fkey := format tag;
-    pkgname := tag.Package;
-    basefilename := if fkey === pkgname then topFileName else toFilename fkey | ".html";
+
+-- TODO: simplify
+getInstallPrefix = (pkgname, dir) -> (
     if currentPackage#"pkgname" === pkgname then (layout, prefix) := (installLayout, installPrefix)
     else (
 	pkginfo := getPackageInfo pkgname;
@@ -87,9 +83,8 @@ htmlFilename DocumentTag := tag -> (
 	(layout, prefix) = if pkginfo === null then (installLayout, installPrefix)
 	else (Layout#(pkginfo#"layout index"), pkginfo#"prefix"));
     if layout === null then error("package ", pkgname, " is not installed on the prefixPath");
-    tail := replace("PKG", pkgname, layout#"packagehtml") | basefilename;
-    assert isAbsolutePath prefix;
-    (prefix, tail))					    -- this pair will be processed by toURL(String,String)
+    if not isAbsolutePath prefix then error("installPrefix is not an absolute path");
+    (prefix, replace("PKG", pkgname, layout#dir)))
 
 -----------------------------------------------------------------------------
 -- produce html form of documentation, for Macaulay2 and for packages
@@ -337,11 +332,10 @@ installInfo := (pkg, installPrefix, installLayout, verboseLog) -> (
     infotitle       := pkg#"pkgname";
     infobasename    := infotitle | ".info";
     infodir         := installPrefix | installLayout#"info";
-
     verboseLog("making info file ", infodir | infobasename);
     makeDirectory infodir;
-    infofile := openOut(infodir | infobasename);
 
+    infofile := openOut(infodir | infobasename);
     infofile << " -*- coding: utf-8 -*- This is " << infobasename << ", produced by Macaulay2, version " << version#"VERSION" << endl << endl;
     infofile << "INFO-DIR-SECTION " << pkg.Options.InfoDirSection << endl;
     infofile << "START-INFO-DIR-ENTRY" << endl;
@@ -376,6 +370,16 @@ installInfo := (pkg, installPrefix, installLayout, verboseLog) -> (
 
 upAncestors := tag -> reverse(
     n := 0; prepend(tag, while UP#?tag and n < 20 list (n = n+1; tag = UP#tag)))
+
+-- determines the normalized filename of a key or tag
+htmlFilename = method(Dispatch => Thing)
+htmlFilename Thing       := key -> htmlFilename makeDocumentTag key
+htmlFilename DocumentTag := tag -> (
+    fkey := format tag;
+    pkgname := tag.Package;
+    basefilename := if fkey === pkgname then topFileName else toFilename fkey | ".html";
+    (prefix, tail) := getInstallPrefix(pkgname, "packagehtml");
+    (prefix, tail | basefilename)) -- this pair will be processed by toURL(String,String)
 
 makeSortedIndex := (nodes, verboseLog) -> (
      numAnchorsMade = 0;
@@ -415,18 +419,13 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
     nodes := packageTagList(pkg, topDocumentTag);
 
     htmlDirectory = replace("PKG", pkg#"pkgname", installLayout#"packagehtml");
-
     makeDirectory(installPrefix | htmlDirectory);
     verboseLog("making html pages in ", minimizeFilename installPrefix | htmlDirectory);
+
+    -- TODO: are these two used anywhere? if not, remove them
     if pkg.Options.Certification =!= null then
     (installPrefix | htmlDirectory | ".Certification") << toExternalString pkg.Options.Certification << close;
     (installPrefix | htmlDirectory | ".Headline") << pkg.Options.Headline << close;
-    for n in (topFileName, indexFileName, tocFileName) do (
-	fn := installPrefix | htmlDirectory | n;
-	if fileExists fn then (
-	    verboseLog("creating empty html page ", minimizeFilename fn);
-	    fn << close)
-	else verboseLog("html page exists: ", minimizeFilename fn));
     scan(nodes, tag -> if not isUndocumented tag then (
 	    currentDocumentTag = tag; -- for debugging purposes
 	    fkey := format tag;
@@ -456,38 +455,61 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
 -----------------------------------------------------------------------------
 -- install Markdown documentation for package
 -----------------------------------------------------------------------------
--- TODO: certification, table of contents, alphabetized index
+-- TODO: Style files, table of contents, alphabetized index
+
+markdownBasename = tag -> (
+    "packages/" | (pkgname := tag.Package) | if (fkey := format tag) === pkgname then "" else "/doc" | toFilename fkey)
+
+markdownFilename = method(Dispatch => Thing)
+markdownFilename Thing       := key -> markdownFilename makeDocumentTag key
+markdownFilename DocumentTag := tag -> (
+    fn := markdownBasename tag | ".md";
+    (prefix, tail) := getInstallPrefix(tag.Package, "docdir");
+    (prefix, tail)  = ("/home/mahrud/Projects/M2/docs/", ""); -- FIXME
+    (prefix, tail | "_" | fn))
 
 installMarkdown := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts) -> (
     topDocumentTag := makeDocumentTag(pkg#"pkgname", Package => pkg);
     nodes := packageTagList(pkg, topDocumentTag);
 
-    markdownDirectory := replace("PKG", pkg#"pkgname", installLayout#"packagedoc") | "markdown/";
-
+    installPrefix = "/home/mahrud/Projects/M2/docs/"; -- FIXME
+    markdownDirectory := "_" | markdownBasename topDocumentTag;
     makeDirectory(installPrefix | markdownDirectory);
-    verboseLog("making markdown pages in ", minimizeFilename installPrefix | markdownDirectory);
-    for n in (topFileName, indexFileName, tocFileName) do (
-	fn := installPrefix | markdownDirectory | n;
-	if fileExists fn then (
-	    verboseLog("creating empty html page ", minimizeFilename fn);
-	    fn << close)
-	else verboseLog("html page exists: ", minimizeFilename fn));
-    -- Redefining this function call specifically for packages
-    title := "";
-    markdown HEAD := x -> concatenate("---\n",
-	"layout: package", newline,
-	"excerpt: ", title, newline,
-	"---\n");
+    verboseLog("making Markdown documentation in ", minimizeFilename installPrefix | markdownDirectory);
+
+    pkgopts := options pkg;
     scan(nodes, tag -> if not isUndocumented tag then (
 	    currentDocumentTag = tag; -- for debugging purposes
 	    fkey := format tag;
-	    fn := replace("\\.html$", ".md", concatenate htmlFilename tag);
-	    fn  = replace("/html/", "/markdown/", fn);
+	    fn := concatenate markdownFilename tag;
 	    if isSecondaryTag tag
 	    or false and fileExists fn and fileLength fn > 0 and not opts.RemakeAllDocumentation and rawDocumentationCache#?fkey then return;
-	    verboseLog("making html page for ", toString tag);
-	    title = headline fkey;
-	    fn << markdown HTML { HEAD {}, BODY { fetchProcessedDocumentation(pkg, fkey) } } << endl << close)));
+	    -- Jekyll front matter
+	    title := if (excerpt := headline tag) =!= null then excerpt else "";
+	    fm := YAML nonnull splice {
+		if fkey === pkg#"pkgname" then (
+		    "layout: package",
+		    "version:  " | pkgopts.Version,
+		    "keywords: " | demark_", " pkgopts.Keywords)
+		else "layout: default",
+		"title:   " | concatenate("'", fkey, "'"),
+		"excerpt: " | concatenate("'", title, "'")
+		-- TODO
+--		if UP#?tag
+--		then DIV between(" > ", apply(upAncestors tag, i -> TO i))
+--		else DIV (TO topDocumentTag, " :: ", TO tag)
+		};
+	    verboseLog("making markdown page for ", toString tag);
+	    fn << markdown HTML { fm, BODY { fetchProcessedDocumentation(pkg, fkey) } } << endl << close));
+
+    -- make the alphabetical index
+    -- indexFileName
+--    makeSortedIndex(nodes, verboseLog);
+
+    -- make the table of contents
+    -- tocFileName
+--    makeTableOfContents(pkg, verboseLog);
+    )
 
 -----------------------------------------------------------------------------
 -- helper functions for installPackage
@@ -614,7 +636,7 @@ installPackage = method(
 	MakeDocumentation      => true,
 	MakeHTML               => true,
 	MakeInfo               => true,
-	MakeMarkdown           => true,
+	MakeMarkdown           => false,
 	MakePDF                => false,
 	-- until we get better dependency graphs between documentation
 	-- nodes, "false" here will confuse users

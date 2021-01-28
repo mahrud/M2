@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "NCAlgebras/FreeAlgebra.hpp"
+#include "buffer.hpp"
 #include "matrix.hpp"
 #include "ring.hpp"
 

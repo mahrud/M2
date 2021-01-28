@@ -1,11 +1,15 @@
 // Copyright 2014-2016  Michael E. Stillman
+// TODO: move to interface
 
 #ifndef _util_hpp_
 #define _util_hpp_
 
+#include <stddef.h>          // for size_t
+
+#include <string>            // for string
+#include <vector>            // for vector
+
 #include "engine-includes.hpp"
-#include <vector>
-#include <string>
 
 M2_string string_std_to_M2(const std::string& s);
 

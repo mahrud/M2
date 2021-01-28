@@ -1,6 +1,7 @@
 #ifndef _m2_free_algebra_quotient_hpp_
 #define _m2_free_algebra_quotient_hpp_
 
+#include "M2/math-include.h"
 #include "engine-includes.hpp"
 
 #include <memory>

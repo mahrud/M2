@@ -1,25 +1,25 @@
 #include "NCAlgebras/NCReduction.hpp"
 
+#include <mathic/Geobucket.h>          // for Geobucket, GeoStoreSameSizeBuffer
+#include <mathic/Heap.h>               // for Heap
+#include <mathic/TourTree.h>           // for TourTree
+
+#include <algorithm>                   // for copy, max
+#include <cassert>                     // for assert
+#include <iostream>                    // for operator<<, endl, basic_ostream
+#include <map>                         // for map, _Rb_tree_iterator, operat...
+#include <memory>                      // for unique_ptr, allocator
+#include <queue>                       // for priority_queue
+#include <vector>                      // for vector
+
+#include "MemoryBlock.hpp"             // for MemoryBlock
 #include "NCAlgebras/FreeAlgebra.hpp"  // for FreeAlgebra
 #include "NCAlgebras/FreeMonoid.hpp"   // for MonomEq, FreeMonoid
-#include "MemoryBlock.hpp"             // for MemoryBlock
 #include "NCAlgebras/NCGroebner.hpp"   // for tryOutMathicCode
 #include "NCAlgebras/Word.hpp"         // for Word
 #include "myalloc.hpp"                 // for StatsAllocator
 #include "ring.hpp"                    // for Ring
 #include "style.hpp"                   // for EQ, LT, GT
-
-#include <cassert>                     // for assert
-#include <mathic/Geobucket.h>          // for Geobucket, GeoStoreSameSizeBuffer
-#include <mathic/Heap.h>               // for Heap
-#include <mathic/TourTree.h>           // for TourTree
-#include <algorithm>                   // for copy
-#include <iostream>                    // for string, operator<<, endl, basi...
-#include <map>                         // for map, __map_iterator, operator!=
-#include <memory>                      // for unique_ptr
-#include <queue>                       // for priority_queue
-#include <type_traits>                 // for swap
-#include <vector>                      // for vector
 
 #if 0
 Reasoning about using these structures in noncomm reduction.

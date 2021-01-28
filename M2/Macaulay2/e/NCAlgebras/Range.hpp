@@ -1,9 +1,10 @@
 #ifndef __range__
 #define __range__
 
-#include "newdelete.hpp"
 #include <utility>
 #include <vector>
+
+#include "newdelete.hpp"
 
 template<typename T>
 class Range

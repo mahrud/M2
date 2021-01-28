@@ -6,8 +6,8 @@
 #include "../d/M2mem.h"
 #include "../d/debug.h"
 
-#include <M2/gc-include.h>
-#include <gc/gc_allocator.h>
+#include <M2/gc-include.h>   // IWYU pragma: export
+#include <gc/gc_allocator.h> // IWYU pragma: export
 #include <vector>
 
 /**

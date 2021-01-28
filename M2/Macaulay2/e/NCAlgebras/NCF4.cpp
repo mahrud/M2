@@ -2,7 +2,6 @@
 
 #include <math.h>                           // for ceil, log2, pow
 #include <algorithm>                        // for copy
-#include <cstdlib>                          // for exit, size_t
 #include <iostream>                         // for operator<<, basic_ostream
 #include <iterator>                         // for back_insert_iterator
 #include <map>                              // for operator!=, _Rb_tree_ite...
@@ -12,10 +11,10 @@
 #include <tuple>                            // for get, make_tuple
 
 #include "tbb/blocked_range.h"               // for blocked_range
-#include "tbb/enumerable_thread_specific.h"  // for enumerable_thread_specific
+#include "tbb/concurrent_unordered_map.h"    // for concurrent_unordered_map
+#include "tbb/parallel_do.h"                 // for parallel_do
 #include "tbb/parallel_for.h"                // for parallel_for
-#include "tbb/parallel_sort.h"               // for parallel_sort
-#include "tbb/tick_count.h"                  // for tick_count, operator-
+#include "tbb/queuing_mutex.h"               // for queuing_mutex, queuing_m...
 
 #include <tbb/tick_count.h>                 // for tbb::tick_count
 #include <tbb/enumerable_thread_specific.h> // for tbb::enumerable_thread_specific

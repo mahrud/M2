@@ -1,13 +1,13 @@
 #ifndef _free_monoid_hpp_
 #define _free_monoid_hpp_
 
-#include "engine-includes.hpp" // for gc_allocator
-
 #include <stddef.h>            // for size_t
 #include <algorithm>           // for equal
 #include <iosfwd>              // for ostream
 #include <string>              // for string, basic_string
 #include <vector>              // for vector
+
+#include "newdelete.hpp"       // for gc_allocator
 
 #include "NCAlgebras/Word.hpp" // for Word
 #include "Polynomial.hpp"      // for Monom, IntVector

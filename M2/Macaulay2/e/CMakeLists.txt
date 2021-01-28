@@ -35,7 +35,6 @@ set(HFILES
 
 # these files are include only.
 set(HPPONLYFILES
-  MemoryBlock.hpp
   NCAlgebras/Range.hpp
   VectorArithmetic.hpp
   ARingElem.hpp

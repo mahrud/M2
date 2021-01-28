@@ -6,6 +6,7 @@
 #include <utility>                        // for pair
 #include <vector>                         // for vector
 
+#include "tbb/tbb_allocator.h"                // for tbb_allocator
 #include <tbb/queuing_mutex.h>                // for queuing_mutex
 #include <tbb/null_mutex.h>                   // for null_mutex
 #include <tbb/parallel_do.h>                  // for parallel_do_feeder

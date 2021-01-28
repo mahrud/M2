@@ -8,8 +8,8 @@ CMAKE_BUILD_DIR       = $(shell pwd)/../build
 # TODO: perhaps store the distribution architecture in a file
 ARCH                  = $(shell basename $(CMAKE_BUILD_DIR)/usr-dist/x*)
 
-export CPPFLAGS       = -I$(CMAKE_BUILD_DIR)/usr-host/include
-export LDFLAGS        = -L$(CMAKE_BUILD_DIR)/usr-host/lib
+export CPPFLAGS       = -I$(CMAKE_BUILD_DIR)/usr-host/include -I$(shell brew --prefix)/include
+export LDFLAGS        = -L$(CMAKE_BUILD_DIR)/usr-host/lib     -L$(shell brew --prefix)/lib
 export PATH            := $(CMAKE_BUILD_DIR)/usr-dist/$(ARCH)/libexec/Macaulay2/bin:$(PATH)
 export PKG_CONFIG_PATH := $(CMAKE_BUILD_DIR)/usr-host/lib/pkgconfig:$(PKG_CONFIG_PATH)
 

@@ -12,12 +12,12 @@
 #include "interface/gmp-util.h"  // for mpfr_reallocate_limbs, moveTo_gmpCC
 #include "interface/random.h"    // for randomMpfr
 
-#include "M2mem.h"               // for getmemstructtype
 #include "ZZ.hpp"                // for RingZZ
 #include "aring-RRR.hpp"         // for ARingRRR, ARingRRR::ElementType
 #include "aring.hpp"             // for RingID, RingInterface, ring_CCC
 #include "error.h"               // for ERROR
 #include "exceptions.hpp"        // for engine_error
+#include "newdelete.hpp"         // for getmemstructtype
 #include "ring.hpp"              // for Ring
 #include "ringelem.hpp"          // for ring_elem, cc_ptr, cc_struct
 #include "ringmap.hpp"           // for RingMap

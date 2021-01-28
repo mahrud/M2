@@ -5,8 +5,8 @@
 #include <stdio.h>            // for printf
 #include <stdlib.h>           // for abort
 
+#include "../d/M2mem.h"       // for freemem, getmemstructtype
 #include "M2/math-include.h"  // for GMP_RNDN, mpfr_mul, mpfr_div, mpfr_add
-#include "M2mem.h"            // for freemem, getmemstructtype
 
 // replace with engine-includes.hpp when this is a cpp source
 #if !defined(SAFEC_EXPORTS)

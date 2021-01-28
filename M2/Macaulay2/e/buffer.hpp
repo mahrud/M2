@@ -3,10 +3,11 @@
 #ifndef _buffer_hpp_
 #define _buffer_hpp_
 
-#include "../d/M2mem.h"
-#include "newdelete.hpp"
-#include "engine-includes.hpp"
 #include <string>
+
+#include "engine-includes.hpp"
+
+#include "newdelete.hpp"
 
 const int BUFFER_INITIAL_CAPACITY = 100;
 

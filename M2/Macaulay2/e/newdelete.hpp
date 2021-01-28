@@ -1,14 +1,17 @@
 #ifndef NEWDELETE_H
 #define NEWDELETE_H 1
 
+#include <vector>
+
+// IWYU pragma: begin_exports
 #define GC_REDIRECT_TO_LOCAL
 // get declarations of outofmem and getmem
 #include "../d/M2mem.h"
 #include "../d/debug.h"
 
-#include <M2/gc-include.h>   // IWYU pragma: export
-#include <gc/gc_allocator.h> // IWYU pragma: export
-#include <vector>
+#include <M2/gc-include.h>
+#include <gc/gc_allocator.h>
+// IWYU pragma: end_exports
 
 /**
   @brief a version of the STL vector, which allocates its backing memory with gc.

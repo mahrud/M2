@@ -1,7 +1,6 @@
 #include "buffer.hpp"
-#include <cstdio>
-#include <cstring>
-#include <cassert>
+
+#include <cstdio>  // for sprintf
 
 void buffer::expand(int newcap)
 {

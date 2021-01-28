@@ -389,7 +389,7 @@ install(TARGETS M2-engine EXPORT Macaulay2
 ## Add source linting and formatting checks for this target, see cmake/prechecks.cmake
 
 if(LINTING)
-  _ADD_PRECHECKS(M2-engine "${CFILES}" "${HPPONLYFILES} ${CPPONLYFILES} ${HPPFILES} ${CPPFILES}")
+  _ADD_PRECHECKS(M2-engine "IWYU" "${CFILES}" "${HPPONLYFILES} ${CPPONLYFILES} ${HPPFILES} ${CPPFILES}")
 endif()
 
 _ADD_CLANG_FORMAT(M2-engine "${CFILES}" "${HPPONLYFILES} ${CPPONLYFILES} ${HPPFILES} ${CPPFILES}")

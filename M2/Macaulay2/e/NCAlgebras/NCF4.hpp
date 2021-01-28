@@ -1,6 +1,11 @@
 #ifndef __nc_f4_hpp__
 #define __nc_f4_hpp__
 
+#include <deque>                          // for deque
+#include <iosfwd>                         // for ostream
+#include <utility>                        // for pair
+#include <vector>                         // for vector
+
 #include <tbb/queuing_mutex.h>                // for queuing_mutex
 #include <tbb/null_mutex.h>                   // for null_mutex
 #include <tbb/parallel_do.h>                  // for parallel_do_feeder
@@ -18,14 +23,6 @@
 #include "VectorArithmetic.hpp"           // for VectorArithmetic, CoeffVector, etc
 #include "Polynomial.hpp"                 // for Monom, ConstPolyList, Poly
 #include "newdelete.hpp"                  // for VECTOR, our_new_delete
-
-#include <deque>                       // for deque
-#include <iosfwd>                      // for ostream
-#include <map>                         // for map
-#include <unordered_map>               // for unordered_map
-#include <tuple>                       // for tuple
-#include <utility>                     // for pair
-#include <vector>                      // for vector
 
 union ring_elem;
 

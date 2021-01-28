@@ -3,12 +3,10 @@
 #ifndef _ringelem_hh_
 #define _ringelem_hh_
 
-#include <stddef.h>
-#if !defined(SAFEC_EXPORTS)
-#include <engine-exports.h>
-#endif
+#include "M2/math-include.h"  // for mpfr_srcptr, mpq_srcptr, mpz_srcptr
+#include "engine-includes.hpp"
 #include "interface/gmp-util.h"
-#include "newdelete.hpp"
+#include "newdelete.hpp"      // for our_new_delete
 
 using ZZ = mpz_srcptr;
 using ZZmutable = mpz_ptr;

@@ -3,15 +3,26 @@
 #ifndef _aring_CCC_hpp_
 #define _aring_CCC_hpp_
 
-#include <iostream>
-#include "aring.hpp"
-#include "buffer.hpp"
-#include "ringelem.hpp"
-#include "ringmap.hpp"
+#include "M2/math-include.h"     // for GMP_RNDN, mpfr_mul, mpfr_div, mpfr_i...
+#include "engine-includes.hpp"   // for gmp_CC_struct, gmp_CCmutable_struct
 
-#include "aring-RRR.hpp"
+#include <memory>                // for allocator
+#include <utility>               // for pair
 
-class RingMap;
+#include "interface/gmp-util.h"  // for mpfr_reallocate_limbs, moveTo_gmpCC
+#include "interface/random.h"    // for randomMpfr
+
+#include "M2mem.h"               // for getmemstructtype
+#include "ZZ.hpp"                // for RingZZ
+#include "aring-RRR.hpp"         // for ARingRRR, ARingRRR::ElementType
+#include "aring.hpp"             // for RingID, RingInterface, ring_CCC
+#include "error.h"               // for ERROR
+#include "exceptions.hpp"        // for engine_error
+#include "ring.hpp"              // for Ring
+#include "ringelem.hpp"          // for ring_elem, cc_ptr, cc_struct
+#include "ringmap.hpp"           // for RingMap
+
+class buffer;
 
 namespace M2 {
 /**

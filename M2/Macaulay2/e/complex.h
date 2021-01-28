@@ -9,6 +9,7 @@
    Resulting values are the first argument
 */
 
+// replace with engine-includes.hpp when this is a hpp source
 #if !defined(SAFEC_EXPORTS)
 #include <engine-exports.h>
 #endif

@@ -4,9 +4,11 @@
 #define _aring_gf_flint_big_hpp_
 
 #include <vector>
+#include <iostream>
 
 // The following needs to be included before any flint files are included.
 #include <M2/gc-include.h>
+#include <M2/math-include.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
@@ -17,8 +19,6 @@
 #include "aring.hpp"
 #include "buffer.hpp"
 #include "ringelem.hpp"
-
-#include <iostream>
 
 class PolynomialRing;
 class RingElement;

@@ -1,18 +1,23 @@
 #ifndef _free_monoid_hpp_
 #define _free_monoid_hpp_
 
+#include "engine-includes.hpp" // for gc_allocator
+
+#include <stddef.h>            // for size_t
+#include <algorithm>           // for equal
+#include <iosfwd>              // for ostream
+#include <string>              // for string, basic_string
+#include <vector>              // for vector
+
+#include "NCAlgebras/Word.hpp" // for Word
 #include "Polynomial.hpp"      // for Monom, IntVector
 #include "newdelete.hpp"       // for VECTOR, our_new_delete
 #include "polyring.hpp"        // for PolynomialRing
 #include "style.hpp"           // for GT
-#include "NCAlgebras/Word.hpp" // for Word
-#include "MemoryBlock.hpp"     // for MemoryBlock
-#include <iosfwd>              // for string, ostream
-#include <vector>              // for vector
 
-class Monoid;  // lines 15-15
-//class Word;  // lines 16-16
-class buffer;  // lines 17-17
+class MemoryBlock;
+class Monoid;
+class buffer;
 
 // TODO for weights in orders
 //  1. make sure it is input correctly from front end.

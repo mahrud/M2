@@ -1,16 +1,16 @@
 #ifndef _NCGroebner_hpp_
 #define _NCGroebner_hpp_
 
-#include "NCAlgebras/NCReduction.hpp"   // for PolynomialHeap
-#include "NCAlgebras/OverlapTable.hpp"  // for OverlapTable
-#include "NCAlgebras/WordTable.hpp"     // for Overlap, WordTable
-#include "NCAlgebras/SuffixTree.hpp"    // for experimental SuffixTree code
-#include "Polynomial.hpp"               // for Poly, ConstPolyList
-#include "newdelete.hpp"                // for our_new_delete
-
 #include <iostream>                     // for ostream
 #include <memory>                       // for unique_ptr
 #include <vector>                       // for vector
+
+#include "NCAlgebras/NCReduction.hpp"   // for PolynomialHeap
+#include "NCAlgebras/OverlapTable.hpp"  // for OverlapTable
+#include "NCAlgebras/WordTable.hpp"     // for WordTable
+#include "Polynomial.hpp"               // for Poly, ConstPolyList, PolyList
+#include "newdelete.hpp"                // for our_new_delete
+#include "ringelem.hpp"                 // for ring_elem
 
 class FreeAlgebra;
 

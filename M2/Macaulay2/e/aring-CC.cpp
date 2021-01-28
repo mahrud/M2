@@ -1,5 +1,7 @@
 #include "aring-CC.hpp"
 
+#include "buffer.hpp"  // for buffer
+
 namespace M2 {
 
 void ARingCC::text_out(buffer &o) const { o << "ACC_53"; }

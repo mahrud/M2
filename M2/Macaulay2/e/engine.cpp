@@ -1,13 +1,15 @@
 // Copyright 1994-2020 by Michael E. Stillman
 
-#include "interface/random.h"
-#include "aring-glue.hpp"    // for initializeRationalRing
-#include "engine-exports.h"  // for M2_tostring, M2_string
-#include "error.h"           // for error_message
-#include "hash.hpp"          // for MutableEngineObject
-#include "mem.hpp"           // for doubles, doubling_stash
-#include "poly.hpp"          // for PolyRing
-#include "style.hpp"         // for GEOHEAP_SIZE
+#include "engine.h"
+#include "engine-includes.hpp"  // for M2_tostring, M2_string
+
+#include "interface/random.h"   // for rawRandomInitialize
+#include "aring-glue.hpp"       // for initializeRationalRing
+#include "error.h"              // for error_message
+#include "hash.hpp"             // for MutableEngineObject
+#include "mem.hpp"              // for doubles, doubling_stash
+#include "poly.hpp"             // for PolyRing
+#include "style.hpp"            // for GEOHEAP_SIZE
 
 unsigned int MutableEngineObject::mNextMutableHashValue = 13;
 

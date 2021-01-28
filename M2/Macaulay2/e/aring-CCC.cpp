@@ -1,5 +1,5 @@
 #include "aring-CCC.hpp"
-#include "text-io.hpp"
+#include "buffer.hpp"  // for buffer
 
 namespace M2 {
 

@@ -1,8 +1,13 @@
 // Copyright 2005-2021  Michael E. Stillman
 
 #include "f4/monhashtable.hpp"
+
 #include <string.h>  // for memset
+
 #include <iostream>  // for operator<<, endl, ostream, cout, basic_ostream
+#include <utility>   // for move
+
+#include "f4/moninfo.hpp"  // for MonomialInfo
 
 #define HASHVALUE(m) (M->hash_value(m))
 #define MONOMIAL_EQUAL(m, n) (M->is_equal(m, n))

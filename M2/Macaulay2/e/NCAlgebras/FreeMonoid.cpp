@@ -1,14 +1,14 @@
 #include "NCAlgebras/FreeMonoid.hpp"
 
-#include "MemoryBlock.hpp"             // for MemoryBlock
-#include "NCAlgebras/Word.hpp"         // for Word
-#include "buffer.hpp"                  // for buffer
-#include "monoid.hpp"                  // for Monoid
+#include <algorithm>            // for copy, max, equal
+#include <cassert>              // for assert
+#include <ostream>              // for operator<<, basic_ostream
+#include <utility>              // for pair
 
-#include <cassert>                     // for assert
-#include <algorithm>                   // for copy
-#include <ostream>                     // for string, operator<<, ostream
-#include <utility>                     // for pair
+#include "MemoryBlock.hpp"      // for MemoryBlock
+#include "NCAlgebras/Word.hpp"  // for Word
+#include "buffer.hpp"           // for buffer
+#include "monoid.hpp"           // for Monoid
 
 size_t FreeMonoidLogger::mCompares = 0;
 

@@ -1,23 +1,36 @@
 #include "NCAlgebras/NCF4.hpp"
 
-#include "text-io.hpp"                      // for emit_wrapped
-#include "NCAlgebras/FreeAlgebra.hpp"       // for FreeAlgebra
-#include "NCAlgebras/OverlapTable.hpp"      // for OverlapTable
-#include "VectorArithmetic.hpp"             // for VectorArithmetic
-#include "NCAlgebras/WordTable.hpp"         // for Overlap, WordTable
-#include "buffer.hpp"                       // for buffer
-#include "engine-exports.h"                 // for M2_gbTrace
-#include "ring.hpp"                         // for Ring
-#include "ringelem.hpp"                     // for ring_elem
-
-#include <cassert>                          // for assert
-#include <cstdlib>                          // for exit, size_t
+#include <math.h>                           // for ceil, log2, pow
 #include <algorithm>                        // for copy
+#include <cstdlib>                          // for exit, size_t
 #include <iostream>                         // for operator<<, basic_ostream
+#include <iterator>                         // for back_insert_iterator
+#include <map>                              // for operator!=, _Rb_tree_ite...
+#include <memory>                           // for allocator_traits<>::valu...
+#include <new>                              // for operator new
+#include <numeric>                          // for iota
+#include <tuple>                            // for get, make_tuple
+
+#include "tbb/blocked_range.h"               // for blocked_range
+#include "tbb/enumerable_thread_specific.h"  // for enumerable_thread_specific
+#include "tbb/parallel_for.h"                // for parallel_for
+#include "tbb/parallel_sort.h"               // for parallel_sort
+#include "tbb/tick_count.h"                  // for tick_count, operator-
 
 #include <tbb/tick_count.h>                 // for tbb::tick_count
 #include <tbb/enumerable_thread_specific.h> // for tbb::enumerable_thread_specific
 #include <tbb/parallel_sort.h>              // for tbb::parallel_sort
+
+#include "engine-includes.hpp"              // for M2_gbTrace
+
+#include "text-io.hpp"                      // for emit_wrapped
+#include "NCAlgebras/FreeAlgebra.hpp"       // for FreeAlgebra
+#include "NCAlgebras/OverlapTable.hpp"      // for OverlapTable
+#include "NCAlgebras/WordTable.hpp"         // for Overlap, WordTable
+#include "VectorArithmetic.hpp"             // for VectorArithmetic
+#include "buffer.hpp"                       // for buffer
+#include "ring.hpp"                         // for Ring
+#include "ringelem.hpp"                     // for ring_elem
 
 NCF4::NCF4(const FreeAlgebra& A,
            const ConstPolyList& input,

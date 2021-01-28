@@ -1,5 +1,13 @@
 #include "NCAlgebras/NCGroebner.hpp"
 
+#include <stddef.h>                     // for size_t
+#include <algorithm>                    // for max
+#include <deque>                        // for deque
+#include <tuple>                        // for get, make_tuple
+#include <utility>                      // for pair
+
+#include "engine-includes.hpp"          // for M2_gbTrace, newline
+
 #include "NCAlgebras/FreeAlgebra.hpp"   // for FreeAlgebra
 #include "NCAlgebras/FreeMonoid.hpp"    // for FreeMonoid, operator<<, FreeM...
 #include "NCAlgebras/NCReduction.hpp"   // for PolynomialHeap, getHeapType
@@ -7,15 +15,10 @@
 #include "NCAlgebras/Word.hpp"          // for Word
 #include "NCAlgebras/WordTable.hpp"     // for Overlap, WordTable
 #include "buffer.hpp"                   // for buffer
-#include "engine-exports.h"             // for M2_gbTrace, newline
 #include "myalloc.hpp"                  // for operator<<, AllocLogger
 #include "ring.hpp"                     // for Ring
 #include "ringelem.hpp"                 // for ring_elem
 #include "text-io.hpp"                  // for emit_line, emit
-
-#include <deque>                        // for deque
-#include <tuple>                        // for get, make_tuple
-#include <utility>                      // for pair
 
 NCGroebner::NCGroebner(const FreeAlgebra& A,
                        const ConstPolyList& input,

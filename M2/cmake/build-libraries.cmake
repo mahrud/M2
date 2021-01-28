@@ -531,7 +531,10 @@ if(NOT CDDLIB_ROOT)
   set(CDDLIB_LIBRARY_DIR ${CDDLIB_ROOT}/lib)
   set(CDDLIB_INCLUDE_DIR ${CDDLIB_ROOT}/include/cddlib)
 endif()
-_ADD_COMPONENT_DEPENDENCY(libraries cddlib mp CDDLIB_FOUND)
+if(NOT CDDLIB_FOUND)
+  _ADD_STEP_DEPENDENCY(cddlib mp)
+endif()
+#_ADD_COMPONENT_DEPENDENCY(misc cddlib mp CDDLIB_FOUND)
 
 
 # https://numpi.dm.unipi.it/software/mpsolve

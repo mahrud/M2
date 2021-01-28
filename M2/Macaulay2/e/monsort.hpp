@@ -3,13 +3,14 @@
 #ifndef _monsort_h_
 #define _monsort_h_
 
-#include <cstdio>
-#include <cstdlib>
-#include "newdelete.hpp"
+#include "engine-includes.hpp"  // for M2_gbTrace
 
-#if !defined(SAFEC_EXPORTS)
-#include <engine-exports.h>
-#endif
+#include <cstdio>               // for fprintf, stderr
+#include <cstdlib>              // for exit
+
+#include "newdelete.hpp"        // for deletearray, newarray_atomic
+
+class MSorter;
 
 template <typename Sorter>
 // Sorter S, needs to define:

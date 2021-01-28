@@ -1,5 +1,7 @@
 #include "NCAlgebras/FreeAlgebraQuotient.hpp"
 
+#include "ring.hpp"  // for Ring, SumCollector (ptr only)
+
 using ExponentVector = int*;
 
 SumCollector* FreeAlgebraQuotient::make_SumCollector() const

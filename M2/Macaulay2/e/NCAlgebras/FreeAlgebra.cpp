@@ -1,5 +1,10 @@
 #include "FreeAlgebra.hpp"
 
+#include <algorithm>                  // for max
+#include <cassert>                    // for assert
+#include <ostream>                    // for operator<<
+#include <utility>                    // for swap, make_pair, pair
+
 #include "NCAlgebras/FreeMonoid.hpp"  // for FreeMonoid
 #include "NCAlgebras/Word.hpp"        // for Word
 #include "Polynomial.hpp"             // for Poly, Polynomial<>::const_iterator
@@ -8,11 +13,6 @@
 #include "error.h"                    // for ERROR
 #include "monoid.hpp"                 // for Monoid
 #include "ringmap.hpp"                // for RingMap
-
-#include <cassert>                    // for assert
-#include <ostream>                    // for operator<<, ostream, string
-#include <type_traits>                // for swap
-#include <utility>                    // for make_pair, pair
 
 class PolynomialRing;  // lines 14-14
 

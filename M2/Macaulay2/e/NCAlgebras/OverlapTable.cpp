@@ -1,6 +1,9 @@
 #include "NCAlgebras/OverlapTable.hpp"
-#include "engine-exports.h"  // for M2_gbTrace
-#include <iostream>          // for cout
+
+#include "engine-includes.hpp"  // for M2_gbTrace
+
+#include <iostream>             // for cout
+#include <type_traits>          // for __strip_reference_wrapper<>::__type
 
 // will call find to see if degree exists, and if not will call
 // insert.  If degree exists, append overlap to value of degree

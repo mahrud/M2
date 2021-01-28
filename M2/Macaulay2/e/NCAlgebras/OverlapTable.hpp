@@ -1,13 +1,14 @@
 #ifndef _OverlapTable_hpp_
 #define _OverlapTable_hpp_
 
-#include "Polynomial.hpp"  // for ConstPolyList
-
+#include <stddef.h>        // for size_t
 #include <deque>           // for deque
 #include <map>             // for map
 #include <ostream>         // for ostream
 #include <tuple>           // for tuple
 #include <utility>         // for pair
+
+#include "Polynomial.hpp"  // for ConstPolyList
 
 // tuple is (i,j,k) where i is index of first word,
 // j is position of overlap in first word and k is

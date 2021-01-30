@@ -770,6 +770,7 @@ ExternalProject_Add(build-mathicgb
                     -DCMAKE_CXX_FLAGS=${CXXFLAGS}
                     -Denable_mgb=ON
                     -Dwith_tbb=ON
+                    -DTBB_ROOT_DIR=${TBB_ROOT_DIR}
   EXCLUDE_FROM_ALL  ON
   TEST_EXCLUDE_FROM_MAIN ON
   STEP_TARGETS      install test

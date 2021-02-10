@@ -262,7 +262,7 @@ isComputationDone ResolutionComputation := Boolean => options resolution >> opts
     -- if FastNonminimal sets returnCode correctly, the "not container.FastNonminimal" condition can be removed
     if C.?Resolution and not container.FastNonminimal then isComputationDone(C.Resolution, opts) else
     ( opts.FastNonminimal == container.FastNonminimal or not container.FastNonminimal )
-    and opts.DegreeLimit  <= container.DegreeLimit
+    and opts.DegreeLimit  <= container.DegreeLimit -- FIXME: care for multidegrees
     and opts.LengthLimit  <= container.LengthLimit)
 
 updateComputation(ResolutionComputation, ChainComplex) := ChainComplex => options resolution >> opts -> (container, result) -> (

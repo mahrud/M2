@@ -10,6 +10,7 @@
     see https://github.com/Macaulay2/M2/issues/1522
  5. remove SourceRing option, or take a RingMap instead
  6. is there any way to better take advantage of the cache when Truncate => true?
+ 7. there is almost no caching when lower and upper limit have rank > 1
 *-
 
 needs "computations.m2"
@@ -107,7 +108,7 @@ basis = method(TypicalValue => Matrix,
 BasisContext = new SelfInitializingType of Context
 BasisContext.synonym = "basis context"
 
-new BasisContext from Sequence := (C, S) -> BasisContext{getVarlist S}
+new BasisContext from Sequence := (C, S) -> BasisContext{getVarlist(S#0, (S#1).Variables)}
 
 BasisComputation = new Type of Computation
 BasisComputation.synonym = "basis computation"
@@ -141,6 +142,8 @@ updateComputation(BasisComputation, RawMatrix) := RawMatrix => options basis ++ 
     container.Result     = result)
 
 adjustComputation BasisComputation := RawMatrix => options basis ++ ExtraOpts >> opts -> container -> (
+    -- TODO: make sure this is correct
+    if container.DegreeRank == 0 then return container.Result;
     -- TODO: make sure this works with either a Matrix or a RawMatrix
     (lo, hi) := (opts.LowerLimit, opts.UpperLimit);
     degs := pack(container.DegreeRank, degrees source container.Result);
@@ -254,7 +257,7 @@ basisHelper = (opts, lo, hi, M) -> (
 
     -- this is the logic for caching partial basis computations. M.cache contains an option:
     --   BasisContext{} => BasisComputation{ Result, ... }
-    container := fetchComputation(BasisComputation, M, (lo, hi, M), new BasisContext from (R, opts.Variables));
+    container := fetchComputation(BasisComputation, M, (lo, hi, M), new BasisContext from (R, opts));
 
     -- the actual computation of the basis occurs here
     B := (cacheComputation(opts, container)) computation;

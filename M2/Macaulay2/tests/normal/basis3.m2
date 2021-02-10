@@ -3,6 +3,14 @@ assert(basis F^6 == id_(F^6))
 R = F[]
 assert(basis R^6 == id_(R^6))
 
+M = image random(QQ^5, QQ^3)
+assert(basis M == map(M, QQ^3, id_(QQ^3)))
+assert(basis M == map(M, QQ^3, id_(QQ^3)))
+
+M = image random(ZZ^5, ZZ^3)
+assert(basis M == map(M, ZZ^3, id_(ZZ^3)))
+assert(basis M == map(M, ZZ^3, id_(ZZ^3)))
+
 A = ZZ/101[x]
 R = A[y]
 assert(basis(1, 2, R, SourceRing => A) == map(R^1, A^2, map(R, A), matrix{{y, y^2}}))

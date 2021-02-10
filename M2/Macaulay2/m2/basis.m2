@@ -10,6 +10,7 @@
  5. see tests/normal/basis3.m2:
       assert try (basis(0, ZZ/101[a, Degrees => {0}]); false) else true
     This probably needs to be fixed in e/matrix-kbasis.cpp
+ 6. is there any way to better take advantage of the cache when Truncate => true?
 *-
 
 needs "computations.m2"
@@ -90,7 +91,7 @@ basis = method(TypicalValue => Matrix,
 	Variables  => null,     -- defaults to the generators of the ring
 	Degree     => null,     -- offset the degree of the resulting matrix
 	Limit      => infinity, -- upper bound on the number of basis elements to collect
-	Truncate   => false     -- TODO: what does this do?
+	Truncate   => false     -- if true, then generators of higher degree are kept
 	}
     )
 
@@ -121,16 +122,16 @@ new BasisComputation from Sequence := (C, S) -> new BasisComputation from {
 isComputationDone BasisComputation := Boolean => options basis ++ ExtraOpts >> opts -> container -> (
     -- this function determines whether we can use the cached result, or further computation is necessary
     instance(container.Result, RawMatrix)
+    and(opts.Truncate   == container.Truncate or container.Truncate)
     and opts.LowerLimit >= container.LowerLimit
     and opts.UpperLimit <= container.UpperLimit
-    and opts.Limit      <= container.Limit
-    and opts.Truncate   == container.Truncate)
+    and opts.Limit      <= container.Limit)
 
 updateComputation(BasisComputation, RawMatrix) := RawMatrix => options basis ++ ExtraOpts >> opts -> (container, result) -> (
+    container.Truncate   = opts.Truncate;
     container.LowerLimit = opts.LowerLimit;
     container.UpperLimit = opts.UpperLimit;
     container.Limit      = opts.Limit;
-    container.Truncate   = opts.Truncate;
     container.Result     = result)
 
 adjustComputation BasisComputation := RawMatrix => options basis ++ ExtraOpts >> opts -> container -> (
@@ -138,7 +139,8 @@ adjustComputation BasisComputation := RawMatrix => options basis ++ ExtraOpts >>
     (lo, hi) := (opts.LowerLimit, opts.UpperLimit);
     degs := pack(container.DegreeRank, degrees source container.Result);
     -- TODO: would be better to do this in engine, but rawSubmatrixByDegree doesn't work with partial degrees
-    cols := positions(degs, deg -> lo <= take(deg, #lo) and take(deg, #hi) <= hi);
+    cols := positions(degs, deg ->
+	lo <= take(deg, #lo) and ( opts.Truncate or take(deg, #hi) <= hi ));
     if opts.Limit < #cols then cols = take(cols, opts.Limit);
     rawSubmatrix(container.Result, cols))
 

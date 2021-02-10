@@ -109,4 +109,3 @@ R = QQ[a,b,c, Degrees => {1,2,3}];
 assert(basis(2, R) == matrix"a2,b")
 -- FIXME: assert(basis(2, R, Truncate => true) == matrix "b,a2,c")
 assert(basis(2, R) == matrix"a2,b")
-

@@ -559,7 +559,7 @@ document {
    (methods, Command),
    (methods, Sequence),
    (methods, Thing),
-   (methods, ScriptedFunctor),
+   (methods, Functor),
    (methods, Symbol),
    (methods, Type)
    },
@@ -608,7 +608,8 @@ document {
      methods.  Types that don't appear as values of global variables will
      not be examined, so perhaps not all methods will be found.",
      SeeAlso => {
-	 (options, ZZ), (code, ZZ), (code, List)
+	 (options, ZZ), (code, ZZ), (code, List),
+	 (locate, List), (makeDocumentTag, List)
 	 }
      }
 

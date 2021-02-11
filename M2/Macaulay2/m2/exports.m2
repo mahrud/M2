@@ -1,6 +1,16 @@
 --		Copyright 2004,2005,2006,2007,2008 by Daniel R. Grayson
 
 needs "packages.m2"
+needs "document.m2"
+
+undocumented methods html
+
+undocumented {
+    symbol (,  symbol ),
+    symbol [,  symbol ],
+    symbol <|, symbol |>,
+    symbol {,  symbol },
+    }
 
 export {
 	"!",
@@ -163,6 +173,7 @@ export {
 	"FunctionApplication",
 	"FunctionBody",
 	"FunctionClosure",
+	"Functor",
 	"GBDegrees",
 	"GCstats",
 	"GF",

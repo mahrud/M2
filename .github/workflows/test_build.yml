@@ -10,6 +10,25 @@ name: Build and Test Macaulay2
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - SheafMaps
+      - quickfix/basis
+      - quickfix/Complexes
+      - quickfix/part
+      - Dmodules
+      - Truncations
+      - PushForward
+      - Varieties
+      - development
+      - feature/functors
+      - feature/monoids
+      - feature/torsion
+      - feature/varieties
+      - refactor/Core
+      - refactor/engine
+      - refactor/monoids
+      - research
   pull_request:
     branches:
       - master
@@ -28,7 +47,6 @@ defaults:
 
 jobs:
   build:
-    if: github.repository == 'Macaulay2/M2' || contains(github.ref, 'global')
     name: ${{ matrix.build-system }}-${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:

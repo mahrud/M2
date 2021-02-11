@@ -25,8 +25,6 @@ MethodFunctionSingle.synonym = "method function with a single argument"
 MethodFunctionBinary.synonym = "binary method function"
 MethodFunctionWithOptions.synonym = "method function with options"
 
-dispatcherFunctions = {}
-
 noapp := (f,x) -> error(
      "no method for applying item of class ", toString class f, 
      " to item of class ", toString class x
@@ -384,7 +382,6 @@ denominator = method()
 denominator QQ := olddenominator
 
 emptyOptionTable := new OptionTable
-options     Ring := x -> null
 options Sequence := s -> (
      m := lookup s;
      if m === null then error "method not found";
@@ -404,22 +401,6 @@ options Function := OptionTable => f -> (
      )
 
 options Command := OptionTable => f -> options f#0
-
-computeAndCache := (M,options,Name,goodEnough,computeIt) -> (
-     if not M#?Name or not goodEnough(M#Name#0,options) 
-     then (
-	  ret := computeIt(M,options);
-	  M#Name = {options,ret};
-	  ret)
-     else M#Name#1
-     )
-
-exitMethod = method(Dispatch => Thing)
-exitMethod ZZ := i -> exit i
-exitMethod Sequence := x -> exit 0
-quit = Command (() -> exit 0)
-erase symbol exit
-exit = Command exitMethod
 
 toExternalString Option := z -> concatenate splice (
      if precedence z > precedence z#0 then ("(",toExternalString z#0,")") else toExternalString z#0,
@@ -498,14 +479,6 @@ foodict := first localDictionaries foo
 --      -- ("-- option table opts:", value (first localDictionaries g)#"opts")
 --      }
 bar := lookup(foo,Sequence)
-
------------------------------------------------------------------------------
-
-ck := f -> ( assert( f =!= null ); assert( instance(f, Function) ); f )
-dispatcherFunctions = join (dispatcherFunctions, {
-	  -- lookup(method(),Sequence),
-	  -- ck lookup(method(Options => {}),Sequence)
-	  })
 
 -----------------------------------------------------------------------------
 -- hooks
@@ -668,6 +641,7 @@ locate Function   := Sequence => x -> locate' x
 locate Pseudocode := Sequence => x -> locate' x
 locate Sequence   := Sequence => x -> locate' x
 locate Symbol     := Sequence => x -> locate' x
+locate List       := List     => x -> apply(x, locate)
 protect symbol locate
 
 -- baseName

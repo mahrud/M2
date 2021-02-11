@@ -6,6 +6,7 @@
 needs "computations.m2"
 needs "matrix1.m2"
 needs "modules.m2"
+needs "printing.m2" -- for unbag
 needs "quotient.m2"
 needs "rings.m2"
 

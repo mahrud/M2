@@ -7,8 +7,10 @@
 -- TODO: not reentrant yet, see resetCounters
 
 needs "document.m2"
+needs "examples.m2"
 needs "hypertext.m2"
 needs "packages.m2"
+needs "printing.m2"
 needs "validate.m2"
 
 -----------------------------------------------------------------------------
@@ -455,10 +457,6 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
 -- helper functions for installPackage
 -----------------------------------------------------------------------------
 
-dispatcherMethod := m -> m#-1 === Sequence and (
-    f := lookup m;
-    any(dispatcherFunctions, g -> functionBody f === functionBody g))
-
 reproduciblePaths = outstr -> (
      if topSrcdir === null then return outstr;
      srcdir := regexQuote toAbsolutePath topSrcdir;
@@ -754,7 +752,6 @@ installPackage Package := opts -> pkg -> (
 				tag := makeDocumentTag m;
 				if  not isUndocumented tag
 				and not hasDocumentation tag
-				and not dispatcherMethod m
 				and signalDocumentationWarning tag then printerr(
 				    "warning: method has no documentation: ", toString tag,
 				    ", key ", toExternalString tag.Key,

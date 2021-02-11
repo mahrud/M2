@@ -121,6 +121,7 @@ edit = Command editMethod
 -----------------------------------------------------------------------------
 -- methods
 -----------------------------------------------------------------------------
+-- TODO: https://github.com/Macaulay2/M2/issues/1331
 
 searchAllDictionaries := (T, f) -> (
     seen := new MutableHashTable;

@@ -2,6 +2,7 @@
 
 -- TODO: some functions seems to depend on other files
 needs "expressions.m2"
+needs "remember.m2"
 needs "rings.m2"
 
 RingElement.synonym = "ring element"

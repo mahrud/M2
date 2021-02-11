@@ -562,7 +562,7 @@ document {
    (methods, Command),
    (methods, Sequence),
    (methods, Thing),
-   (methods, ScriptedFunctor),
+   (methods, Functor),
    (methods, Symbol),
    (methods, Type)
    },

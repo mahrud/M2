@@ -8,6 +8,7 @@
  *-
 
 needs "hypertext.m2"
+needs "run.m2"
 
 processExamplesStrict = true
 
@@ -49,6 +50,7 @@ EXAMPLE VisibleList := x -> (
 -----------------------------------------------------------------------------
 -- capture
 -----------------------------------------------------------------------------
+-- TODO: move to capture.m2
 
 -- TODO: the output format is provisional
 -- TODO: doesn't capture stderr

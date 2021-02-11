@@ -1,4 +1,3 @@
-run.m2
 classes.m2
 option.m2
 methods.m2
@@ -10,6 +9,7 @@ profile.m2
 debugging.m2
 remember.m2
 files.m2
+run.m2
 
 set.m2
 fold.m2
@@ -99,7 +99,6 @@ mathml.m2
 texmacs.m2
 pretty.m2
 programs.m2
-undoc.m2
 obsolete.m2
 exports.m2
 shared.m2

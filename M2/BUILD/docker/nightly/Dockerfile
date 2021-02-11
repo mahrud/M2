@@ -4,6 +4,9 @@
 
 FROM ubuntu:20.04
 
+# this is needed to make tzdata install without asking a question
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
 RUN apt-get update && \
     apt-get install -y software-properties-common apt-transport-https curl git sudo unzip gnupg && \
     add-apt-repository -y ppa:macaulay2/macaulay2 && apt-get update && apt-get clean

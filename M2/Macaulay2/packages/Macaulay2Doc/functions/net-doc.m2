@@ -2,8 +2,10 @@
 --- author(s): 
 --- notes: 
 
+
 undocumented {
 	  (net, Adjacent),
+	  (net, AngleBarList),
 	  (net, Array),
 	  (net, Bag),
 	  (net, BasicList),
@@ -25,6 +27,7 @@ undocumented {
 	  (net, Function),
 	  (net, FunctionApplication),
 	  (net, FunctionBody),
+	  (net, Functor),
 	  (net, GaloisField),
 	  (net, GeneralOrderedMonoid),
 	  (net, GradedModule),
@@ -43,6 +46,8 @@ undocumented {
 	  (net, IndexedVariable),
 	  (net, InexactField),
 	  (net, InfiniteNumber),
+	  (net, LATER),
+	  (net, LITERAL),
 	  (net, List),
 	  (net, MENU),
 	  (net, Manipulator),
@@ -76,7 +81,6 @@ undocumented {
 	  (net, RowExpression),
 	  (net, SUB),
 	  (net, SUP),
-	  (net, ScriptedFunctor),
 	  (net, Sequence),
 	  (net, Set),
 	  (net, SheafOfRings),

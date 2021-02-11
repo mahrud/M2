@@ -89,6 +89,10 @@ OO.texMath = ///{\mathcal O}///
 -- HH: homology and cohomology
 -----------------------------------------------------------------------------
 
+-- TODO: change to Options => true?
+  homology = method(Options => {})
+cohomology = method(Options => {Degree => 0}) -- for local cohomology and sheaf cohomology
+
   homology(ZZ, Sequence) := opts -> (i, X) ->   homology(prepend(i, X), opts)
 cohomology(ZZ, Sequence) := opts -> (i, X) -> cohomology(prepend(i, X), opts)
 

@@ -10,12 +10,26 @@ name: Build and Test Macaulay2
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - SheafMaps
+      - quickfix/Hom
+      - Dmodules
+      - Truncations
+      - Varieties
+      - development
+      - feature/functors
+      - feature/monoids
+      - feature/torsion
+      - feature/varieties
+      - refactor/Core
+      - refactor/engine
+      - refactor/monoids
+      - research
   pull_request:
     branches:
       - master
       - development
-  schedule:
-    - cron: '0 6 * * SUN' # runs tests on the main branch every Sunday at 06:00 UTC
 
 concurrency:
   # Cancel in-progress runs when a new workflow with the same group name is triggered
@@ -28,7 +42,6 @@ defaults:
 
 jobs:
   build:
-    if: github.repository == 'Macaulay2/M2' || contains(github.ref, 'global')
     name: ${{ matrix.build-system }}-${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:

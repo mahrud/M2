@@ -89,7 +89,7 @@ argumentMode = defaultMode
 runFile = (inf, inputhash, outf, tmpf, pkg, announcechange, usermode, examplefiles) -> (
      announcechange();
      if fileExists outf then removeFile outf;
-     pkgname := toString pkg;
+     pkgname := pkg#"pkgname";
      tmpf << "-- -*- M2-comint -*- hash: " << inputhash << endl << close; -- must match regular expression below
      rundir := temporaryFileName() | "-rundir/";
      makeDirectory rundir;

@@ -16,9 +16,11 @@
  9. answer over fields or ZZ gives an undesired minimal presentation
 *-
 
+needs "computations.m2"
+needs "gb.m2"
 needs "max.m2" -- for InfiniteNumber
 needs "modules2.m2"
-needs "computations.m2"
+needs "ringmap.m2"
 
 -----------------------------------------------------------------------------
 -- Local variables

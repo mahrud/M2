@@ -1,6 +1,8 @@
 --		Copyright 1993-2002 by Daniel R. Grayson
 
+needs "engine.m2" -- for isListOfListsOfIntegers
 needs "expressions.m2"
+needs "indeterminates.m2"
 needs "methods.m2"
 needs "orderedmonoidrings.m2"
 needs "variables.m2"

@@ -1,6 +1,7 @@
 --		Copyright 2009 by Daniel R. Grayson
 
 needs "code.m2"
+needs "indeterminates.m2"
 needs "ofcm.m2"
 needs "variables.m2"
 

@@ -323,6 +323,7 @@ newPackage String := opts -> pkgname -> (
 	    m = regex("(/|^)" | Layout#1#"packages" | "$", currentFileDirectory);
 	    -- this can be useful when running from the source tree, but this is a kludge
 	    if m#?1 then substring(currentFileDirectory, 0, m#1#0 + m#1#1) else prefixDirectory));
+    packageLayout := detectCurrentLayout packagePrefix;
     --
     newpkg := new Package from nonnull {
 	"pkgname"                  => pkgname,
@@ -353,8 +354,8 @@ newPackage String := opts -> pkgname -> (
 	"package prefix"           => packagePrefix
 	};
     --
-    if packagePrefix =!= null then (
-	rawdbname := databaseFilename(Layout#(detectCurrentLayout packagePrefix), packagePrefix, pkgname);
+    if packageLayout =!= null then (
+	rawdbname := databaseFilename(Layout#packageLayout, packagePrefix, pkgname);
 	if fileExists rawdbname then (
 	    newpkg#rawKeyDB = rawdb := openDatabase rawdbname;
 	    addEndFunction(() -> if isOpen rawdb then close rawdb))

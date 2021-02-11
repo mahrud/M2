@@ -17,6 +17,7 @@ max.m2
 structure.m2
 combinatorics.m2
 lists.m2
+tables.m2
 
 nets.m2
 robust.m2
@@ -27,10 +28,11 @@ expressions.m2
 peek.m2
 code.m2
 printing.m2
+http.m2
 
 computations.m2
-
 functors.m2
+
 rings.m2
 integers.m2
 engine.m2
@@ -43,7 +45,8 @@ orderedmonoidrings.m2
 variables.m2
 indeterminates.m2
 ofcm.m2
-tables.m2
+dotdot.m2
+
 modules.m2
 matrix.m2
 matrix1.m2
@@ -53,13 +56,13 @@ quotring.m2
 multilin.m2
 flint.m2
 modules2.m2
-basis.m2
-genmat.m2
 gb.m2
 matrix2.m2
 galois.m2
 ringmap.m2
 newring.m2
+basis.m2
+genmat.m2
 pushforward.m2
 ext.m2
 tor.m2
@@ -72,12 +75,10 @@ varieties.m2
 intersect.m2
 factor.m2
 integrate.m2
-http.m2
 minPres.m2
 monomcurve.m2
 fano.m2
 schubert.m2
-dotdot.m2
 
 packages.m2
 examples.m2

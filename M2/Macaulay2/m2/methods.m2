@@ -2,19 +2,6 @@
 
 needs "option.m2"
 
--- temporary definitions to get error messages to work before methods are working, so we can debug methods
-assert'( class between === Symbol )
-between = (m,v) -> mingle(v,#v-1:m)			    -- provisional
-assert'( class toString === Symbol )
-toString = x -> (					    -- provisional
-     if hasAttribute(x,ReverseDictionary) then simpleToString getAttribute(x,ReverseDictionary)
-     else if class x === Net then concatenate between("\n",unstack x)
-     else simpleToString x
-     )
-silentRobustString = (wid,sec,y) -> simpleToString y
-silentRobustNetWithClass = silentRobustNet = (wid,ht,sec,y) -> simpleToString y
---
-
 MethodFunction = new Type of CompiledFunctionClosure
 MethodFunctionSingle = new Type of CompiledFunctionClosure
 MethodFunctionBinary = new Type of CompiledFunctionClosure
@@ -466,19 +453,6 @@ scan(flexiblePostfixOperators, op -> (
 	  installAssignmentMethod(op, Type, (X,am) -> installAssignmentMethod(op, X, am));
 	  undocumented' ((op, symbol =), Type);
 	  ))
-
------------------------------------------------------------------------------
--- helper functions useable in documentation
------------------------------------------------------------------------------
-
-foo := method(Options => {})
-foodict := first localDictionaries foo
----- we can get into an infinite loop by doing this: (it's like printing the contents of a mutable hash table
--- codeHelper#(functionBody value foodict#"f") = g -> {
---      ("-- method functions:", code methods value (first localDictionaries g)#"methodFunction")
---      -- ("-- option table opts:", value (first localDictionaries g)#"opts")
---      }
-bar := lookup(foo,Sequence)
 
 -----------------------------------------------------------------------------
 -- hooks

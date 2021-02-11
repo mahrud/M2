@@ -12,7 +12,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - pre-master # when we're ready to merge 'development' into 'master', we merge it first into 'pre-master', so it can be tested
+      - Bases
+      - Truncations
+      - feature/functors
+      - feature/hilbert
+      - refactor/methods
+      - refactor/basis
+      - feature/computations
+      - refactor/Core
   pull_request:
     branches:
       - master
@@ -28,7 +35,6 @@ defaults:
 
 jobs:
   build:
-    if: github.repository == 'Macaulay2/M2' || contains(github.ref, 'global')
     name: ${{ matrix.build-system }}-${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:

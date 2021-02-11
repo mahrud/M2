@@ -34,7 +34,6 @@ undocumented {
     (expression,MutableMatrix),
     (expression,Option),
     (expression,QuotientRing),
-    (expression,ScriptedFunctor),
     (expression,Set),
     (expression,Type),
     (expression,Variety),

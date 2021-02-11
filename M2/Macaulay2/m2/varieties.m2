@@ -1,7 +1,7 @@
 --		Copyright 1993-1998 by Daniel R. Grayson
 
 needs "ext.m2"
-needs "gateway.m2"
+needs "functors.m2"
 needs "local.m2"
 needs "matrix1.m2"
 needs "modules.m2"
@@ -51,18 +51,21 @@ Proj Ring := ProjectiveVariety => (R) -> if R.?Proj then R.Proj else R.Proj = (
      	  }
      )
 
-sheaf = method()
-
 SheafOfRings = new Type of HashTable
 SheafOfRings.synonym = "sheaf of rings"
 expression SheafOfRings := O -> Subscript { OO, expression O.variety }
 net SheafOfRings := net @@ expression
 texMath SheafOfRings := x -> texMath expression x
-Ring ~ := sheaf Ring := SheafOfRings => R -> new SheafOfRings from { symbol variety => Proj R, symbol ring => R }
-sheaf(Variety,Ring) := SheafOfRings => (X,R) -> (
+
+sheaf = method()
+Ring ~ := sheaf Ring := SheafOfRings =>     R  -> new SheafOfRings from { symbol variety => Proj R, symbol ring => R }
+sheaf Variety        := SheafOfRings =>  X     -> sheaf_X ring X
+sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
      if ring X =!= R then error "expected the variety of the ring";
      new SheafOfRings from { symbol variety => X, symbol ring => R } )
+installMethod(symbol_,OO,Variety, (OO, X) -> sheaf_X ring X)
 ring SheafOfRings := O -> O.ring
+
 
 CoherentSheaf = new Type of HashTable
 CoherentSheaf.synonym = "coherent sheaf"
@@ -236,18 +239,10 @@ cohomology(ZZ,CoherentSheaf) := Module => opts -> (i,F) -> (
 
 cohomology(ZZ,SheafOfRings) := Module => opts -> (i,O) -> HH^i O^1
 
-applyMethod = (key,x) -> (
-     f := lookup key;
-     if f === null then error "no method available";	    -- expand this error message later
-     f x)
-
-OO = new ScriptedFunctor from {
-     subscript => X -> applyMethod((symbol _,OO,class X),(OO,X)),
-     argument => X -> applyMethod((symbol SPACE,OO,class X),(OO,X)),
-     }
-OO.texMath = ///{\mathcal O}///
-installMethod(symbol _,OO,Variety,(OO,X) -> sheaf_X ring X)
-sheaf Variety := X -> sheaf_X ring X
+-----------------------------------------------------------------------------
+-- PP: the projective space
+-----------------------------------------------------------------------------
+-- TODO: support weighted Proj as well
 
 --PP = new ScriptedFunctor from {
 --     superscript => (
@@ -450,6 +445,10 @@ Ext(ZZ,SheafOfRings,SheafOfRings) := Module => opts -> (n,O,R) -> Ext^n(O^1,R^1,
 
 -----------------------------------------------------------------------------
 -- end of code donated by Greg Smith <ggsmith@math.berkeley.edu>
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- hh: sheaf cohomology
 -----------------------------------------------------------------------------
 
 hh = new ScriptedFunctor from {

@@ -25,11 +25,12 @@ hypertext.m2
 validate.m2
 expressions.m2
 peek.m2
+code.m2
 printing.m2
 
 computations.m2
 
-gateway.m2
+functors.m2
 rings.m2
 integers.m2
 engine.m2
@@ -62,10 +63,12 @@ newring.m2
 pushforward.m2
 ext.m2
 tor.m2
+local.m2
 gradedmodules.m2
 chaincomplexes.m2
 res.m2
 monideal.m2
+varieties.m2
 intersect.m2
 factor.m2
 integrate.m2
@@ -74,9 +77,7 @@ minPres.m2
 monomcurve.m2
 fano.m2
 schubert.m2
-code.m2
 dotdot.m2
-local.m2
 
 packages.m2
 examples.m2
@@ -91,7 +92,6 @@ markdown.m2
 latex.m2
 book.m2
 
-varieties.m2
 webapp.m2
 jupyter.m2
 mathml.m2

@@ -131,7 +131,7 @@ isDocumentableMethod     Type :=
 isDocumentableMethod   Symbol :=
 isDocumentableMethod  Command :=
 isDocumentableMethod Function :=
-isDocumentableMethod ScriptedFunctor := isDocumentableThing
+isDocumentableMethod Functor  := isDocumentableThing
 
 documentableMethods := key -> select(methods key, isDocumentableMethod)
 
@@ -177,11 +177,11 @@ documentationValue(Symbol, Option) := (S, o) -> (
     -- cf: https://github.com/Macaulay2/M2/issues/1649#issuecomment-738618652
     documentationValue(S, value o#0))
 -- e.g. Macaulay2Doc :: help
-documentationValue(Symbol, Command)         := (S, c) -> documentationValue(S, c#0)
--- e.g. Macaulay2Doc :: sum
-documentationValue(Symbol, ScriptedFunctor) :=
-documentationValue(Symbol, Function)        :=
-documentationValue(Symbol, Keyword)         := (S, f) -> (
+documentationValue(Symbol, Command)  := (S, c) -> documentationValue(S, c#0)
+-- e.g. Macaulay2Doc :: sum, Macaulay2Doc :: HH
+documentationValue(Symbol, Functor)  :=
+documentationValue(Symbol, Function) :=
+documentationValue(Symbol, Keyword)  := (S, f) -> (
     -- methods of f
     a := smenu documentableMethods f;
     if #a > 0 then DIV nonnull splice ( "class" => "waystouse",
@@ -189,7 +189,7 @@ documentationValue(Symbol, Keyword)         := (S, f) -> (
 
 -- TODO: simplify this process
 -- e.g. Macaulay2Doc :: Macaulay2Doc
-documentationValue(Symbol, Package)         := (S, pkg) -> if pkg =!= Core then (
+documentationValue(Symbol, Package) := (S, pkg) -> if pkg =!= Core then (
     -- package filename
     fn := pkg#"pkgname" | ".m2";
     -- authors
@@ -317,10 +317,10 @@ getSynopsis := (key, tag, rawdoc) -> (
     result := nonnull {
 	if rawdoc.?BaseFunction then SPAN { "Function: ", TO rawdoc.BaseFunction }
 	else if instance(key, Sequence) and key#?0 then (
-	    if  instance(key#0, ScriptedFunctor) then SPAN { "Scripted functor: ", TO key#0 }
-	    else if instance(key#0, Keyword)     then SPAN { "Operator: ",         TO key#0 }
-	    else if instance(key#0, Function)    then SPAN { "Function: ",         TO key#0 }
-	    else if instance(key#0, Sequence) and #key#0 === 2 and key#0#1 === symbol=
+	    if  instance(key#0, Functor)  then SPAN { "Functor: ",  TO key#0 } else
+	    if  instance(key#0, Keyword)  then SPAN { "Operator: ", TO key#0 } else
+	    if  instance(key#0, Function) then SPAN { "Function: ", TO key#0 } else
+	    if  instance(key#0, Sequence) and #key#0 === 2 and key#0#1 === symbol=
 	    then SPAN { "Operator: ", TO key#0#0 }), -- assignment operator for this operator
 	if rawdoc.?Usage        then                           rawdoc.Usage, -- TODO: handle getUsage here
 	if rawdoc.?Inputs       then  LI { "Inputs:",       UL rawdoc.Inputs },
@@ -409,7 +409,7 @@ help Array := key -> (
     tag := getOption(rawdoc, symbol DocumentTag);
     getBody(key, tag, rawdoc))
 
--- everything else: Symbols, Types, ScriptedFunctors, Functions, Keywords, and Packages
+-- everything else: Symbols, Types, Functors, Functions, Keywords, and Packages
 help Symbol := key -> (
     rawdoc := fetchAnyRawDocumentation makeDocumentTag key;
     tag := getOption(rawdoc, symbol DocumentTag);
@@ -507,7 +507,7 @@ briefDocumentation Thing       := key -> (
     if waystouse =!= null then << endl << waystouse << endl;
     if technical =!= null then << endl << technical << endl;)
 
-? ScriptedFunctor :=
+? Functor  :=
 ? Function :=
 ? Command  :=
 ? Keyword  :=

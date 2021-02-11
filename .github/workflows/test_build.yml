@@ -21,6 +21,7 @@ on:
       - refactor/Core
       - refactor/engine
       - refactor/monoids
+      - feature/galois
       - research
   pull_request:
     branches:

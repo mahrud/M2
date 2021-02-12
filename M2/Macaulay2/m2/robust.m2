@@ -1,5 +1,7 @@
 -- all this code should go!!
 
+needs "lists.m2"
+needs "max.m2"
 needs "nets.m2"
 
 simpleToString := toString

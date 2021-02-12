@@ -11,7 +11,9 @@
  * pager
  *-
 
+needs "system.m2" -- for chkrun
 needs "document.m2"
+needs "installPackage.m2" -- TODO: can this be removed?
 
 -----------------------------------------------------------------------------
 -- Local variables
@@ -559,7 +561,7 @@ about String   := o -> re -> lastabout = (
             pkgname := pkg#"name";
             if packagesSeen#?pkgname then continue else packagesSeen#pkgname = 1;
             dbname := pkg#"doc db file name";
-            dbkeys := keys fetchDocKeys pkg;
+            dbkeys := pkg#"doc keys"();
             db := if o.Body then openDatabase dbname;
             keyList := select(dbkeys, matchfun_re db);
             if o.Body then close db;

@@ -1,3 +1,4 @@
+
 --		Copyright 1993-2002 by Daniel R. Grayson
 -*
   Methods are the most common type of dynamic dispatch, along with Hooks.
@@ -172,7 +173,7 @@ method = methodDefaults >> opts -> args -> (
      singleDispatch := chk opts.Dispatch;
      outputs := if not singleDispatch then apply(opts.Dispatch, c -> c === Type) else opts.Dispatch === Type;
      saveCurrentFileName := currentFileName;		    -- for debugging
-     saveCurrentLineNumber := currentLineNumber;	    -- for debugging
+     saveCurrentLineNumber := currentLineNumber();	    -- for debugging
      methodFunction := (
         if opts.Options === null then (
 	    if opts.Binary    then BinaryNoOptions(outputs) else

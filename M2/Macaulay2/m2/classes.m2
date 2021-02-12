@@ -1,5 +1,8 @@
 --		Copyright 1993-1999 by Daniel R. Grayson
 
+-- TODO: make this TT toString X later?
+synonym = X -> if X.?synonym then X.synonym else "object of class " | toString X
+
 Net.synonym = "net"
 Time.synonym = "timing result"
 Boolean.synonym = "Boolean value"
@@ -67,10 +70,7 @@ Command.synonym = "command"
 globalAssignment Command
 
 new Command from Function := Command => (command, f)       -> command {f}
-new Command from String   := Command => (command, cmdname) -> command {x ->
-    if x === ()
-    then chkrun cmdname
-    else chkrun(cmdname | " " | toString x)}
+-- new Command from String is defined in system.m2
 
 Command#AfterEval = x -> Thing#AfterEval x#0 ()
 Command Thing := (x,y) -> x#0 y

@@ -51,13 +51,6 @@ popvar = (sym) -> if varstack#?sym then (
      varstack#sym = c#1;
      )
 
--- TODO: why doesn't run always do this?
--- also used in expressions.m2, code.m2, and help.m2
-chkrun = cmd -> if (ret := run cmd) =!= 2 then ret else (
-    -- On Mac OS and Linux, 2 = 130-128 indicates shell is terminated by Ctrl-C
-    -- See https://tldp.org/LDP/abs/html/exitcodes.html
-    endl(stderr); error("run: subprocess interrupted"); )
-
 -----------------------------------------------------------------------------
 -- Dictionaries and Symbols
 -----------------------------------------------------------------------------

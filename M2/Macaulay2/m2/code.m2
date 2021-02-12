@@ -1,5 +1,7 @@
 --		Copyright 1993-1999, 2008 by Daniel R. Grayson
 
+--needs "document.m2" -- for formatDocumentTag, but this casues a loop
+needs "lists.m2"
 needs "methods.m2"
 needs "nets.m2"
 

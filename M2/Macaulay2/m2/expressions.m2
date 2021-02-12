@@ -1,15 +1,9 @@
 --		Copyright 1993-2002 by Daniel R. Grayson
 -- rewritten by P. Zinn-Justin 2018
 
-needs "files.m2"
-needs "fold.m2"
-needs "hypertext.m2"
 needs "max.m2"
 needs "methods.m2"
 needs "nets.m2"
-needs "remember.m2"
-needs "structure.m2"
-needs "system.m2"
 
 Constant = new Type of BasicList
 globalAssignment Constant
@@ -1235,30 +1229,6 @@ texMath VectorExpression := v -> (
 	"\\right)"
 	)
     )
-
-ctr := 0
-showTex = method()
-showTex Thing := x -> (
-    dir := temporaryFileName();
-    makeDirectory dir;
-    f := dir | "/show";
-    f | ".tex"
-    << ///\documentclass{article}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\begin{document}
-///
-     << tex x <<
-///
-\end{document}
-///
-     << close;
-     if 0 =!= chkrun("set -x ; cd "|dir|"; latex " | f)
-     then error ("latex failed on input file "|f|".tex");
-     if 0 =!= chkrun("(xdvi "|f|".dvi && rm -f "|f|".tex "|f|".dvi "|f|".log "|f|".aux)&")
-     then error ("xdvi failed on input file "|f|".tex");
-     )
-show TEX := showTex
 
 -----------------------------------------------------------------------------
 print = x -> (<< net x << endl;) -- !! one may want to modify this depending on the type of output !!

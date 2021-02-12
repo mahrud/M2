@@ -6,6 +6,7 @@
 -----------------------------------------------------------------------------
 
 needs "format.m2"
+needs "html.m2" -- for browser
 
 newpara := "\n\\par "
 maximumCodeWidth := 60 -- see also booktex.m2, an old file that sets the same variable
@@ -165,6 +166,26 @@ tex TO2  := x -> ( tag := x#0; text := x#1; tex TT text )
 tex HREF := x -> concatenate("\\special{html:<a href=\"", texLiteral toURL first x, "\">}", tex last x, "\\special{html:</a>}")
 
 tex MENU := x -> tex drop(redoMENU x, 1)
+
+-----------------------------------------------------------------------------
+-- Viewing TeX
+-----------------------------------------------------------------------------
+
+-- TODO: incorporate this with packages/Style/M2book.tex.in
+TeXclass := "\\documentclass{article}"
+TeXpackages := {"amsmath", "amssymb"}
+TeXtemplate := src -> concatenate( TeXclass,                newline,
+    apply(TeXpackages, pkg -> "\\usepackage{" | pkg | "}"), newline,
+    "\\begin{document}", newline, src, newline, "\\end{document}" )
+
+showTex =
+show TEX := x -> (
+    fn := "show";
+    makeDirectory(dir := temporaryFileName() | "/");
+    dir | fn | ".tex" << TeXtemplate tex x << close;
+    if 0 =!= chkrun concatenate("set -x ; cd ", dir, "; pdflatex -interaction=batchmode " , fn)
+    then error("pdflatex failed on input file ", dir, fn, ".tex");
+    show new URL from concatenate(rootURI, dir, fn, ".pdf"))
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "

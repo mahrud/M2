@@ -80,7 +80,7 @@ runnable := fn -> (
 
 -- preferred web browser
 -- TODO: cache this value
-browser := () -> (
+browser = () -> (
     if runnable getenv "WWWBROWSER" then getenv "WWWBROWSER" -- compatibility
     else if version#"operating system" === "Darwin" and runnable "open" then "open" -- Apple varieties
     else if runnable "xdg-open" then "xdg-open" -- most Linux distributions

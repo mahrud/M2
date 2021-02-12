@@ -1,5 +1,6 @@
 --		Copyright 1993-1999,2004 by Daniel R. Grayson
 
+needs "fold.m2"
 needs "methods.m2"
 
 InfiniteNumber = new Type of BasicList

@@ -18,7 +18,7 @@ document {
 	  (describe, AffineVariety),
 	  (describe, CoherentSheaf),
 	  (describe, GaloisField),
-	  (describe, GeneralOrderedMonoid),
+	  (describe, Monoid),
 	  (describe, Matrix),
 	  (describe, Module),
 	  (describe, ProjectiveVariety),

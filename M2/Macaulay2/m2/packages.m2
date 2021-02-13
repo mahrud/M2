@@ -109,6 +109,7 @@ Package.GlobalReleaseHook = globalReleaseFunction
 
 net      Package :=
 toString Package := pkg -> if pkg#?"pkgname" then pkg#"pkgname" else "-*package*-"
+html     Package := pkg -> html    toString pkg
 texMath  Package := pkg -> texMath toString pkg
 options  Package := pkg -> pkg.Options
 

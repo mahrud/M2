@@ -5,7 +5,7 @@
 
 needs "debugging.m2" -- for Descent
 needs "format.m2"
-needs "gb.m2" -- for for GroebnerBasis
+needs "orderedmonoidrings.m2" -- for Monoid
 needs "packages.m2" -- for Package
 needs "system.m2" -- for getViewer
 
@@ -177,8 +177,6 @@ html Time := x -> html x#1 | html DIV ("-- ", toString x#0, " seconds")
 html Command :=
 html File :=
 html IndeterminateNumber :=
-html GroebnerBasis :=
-html Package :=
 html Boolean :=
 html Function :=
 html Type := html @@ toString

@@ -29,7 +29,7 @@ undocumented {
 	  (net, FunctionBody),
 	  (net, Functor),
 	  (net, GaloisField),
-	  (net, GeneralOrderedMonoid),
+	  (net, Monoid),
 	  (net, GradedModule),
 	  (net, GradedModuleMap),
 	  (net, GroebnerBasis),

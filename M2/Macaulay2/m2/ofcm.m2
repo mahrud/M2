@@ -43,11 +43,6 @@ options GeneralOrderedMonoid := M -> M.Options
 degrees GeneralOrderedMonoid := M -> M.Options.Degrees
 raw GeneralOrderedMonoid := M -> M.RawMonoid
 
-rle = method(Dispatch => Thing)
-rle VisibleList := x -> apply(runLengthEncode x, y -> if instance(y,Holder) then rle y#0 else y)
-rle Option := x -> x#0 => rle x#1
-rle Thing := identity
-
 fixbasename = s -> if instance(s,String) then getSymbol s else s
 
 monoidDefaults = (
@@ -72,28 +67,6 @@ monoidDefaults = (
 	  Constants => false				    -- whether to use rawTowerRing when making a monoid ring
 	  }
      )
-
-monoidParts = (M) -> (
-     O := monoidDefaults;
-     o := M#"original options";	-- if we used M.Options we'd run into lots of long lists as in GRevLex => {1,1,1,1,1,1,1}
-     o = M.Options;
-     nonnull splice (
-	  if M.?generatorExpressions then toSequence runLengthEncode M.generatorExpressions,
-	  Degrees => runLengthEncode if o.DegreeRank === 1 then flatten o.Degrees else (x -> VerticalList x) \ o.Degrees,
-	  if o.Heft =!= null then Heft => runLengthEncode o.Heft,
-	  MonomialOrder => rle o.MonomialOrder,
-	  ( DegreeRank, MonomialSize, WeylAlgebra, SkewCommutative, Inverses, Global ) / (key -> if o#?key and o#key =!= O#key then key => o#key)))
-
-expressionMonoid = M -> (
-     T := if (options M).Local === true then List else Array;
-     new T from apply(monoidParts M,expression))
-expression GeneralOrderedMonoid := M -> if hasAttribute(M,ReverseDictionary) then expression getAttribute(M,ReverseDictionary) else new Parenthesize from { (expression monoid) expressionMonoid M }
-describe GeneralOrderedMonoid := M -> Describe new Parenthesize from { (expression monoid) expressionMonoid M }
-
-toExternalString GeneralOrderedMonoid := toString @@ describe
-toString GeneralOrderedMonoid := toString @@ expression
-net GeneralOrderedMonoid := net @@ expression
-texMath GeneralOrderedMonoid := x -> texMath expression x
 
 degreesMonoid = method(TypicalValue => GeneralOrderedMonoid)
 degreesMonoid PolynomialRing := R -> (
@@ -238,7 +211,6 @@ findSymbols = varlist -> (
 
 makeit1 := (opts) -> (
      M := new GeneralOrderedMonoid of MonoidElement;
-     M#"original options" = opts;
      M.Engine = true;
      varlist := baseName \ opts.Variables;
      numvars := # varlist;

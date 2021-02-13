@@ -710,6 +710,7 @@ protect symbol locate
 
 -- baseName
 baseName = method()
+baseName Symbol := identity
 baseName Thing := R -> (
      if hasAttribute(R,ReverseDictionary) then (
 	  x := getAttribute(R,ReverseDictionary);

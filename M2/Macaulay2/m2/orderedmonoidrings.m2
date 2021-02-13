@@ -2,27 +2,60 @@
 
 -- TODO: seems to need ofcm.m2 for monoid and tensor
 -- TODO: seems to need quotring.m2 for isQuotientOf
-needs "methods.m2"
 needs "enginering.m2"
+needs "indeterminates.m2" -- runLengthEncode
+needs "methods.m2"
 needs "tables.m2"
 
+-----------------------------------------------------------------------------
+-- Monoid and OrderedMonoid type declarations and basic constructors
 -----------------------------------------------------------------------------
 
 Monoid = new Type of Type
 Monoid.synonym = "monoid"
-use Monoid := x -> ( if x.?use then x.use x; x)
 
+use     Monoid := x -> ( if x.?use then x.use x; x)
 options Monoid := x -> null
-
-baseName Symbol := identity
 
 OrderedMonoid = new Type of Monoid
 OrderedMonoid.synonym = "ordered monoid"
+
 degreeLength OrderedMonoid := M -> M.degreeLength
 
 -----------------------------------------------------------------------------
+-- helpers for printing Monoids
+-----------------------------------------------------------------------------
 
-terms := symbol terms
+monoidParts = M -> (
+    opts := M.Options;
+    G := if M.?generatorExpressions then toSequence runLengthEncode M.generatorExpressions;
+    D := runLengthEncode if opts.DegreeRank === 1 then flatten opts.Degrees else opts.Degrees / (deg -> VerticalList deg);
+    H := if opts.Heft =!= null then runLengthEncode opts.Heft;
+    O := rle opts.MonomialOrder;
+    L := nonnull splice (
+	G, Degrees => D, if opts.Heft =!= null then Heft => H, MonomialOrder => O,
+	apply(( DegreeRank, MonomialSize, WeylAlgebra, SkewCommutative, Inverses, Global ),
+	    key -> if opts#?key and opts#key =!= monoidDefaults#key then key => opts#key)))
+
+expressionMonoid = M -> (
+    T := if (options M).Local === true then List else Array;
+    new T from apply(monoidParts M, expression))
+
+describe   Monoid := M -> Describe expressionMonoid M
+expression Monoid := M -> (
+    if hasAttribute(M, ReverseDictionary)
+    then expression getAttribute(M, ReverseDictionary)
+    else new Parenthesize from { (expression monoid) expressionMonoid M } )
+
+toExternalString Monoid := toString @@ describe
+toString Monoid := toString @@ expression
+net      Monoid :=      net @@ expression
+texMath  Monoid :=  texMath @@ expression
+
+-----------------------------------------------------------------------------
+-- PolynomialRing type declaration and basic constructor
+-----------------------------------------------------------------------------
+
 PolynomialRing = new Type of EngineRing
 PolynomialRing.synonym = "polynomial ring"
 PolynomialRing#{Standard,AfterPrint} = R -> (

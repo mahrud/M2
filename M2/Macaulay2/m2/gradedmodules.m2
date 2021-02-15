@@ -1,4 +1,5 @@
 --		Copyright 1997-2002 by Daniel R. Grayson
+-- TODO: https://github.com/Macaulay2/M2/issues/640
 
 needs "modules.m2"
 needs "ringmap.m2"

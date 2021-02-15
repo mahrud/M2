@@ -397,6 +397,7 @@ engineMGBF4 Ideal := opts -> I -> engineMGB(generators I, opts, "Reducer" => "F4
 -- groebnerBasis
 -----------------------------------------------------------------------------
 -- TODO: hookify this
+-- TODO: https://github.com/Macaulay2/M2/issues/798
 
 groebnerBasis = method(
     TypicalValue => Matrix,

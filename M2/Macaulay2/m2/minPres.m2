@@ -1,5 +1,14 @@
 -- This file written by Amelia Taylor <ataylor@stolaf.edu>
 
+-- TODO: https://github.com/Macaulay2/M2/issues/252
+-- TODO: move to a MinimalPresentation package?
+-- TOOD: identify hotspots, move to the engine
+-- also see code in:
+-- chaincomplexes.m2
+-- varieties.m2
+-- gradedmodules.m2
+-- modules2.m2  for Module and Matrix, already hookified
+
 needs "matrix1.m2"
 
 ----- This file was last updated on June 22, 2006

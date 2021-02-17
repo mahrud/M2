@@ -409,6 +409,7 @@ ExternalProject_Add(build-flint
                     -DCMAKE_CXX_FLAGS=${CXXFLAGS}
                     -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
                     -DIPO_SUPPORTED=OFF # TODO: because of clang; see https://github.com/wbhart/flint2/issues/644
+                    -DFLINT_USES_TLS=ON
                     -DWITH_NTL=ON
                     -DWITH_MPIR=${USING_MPIR}
                     # TODO: force SIMD flags off for distribution

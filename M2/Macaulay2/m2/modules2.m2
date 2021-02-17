@@ -1,5 +1,11 @@
 --		Copyright 1995-2002 by Daniel R. Grayson and Michael Stillman
 
+-- TODO: splinter off:
+-- hilbert.m2 for hilbert*, euler, and poincare
+-- trim.m2 for trim and minpres
+-- Hom/End/adjoint/tensor?
+-- whatever remains is purely module manipulations, not computations
+
 needs "matrix1.m2"  -- for Ideal
 needs "matrix2.m2"  -- for modulo
 needs "quotring.m2" -- for QuotientRing

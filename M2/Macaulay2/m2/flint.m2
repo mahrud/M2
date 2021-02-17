@@ -1,3 +1,6 @@
+-- TODO: turn this into a template for what precisely the ring interface needs to define
+-- see https://nemocas.github.io/AbstractAlgebra.jl/latest/rings/ for inspiration
+
 needs "engine.m2"
 needs "enginering.m2"
 needs "mutablemat.m2"
@@ -90,8 +93,8 @@ QQFlint = makeQQFlint();
 end
 restart
 debug Core
+load (Core#"source directory" | "flint.m2")
 
-load "~/src/M2-git-linalg/M2/Macaulay2/m2/flint.m2"
 R = ZZFlint
 a = 1_R
 b = 3_R

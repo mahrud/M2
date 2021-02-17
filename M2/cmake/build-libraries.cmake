@@ -354,6 +354,7 @@ ExternalProject_Add(build-flint
                     -DCMAKE_CXX_FLAGS=${CXXFLAGS}
                     -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
                     -DIPO_SUPPORTED=OFF # TODO: because of clang; see https://github.com/wbhart/flint2/issues/644
+                    -DFLINT_USES_TLS=ON
                     -DWITH_NTL=ON
   INSTALL_COMMAND   ${CMAKE_COMMAND} --install . ${strip_setting}
           COMMAND   ${CMAKE_COMMAND} -E make_directory ${M2_INSTALL_LICENSESDIR}/flint

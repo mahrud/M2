@@ -1,5 +1,10 @@
 --		Copyright 1995 by Daniel R. Grayson and Michael Stillman
 
+-- TODO: add more generics and random objects
+-- each ring should have a random method
+-- TODO: move randomMutableMatrix here from mutablemat.m2?
+-- TODO: move randomKRationalPoint here from varieties.m2?
+
 needs "basis.m2"
 needs "modules.m2" -- for Matrix
 

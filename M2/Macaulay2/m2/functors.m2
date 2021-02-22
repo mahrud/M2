@@ -17,10 +17,9 @@ functorArgs(Thing, Thing)           := identity
 
 wrongDomain := (G, op, X) -> error("no method for ", toString G, toString op, toString X)
 
-applyMethod = (key, X) -> (
-    if (F := lookup key) =!= null then F X
-    -- TODO: expand this error message
-    else error("no method for functor ", toString key#1, " applied to ", X))
+-- check if a function can be applied to the inputs
+applyMethod = (key, G, op, X) -> (
+    if (F := lookup key) =!= null then F X else wrongDomain(G, op, X))
 
 -- TODO: combine these with applyMethod and retire these
 applyMethod' = (key, desc, X) -> (
@@ -69,9 +68,11 @@ ScriptedFunctor _ Thing := (G, i) -> if G#?subscript   then G#subscript i   else
 ScriptedFunctor ^ Thing := (G, i) -> if G#?superscript then G#superscript i else wrongDomain(G, symbol ^, i)
 
 -----------------------------------------------------------------------------
+-- printing
 
-net        Functor := lookup(net, Type)
-toString   Functor := lookup(toString, Type)
+-- TODO: improve expression and mathML of functors
+net        Functor := F -> if F.?net      then F.net      else (lookup(     net, Type)) F
+toString   Functor := F -> if F.?toString then F.toString else (lookup(toString, Type)) F
 expression Functor := F -> new Holder from { F }
 precedence Functor := x -> 70
 
@@ -88,7 +89,7 @@ methodOptions Functor := F -> null
 -----------------------------------------------------------------------------
 
 id = new ScriptedFunctor from {
-    subscript => X -> applyMethod((id, class X), X),
+    subscript => X -> applyMethod((id, class X), id, symbol_, X),
     }
 
 -----------------------------------------------------------------------------
@@ -120,6 +121,7 @@ HH = new ScriptedFunctor from {
     argument => X -> homology X
     }
 
+-- TODO: is this actually necessary? functorArgs takes care of HH^i(X, Degree => ...)
   homology(ZZ,Sequence) := opts -> (i,X) ->   homology prepend(i,X)
 cohomology(ZZ,Sequence) := opts -> (i,X) -> cohomology(prepend(i,X), opts)
 

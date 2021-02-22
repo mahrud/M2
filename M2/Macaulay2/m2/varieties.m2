@@ -1,4 +1,5 @@
 --		Copyright 1993-1998 by Daniel R. Grayson
+-- TODO: define f^# for the map on SheafOfRings?
 
 needs "ext.m2"
 needs "functors.m2"

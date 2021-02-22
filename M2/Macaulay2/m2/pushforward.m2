@@ -240,6 +240,29 @@ kernel Matrix := Module => opts -> (cacheValue symbol kernel) ((m) -> (
 	       subquotient( h, if N.?relations then N.relations))))
 kernel RingElement := Module => options -> (m) -> kernel (matrix {{m}},options)
 
+-----------------------------------------------------------------------------
+-- RingMap_*: direct image functor (pushforward)
+-----------------------------------------------------------------------------
+-- TODO: should RingMap set attribute and print that?
+
+RingMap_* := Functor => f -> new Functor from {
+    argument => X -> pushForward functorArgs(f, X),
+    -- printing methods
+    symbol net     => "pushforward by " | net f,
+    symbol texMath => texMath f | texMath symbol_*,
+    }
+
+-----------------------------------------------------------------------------
+-- RingMap^*: pullback functor
+-----------------------------------------------------------------------------
+-- TODO: move this elsewhere
+-- TODO: is it possible to get this as the adjoint to f_*?
+
+RingMap^* := Functor => f -> new Functor from {
+    argument => X -> print("pullback by f applied to " | synonym class X),
+    net => F -> "pullback by " | net f,
+    }
+
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "
 -- End:

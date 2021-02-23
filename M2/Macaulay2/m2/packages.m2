@@ -102,15 +102,12 @@ closePackage = pkg -> if pkg#?rawKeyDB then (db -> if isOpen db then close db) p
 
 Package = new Type of MutableHashTable
 Package.synonym = "package"
-
-Package.GlobalAssignHook  = (X, x) -> (
-    if not hasAttribute(x, ReverseDictionary) then setAttribute(x, ReverseDictionary, X))
-Package.GlobalReleaseHook = globalReleaseFunction
+globalAssignment Package
+-- TODO: if it is okay to call "use X", we can remove this line:
+Package.GlobalAssignHook = (X, x) -> if not hasAttribute(x, ReverseDictionary) then setAttribute(x, ReverseDictionary, X)
 
 net      Package :=
 toString Package := pkg -> if pkg#?"pkgname" then pkg#"pkgname" else "-*package*-"
-html     Package := pkg -> html    toString pkg
-texMath  Package := pkg -> texMath toString pkg
 options  Package := pkg -> pkg.Options
 
 -- TODO: should this go elsewhere?

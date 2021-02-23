@@ -22,6 +22,7 @@ workable = f -> try (f(); true) else false
 
 RingMap = new Type of HashTable
 RingMap.synonym = "ring map"
+globalAssignment RingMap
 
 matrix RingMap := opts -> f -> f.matrix
 source RingMap := f -> f.source
@@ -34,8 +35,13 @@ RingMap == ZZ := (f, n) -> (
     error "encountered integer other than 1 in comparison with a ring map")
 
 -- printing helpers
-describe   RingMap := f -> Describe expression f
-expression RingMap := f -> (expression map) (expression (target f, source f, first entries matrix f))
+expressionRingMap := f -> (expression map) (expression(target f, source f, first entries matrix f))
+
+describe   RingMap := f -> Describe expressionRingMap f
+expression RingMap := f -> (
+    if hasAttribute(f, ReverseDictionary)
+    then expression getAttribute(f, ReverseDictionary)
+    else new Parenthesize from { expressionRingMap f })
 
 toExternalString RingMap := toString @@ describe
 toString RingMap := toString @@ expression
@@ -44,6 +50,7 @@ texMath  RingMap :=  texMath @@ expression
 
 RingMap#AfterPrint =
 RingMap#AfterNoPrint = f -> (
+    -- TODO: is there an alternative that isn't grayed out as comments by syntax highlighters?
     -- class f, " ", target f, " <--- ", source f)
     class f, " ", new MapExpression from {target f, source f})
 

@@ -104,15 +104,12 @@ closePackage = pkg -> if pkg#?rawKeyDB then (db -> if isOpen db then close db) p
 
 Package = new Type of MutableHashTable
 Package.synonym = "package"
-
-Package.GlobalAssignHook  = (X, x) -> (
-    if not hasAttribute(x, ReverseDictionary) then setAttribute(x, ReverseDictionary, X))
-Package.GlobalReleaseHook = globalReleaseFunction
+globalAssignment Package
+-- TODO: if it is okay to call "use X", we can remove this line:
+Package.GlobalAssignHook = (X, x) -> if not hasAttribute(x, ReverseDictionary) then setAttribute(x, ReverseDictionary, X)
 
 net      Package :=
 toString Package := pkg -> if pkg#?"pkgname" then pkg#"pkgname" else "-*package*-"
-html     Package := pkg -> html    toString pkg
-texMath  Package := pkg -> texMath toString pkg
 options  Package := pkg -> pkg.Options
 methods  Package := memoize(pkg -> select(methods(), m -> package m === pkg))
 
@@ -461,10 +458,7 @@ endPackage String := title -> (
      pkg := currentPackage;
      ws := set apply(pkg#"exported mutable symbols", symbolBody);
      exportDict := pkg.Dictionary;
-     scan(sortByHash values exportDict, s -> if not ws#?(symbolBody s) then (
-	       protect s;
-	       ---if value s =!= s and not hasAttribute(value s, ReverseDictionary) then setAttribute((value s), ReverseDictionary, s)
-	       ));
+     scan(sortByHash values exportDict, s -> if not ws#?(symbolBody s) then protect s);
      protect exportDict;
      protect pkg#"private dictionary";
      if pkg#"pkgname" === "Core" then (

@@ -244,7 +244,12 @@ kernel RingElement := Module => options -> (m) -> kernel (matrix {{m}},options)
 -- RingMap_*: direct image functor (pushforward)
 -----------------------------------------------------------------------------
 
-RingMap_* := Functor => f -> new Functor from {
+Category = new Type of Type
+Morphism = new Type of Category
+Pushforward = new Type of Morphism
+-- TODO: figure out how to route printing functions through Pushforward
+
+RingMap_* := Functor => f -> new Functor of Pushforward from hashTable {
     argument => X -> pushForward functorArgs(f, X),
     -- printing methods
     symbol synonym => "pushforward functor " | toString f | toString symbol_*,

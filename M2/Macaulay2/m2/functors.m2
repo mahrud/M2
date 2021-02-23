@@ -65,15 +65,15 @@ ScriptedFunctor _ Thing := (G, i) -> if G#?subscript   then G#subscript i   else
 ScriptedFunctor ^ Thing := (G, i) -> if G#?superscript then G#superscript i else wrongDomain(G, symbol^, i)
 
 -----------------------------------------------------------------------------
--- printing
+-- printing and introspection
 
--- TODO: improve expression and mathML of functors
-net        Functor := F -> if F.?net      then F.net      else (lookup(     net, Type)) F
-toString   Functor := F -> if F.?toString then F.toString else (lookup(toString, Type)) F
+net        Functor := lookup(     net, Type)
+toString   Functor := lookup(toString, Type)
 expression Functor := F -> new Holder from { F }
 precedence Functor := x -> 70
 
 -- TODO: use codeHelpers to get code HH to work
+-- TODO: improve this for RingMap_*
 methods' := lookup(methods, Symbol)
 methods Functor := F -> (
     if F === HH then join(methods homology, methods cohomology) else methods' F)
@@ -106,10 +106,6 @@ OO.texMath = ///{\mathcal O}///
 -- TODO: change to Options => true?
   homology = method(Options => {})
 cohomology = method(Options => {Degree => 0}) -- for local cohomology and sheaf cohomology
-
--- TODO: is this actually necessary? functorArgs takes care of HH^i(X, Degree => ...)
-  homology(ZZ, Sequence) := opts -> (i, X) ->   homology prepend(i, X)
-cohomology(ZZ, Sequence) := opts -> (i, X) -> cohomology prepend(i, X)
 
 HH = new ScriptedFunctor from {
     subscript => (

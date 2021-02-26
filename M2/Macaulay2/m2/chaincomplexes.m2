@@ -1,6 +1,7 @@
 --		Copyright 1993-2002 by Daniel R. Grayson
 -- TODO:
 -- 1. support QQ in rawResolutionGetMatrix, then enable FastNonminimal for QQ
+-- 2. move betti and BettiTally functions to betti.m2
 
 needs "functors.m2"
 needs "gb.m2"

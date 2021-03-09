@@ -110,12 +110,17 @@ nestingDepth(frameID:int,d:Dictionary):int := (
 	  );
      n);
 
+-- TODO: type check before assignment to typed tokens?
+-- See https://github.com/Macaulay2/M2/issues/1979
 tokenAssignment(e:ParseTree,b:Binary,t:Token):Code := (
      if t.entry.frameID == 0
      then Code(globalAssignmentCode(t.entry,convert(b.rhs),treePosition(e)))
      else Code(localAssignmentCode(nestingDepth(t.entry.frameID,t.dictionary),t.entry.frameindex,convert(b.rhs),treePosition(e)))
      );
 
+-- TODO: partial parallel assignment
+-- e.g., (a, , c) = (1, 2, 3)
+-- See https://github.com/Macaulay2/M2/issues/1774
 parallelAssignment(e:ParseTree,b:Binary,p:Parentheses):Code := (
      symbols := makeSymbolSequence(b.lhs);
      n := length(symbols);
@@ -190,6 +195,9 @@ export convert(e:ParseTree):Code := (
 	  else dummyCode			  -- should not happen
 	  )
      is p:Parentheses do (
+	  -- TODO: perhaps this should give a FlatList, which is absorbed by top-level lists
+	  -- e.g., {1..3, 5, 6} = { FlatList(1,2,3), 5, 6 } = {1,2,3,5,6}
+	  -- See https://github.com/Macaulay2/M2/issues/1978
 	  if p.left.word == leftparen then convert(p.contents)
 	  else if p.left.word == leftbrace 
 	  then Code(listCode(makeCodeSequence(p.contents,CommaW),treePosition(e)))

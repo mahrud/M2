@@ -41,7 +41,8 @@ toExternalString LocalRing:= RP -> toString describe RP
 coefficientRing LocalRing := RP -> coefficientRing ring RP.maxIdeal
   isWellDefined LocalRing := RP -> isPrime RP.maxIdeal
   isCommutative LocalRing := RP -> isCommutative ring RP.maxIdeal -- FIXME make sure this is correct
-   degreeLength LocalRing := RP -> degreeLength ring RP.maxIdeal
+   degreeLength LocalRing := RP -> degreeLength ring RP.maxIdeal -- TODO: should this always be 1?
+    degreesRing LocalRing := RP -> degreesRing ring RP.maxIdeal -- TODO: should this always be degreesRing 1?
    presentation LocalRing := RP -> map(RP^1, RP^0, 0)
      generators LocalRing := opts -> RP -> (if opts.CoefficientRing === ring RP.maxIdeal
                                             then generators(ring RP.maxIdeal) / (r -> promote(r, RP))
@@ -49,6 +50,7 @@ coefficientRing LocalRing := RP -> coefficientRing ring RP.maxIdeal
       precision LocalRing := RP -> precision ring RP.maxIdeal
         degrees LocalRing := RP -> degrees ring RP.maxIdeal
         numgens LocalRing := RP -> numgens ring RP.maxIdeal
+           heft LocalRing := RP -> heft ring RP.maxIdeal -- TODO: should this always be {1}?
            frac LocalRing := RP -> frac ring RP.maxIdeal
            char LocalRing := RP -> char ring RP.maxIdeal
             dim LocalRing := RP -> codim RP.maxIdeal
@@ -60,6 +62,7 @@ localRing(Ring, Ideal) := (R, P) -> (
     if R#?(localRing, P) then R#(localRing, P) else error "No method found")
 localRing(EngineRing, Ideal) := (R, P) ->
     if isField R then R else if R#?(localRing,P) then R#(localRing,P) else (
+        if degreeLength R =!= 1 then error notImplemented "localization of multigraded rings";
         if ring P =!= R then error "expected ideal of the same ring";
         RP := new LocalRing from rawLocalRing(raw R, raw gb P);
         RP.baseRings = append(R.baseRings, R);

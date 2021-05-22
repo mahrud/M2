@@ -249,7 +249,7 @@ localMinimalPresentationHook Module := Module => opts -> M -> (
         );
     )
 
---===================== Length and Hilbert-Samuel Polynomial Polynomial =====================--
+--===================== Length and Hilbert-Samuel Series and Polynomial ======================--
 
 -- TODO: check that it's Artinian first
 -- test based on when hilbertSamuelFunction(M, n) == 0?

@@ -52,7 +52,7 @@ findHeftandVars = (R, varlist, ndegs) -> (
     -- consisting of those vars whose degree is not 0 on the first ndegs slots
     -- and heft is an integer vector of length ndegs s.t. heft.deg(x) > 0 for each variable x in varlist
     varlist = getVarlist(R, varlist);
-    if ndegs == 0 or #varlist == 0 then return (varlist, {});
+    if ndegs == 0 or #varlist == 0 then return (varlist, toList(ndegs : 1));
     if degreeLength R == ndegs and #varlist == numgens R then (
 	heftvec := heft R;
 	if heftvec =!= null then return (varlist, heftvec));

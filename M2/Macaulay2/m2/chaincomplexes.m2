@@ -4,6 +4,7 @@
 
 needs "gradedmodules.m2"
 needs "gb.m2"
+needs "hilbert.m2"
 needs "modules2.m2"
 
 -----------------------------------------------------------------------------

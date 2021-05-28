@@ -1,6 +1,7 @@
 --		Copyright 1995-2002 by Daniel R. Grayson
 
 -- TODO: needs "newring.m2" for flattenRing
+needs "gb.m2" -- for checkHilbertHint
 needs "galois.m2"
 needs "matrix1.m2"
 needs "modules.m2"

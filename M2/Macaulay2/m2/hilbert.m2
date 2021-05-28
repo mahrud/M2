@@ -1,5 +1,10 @@
 --		Copyright 1995-2002 by Daniel R. Grayson and Michael Stillman
 
+-- TODO:
+-- - hookifying the functions
+-- - simplify how caching in hilbertSeries works
+-- - use the same caching style for local rings
+
 needs "modules2.m2"
 needs "max.m2" -- infinity
 
@@ -16,8 +21,8 @@ recipN := (n, wts, f) -> (
      -- we compute the terms of the expansion of 1/f of weight less than n
      if n <= 0 then error "expected a positive integer";
      if part(, 0, wts, f) != 1 then error "expected a polynomial of the form 1 plus terms of positive weight";
-     g := 1_(ring f);  -- g always has the form 1 plus terms weight 1,2,...,m-1
-     m := 1;			   -- 1-f*g always has terms of wt m and higher
+     g := 1_(ring f); -- g always has the form 1 plus terms weight 1,2,...,m-1
+     m := 1;          -- 1-f*g always has terms of wt m and higher
      tr := h -> part(, m-1, wts, h);
      while m < n do (
 	  m = 2*m;
@@ -117,8 +122,7 @@ length Module := ZZ => (cacheValue symbol length) (M -> (
 
 addHook((length, Module), Strategy => Default, M -> (
      if not isHomogeneous M then notImplemented();
-     if dim M > 0 then return infinity;
-     degree M))
+     if dim M > 0 then infinity else degree M))
 
 -----------------------------------------------------------------------------
 -- ProjectiveHilbertPolynomial type declaration
@@ -172,9 +176,9 @@ hilbertPolynomial Ring   := opts -> R -> hilbertPolynomial(module R,   opts)
 hilbertPolynomial Ideal  := opts -> I -> hilbertPolynomial(comodule I, opts)
 hilbertPolynomial Module := opts -> M -> (
     R := ring M;
-    if not isHomogeneous M then error "expected a homogeneous module";
-    if degreeLength R != 1 then error "expected a singly graded ring";
-    if not all(degrees R, d -> d === {1}) then error "expected a ring whose variables all have degree 1";
+    if not isHomogeneous M then error "hilbertPolynomial: expected a homogeneous module";
+    if degreeLength R != 1 then error "hilbertPolynomial: expected a singly graded ring";
+    if not all(degrees R, d -> d === {1}) then error "hilbertPolynomial: expected a ring whose variables all have degree 1";
     n := numgens R - 1;
     p := pairs standardForm poincare M;
     if opts.Projective then (
@@ -218,19 +222,19 @@ genera Module := M -> (
 
 reduceHilbert = method()
 reduceHilbert Divide := ser -> (
-    num := numerator ser;				    -- an element of the degrees ring
+    num := numerator ser;   -- an element of the degrees ring
     if num == 0 then return Divide {num, 1_(ring num)};
-    den := denominator ser;				    -- a Product of Powers
+    den := denominator ser; -- a Product of Powers
     newden := Product nonnull apply(toList den, pwr -> (
-	    fac := pwr#0;				    -- 1-T_i
-	    ex  := pwr#1;				    -- exponent
+	    fac := pwr#0;   -- 1-T_i
+	    ex  := pwr#1;   -- exponent
 	    while ex > 0
-	    and num % fac == 0			    -- this works because of Mike's magic in the engine
+	    and num % fac == 0 -- this works because of Mike's magic in the engine
 	    do (
 		num = num // fac;
 		ex = ex - 1;
 		);
-	    if ex > 0 then Power {fac,ex}));
+	    if ex > 0 then Power {fac, ex}));
     Divide {num, newden})
 
 -----------------------------------------------------------------------------
@@ -260,30 +264,27 @@ hilbertSeries Module := opts -> M -> (
     A := ring M;
     if heft A === null then error "hilbertSeries: ring has no heft vector";
     ord := opts.Order;
-    reduced := opts.Reduce;
+    -- using cached result
     if ord === infinity then (
-	if reduced then (
+	if opts.Reduce then (
 	    if M.cache#?reducedKey then return M.cache#reducedKey;
-	    if M.cache#?exactKey then return (M.cache#reducedKey = reduceHilbert M.cache#exactKey);
+	    if M.cache#?exactKey   then return(M.cache#reducedKey = reduceHilbert M.cache#exactKey);
 	    )
-	else (
-	    if M.cache#?exactKey then return M.cache#exactKey;
-	    )
-	)
+	else if M.cache#?exactKey  then return M.cache#exactKey)
     else if instance(ord, ZZ) then (
 	if M.cache#?approxKey then (
 	    (ord2, ser) := M.cache#approxKey;
-	    if ord == ord2 then return ser
-	    else if ord < ord2 then return part(, ord-1, heft M, ser)))
-    else error "hilbertSeries: expected infinity or an integer as value of Order option";
+	    if ord == ord2 then return ser else
+	    if ord  < ord2 then return part(, ord-1, heft M, ser)))
+    else error "hilbertSeries: option Order expected infinity or an integer";
+    -- computing the hilbert series
     T := degreesRing A;
     if ord === infinity then (
 	num := poincare M; -- 'poincare' treats monomial ideals correctly (as the corresponding quotient module)
-	denom := tally degrees A.FlatMonoid;
-	r := Divide{ num,
-	    Product apply(sort apply(pairs denom, (i, e) -> {1 - T_i, e}), t -> Power t)};
-	M.cache#exactKey = r;
-	if reduced then M.cache#reducedKey = reduceHilbert r else r)
+	deg := tally degrees A.FlatMonoid;
+	den := Product apply(sort apply(pairs deg, (i, e) -> {1 - T_i, e}), t -> Power t);
+	ser = M.cache#exactKey = Divide {num, den};
+	if opts.Reduce then M.cache#reducedKey = reduceHilbert ser else ser)
     else (
 	h := hilbertSeries(M, Reduce => true);
 	s := (

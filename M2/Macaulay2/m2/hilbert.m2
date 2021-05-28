@@ -146,13 +146,23 @@ projectiveHilbertPolynomial(ZZ, ZZ) := ProjectiveHilbertPolynomial => memoize(
 	else apply(n + 1, j -> n - j => binomial(d - 1 + j, j))))
 
 -- arithmetic ops
-ProjectiveHilbertPolynomial == ProjectiveHilbertPolynomial := (h, k) -> h === k
+-- TODO: how can we abstract away this section?
+P0 := projectiveHilbertPolynomial 0
+ProjectiveHilbertPolynomial == ProjectiveHilbertPolynomial := Boolean => (h, k) -> h === k
 ProjectiveHilbertPolynomial + ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (h, k) -> merge(h, k, continueIfZero @@ plus)
 ProjectiveHilbertPolynomial - ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (h, k) -> h + -k
    - ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => h -> applyValues(h, minus)
 ZZ * ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (b, h) -> (
-    if b === 1 then h else
-    if b === 0 then new ProjectiveHilbertPolynomial from {} else applyValues(h, c -> b * c))
+    if b === 0 then new ProjectiveHilbertPolynomial from {} else if b === 1 then h else applyValues(h, c -> b * c))
+ProjectiveHilbertPolynomial * ZZ := ProjectiveHilbertPolynomial => (h, b) -> b * h
+ProjectiveHilbertPolynomial + ZZ := ProjectiveHilbertPolynomial => (h, n) -> h + n * P0
+ZZ + ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (n, h) -> h + n * P0
+ProjectiveHilbertPolynomial - ZZ := ProjectiveHilbertPolynomial => (h, n) -> h - n * P0
+ZZ - ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (n, h) -> -h + n * P0
+ProjectiveHilbertPolynomial == ZZ := Boolean => (h, n) -> h === n * P0
+ZZ == ProjectiveHilbertPolynomial := Boolean => (n, h) -> h === n * P0
+
+-- evaluation
 ProjectiveHilbertPolynomial ZZ := (P, i) -> sum(pairs P, (n, c) -> c * binomial(n + i, n))
 
 -- other methods
@@ -160,6 +170,7 @@ euler  ProjectiveHilbertPolynomial := P -> P(0)
 dim    ProjectiveHilbertPolynomial := P -> if #P === 0 then -1 else max keys P
 degree ProjectiveHilbertPolynomial := P -> if #P === 0 then 0 else P#(dim P)
 
+-- differentiation
 diff(ProjectiveHilbertPolynomial, ZZ) := ProjectiveHilbertPolynomial => (P,i) -> (
     new ProjectiveHilbertPolynomial from select(apply(pairs P, (n, c) -> (n - i, c)), (n, c) -> n >= 0))
 diff ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => P -> diff(P, 1)

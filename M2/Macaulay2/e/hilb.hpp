@@ -113,17 +113,10 @@ class hilb_comp : public MutableEngineObject
   // set an error, and return 0.  The caller MUST check this.
   static int coeff_of(const RingElement *h, int deg);
 
-#if 0
-//   static int hilbertSeries(const Matrix *M, RingElement * &result);
-//   // A return of 0 means that the result can be used.  A non-zero return
-//   // value means that the computation was interrupted, and so control should
-//   // return to the user.
-#endif
-
   static RingElement /* or null */ *hilbertNumerator(const Matrix *M);
   /* This routine computes the numerator of the Hilbert series
      for coker leadterms(M), using the degrees of the rows of M.
-     NULL is returned if the ring is not appropriate for
+     nullptr is returned if the ring is not appropriate for
      computing Hilbert series, or the computation was interrupted. */
 
   static RingElement *hilbertNumerator(const FreeModule *F);

@@ -54,6 +54,7 @@ void test_over_RR_or_CC(const Ring *R)
 }
 
 ////////////////////////////////////
+
 const RingElement /* or null */ *IM2_Matrix_Hilbert(const Matrix *M)
 /* This routine computes the numerator of the Hilbert series
    for coker leadterms(M), using the degrees of the rows of M.
@@ -70,9 +71,22 @@ const RingElement /* or null */ *IM2_Matrix_Hilbert(const Matrix *M)
   }
 }
 
+#include "Eschreyer.hpp"
+
+const Matrix *IM2_kernel_of_GB(const Matrix *m)
+/* Assuming that the columns of G form a GB, this computes
+   a Groebner basis of the kernel of these elements, using
+   an appropriate Schreyer order on the source of G. */
+{
+  GBMatrix *n = new GBMatrix(m);
+  GBKernelComputation G(n);
+  G.calc();
+  GBMatrix *syz = G.get_syzygies();
+  return syz->to_matrix();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
-///////// The following will be removed once the new code is functional
-/////////////
+//////// The following will be removed once the new code is functional /////////
 ///////////////////////////////////////////////////////////////////////////////////
 Computation /* or null */ *IM2_GB_make(
     const Matrix *m,

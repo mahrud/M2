@@ -590,7 +590,7 @@ RingElement *hilb_comp::value()
   if (!is_done())
     {
       ERROR("Hilbert function computation not complete");
-      return 0;
+      return nullptr;
     }
   RingElement *result = RingElement::make_raw(R, R->copy(result_poincare));
   return result;
@@ -631,29 +631,18 @@ void hilb_comp::stats() const
       d--;
     }
 }
-#if 0
-// int hilb_comp::hilbertSeries(const Matrix *M, RingElement *&result)
-// {
-//   const PolynomialRing *P = M->get_ring()->get_degree_ring();
-//   hilb_comp *hf = new hilb_comp(P,M);
-//   int retval = hf->calc(-1);
-//   if (retval != COMP_DONE) return 1;
-//   result = hf->value();
-//   freemem(hf);
-//   return 0;
-// }
-#endif
+
 RingElement *hilb_comp::hilbertNumerator(const Matrix *M)
 /* This routine computes the numerator of the Hilbert series
    for coker leadterms(M), using the degrees of the rows of M.
-   NULL is returned if the ring is not appropriate for
+   nullptr is returned if the ring is not appropriate for
    computing Hilbert series, or the computation was interrupted. */
 {
   const PolynomialRing *P = M->get_ring()->get_degree_ring();
-  if (P == 0) return 0;
+  if (P == 0) return nullptr;
   hilb_comp *hf = new hilb_comp(P, M);
   int retval = hf->calc(-1);
-  if (retval != COMP_DONE) return 0;
+  if (retval != COMP_DONE) return nullptr;
   RingElement *result = hf->value();
   delete hf;
   return result;
@@ -673,10 +662,10 @@ RingElement /* or null */ *hilb_comp::hilbertNumerator(const MonomialIdeal *I)
    computing Hilbert series, or the computation was interrupted. */
 {
   const PolynomialRing *P = I->get_ring()->get_degree_ring();
-  if (P == 0) return 0;
+  if (P == 0) return nullptr;
   hilb_comp *hf = new hilb_comp(P, I);
   int retval = hf->calc(-1);
-  if (retval != COMP_DONE) return 0;
+  if (retval != COMP_DONE) return nullptr;
   RingElement *result = hf->value();
   delete hf;
   return result;

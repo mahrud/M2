@@ -849,7 +849,6 @@ doc ///
     polySpace
     (polySpace,Matrix)
     (polySpace,PolySpace)
-    Reduced
     [polySpace,Reduced]
   Headline
     construct a PolySpace

@@ -284,15 +284,66 @@ reduceHilbert Divide := ser -> (
 -- hilbertSeries
 -----------------------------------------------------------------------------
 
-exactKey := "exact hilbertSeries"
-reducedKey := "reduced exact hilbertSeries"
-approxKey := "approximate hilbertSeries"
+protect Exact        -- exact Hilbert series
+protect Reduced      -- reduced exact Hilbert series
+protect Approximate  -- approximate Hilbert series
 
 hilbertSeries = method(
     Options => {
 	Order    => infinity,
 	Reduce   => false,
+	Strategy => null,
 	}
+    )
+
+HilbertContext = new SelfInitializingType of Context
+HilbertContext.synonym = "Hilbert series context"
+
+HilbertComputation = new Type of Computation
+HilbertComputation.synonym = "Hilbert series computation"
+
+new HilbertComputation from Module := (C, M) -> new HilbertComputation from {
+    Heft        => heft ring M,
+    Order       => -infinity,
+    Exact       => null,
+    Reduced     => null,
+    Approximate => null}
+
+isComputationDone HilbertComputation := Boolean => options hilbertSeries >> opts -> container -> (
+    -- this function determines whether we can use the cached result, or further computation is necessary
+    container.Reduced =!= null and (opts.Order =!= infinity or opts.Reduce) or
+    container.Exact   =!= null  or  opts.Order < container.Order + 1)
+
+updateComputation(HilbertComputation, Thing) := options hilbertSeries >> opts -> (container, result) -> (
+    ord := opts.Order;
+    hft := container.Heft;
+    if ord === infinity then (
+	if opts.Reduce
+	then container.Reduced = result
+	else container.Exact = result)
+    else (
+	container.Order = ord;
+	container.Approximate = result)
+    )
+
+adjustComputation HilbertComputation := options hilbertSeries >> opts -> container -> (
+    ord := opts.Order;
+    hft := container.Heft;
+    if ord === infinity then (
+	if opts.Reduce then (
+	    if container.Reduced =!= null then container.Reduced
+	    else container.Reduced = reduceHilbert container.Exact)
+	else container.Exact)
+    else (
+	ord' := container.Order;
+	if ord == ord' then return container.Approximate;
+	if ord  < ord' then return part(, ord-1, hft, container.Approximate);
+	-- computing the approximate expansion from an exact Hilbert series
+	if container.Exact =!= null
+	or container.Reduced =!= null then (
+	    if container.Reduced === null then container.Reduced = reduceHilbert container.Exact;
+	    container.Approximate = truncateSeries(container.Order = ord, hft, container.Reduced))
+	)
     )
 
 hilbertSeries QuotientRing   :=
@@ -302,30 +353,27 @@ hilbertSeries Ideal  := opts -> I -> hilbertSeries(comodule I, opts)
 hilbertSeries Module := opts -> M -> (
     R := ring M;
     hft := heft R;
-    if hft === null then error "hilbertSeries: ring has no heft vector";
     ord := opts.Order;
-    -- using cached result
-    if ord === infinity then (
-	if opts.Reduce then (
-	    if M.cache#?reducedKey then return M.cache#reducedKey;
-	    if M.cache#?exactKey   then return(M.cache#reducedKey = reduceHilbert M.cache#exactKey))
-	else if M.cache#?exactKey  then return M.cache#exactKey)
-    else if instance(ord, ZZ) then (
-	if M.cache#?approxKey then (
-	    (ord2, ser) := M.cache#approxKey;
-	    if ord == ord2 then return ser else
-	    if ord  < ord2 then return part(, ord-1, hft, ser));
-	if M.cache#?exactKey or M.cache#?reducedKey then (
-	    if not M.cache#?reducedKey then M.cache#reducedKey = reduceHilbert M.cache#exactKey;
-	    return last(M.cache#approxKey = (ord, truncateSeries(ord, hft, M.cache#reducedKey))))
-	    )
-    else error "hilbertSeries: option Order expected infinity or an integer";
-    -- computing the Hilbert series
-    ser = runHooks((hilbertSeries, Module), (opts, M));
-    if ser === null   then error("no applicable strategy for computing Hilbert series over ", toString R);
-    -- returning the appropriate format
-    if ord < infinity then last M.cache#approxKey else
-    if opts.Reduce    then M.cache#reducedKey else M.cache#exactKey)
+    strategy := opts.Strategy;
+    --
+    if ord =!= infinity and not instance(ord, ZZ)
+    then error "hilbertSeries: option Order should be either infinity or an integer";
+    if heft R === null then error "hilbertSeries: ring has no heft vector";
+    --
+    -- partial Hilbert series computations are stored in M.cache as an option:
+    --   HilbertContext{} => HilbertComputation{ Exact => ..., Reduced => ..., Approximate => ..., ... }
+    container := fetchComputation(HilbertComputation, M, HilbertContext{});
+    --
+    -- this function runs the strategies in order, or only the specified strategy
+    computation := (opts, container) -> (
+	runHooks((hilbertSeries, Module), (opts ++ {cache => container}, M), Strategy => strategy));
+    --
+    -- the actual computation of the basis occurs here
+    H := (cacheComputation(opts, container)) computation;
+    --
+    if H =!= null then H else if strategy === null
+    then error("no applicable strategy for computing Hilbert series over ", toString R)
+    else error("assumptions for Hilbert series strategy ", toString strategy, " are not met"))
 
 addHook((hilbertSeries, Module), Strategy => Default, (opts, M) -> (
     -- some examples compute degrees of inhomogeneous modules,
@@ -339,11 +387,17 @@ addHook((hilbertSeries, Module), Strategy => Default, (opts, M) -> (
 	num := poincare M; -- 'poincare' treats monomial ideals correctly (as the corresponding quotient module)
 	deg := tally degrees R.FlatMonoid;
 	den := Product apply(sort apply(pairs deg, (i, e) -> {1 - T_i, e}), t -> Power t);
-	M.cache#exactKey = ser := Divide {num, den};
+	series := Divide {num, den};
+	-- each strategy only needs to cache the result that must
+	-- compute in the appropriate key under the container
+	container := opts.cache;
+	container.Exact = series;
 	if ord < infinity or opts.Reduce then
-	M.cache#reducedKey = reduceHilbert ser;
-	if ord < infinity then
-	M.cache#approxKey = (ord, truncateSeries(ord, hft, ser)) else ser))
+	container.Reduced = series = reduceHilbert series;
+	if ord < infinity then (
+	    container.Order = ord;
+	    container.Approximate = truncateSeries(ord, hft, series))
+	else series))
 
 hilbertSeries ProjectiveHilbertPolynomial := opts -> P -> (
     d := max keys P;

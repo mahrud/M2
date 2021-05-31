@@ -42,7 +42,6 @@ export {
 	"detResDeg",
 --	"rankNE",
 	"Numeric",
-	"Exact",
 	"Sylvester",
 	"Macaulay",
 	"CM2Residual",
@@ -1080,9 +1079,9 @@ scan({detComplex, minorsComplex, listDetComplex}, fn -> document {
 	"s" => Symbol => {"either ", TT "Exact", " or ", TT "Numeric"}	  
 	},
     
-    Consequences => {{ "If ", TT "s", " is ", TO "Exact", ", then the", TO "rank", " algorithms is used computing minors; if ", TT "s", " is ", TO "Numeric", ", then numerical rank computation is used, this is, all coefficients are evaluated in the ground field before computing ranks."}},
+    Consequences => {{ "If ", TT "s", " is ", TO "EliminationMatrices :: Exact", ", then the ", TO "rank", " algorithms is used computing minors; if ", TT "s", " is ", TO "Numeric", ", then numerical rank computation is used, this is, all coefficients are evaluated in the ground field before computing ranks."}},
     
-    PARA{}, TO "Exact", "is the default Strategy.",     
+    PARA{}, TO "EliminationMatrices :: Exact", "is the default Strategy.",
     
 		
     SeeAlso => select({detComplex, minorsComplex, listDetComplex}, g -> g =!= fn)
@@ -1160,9 +1159,9 @@ scan({maxCol, maxMinor}, fn -> document {
 	"s" => Symbol => {"either ", TT "Exact", " or ", TT "Numeric"}	  
 	},
     
-    Consequences => {{ "If ", TT "s", " is ", TO "Exact", ", then the", TO "rank", " algorithms is used computing minors; if ", TT "s", " is ", TO "Numeric", ", then numerical rank computation is used, this is, all coefficients are evaluated in the ground field before computing ranks."}},
+    Consequences => {{ "If ", TT "s", " is ", TO "EliminationMatrices :: Exact", ", then the ", TO "rank", " algorithms is used computing minors; if ", TT "s", " is ", TO "Numeric", ", then numerical rank computation is used, this is, all coefficients are evaluated in the ground field before computing ranks."}},
     
-    PARA{}, TO "Exact", "is the default Strategy.",     
+    PARA{}, TO "EliminationMatrices :: Exact", "is the default Strategy.",
     
 		
     SeeAlso => select({maxCol, maxMinor}, g -> g =!= fn)
@@ -1527,7 +1526,7 @@ document {
 	Headline => "Strategy for functions that uses rank computation.",
 	Usage => " Strategy => Numeric",
 	    
-    Consequences => { "If 'Numeric' Strategy is used, then numerical rank computation is used instead of ", TO "Exact", " rank computation. Precisely, all coefficients are evaluated in the ground field before computing ranks."},
+    Consequences => { "If 'Numeric' Strategy is used, then numerical rank computation is used instead of ", TO "EliminationMatrices :: Exact", " rank computation. Precisely, all coefficients are evaluated in the ground field before computing ranks."},
     
 }
 
@@ -1535,7 +1534,7 @@ document {
 ------------------------ \ Exact / ------------------------
 
 document { 
-	Key => {Exact},
+	Key => {"EliminationMatrices :: Exact"},
 	Headline => "Strategy for functions that uses rank computation.",
 	Usage => " Strategy => Exact",
 	    

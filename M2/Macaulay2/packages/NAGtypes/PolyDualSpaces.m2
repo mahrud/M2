@@ -2,7 +2,7 @@
 -- PolySpace and DualSpace
 ------------------------------------------------------
 export { 
-    "DualSpace", "BasePoint", "dualSpace", "PolySpace", "polySpace", "Reduced", "Gens", "Space",
+    "DualSpace", "BasePoint", "dualSpace", "PolySpace", "polySpace", "Gens", "Space",
     "reduceSpace",
     "addition", "isContained"
     }

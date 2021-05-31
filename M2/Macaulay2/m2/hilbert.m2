@@ -1,7 +1,6 @@
 --		Copyright 1995-2002 by Daniel R. Grayson and Michael Stillman
 
 -- TODO:
--- - hookifying the functions
 -- - simplify how caching in hilbertSeries works
 -- - use the same caching style for local rings
 
@@ -69,7 +68,12 @@ heft Module         := M -> heft ring M
 -- see the comment in the documentation for (degree, Ideal) about what this means when M is not homogeneous
 poincare Ring   := R -> poincare module R
 poincare Ideal  := I -> poincare comodule I
-poincare Module := (cacheValue symbol poincare) (M -> (
+poincare Module := M -> (
+    computation := (cacheValue symbol poincare) (M -> runHooks((poincare, Module), M));
+    if (P := computation M) =!= null then return P;
+    error("no applicable strategy for computing Poincare polynomial over ", toString ring M))
+
+addHook((poincare, Module), Strategy => Default, M -> (
 	new degreesRing M from rawHilbert raw leadTerm gb -* presentation cokernel ?? *- presentation M))
 
 -----------------------------------------------------------------------------
@@ -116,9 +120,10 @@ multidegree Module := M -> (
     c := codim M;
     if c === infinity then 0_A else part(c, numgens A:1, onem numerator poincare M))
 
-length Module := ZZ => (cacheValue symbol length) (M -> (
-    c := runHooks((length, Module), M);
-    if c =!= null then c else error "length: no method implemented for this type of module"))
+length Module := ZZ => M -> (
+    computation := (cacheValue symbol length) (M -> runHooks((length, Module), M));
+    if (n := computation M) =!= null then return n;
+    error("no applicable strategy for computing length of modules over ", toString ring M))
 
 addHook((length, Module), Strategy => Default, M -> (
      if not isHomogeneous M then notImplemented();
@@ -186,10 +191,16 @@ hilbertPolynomial = method(
 hilbertPolynomial Ring   := opts -> R -> hilbertPolynomial(module R,   opts)
 hilbertPolynomial Ideal  := opts -> I -> hilbertPolynomial(comodule I, opts)
 hilbertPolynomial Module := opts -> M -> (
+    HP := runHooks((hilbertPolynomial, Module), (opts, M));
+    if HP =!= null then return HP;
+    error("no applicable strategy for computing Hilbert polynomial over ", toString ring M))
+
+addHook((hilbertPolynomial, Module), Strategy => Default, (opts, M) -> (
     R := ring M;
     if not isHomogeneous M then error "hilbertPolynomial: expected a homogeneous module";
     if degreeLength R != 1 then error "hilbertPolynomial: expected a singly graded ring";
     if not all(degrees R, d -> d === {1}) then error "hilbertPolynomial: expected a ring whose variables all have degree 1";
+    --
     n := numgens R - 1;
     p := pairs standardForm poincare M;
     if opts.Projective then (
@@ -202,6 +213,7 @@ hilbertPolynomial Module := opts -> M -> (
 	else sum(p, (d, c) -> (
 		if #d === 0 then d = 0 else d = d#0;
 		c * hilbertFunctionQ(n, -d)))))
+    )
 
 -----------------------------------------------------------------------------
 -- euler, eulers, genus, genera
@@ -334,12 +346,21 @@ hilbertFunction(List, Ideal)  :=
 hilbertFunction(List, Module) := (L, M) -> (
     -- computes the Hilbert series to a sufficiently high order and
     -- returns the desired coefficient, thus it is cached by hilbertSeries
+    R := ring M;
     if not all(L, i -> instance(i, ZZ)) then error "hilbertFunction: expected degree to be an integer or list of integers";
-    if #L =!= degreeLength M            then error "hilbertFunction: degree length mismatch";
-    if (h := heft ring M) === null      then error "hilbertFunction: ring has no heft vector";
+    if #L =!= degreeLength R            then error "hilbertFunction: degree length mismatch";
+    if heft R === null                  then error "hilbertFunction: ring has no heft vector";
+    --
+    HF := runHooks((hilbertFunction, List, Module), (L, M));
+    if HF =!= null then return HF;
+    error("no applicable strategy for computing Hilbert function over ", toString R))
+
+addHook((hilbertFunction, List, Module), Strategy => Default, (L, M) -> (
+    h := heft ring M;
     f := hilbertSeries(M, Order => 1 + sum(h, L, times));
     U := monoid ring f;
     coefficient(U_L, f))
+    )
 
 -----------------------------------------------------------------------------
 -- miscellaneous

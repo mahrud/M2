@@ -290,6 +290,20 @@ addHook((trim, Module), Strategy => Local, (opts, M) ->
 	if M.?generators then localMingensHook(opts, image generators M),
 	if M.?relations  then localMingensHook(opts, image relations M)))
 
+-*
+-- TODO
+-- codim
+addHook((codim, Module), Strategy => Local, (opts, M) ->
+    if instance(ring M, LocalRing) then (
+	R := ring M;
+	if M == 0 then return infinity;
+	p := leadTerm gb presentation M;
+	n := rank target p;
+	c := infinity;
+	for i from 0 to n-1 when c > 0 do c = min(c,codim(monomialIdealOfRow(i,p)));
+	c - codim monomialIdealOfRow(0,matrix{{0_R}}))) -- same as c - codim R, except works for iterated rings
+*-
+
 load "./LocalRings/LU.m2"
 
 -- (symbol//, Matrix, Matrix)

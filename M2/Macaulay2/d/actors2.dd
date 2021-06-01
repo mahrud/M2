@@ -663,29 +663,6 @@ pseudocode(e:Expr):Expr := (
      );
 setupfun("pseudocode", pseudocode);
 
-cpuTime(e:Expr):Expr := (
-     when e
-     is s:Sequence do if length(s) == 0 then toExpr(cpuTime())
-     else WrongNumArgs(0)
-     else WrongNumArgs(0));
-setupfun("cpuTime",cpuTime);
-
-timefun(a:Code):Expr := (
-     v := cpuTime();
-     ret := eval(a);
-     x := cpuTime();
-     when ret
-     is Error do ret
-     else list(timeClass,Sequence(toExpr(x-v),ret)));
-setupop(timingS,timefun);
-showtimefun(a:Code):Expr := (
-     v := cpuTime();
-     ret := eval(a);
-     x := cpuTime();
-     stdIO << "     -- used " << x-v << " seconds" << endl;
-     ret);
-setupop(timeS,showtimefun);
-
 exponent(e:Expr):Expr := (
      when e
      is x:ZZcell do toExpr(exponent(x.v))	      -- # typical value: size2, ZZ, ZZ

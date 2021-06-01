@@ -2036,9 +2036,7 @@ GCstats(e:Expr):Expr := (
      else WrongNumArgs(0));
 setupfun("GCstats",GCstats);
 
-header "
-extern void set_gftable_dir(char *); /* defined in library factory, as patched by us */
-";
+header "extern void set_gftable_dir(char *); /* defined in library factory, as patched by us */";
 setFactoryGFtableDirectory(e:Expr):Expr := (
      when e is d:stringCell do (
      	  Ccode(void,"set_gftable_dir(", tocharstar(d.v), ")");

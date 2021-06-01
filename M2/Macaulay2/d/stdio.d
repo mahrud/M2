@@ -125,8 +125,9 @@ export stdIO  := newFile("stdio",  0,
      true,  STDIN ,0!=isatty(0), newbuffer(), 0,0,false,false,noprompt,noprompt,false,true,false,0,
      true,  STDOUT,0!=isatty(1), newbuffer(), 0,0,false,dummyNetList,0,-1,false,1);
 
-export interpreterDepth := 0;
-export lineNumber := 0;
+-- TODO: move this somewhere more appropriate
+export threadLocal interpreterDepth := 0;
+export threadLocal lineNumber := 0;
 texmacsprompt():string := (
      s := "";
      for i from 1 to interpreterDepth do s = s + "i";

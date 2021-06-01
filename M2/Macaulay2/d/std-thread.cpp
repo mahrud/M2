@@ -26,16 +26,13 @@ extern "C" {
 void streams_Sinitialize(int, bool);
 void streams_Sflush();
 
-void threads_initialize(bool live)
+void threads_Tinitialize(bool live)
 {
-  streams_initialize(&outbuf, &outstream);
-  if (live)
-    streams_initialize(&errbuf, &errstream);
-  else
-    errstream.rdbuf(&outbuf);
+  streams_Sinitialize(1, live); // stdout
+  streams_Sinitialize(2, live); // stderr
 }
 
-void threads_compute(const M2_string str, int n)
+void threads_Tcompute(const M2_string str, int n)
 {
   errstream << "\t";
   for(int i = 0; i < 100; i++)
@@ -45,7 +42,7 @@ void threads_compute(const M2_string str, int n)
     }
   errstream << std::endl;
   outstream << "\tstr = '" << errbuf.str() << "'" << std::endl;
-  streams_flush(n);
+  streams_Sflush();
 }
 
 } /* extern "C" */

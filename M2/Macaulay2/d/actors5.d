@@ -1,6 +1,7 @@
 --		Copyright 1995,2010 by Daniel R. Grayson
 use actors;
 use actors2;
+use threads;
 
 header "#include <interface/random.h>";
 
@@ -1659,6 +1660,7 @@ export debuggerHook := nullE;
 backtraceS := dummySymbol;
 debugLevelS := dummySymbol;
 engineDebugLevelS := dummySymbol;
+myNS := dummySymbol;
 debuggingModeS := dummySymbol;
 errorDepthS := dummySymbol;
 gbTraceS := dummySymbol;
@@ -1704,6 +1706,7 @@ syms := SymbolSequence(
      (  backtraceS = setupvar("backtrace",toExpr(backtrace));  backtraceS  ),
      (  debugLevelS = setupvarThread("debugLevel",toExpr(debugLevel));  debugLevelS  ),
      (  engineDebugLevelS = setupvarThread("engineDebugLevel",toExpr(engineDebugLevel));  engineDebugLevelS  ),
+     (  myNS = setupvarThread("myN",toExpr(myN));  myNS  ),
      (  debuggingModeS = setupvarThread("debuggingMode",toExpr(debuggingMode));  debuggingModeS  ),
      (  defaultPrecisionS = setupvar("defaultPrecision",toExpr(defaultPrecision));  defaultPrecisionS  ),
      (  errorDepthS = setupvar("errorDepth",toExpr(errorDepth));  errorDepthS  ),
@@ -1772,6 +1775,7 @@ threadLocal resetvars := (
      setGlobalVariable(debuggingModeS,toExpr(debuggingMode));
      setGlobalVariable(debugLevelS,toExpr(debugLevel));
      setGlobalVariable(engineDebugLevelS,toExpr(engineDebugLevel));
+     setGlobalVariable(myNS,toExpr(myN));
      setGlobalVariable(stopIfErrorS,toExpr(stopIfError));
      setGlobalVariable(loadDepthS,toExpr(loadDepth));
      0
@@ -1822,6 +1826,7 @@ store(e:Expr):Expr := (			    -- called with (symbol,newvalue)
 		    n := toInt(i);
 		    if sym === debugLevelS then (debugLevel = n; e)
 		    else if sym === engineDebugLevelS then (engineDebugLevel = n; e)
+		    else if sym === myNS then (myN = n; e)
 		    else if sym === recursionLimitS then (recursionLimit = n; e)
 		    else if sym === lineNumberS then (lineNumber = n; e)
 		    else if sym === numTBBThreadsS then (
@@ -1850,6 +1855,7 @@ store(e:Expr):Expr := (			    -- called with (symbol,newvalue)
 	       else buildErrorPacket(
 		    if sym === debugLevelS
 		    || sym === engineDebugLevelS
+		    || sym === myNS
 		    || sym === lineNumberS
 		    || sym === allowableThreadsS
 		    || sym === printingPrecisionS

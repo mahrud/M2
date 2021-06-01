@@ -11,7 +11,7 @@ decompose = method(Options => true)
 intersect = method(Dispatch => Thing, Options => true)
 intersection = method(Options => true)
 
-truncate = method()
+truncate = method(Options => true)
 
 isEmpty = method(TypicalValue => Boolean)
 

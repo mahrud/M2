@@ -358,7 +358,7 @@ flushBuffer(o:file):int := (
     foss.lastCharOut = int(Srewindc(foss.outbuffer));
     foss.outbol = 0;
     foss.outindex = 0;
-    Sempty(foss.outbuffer);
+    cleanstream(foss.outbuffer);
     releaseFileFOSS(o);
     NOERROR);
 
@@ -367,7 +367,7 @@ flushLine(s:string, o:file):int := (
     foss := getFileFOSS(o);
     --Ccode(void, "puts(",tocharstar(tostring(n)),")");
     --Ccode(void, "puts(",tocharstar(s),")");
-    n := Sputn(s, length(s), foss.outbuffer);
+    n := Swrite(s, length(s), foss.outbuffer);
     -- TODO: is it okay to leave flushing the streams to std::stream?
     -- It might not reset certain variables
     --if iserror(flushBuffer(o)) then (releaseFileFOSS(o); return ERROR);
@@ -410,7 +410,7 @@ export flush(o:file):int := (
 export endl(o:file):int := if o.output then (
     foss := getFileFOSS(o);
     if iserror(flushNets(o)) then (releaseFileFOSS(o); return ERROR);
-    foss.outindex = foss.outindex + Sputn(newline, length(newline), foss.outbuffer);
+    foss.outindex = foss.outindex + Swrite(newline, length(newline), foss.outbuffer);
     flush(o);
     foss.outmargin = 0;
     releaseFileFOSS(o);
@@ -432,7 +432,7 @@ export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then 
     if !foss.hadNet then (
 	skip := foss.outindex - foss.outbol;
 	Ccode(void, "assert(",skip >= 0,")");
-	margin := Stostring(foss.outbuffer, foss.outbol, skip);
+	margin := buftostring(getstringbuf(foss.outbuffer), foss.outbol, skip);
 	-- TODO: after "abc\nd" should be 1, 3, or 4? used to be 3, now is 1
 	skip = foss.outmargin;
 	foreach c in margin do
@@ -455,16 +455,15 @@ export (o:file) << (n:Net) : file := if o.output && !test(interruptedFlag) then 
 export (o:file) << (c:char) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
     -- TODO: simplify this by always printing as nets
-    -- if foss.outindex == Slength(foss.outbuffer) && iserror(flush(o)) then (releaseFileFOSS(o); return o);
     if foss.hadNet then ( o << toNet(c); )
-    else ( foss.outindex = foss.outindex + 1; Sputc(c, foss.outbuffer); );
+    else ( foss.outindex = foss.outindex + 1; Sput(c, foss.outbuffer); );
     releaseFileFOSS(o);
     o) else o;
 
 export (o:file) << (s:string) : file := if o.output && !test(interruptedFlag) then (
     foss := getFileFOSS(o);
     if foss.hadNet then ( o << toNet(s); )
-    else ( foss.outindex = foss.outindex + Sputn(s, length(s), foss.outbuffer); );
+    else ( foss.outindex = foss.outindex + Swrite(s, length(s), foss.outbuffer); );
     releaseFileFOSS(o);
     o) else o;
 
@@ -633,7 +632,7 @@ export presentn(x:string):string := ( -- fix newlines and other special chars, a
 lastCharWritten(o:file):int := (
     foss := getFileFOSS(o);
     if foss.outindex > 0
-    then (releaseFileFOSS(o); int(Sgetc(foss.outbuffer)))
+    then (releaseFileFOSS(o); int(Sgetc(getstringbuf(foss.outbuffer))))
     else (releaseFileFOSS(o); foss.lastCharOut));
 
 export atEndOfLine(o:file):bool := ( c := lastCharWritten(o); c == int('\n') || c == ERROR );
@@ -767,8 +766,8 @@ export getc(o:file):int := (
      x
 );
 
--- TODO: is 100 enough?
-tokenbuf := newvarstring(100);
+-- TODO: why is this global?
+tokenbuf := newstringbuf();
 export getLine(o:file):StringOrError := (
     ch := 0;
     while (

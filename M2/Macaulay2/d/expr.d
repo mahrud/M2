@@ -86,6 +86,7 @@ export globalDictionary :=
 export Macaulay2Dictionary := Dictionary(nextHash(),
      newSymbolHashTable(),self,globalFrameID,
      globalFramesize,false,false,false);
+-- used in M2lib.c for readline
 export completions(s:string):array(string) := (
      n := length(s);
      if n == 0 then return array(string)();		    -- don't complete the null string

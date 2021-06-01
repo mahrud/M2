@@ -32,47 +32,52 @@ export iserror(c:int):bool := c == ERROR;
 -- TODO: convert int to size_t
 
 -- constructors for stringstream
-import Sstringstream(str:string):stringstream;
-export Sstringstream():stringstream := Sstringstream("");
+import newstringstream(str:string):stringstream;
+export newstringstream():stringstream := newstringstream("");
 
 import Srewindc(stream:stringstream):int;
-import  Slength(stream:stringstream):int;
-import   Sempty(stream:stringstream):void;
+--import  Slength(stream:stringstream):int;
+import cleanstream(stream:stringstream):void;
 
-import Sputc(c:char,          stream:stringstream):int;
-import Sputn(s:string, n:int, stream:stringstream):int;
-import Sflush(fd:int,         stream:stringstream):int;
+import Sput(c:char,            stream:stringstream):int;
+import Swrite(s:string, n:int, stream:stringstream):int;
+import Sflush(fd:int,          stream:stringstream):int;
 
 --export (stream:stringstream) << (n:net)    : stringstream := ...
-export (stream:stringstream) << (c:char)   : stringstream := ( Sputc(c,            stream); stream );
-export (stream:stringstream) << (s:string) : stringstream := ( Sputn(s, length(s), stream); stream );
-
-import Sgetc(                 stream:stringstream):int;
-import Sgetn(s:string, n:int, stream:stringstream):int;
-
-import Stostring(stream:stringstream, offset:int, n:int):string;
-export Stostring(stream:stringstream, offset:int       ):string := Stostring(stream, offset, Slength(stream) - offset);
-export Stostring(stream:stringstream                   ):string := Stostring(stream, 0,      Slength(stream)); -- TODO: memory inefficient
+export (stream:stringstream) << (c:char)   : stringstream := ( Sput(c,              stream); stream );
+export (stream:stringstream) << (s:string) : stringstream := ( Swrite(s, length(s), stream); stream );
 
 -----------------------------------------------------------------------------
 -- constructors for stringbuf
-import Sstringbuf(stream:stringstream):stringbuf;
-export Sstringbuf(str:string):stringbuf := Sstringbuf(Sstringstream(""));
+import newstringbuf(str:string):stringbuf;
+export newstringbuf():stringbuf := newstringbuf("");
+
+import getstringbuf(stream:stringstream):stringbuf;
 
 --import Srewindc(buf:stringbuf):int;
 import Slength(buf:stringbuf):int;
---import Sempty(buf:stringbuf):void;
+import cleanbuf(buf:stringbuf):void;
 
---export (buf:stringbuf) << (n:net)    : stringbuf :=
---export (buf:stringbuf) << (c:char)   : stringbuf :=
---export (buf:stringbuf) << (s:string) : stringbuf :=
+import Sputc(c:char,          buf:stringbuf):int;
+import Sputn(s:string, n:int, buf:stringbuf):int;
+import Sflush(fd:int,         buf:stringbuf):int;
+
+--export (buf:stringbuf) << (n:net)    : stringbuf := ...
+export (buf:stringbuf) << (c:char)   : stringbuf := ( Sputc(c,            buf); buf );
+export (buf:stringbuf) << (s:string) : stringbuf := ( Sputn(s, length(s), buf); buf );
+
+import Sgetc(                 buf:stringbuf):int;
+import Sgetn(s:string, n:int, buf:stringbuf):int;
 
 --export (buf:stringbuf) . (i:size_t) : char := ...
 --export (buf:stringbuf) . (i:size_t) : char := ...
 
---import Stostring(buf:stringbuf, offset:int, n:int):string;
---export Stostring(buf:stringbuf, offset:int       ):string := Stostring(buf, offset, Slength(buf) - offset);
---export Stostring(buf:stringbuf                   ):string := Stostring(buf, 0,      Slength(buf)); -- TODO: memory inefficient
+import buftostring(buf:stringbuf, offset:int, n:int):string;
+export buftostring(buf:stringbuf, offset:int       ):string := buftostring(buf, offset, Slength(buf) - offset);
+export buftostring(buf:stringbuf                   ):string := buftostring(buf, 0,      Slength(buf)); -- TODO: memory inefficient
+export    tostring(buf:stringbuf                   ):string := buftostring(buf);
+
+export takestring(buf:stringbuf):string := ( s := buftostring(buf); cleanbuf(buf); s );
 
 --import (stream:stringstream) << (s:stringbuf) : stringstream;
 
@@ -120,7 +125,7 @@ export newFOSS(
 	outmargin:int,	        -- outbuffer.outmargin is the number of chars written on the last line
 	lastCharOut:int,        -- when outbuffer empty, last character written, or -1 if none
         capturing:bool		-- whether file output is being captured (for use in generating example output) instead of being written to the file descriptor
-    ):FOSS := FOSS(Sstringstream(outbuffer), outindex, outbol, hadNet, nets, outmargin, bytesWritten, lastCharOut, capturing);
+    ):FOSS := FOSS(newstringstream(outbuffer), outindex, outbol, hadNet, nets, outmargin, bytesWritten, lastCharOut, capturing);
 
 --provide a default 'constructor' for FOSS.
 --this is used by m2file.cpp to create new sync states on the fly for new threads in thread exclusive mode

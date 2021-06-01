@@ -2,6 +2,13 @@ use arithmetic;
 use nets; -- for dummyNetList
 use M2;   -- for tostring
 
+--header "#include <sstream>";
+header "#include <string>";
+
+-- TODO: support C++ linkage in the interpreter
+export stringstream := Type "struct stringstream *"; -- "std::stringstream *";
+export stringbuf    := Type "struct stringbuf *";    -- "std::stringbuf *";
+
 -----------------------------------------------------------------------------
 -- Exported variables
 -----------------------------------------------------------------------------
@@ -14,56 +21,60 @@ export STDERR  ::= 2;
 export NOERROR ::= 0;
 export NOFD    ::= -1;
 export ERROR   ::= -1;
-export EOF     ::= -2; -- end of file
+export EOF     ::= -2;
 
-export iseof(c:int):bool   := c == EOF;
+export iseof(c:int):bool   := c == EOF; -- end of file
 export iserror(c:int):bool := c == ERROR;
 
 -----------------------------------------------------------------------------
 -- C++ interface functions defined in std-stream.cpp
 -----------------------------------------------------------------------------
+-- TODO: convert int to size_t
 
-import Sinitialize(fd:int, live:bool):void;
-
--- TODO: find a way to allow C++ here, then replace this and sgetc..sputn
---declarations "#include <sstream>";
---export stringstream := Type "std::stringstream *";
-export stringstream := Type "struct stringstream *";
+-- constructors for stringstream
 import Sstringstream(str:string):stringstream;
 export Sstringstream():stringstream := Sstringstream("");
 
---export stringbuf := Type "std::stringbuf *";
-export stringbuf := Type "struct stringbuf *";
+import Srewindc(stream:stringstream):int;
+import  Slength(stream:stringstream):int;
+import   Sempty(stream:stringstream):void;
+
+import Sputc(c:char,          stream:stringstream):int;
+import Sputn(s:string, n:int, stream:stringstream):int;
+import Sflush(fd:int,         stream:stringstream):int;
+
+--export (stream:stringstream) << (n:net)    : stringstream := ...
+export (stream:stringstream) << (c:char)   : stringstream := ( Sputc(c,            stream); stream );
+export (stream:stringstream) << (s:string) : stringstream := ( Sputn(s, length(s), stream); stream );
+
+import Sgetc(                 stream:stringstream):int;
+import Sgetn(s:string, n:int, stream:stringstream):int;
+
+import Stostring(stream:stringstream, offset:int, n:int):string;
+export Stostring(stream:stringstream, offset:int       ):string := Stostring(stream, offset, Slength(stream) - offset);
+export Stostring(stream:stringstream                   ):string := Stostring(stream, 0,      Slength(stream)); -- TODO: memory inefficient
+
+-----------------------------------------------------------------------------
+-- constructors for stringbuf
 import Sstringbuf(stream:stringstream):stringbuf;
---export Sstringbuf(str:string):stringbuf := Sstringbuf(Sstringstream(""));
+export Sstringbuf(str:string):stringbuf := Sstringbuf(Sstringstream(""));
 
--- TODO: implement string access, like an actual string
+--import Srewindc(buf:stringbuf):int;
+import Slength(buf:stringbuf):int;
+--import Sempty(buf:stringbuf):void;
+
+--export (buf:stringbuf) << (n:net)    : stringbuf :=
+--export (buf:stringbuf) << (c:char)   : stringbuf :=
+--export (buf:stringbuf) << (s:string) : stringbuf :=
+
 --export (buf:stringbuf) . (i:size_t) : char := ...
 --export (buf:stringbuf) . (i:size_t) : char := ...
 
--- TODO: get length to work on a stringstream
--- TODO: convert almost all int to size_t
-import Slength(buf:stringstream):int;
+--import Stostring(buf:stringbuf, offset:int, n:int):string;
+--export Stostring(buf:stringbuf, offset:int       ):string := Stostring(buf, offset, Slength(buf) - offset);
+--export Stostring(buf:stringbuf                   ):string := Stostring(buf, 0,      Slength(buf)); -- TODO: memory inefficient
 
-import Sflush(fd:int, buf:stringstream):int;
-
---import Swrite(fd:int, buf:stringstream, offset:int, n:int):int;
---export Swrite(fd:int, buf:stringstream, offset:int):int := Swrite(fd, buf, offset, Slength(buf) - offset);
---export Swrite(fd:int, buf:stringstream):int := Swrite(fd, buf, 0, Slength(buf));
-
-import Sgetc(                 buf:stringstream):int;    -- := Ccode(int, buf,"->sgetc()");
-import Sgetn(s:string, n:int, buf:stringstream):int; -- := Ccode(int, buf,"->sgetn(",s,",",n,")");
-import Sputc(c:char,          buf:stringstream):int;    -- := Ccode(int, buf,"->sputc(",c,")");
-import Sputn(s:string, n:int, buf:stringstream):int; -- := Ccode(int, buf,"->sputn(",s,",",n,")");
-
-import Srewindc(buf:stringstream):int;
-
-import Stostring(buf:stringstream, offset:int, n:int):string;
-export Stostring(buf:stringstream, offset:int):string := Stostring(buf, offset, Slength(buf) - offset);
-export Stostring(buf:stringstream):string := Stostring(buf, 0, Slength(buf)); -- TODO: memory inefficient
---export Stostring(buf:stringstream):string := tostring(Ccode(constcharstar, buf,"->str().c_str()"));
-
-import Sempty(buf:stringstream):void;
+--import (stream:stringstream) << (s:stringbuf) : stringstream;
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -124,29 +135,11 @@ export bufsize ::= 4 * 1024;
 --create a new buffer of size bufsize and initialize it to ' '
 export newinbuffer():string := new string len bufsize do provide ' ';
 
------------------------------------------------------------------------------
--- TODO: deprecate, use stringbuf instead
-
-prec := 25;
-
-export tostring(i:int):string := (
-    if i == 0 then return "0";
-    s := newvarstring(prec);
-    sig := i < 0;
-    if sig then i = -i;
-    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
-    toreversestring(if sig then s << '-' else s));
-
-export tostring(i:long):string := (
-    if i == long(0) then return "0";
-    s := newvarstring(prec);
-    sgn := i < 0;
-    if sgn then i = -i;
-    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
-    toreversestring(if sgn then s << '-' else s));
-
-export tostring(i:ulong):string := (
-    if i == ulong(0) then return "0";
-    s := newvarstring(prec);
-    while i > 0 do ( s << "0123456789".(i % 10); i = i / 10; );
-    toreversestring(s));
+-- TODO: move all to toStrings.dd
+export tostring(i:int):string        := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:long):string       := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:longlong):string   := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:ulong):string      := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:ulonglong):string  := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:float):string      := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));
+export tostring(i:double):string     := tostring(Ccode(constcharstar, "std::to_string(",i,").c_str()"));

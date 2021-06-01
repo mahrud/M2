@@ -62,7 +62,7 @@ set(DLIST
   parse.d
   expr.d
   stdio.d
-  toStrings.d
+  toStrings.dd
   stdiop.d
   err.d
   gmp1.d

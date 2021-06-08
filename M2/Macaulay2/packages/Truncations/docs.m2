@@ -40,6 +40,7 @@ Node
       to support Cox rings of simplicial @TO2 {NormalToricVarieties, "normal toric varieties"}@.
   References
     @UL {
+--        {"TODO: cite our paper."},
         {"[MS04]: Maclagan and Smith, Multigraded Castelnuovo-Mumford Regularity (see ", arXiv "math/0305214", ")."}
         }@
   Subnodes

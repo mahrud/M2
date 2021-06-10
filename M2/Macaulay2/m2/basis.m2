@@ -4,8 +4,14 @@
  0. hookify, cache
  1. what are (basis, ZZ, List, *) methods for? why only Ring and Ideal?
  2. why isn't (basis, Matrix) implemented?
+ 3. update rawSelectByDegrees to accept partial degrees,
+    then simplify adjustComputation
+ 4. can liftBasis be done with a tensor or pushforward computation?
+    see https://github.com/Macaulay2/M2/issues/1522
+ 5. remove SourceRing option, or take a RingMap instead
 *-
 
+needs "computations.m2"
 needs "gb.m2"
 needs "max.m2" -- for InfiniteNumber
 needs "modules2.m2"
@@ -93,6 +99,54 @@ basis = method(TypicalValue => Matrix,
         Truncate   => false     -- TODO: what does this do?
         }
     )
+
+-- keys: Variables
+-- TODO: perhaps we can use selectInSubring on
+-- a cached basis with a larger variable set
+BasisContext = new SelfInitializingType of Context
+BasisContext.synonym = "basis context"
+
+new BasisContext from Sequence := (C, S) -> BasisContext{getVarlist S}
+
+BasisComputation = new Type of Computation
+BasisComputation.synonym = "basis computation"
+
+protect LowerLimit
+protect UpperLimit
+ExtraOpts := { LowerLimit => null, UpperLimit => null }
+
+new BasisComputation from Sequence := (C, S) -> new BasisComputation from {
+    LowerLimit => S#0,
+    UpperLimit => S#1,
+    DegreeRank => degreeLength S#2,
+    Limit      => infinity,
+    Truncate   => false,
+    Variables  => null,
+    Result     => null}
+
+isComputationDone BasisComputation := Boolean => options basis ++ ExtraOpts >> opts -> container -> (
+    -- this function determines whether we can use the cached result, or further computation is necessary
+    instance(container.Result, RawMatrix)
+    and opts.LowerLimit >= container.LowerLimit
+    and opts.UpperLimit <= container.UpperLimit
+    and opts.Limit      <= container.Limit
+    and opts.Truncate   == container.Truncate)
+
+updateComputation(BasisComputation, RawMatrix) := RawMatrix => options basis ++ ExtraOpts >> opts -> (container, result) -> (
+    container.LowerLimit = opts.LowerLimit;
+    container.UpperLimit = opts.UpperLimit;
+    container.Limit      = opts.Limit;
+    container.Truncate   = opts.Truncate;
+    container.Result     = result)
+
+adjustComputation BasisComputation := RawMatrix => options basis ++ ExtraOpts >> opts -> container -> (
+    -- TODO: make sure this works with either a Matrix or a RawMatrix
+    (lo, hi) := (opts.LowerLimit, opts.UpperLimit);
+    degs := pack(container.DegreeRank, degrees source container.Result);
+    -- TODO: would be better to do this in engine, but rawSelectByDegrees doesn't work with partial degrees
+    cols := positions(degs, deg -> lo <= take(deg, #lo) and take(deg, #hi) <= hi);
+    if opts.Limit < #cols then cols = take(cols, opts.Limit);
+    rawSubmatrix(container.Result, cols))
 
 -----------------------------------------------------------------------------
 
@@ -187,11 +241,21 @@ basisHelper = (opts, lo, hi, M) -> (
     then return if S === R then map(M, S^0, {}) else map(M, S^0, phi, {});
 
     opts = opts ++ {
+        LowerLimit => lo,
+        UpperLimit => hi,
         Limit      => if opts.Limit == -1 then infinity else opts.Limit
         };
 
+    -- this logic runs the strategies in order, or the specified strategy
+    computation := (opts, container) -> (
+        runHooks((basis, List, List, Module), (opts, lo, hi, M), Strategy => strategy));
+
+    -- this is the logic for caching partial basis computations. M.cache contains an option:
+    --   BasisContext{} => BasisComputation{ Result, ... }
+    container := fetchComputation(BasisComputation, M, (lo, hi, M), new BasisContext from (R, opts.Variables));
+
     -- the actual computation of the basis occurs here
-    B := runHooks((basis, List, List, Module), (opts, lo, hi, M), Strategy => strategy);
+    B := (cacheComputation(opts, container)) computation;
 
     if B =!= null then liftBasis(M, phi, B, opts.Degree) else if strategy === null
     then error("no applicable strategy for computing bases over ", toString R)
@@ -234,6 +298,7 @@ basisDefaultStrategy = (opts, lo, hi, M) -> (
 algorithms#(basis, List, List, Module) = new MutableHashTable from {
     Default => basisDefaultStrategy,
     -- TODO: add separate strategies for skew commutative rings, vector spaces, and ZZ-modules
+    -- TODO: add strategy to use already cached results
     }
 
 -- Installing hooks for resolution

@@ -617,7 +617,7 @@ Description
     diagonalMultidegrees(d,t)
     diagonalMultidegrees(d, {0,1,2})
 SeeAlso
-  (basis,ZZ,Module)
+  "Bases::basis(ZZ,Module)"
 ///
 
 --TODO: check that modules are over polynomial rings? products of projective spaces?

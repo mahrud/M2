@@ -13,6 +13,38 @@
  7. there is almost no caching when lower and upper limit have rank > 1
 *-
 
+---------------------------------------------------------------------------
+-- PURPOSE : Computation of bases for modules
+--
+-- UPDATE HISTORY : created Oct 2018
+--                  updated Jun 2021
+--
+-- TODO :
+-- 1. improve speed and caching
+-- 2. flattenRing should keep track of the Nef cone
+-- 3. turn into hook strategies
+-- 4. remove [basis, Truncate], call rawBasis in truncation0
+-- 5. finish basis'
+---------------------------------------------------------------------------
+newPackage(
+    "Bases",
+    Version => "1.0",
+    Date => "10 June 2021",
+    Headline => "bases of modules",
+    Authors => {
+	{ Name => "Daniel Grayson", Email => "dan@math.uiuc.edu",     HomePage => "http://www.math.uiuc.edu/~dan/" },
+        { Name => "Mike Stillman",  Email => "mike@math.cornell.edu", HomePage => "https://www.math.cornell.edu/~mike" },
+        { Name => "Mahrud Sayrafi", Email => "mahrud@umn.edu",        HomePage => "https://math.umn.edu/~mahrud" }
+        },
+    Keywords => { "Commutative Algebra" },
+    AuxiliaryFiles => true,
+    DebuggingMode => true
+    )
+
+importFrom_Core {"raw", "rawBasis", "rawSelectByDegrees", "rawSubmatrix", "RawMatrix"}
+importFrom_Core { "isComputationDone", "cacheComputation", "fetchComputation",
+    "updateComputation", "adjustComputation", "cacheHit", "Context", "Computation" }
+
 needs "computations.m2"
 needs "gb.m2"
 needs "max.m2" -- for InfiniteNumber
@@ -91,6 +123,7 @@ liftBasis = (M, phi, B, offset) -> (
 -- basis
 -----------------------------------------------------------------------------
 
+-* defined in m2/modules.m2
 basis = method(TypicalValue => Matrix,
     Options => {
         Strategy   => null,
@@ -101,6 +134,7 @@ basis = method(TypicalValue => Matrix,
         Truncate   => false     -- if true, then generators of higher degree are kept
         }
     )
+*-
 
 -- keys: Variables
 -- TODO: perhaps we can use selectInSubring on
@@ -309,3 +343,20 @@ algorithms#(basis, List, List, Module) = new MutableHashTable from {
 -- Installing hooks for resolution
 scan({Default}, strategy ->
     addHook(key := (basis, List, List, Module), algorithms#key#strategy, Strategy => strategy))
+
+--------------------------------------------------------------------
+----- Tests section
+--------------------------------------------------------------------
+
+load "./Bases/tests.m2"
+
+--------------------------------------------------------------------
+----- Documentation section
+--------------------------------------------------------------------
+
+beginDocumentation()
+load "./Bases/docs.m2"
+
+--------------------------------------------------------------------
+----- Development section
+--------------------------------------------------------------------

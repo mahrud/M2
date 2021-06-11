@@ -1,4 +1,35 @@
 doc ///
+Node
+   Key
+     Bases
+   Headline
+     basis of all or part of a module, ring or ideal
+   Description
+    Text
+      This function has several variants, so here we introduce the most common uses
+      of {\tt basis}.  See the specific links below to see the documentation for each
+      variant.
+      
+      The most basis use is to find all of the monomials in a polynomial ring of a given degree:
+    Example
+      R = QQ[x,y,z]
+      basis(2,R)
+    Text
+      We can also find a generating set (over the base ring QQ) of an ideal of module.  The returned value is
+      a matrix from a free module to the ideal or module.
+    Example
+      I = ideal"x2,y3"
+      phi = basis(3,I)
+    Text
+      To get the actual elements of I, form the image of this map
+    Example
+      image phi
+   SeeAlso
+     truncate
+     coefficients
+     monomials
+     
+Node
    Key
       basis
      (basis, Ideal)
@@ -199,39 +230,6 @@ doc ///
 ///
 
 -*
-doc ///
-   Key
-     basis
-   Headline
-     basis of all or part of a module, ring or ideal
-   Description
-    Text
-      This function has several variants, so here we introduce the most common uses
-      of {\tt basis}.  See the specific links below to see the documentation for each
-      variant.
-      
-      The most basis use is to find all of the monomials in a polynomial ring of a given degree:
-    Example
-      R = QQ[x,y,z]
-      basis(2,R)
-    Text
-      We can also find a generating set (over the base ring QQ) of an ideal of module.  The returned value is
-      a matrix from a free module to the ideal or module.
-    Example
-      I = ideal"x2,y3"
-      phi = basis(3,I)
-    Text
-      To get the actual elements of I, form the image of this map
-    Example
-      image phi
-   Caveat
-   SeeAlso
-     truncate
-     coefficients
-     monomials
-     
-///
-
 doc ///
    Key
      (basis, Ring)

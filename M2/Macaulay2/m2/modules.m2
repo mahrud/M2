@@ -437,6 +437,18 @@ isHomogeneous Module := Boolean => (cacheValue symbol isHomogeneous) (
      	  (not M.?relations or isHomogeneous M.relations)
 	  ))
 
+-- methods are defined in packages/Bases.m2
+basis = method(TypicalValue => Matrix,
+    Options => {
+        Strategy   => null,
+        SourceRing => null,     -- defaults to ring of the module, but accepts the coefficient ring
+        Variables  => null,     -- defaults to the generators of the ring
+        Degree     => null,     -- offset the degree of the resulting matrix
+        Limit      => infinity, -- upper bound on the number of basis elements to collect
+        Truncate   => false     -- if true, then generators of higher degree are kept
+        }
+    )
+
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "
 -- End:

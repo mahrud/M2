@@ -10,6 +10,7 @@
 -- 3. turn into hook strategies
 -- 4. remove [basis, Truncate], call rawBasis in truncation0
 -- 5. finish basis'
+-- 6. support Picard groups with torsion
 ---------------------------------------------------------------------------
 newPackage(
     "Truncations",

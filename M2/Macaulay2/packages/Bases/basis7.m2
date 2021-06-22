@@ -114,7 +114,3 @@ basis(-4,-2,R)
 basis(-2,-4,R)
 basis(4,2,R)
 basis(2,4,R)
-
--- Local Variables:
--- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages/Macaulay2Doc/test pushforward2.out"
--- End:

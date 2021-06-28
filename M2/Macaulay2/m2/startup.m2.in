@@ -613,6 +613,7 @@ userpath = {
     applicationDirectory() | "local/" | Layout#1#"packages"
     }
 
+-- TODO: rename m2 -> packages/Core, then simplify by adding directories to srcdirs
 if prefixDirectory =!= null then (
     if topBuilddir =!= null then (
 	if topSrcdir =!= null then (

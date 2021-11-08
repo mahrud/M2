@@ -68,6 +68,7 @@ Node
 
 Node
   Key
+--     truncate -- add this when getting options from methods with Options => true works
     (truncate, List, Module)
     (truncate, List, Ideal)
     (truncate, List, Ring)

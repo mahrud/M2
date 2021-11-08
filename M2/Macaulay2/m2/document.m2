@@ -544,6 +544,7 @@ processUsage := (tag, fn, o) -> (
     optionNames := keys hashTable optionList;
     -- default inputs, outputs, and options of the function or method
     (inputs0, outputs0) := getSignature tag.Key;
+    -- TODO: this fails for methods with Options => true, e.g. truncate
     options0 := getOptionDefaultValues  tag.Key;
     -- e.g. map(Module, Nothing, Matrix)
     inputs0  = select( inputs0, T -> T =!= Nothing);

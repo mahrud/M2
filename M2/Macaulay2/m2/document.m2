@@ -519,6 +519,7 @@ processUsage := (tag, fn, o) -> (
     arg := if o.?Inputs then o.Inputs else {};
     out := if o.?Outputs then o.Outputs else {};
     (ino, inp) := toSequence values partition(isOption, arg, {true, false});
+    -- TODO: this fails for methods with Options => true, e.g. truncate
     opt := getOptionDefaultValues tag.Key;
     inoh:= new HashTable from ino;
     if not isSubset(keys inoh, keys opt)

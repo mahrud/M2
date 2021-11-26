@@ -1,7 +1,7 @@
 --		Copyright 1995 by Daniel R. Grayson
 
 needs "basis.m2"
-needs "gateway.m2" -- for ScriptedFunctor
+needs "functors.m2"
 needs "matrix1.m2"
 needs "modules.m2"
 needs "Hom.m2"
@@ -13,7 +13,7 @@ ExtOptions = new OptionTable from {
      }
 
 Ext = new ScriptedFunctor from {
-    superscript => i -> new ScriptedFunctor from {
+    superscript => i -> new Functor from {
 	-- Ext^1(F, G)
 	argument => ExtOptions >> opts -> X -> applyMethodWithOpts''(Ext, functorArgs(i, X), opts)
 	},

@@ -1,6 +1,6 @@
 --		Copyright 1995 by Daniel R. Grayson
 
-needs "gateway.m2" -- for ScriptedFunctor
+needs "functors.m2"
 needs "matrix1.m2"
 needs "modules.m2"
 
@@ -11,7 +11,7 @@ TorOptions = new OptionTable from {
      }
 
 Tor = new ScriptedFunctor from {
-    subscript => i -> new ScriptedFunctor from {
+    subscript => i -> new Functor from {
 	-- Tor_i(F, G)
 	argument => TorOptions >> opts -> X -> applyMethodWithOpts''(Tor, functorArgs(i, X), opts)
 	},

@@ -343,9 +343,9 @@ tildeWarn = true
 Thing~ := x -> (if tildeWarn then (tildeWarn = false; printerr "Note: M~ is deprecated; use M^~ or sheaf instead."); x^~)
 
 OO = new ScriptedFunctor from {
-     subscript => X -> applyMethod((symbol _,     OO, class X), (OO, X)),
-     argument  => X -> applyMethod((symbol SPACE, OO, class X), (OO, X)),
-     }
+    subscript => X -> applyMethod((symbol _,     OO, class X), (OO, X)),
+    argument  => X -> applyMethod((symbol SPACE, OO, class X), (OO, X)),
+    }
 OO.texMath = ///{\mathcal O}///
 installMethod(symbol_, OO, Variety, SheafOfRings => (OO, X) -> sheaf(X, ring X))
 
@@ -779,7 +779,7 @@ sheafHom(CoherentSheaf, CoherentSheaf) := CoherentSheaf => opts -> (F, G) -> (
 
 sheafExt = new ScriptedFunctor from {
     superscript => i -> new ScriptedFunctor from {
-	-- sheafExt^1(F, G)
+	-- sheafExt^i(F, G)
 	argument => X -> applyMethod''(sheafExt, functorArgs(i, X))
 	},
     argument => X -> applyMethod''(sheafExt, X)

@@ -166,6 +166,7 @@ export {
 	"FunctionApplication",
 	"FunctionBody",
 	"FunctionClosure",
+	"Functor",
 	"GBDegrees",
 	"GCstats",
 	"GF",

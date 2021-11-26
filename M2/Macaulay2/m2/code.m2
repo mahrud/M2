@@ -2,7 +2,6 @@
 
 -- TODO: needs "document.m2" for formatDocumentTag, but this causes a loop
 needs "debugging.m2" -- for FilePosition
-needs "gateway.m2"
 needs "lists.m2"
 needs "methods.m2"
 needs "nets.m2"
@@ -170,11 +169,8 @@ methods Sequence := F -> (
     scan(select(F, e -> instance(e, Type)), T -> scan(sequenceMethods(T, F, tallyF), key -> found#key = true));
     previousMethodsFound = new NumberedVerticalList from sortByName keys found)
 
-methods ScriptedFunctor := -- TODO: OO and other scripted functors aren't supported
 methods Symbol :=
 methods Thing  := F -> (
-    if F === HH
-    then return previousMethodsFound = join \\ methods \ (homology, cohomology);
     found := new MutableHashTable;
     -- TODO: either finish or remove nullaryMethods
     if nullaryMethods#?(1:F) then found#(1:F) = true;

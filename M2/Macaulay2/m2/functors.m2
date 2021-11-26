@@ -1,0 +1,141 @@
+--		Copyright 1995 by Daniel R. Grayson
+
+needs "code.m2" -- for methods
+needs "expressions.m2"
+needs "methods.m2"
+
+-----------------------------------------------------------------------------
+-- helpers for functors
+-----------------------------------------------------------------------------
+
+-- flatten the arguments given to a scripted functor
+functorArgs = method()
+functorArgs(Thing,        Sequence) := (i,    args) -> prepend(i, args)
+functorArgs(Thing, Thing, Sequence) := (i, j, args) -> prepend(i, prepend(j, args))
+functorArgs(Thing, Thing, Thing)    :=
+functorArgs(Thing, Thing)           := identity
+
+wrongDomain := (G, op, X) -> error("no method for ", toString G, toString op, toString X)
+
+applyMethod = (key, X) -> (
+    if (F := lookup key) =!= null then F X
+    -- TODO: expand this error message
+    else error("no method for functor ", toString key#1, " applied to ", X))
+
+-- TODO: combine these with applyMethod and retire these
+applyMethod' = (key, desc, X) -> (
+    if (F := lookup key) =!= null then F X
+    else error("no method for ", desc, " applied to ", X))
+
+-- used in hh
+applyMethod'' = (F, X) -> (
+    -- TODO: write a variation of lookup to do this
+    key := prepend(F, delete(Option, apply(X, class)));
+    applyMethod'(key, toString F, if #X == 1 then X#0 else X))
+
+-- TODO: combine for all functors
+-- used in Ext
+applyMethodWithOpts' = (key, desc, X, opts) -> (
+    if (F := lookup key) =!= null then (F opts) X
+    else error("no method for ", desc, " applied to ", X))
+
+applyMethodWithOpts'' = (F, X, opts) -> (
+    -- TODO: write a variation of lookup to do this
+    key := prepend(F, apply(X, class));
+    applyMethodWithOpts'(key, toString F, X, opts))
+
+-----------------------------------------------------------------------------
+-- Functor and ScriptedFunctor type declarations
+-----------------------------------------------------------------------------
+
+protect argument
+protect subscript
+protect superscript
+
+Functor = new Type of MutableHashTable
+Functor.synonym = "functor"
+globalAssignment Functor
+
+ScriptedFunctor = new Type of Functor
+ScriptedFunctor.synonym = "scripted functor"
+
+-----------------------------------------------------------------------------
+-- Main methods
+-----------------------------------------------------------------------------
+-- TODO: domain and codomain
+
+Functor           Thing := (G, X) -> if G#?argument    then G#argument X    else wrongDomain(G, " ", X)
+ScriptedFunctor _ Thing := (G, i) -> if G#?subscript   then G#subscript i   else wrongDomain(G, symbol _, i)
+ScriptedFunctor ^ Thing := (G, i) -> if G#?superscript then G#superscript i else wrongDomain(G, symbol ^, i)
+
+-----------------------------------------------------------------------------
+
+net        Functor := lookup(net, Type)
+toString   Functor := lookup(toString, Type)
+expression Functor := F -> new Holder from { F }
+precedence Functor := x -> 70
+
+-- TODO: use codeHelpers to get code HH to work
+-- TODO: get methods OO to work
+methods' := lookup(methods, Symbol)
+methods Functor := F -> (
+    if F === HH then join(methods homology, methods cohomology) else methods' F)
+-- TODO: perhaps give info about argument, subscript, superscript?
+methodOptions Functor := F -> null
+
+-----------------------------------------------------------------------------
+-- id: the identity morphism
+-----------------------------------------------------------------------------
+
+id = new ScriptedFunctor from {
+    subscript => X -> applyMethod((id, class X), X),
+    }
+
+-----------------------------------------------------------------------------
+-- HH: homology and cohomology
+-----------------------------------------------------------------------------
+
+-- TODO: change to Options => true?
+  homology = method(Options => {})
+cohomology = method(Options => {Degree => 0}) -- for local cohomology and sheaf cohomology
+
+HH = new ScriptedFunctor from {
+     subscript => (
+	  i -> new ScriptedFunctor from {
+	       superscript => (
+		    j -> new ScriptedFunctor from {
+	       	    	 argument => (
+			      X -> cohomology functorArgs(i,j,X)
+			      )
+	       	    	 }
+		    ),
+	       argument => (
+		    X -> homology functorArgs(i,X)
+		    )
+	       }
+	  ),
+     superscript => (
+	  j -> new ScriptedFunctor from {
+	       subscript => (
+		    i -> new ScriptedFunctor from {
+	       	    	 argument => (
+			      X -> homology functorArgs(j,i,X)
+			      )
+	       	    	 }
+		    ),
+	       argument => (
+		    X -> cohomology functorArgs(j,X)
+		    )
+	       }
+	  ),
+     argument => (
+	  args -> homology(args)
+	  )
+     }
+
+  homology(ZZ,Sequence) := opts -> (i,X) -> homology prepend(i,X)
+cohomology(ZZ,Sequence) := opts -> (i,X) -> cohomology(prepend(i,X), opts)
+
+-- Local Variables:
+-- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "
+-- End:

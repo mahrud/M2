@@ -22,14 +22,13 @@ new Command from String   := Command => (command, cmdname) -> command {x ->
     else chkrun(cmdname | " " | toString x)}
 
 -- whether fn exists on the path and is executable
--- TODO: check executable bit
+chkexec := fn -> fileExists fn and 0 < (64+8+1) & fileMode fn
 runnable = fn -> (
     if fn == "" then return false;
-    if isFixedExecPath fn then fileExists fn
-    else 0 < # select(1, apply(separate(":", getenv "PATH"), p -> p|"/"|fn), fileExists))
+    if isFixedExecPath fn then chkexec fn
+    else null =!= scan(separate(":", getenv "PATH"), p -> if chkexec concatPath(p, fn) then break p))
 
 -- used to get preferred web browser or editor application
--- TODO: cache this value or allow setting default in init.m2?
 getViewer = (var, backup) -> (
     if runnable (env := getenv var) then env -- compatibility
     else if version#"operating system" === "Darwin" and runnable "open" then "open" -- Apple varieties

@@ -169,7 +169,7 @@ mathML GradedModuleMap :=
 mathML GroebnerBasis :=
 mathML IndexedVariableTable :=
 mathML Package :=
-mathML ScriptedFunctor :=
+mathML Functor :=
 mathML Monoid :=
 mathML Thing := x -> (
      -- maybe "expression" should not just put unknown things in a holder ...

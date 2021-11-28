@@ -732,32 +732,27 @@ Ext(ZZ, CoherentSheaf, CoherentSheaf) := Module => opts -> (n,F,G) -> (
 -- TODO: HodgeTally for pretty printing the Hodge diamond
 
 hh = new ScriptedFunctor from {
-     superscript => (
-	  pq -> new ScriptedFunctor from {
-	       argument => X -> (
-		    a := (pq,X);
-		    f := lookup_hh ( class \ a );
-		    if f === null then error "no method available";
-	       	    f a
-		    )
-	       }
-	  )
-     }
+    superscript => pq -> new ScriptedFunctor from {
+	-- hh^(p,q) X = dim HH^p(X, Omega^q)
+	argument => X -> applyMethod''(hh, functorArgs(pq, X))
+	},
+    argument => X -> applyMethod''(hh, X)
+    }
 
-hh(Sequence,ProjectiveVariety) := (pq,X) -> if X.cache.?hh and X.cache.hh#?pq then X.cache.hh#pq else (
-     (p,q) := pq;
-     if class p =!= ZZ or class q =!= ZZ then error "expected integer superscripts";
-     d := dim X;
-     pqs := { (p,q), (q,p), (d-p,d-q), (d-q,d-p) };
-     (p,q) = min { (p,q), (q,p), (d-p,d-q), (d-q,d-p) };
-     h := rank HH^q cotangentSheaf(p,X);
-     if not X.cache.?hh then X.cache.hh = new MutableHashTable;
-     scan(pqs, pq -> X.cache.hh#pq = h);
-     h)
+-- using Hodge symmetry and Serre duality to ease the computation
+-- TODO: is minimum necessarily the most efficient?
+min'pq := d -> (p,q) -> min{(p,q), (q,p), (d-p,d-q), (d-q,d-p)}
 
-euler ProjectiveVariety := X -> (
-     d := dim X;
-     sum(0 .. d, j -> hh^(j,j) X + 2 * sum(0 .. j-1, i -> (-1)^(i+j) * hh^(i,j) X)))
+hh(Sequence, ProjectiveVariety) := ZZ => (pq, X) -> (
+    -- p and q are swapped here, because cotangentSheaf seems to be the
+    -- slowest part of this algorithm, so we minimize the exterior powers
+    (q,p) := (min'pq dim X) pq;
+    if not X.cache.?hh   then X.cache.hh = new MutableHashTable;
+    if X.cache.hh#?(p,q) then X.cache.hh#(p,q) else X.cache.hh#(p,q) = (
+	rank HH^p cotangentSheaf(q, X)))
+
+euler ProjectiveVariety := ZZ => X -> sum(0 .. dim X,
+    j -> hh^(j,j) X + 2 * sum(0 .. j-1, i -> (-1)^(i+j) * hh^(i,j) X))
 
 -----------------------------------------------------------------------------
 -- Subpackages

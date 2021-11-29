@@ -628,6 +628,10 @@ cohomology(ZZ, ProjectiveVariety, SumOfTwists) := Module => opts -> (p, X, S) ->
     then twistedGlobalSectionsModule(F, b)
     else HH^(p+1)(module F, Degree => b))
 
+-- HH_(>=b)^p(X, F)
+cohomology(LowerBound, ZZ,                    CoherentSheaf) := Module => opts -> (b, p,    F) -> HH^p(   F(b), opts)
+cohomology(LowerBound, ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (b, p, X, F) -> HH^p(X, F(b), opts)
+
 -- HH^p(X, F)
 cohomology(ZZ,                    CoherentSheaf) := Module => opts -> (p,    F) -> cohomology(p, variety F, F, opts)
 cohomology(ZZ,     AffineVariety, CoherentSheaf) := Module => opts -> (p, X, F) -> (

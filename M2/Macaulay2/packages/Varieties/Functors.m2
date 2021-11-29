@@ -792,6 +792,9 @@ cohomologyDirect = {Print => true} >> opts -> (cohodeg, S) -> (
 	);
     output)
 
+-- HH_(>=b)^p(X, F)
+cohomology(LowerBound, ZZ,                    CoherentSheaf) := Module => opts -> (b, p,    F) -> HH^p(   F(b), opts)
+cohomology(LowerBound, ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (b, p, X, F) -> HH^p(X, F(b), opts)
 
 -- HH^p(X, F).
 -- The base ring should be a field. Note that it is usually faster

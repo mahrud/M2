@@ -115,7 +115,7 @@ andP = x -> (						    -- we don't do backtracking: the first parser absorbs as 
      f((),x#0,drop(x,1)))
 
 
-String @ Parser := (s,p) -> constParser s @ p
+String @ Parser := (s,p) -> (constParser s) @ p
 Parser @ String := (p,s) -> p @ constParser s
 Parser @ Parser := (p,q) -> new Parser from (
      c -> (

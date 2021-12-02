@@ -118,15 +118,31 @@ Proj Ring := (stashValue symbol Proj) (R ->
 	}
     )
 
--- TODO: PP(1,2,3) for weighted Proj and PP(V) for vector space V and PP(E) for bundle E?
---PP = new ScriptedFunctor from {
---     superscript => (
---	  i -> R -> (
---	       x := symbol x;
---	       Proj (R[ x_0 .. x_i ])
---	       )
---	  )
---     }
+-- TODO: export and document
+-- Note: NormalToricVarieties may redefine
+PP = new ScriptedFunctor from {
+    subscript => K -> new ScriptedFunctor from {
+	-- PP_kk^2 or PP_kk(1,2,3)
+	superscript => X -> applyMethod''(PP, functorArgs(K, 1:X)),
+	argument    => X -> applyMethod''(PP, functorArgs(K, 1:X)),
+	},
+    -- PP^2     --> Proj ZZ[a,b]
+    -- PP^{1,2} --> PP^1 ** PP^1
+    superscript => X -> applyMethod''(PP, 1:X),
+    -- PP(1,2,3) --> weighted projective space
+    -- PP E      --> projective bundle Proj E
+    argument    => X -> applyMethod''(PP, 1:X)
+    }
+
+-- TODO: add options for variable names, other monoid options?
+-- TODO: should really be PP^ZZ, but methods can't be installed that way
+PP ZZ       := ProjectiveVariety => n -> Proj(ZZ[vars(0..n#0)])
+--PP List     := ProjectiveVariety => N -> cartesianProduct apply(N#0, n -> PP^n)
+PP Sequence := ProjectiveVariety => w -> Proj(ZZ[vars(0..#w#0-1), Degrees => listZZ w#0])
+-- TODO: see https://github.com/Macaulay2/M2/issues/2351
+PP(Ring, ZZ)       :=
+--PP(Ring, List)     := ProjectiveVariety => (K, N) -> PP^N ** K
+PP(Ring, Sequence) := ProjectiveVariety => (K, w) -> PP w ** K
 
 -- this is a kludge to make Spec ZZ/101[x,y]/(y^2-x^3) and Proj ZZ/101[x,y]/(x^2-y^2) work as expected
 -- TODO: also make Spec kk{x,y} or Spec kk<|x,y|> work when they are supported
@@ -211,6 +227,7 @@ toExternalString Variety := toString @@ describe
 -- used to be in m2/mathml.m2
 mathML Variety := lookup(mathML, Thing)
 
+-- TODO: if the ring is not standard graded, it should be displayed (e.g. show the degrees)
 describe     AffineVariety := X -> Describe (expression Spec) (expression X.ring)
 describe ProjectiveVariety := X -> Describe (expression Proj) (expression X.ring)
 
@@ -607,6 +624,19 @@ minimalPresentation CoherentSheaf := prune CoherentSheaf := CoherentSheaf => opt
 	    G := sheaf(F.variety, HH^0 F(>=0));
 	    G.cache.pruningMap = sheafMap F.cache.SaturationMap;
 	    G)))
+
+-----------------------------------------------------------------------------
+-- Projective bundles
+-----------------------------------------------------------------------------
+-- TODO: add isVectorSpace, then given a vector space V with basis elements
+-- V_1 .. V_n support defining PP V = Proj Sym V = Proj kk[V_1..V_n].
+
+-- TODO: is this correct?
+symmetricAlgebra CoherentSheaf := Ring => opts -> F -> symmetricAlgebra(HH^0 F(>=0), opts)
+-- TODO: is the dual right?
+-- TODO: add isLocallyFree and make sure F is locally free first?
+PP CoherentSheaf := ProjectiveVariety => F -> tryHooks((PP, CoherentSheaf), F,
+    F -> Proj flattenRing(symmetricAlgebra dual F, Result => Thing))
 
 -----------------------------------------------------------------------------
 -- cotangentSheaf, tangentSheaf, and canonicalBundle

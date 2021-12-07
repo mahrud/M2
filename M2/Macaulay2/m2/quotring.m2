@@ -2,47 +2,20 @@
 
 needs "enginering.m2"
 needs "matrix1.m2"
+needs "modules.m2"
 
-QuotientRing = new Type of EngineRing
-QuotientRing.synonym = "quotient ring"
-ideal QuotientRing := R -> R.ideal
-isQuotientRing = method(TypicalValue => Boolean)
-monoid QuotientRing := o -> R -> R.monoid
-isQuotientRing Ring := R -> false
-isQuotientRing QuotientRing := R -> true
-coefficientRing QuotientRing := (cacheValue coefficientRing) (R -> coefficientRing ambient R)
-options QuotientRing := R -> options ambient R
-isHomogeneous QuotientRing := R -> isHomogeneous ideal R
-isQuotientOf = method(TypicalValue => Boolean)
-isQuotientOf(Ring,Ring) := (R,S) -> false
-isQuotientOf(Ring,QuotientRing) := (R,S) -> R === ambient S or isQuotientOf(R,ambient S)
-isQuotientOf(Type,Ring) := (X,S) -> false
-isQuotientOf(Type,QuotientRing) := (X,S) -> instance(ambient S,X) or isQuotientOf(X,ambient S)
-degreeLength QuotientRing := S -> degreeLength ambient S
-degreeGroup  QuotientRing := S -> degreeGroup  ambient S
-vars QuotientRing := (cacheValue vars) (S -> map(S^1,, table (1, numgens S, (i,j) -> S_j)))
-numgens QuotientRing := (cacheValue numgens) (S -> numgens ambient S)
-pretty := relns -> (
-     s := toSequence flatten entries relns;
-     if #s === 1 then s = first s;
-     s)
-toExternalString QuotientRing := S -> toString describe S
-random QuotientRing := opts -> S -> (
-     if S.baseRings === {ZZ} then (random char S)_S
-     else notImplemented())
-expression QuotientRing := S -> if hasAttribute(S,ReverseDictionary) then expression getAttribute(S,ReverseDictionary) else new Divide from { unhold expression ambient S, unhold expression pretty S.relations }
-describe QuotientRing := S -> Describe Divide { expression ambient S, expression pretty S.relations }
+-----------------------------------------------------------------------------
+-- TODO
+-----------------------------------------------------------------------------
+-- move away
 ambient PolynomialRing := R -> R
-ambient QuotientRing := Ring => (cacheValue ambient) (R -> last R.baseRings)
-degrees QuotientRing := R -> degrees ambient R
-precision QuotientRing := precision @@ ambient
-isSkewCommutative QuotientRing := R -> isSkewCommutative ambient R
-isWeylAlgebra     QuotientRing := R -> isWeylAlgebra     ambient R
+-- cache: numgens PolynomialRing, coefficientRing PolynomialRing
+-- typical value: precision
 
-Ring / Module := QuotientRing => (R,I) -> (
-     if ambient I != R^1 or I.?relations
-     then error ("expected ", toString I, " to be an ideal of ", toString R);
-     R / ideal I)
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
+-- TODO: move these elsewhere
 
 savedQuotients = new MutableHashTable
 
@@ -51,35 +24,45 @@ liftZZmodQQ := (r,S) -> (
      v := (value getGlobalSymbol "LLL") syz matrix {{-1,lift(r,ZZ),char ring r}};
      v_(0,0) / v_(1,0))
 
+-- Labels for algorithms implemented in the engine
+rawZZptypes = new HashTable from {
+    "Old"    => rawZZp,
+    "Aring"  => rawARingZZp,
+    "Ffpack" => p -> rawARingGaloisField(p, 1),
+    "Flint"  => rawARingZZpFlint,
+    }
+
 --------------------------------
-ZZp = method(Options=> {Strategy => "Flint"}) -- values allowed: "Flint", "Ffpack", "Aring", "Old".
-ZZp ZZ := opts -> (n) -> ZZp(ideal n, opts)
-ZZp Ideal := opts -> (I) -> (
-     typ := opts#Strategy;
-     gensI := generators I;
-     if ring gensI =!= ZZ then error "expected an ideal of ZZ";
-     n := gcd flatten entries gensI;
+ZZp = method(Options => { Strategy => null }) -- values allowed: "Flint", "Ffpack", "Aring", "Old".
+-- TODO: swap these
+ZZp ZZ := opts -> n -> ZZp(ideal n, opts)
+ZZp Ideal := opts -> I -> (
+    if ring I =!= ZZ then error "expected an ideal of ZZ";
+    type := opts.Strategy;
+    if type === null then type = "Flint";
+    if not rawZZptypes#?type then error("ZZp: unrecognized type ", toString type, " of prime field requested;", newline,
+	"  available types are: ", demark(", ", keys rawZZptypes));
+    n := gcd flatten entries generators I;
      if n < 0 then n = -n;
-     if n === 0 then 
-         ZZ
-     else if savedQuotients#?(typ, n) then
-         savedQuotients#(typ, n)
+     if n === 0 then ZZ else
+     if savedQuotients#?(type, n)
+     then savedQuotients#(type, n)
      else (
 	  if not isPrime n
 	  then error ("ZZ/n not implemented yet for composite n = ", toString n);
-	  S := new QuotientRing from 
-	    if typ === "Ffpack" then rawARingGaloisField(n,1)  
-        else if typ === "Flint" then rawARingZZpFlint n
-        else if typ === "Aring" then rawARingZZp n
-        else if typ === "Old" then rawZZp n
-        else error("unknown implementation choice: "|typ|///. Choices are "Flint" (default), "Ffpack", "Aring", "Old"///);
+	  S := new QuotientRing from
+	    if type === "Ffpack" then rawARingGaloisField(n,1)
+        else if type === "Flint" then rawARingZZpFlint n
+        else if type === "Aring" then rawARingZZp n
+        else if type === "Old" then rawZZp n;
 	  S.cache = new CacheTable;
 	  S.isBasic = true;
 	  S.ideal = I;
 	  S.baseRings = {ZZ};
    	  commonEngineRingInitializations S;
       initializeEngineLinearAlgebra S;
-	  S.relations = gensI;
+	  S.relations = matrix n;
+	  S.generators = {};
 	  S.isCommutative = true;
 	  S.presentation = matrix{{n}};
 	  S.order = S.char = n;
@@ -87,23 +70,22 @@ ZZp Ideal := opts -> (I) -> (
 	  expression S := x -> expression rawToInteger raw x;
 	  fraction(S,S) := S / S := (x,y) -> if y === 0_S then error "division by zero" else x//y;
 	  S.frac = S;		  -- ZZ/n with n PRIME!
-      savedQuotients#(typ, n) = S;
+      savedQuotients#(type, n) = S;
       lift(S,QQ) := opts -> liftZZmodQQ;
 	  S))
 
-isFinitePrimeField = F -> isQuotientRing F and ambient F === ZZ and F.?char
-
+-- TODO: this is used in ZZp
 initializeEngineLinearAlgebra = method()
-initializeEngineLinearAlgebra Ring := (R) -> (
+initializeEngineLinearAlgebra Ring := R -> (
     R#"EngineLinearAlgebra" = true;
-    R.determinant = (f) -> (
-        -- The following information 
+    R.determinant = f -> (
+        -- The following information
         -- f is a Matrix in the ring R
         -- f should be a square matrix, with free modules for both source and target
          m := mutableMatrix(f, Dense=>true);
          new R from rawLinAlgDeterminant raw m
          );
-    R.inverse = (f) -> (
+    R.inverse = f -> (
         A := mutableMatrix(f, Dense=>true);
         R := ring A;
         if numRows A =!= numColumns A then error "expected square matrix";
@@ -120,20 +102,20 @@ initializeEngineLinearAlgebra Ring := (R) -> (
         );
     )
 
-isBasicMatrix Matrix := (f) -> isFreeModule source f and isFreeModule target f
-basicDet Matrix := (f) -> (
+isBasicMatrix Matrix := f -> isFreeModule source f and isFreeModule target f
+basicDet Matrix := f -> (
     if not isBasicMatrix f then error "expected a matrix with free source and target";
     m := mutableMatrix(f, Dense=>true);
     promote(rawLinAlgDeterminant raw m, ring f) -- use promote to work with real and complex fields
     )
-basicInverse Matrix := (f) -> (
-    if not isBasicMatrix f then error "expected a matrix with free source and target";    
-    A := mutableMatrix(f, Dense=>true);    
+basicInverse Matrix := f -> (
+    if not isBasicMatrix f then error "expected a matrix with free source and target";
+    A := mutableMatrix(f, Dense=>true);
     R := ring A;
     if numRows A =!= numColumns A then error "expected square matrix";
     matrix map(R,rawLinAlgInverse(raw A))
     )
-basicRank Matrix := (f) -> (
+basicRank Matrix := f -> (
     if not isBasicMatrix f then error "expected a matrix with free source and target";
     m := mutableMatrix(f, Dense=>true);
     rawLinAlgRank(raw m)
@@ -141,19 +123,32 @@ basicRank Matrix := (f) -> (
 
 initializeEngineLinearAlgebra QQ
 
-Ring / Ideal := QuotientRing => (R,I) -> I.cache.QuotientRing = (
-     if ring I =!= R then error "expected ideal of the same ring";
-     if I.cache.?QuotientRing then return I.cache.QuotientRing;
-     if I == 0 then return R;
-     if R === ZZ then return ZZp(I);
-     error "can't form quotient of this ring";
-     )
+-----------------------------------------------------------------------------
+-- QuotientRing type declarations, constructors, and basic methods
+-----------------------------------------------------------------------------
 
-predecessors := method()
-predecessors Ring := R -> {R}
-predecessors QuotientRing := R -> append(predecessors last R.baseRings, R)
+QuotientRing = new Type of EngineRing
+QuotientRing.synonym = "quotient ring"
 
-EngineRing / Ideal := QuotientRing => (R,I) -> I.cache.QuotientRing = (
+-- constructors
+tryPromote := (f, R) -> try promote(f, R) else error "expected element of the same ring or promotable to it"
+
+Ring / ZZ :=
+Ring / List :=
+Ring / Sequence :=
+Ring / RingElement := QuotientRing => (R, f) -> R / tryPromote(ideal f, R)
+-- TODO: used to check ambient I == R^1 and not I.?relations instead of isIdeal, confirm that this is fine
+Ring / Module := QuotientRing => (R, M) -> if isIdeal M then R / ideal M else error "expected an ideal of the ring"
+
+-- TODO: get ZZ[x]/ideal 2 to work
+Ring / Ideal := QuotientRing => (R, I) -> I.cache.QuotientRing = (
+    if ring I =!= R then error "expected ideal of the same ring";
+    if I.cache.?QuotientRing then return I.cache.QuotientRing;
+    if I == 0   then R else
+    if R === ZZ then ZZp(I)
+    else error "can't form quotient of this ring")
+
+EngineRing / Ideal := QuotientRing => (R, I) -> I.cache.QuotientRing = (
      if ring I =!= R then error "expected ideal of the same ring";
      if I.cache.?QuotientRing then return I.cache.QuotientRing;
      if I == 0 then return R;
@@ -174,7 +169,7 @@ EngineRing / Ideal := QuotientRing => (R,I) -> I.cache.QuotientRing = (
      S.relations = gensI;
      S.isCommutative = R.isCommutative;
      if R.?SkewCommutative then S.SkewCommutative = R.SkewCommutative;
-     S.generators = apply(generators S, m -> promote(m,S));
+     S.generators = apply(generators R, m -> promote(m, S));
      if R.?generatorSymbols then S.generatorSymbols = R.generatorSymbols;
      if R.?generatorExpressions then S.generatorExpressions = (
 	  R.generatorExpressions
@@ -203,14 +198,55 @@ EngineRing / Ideal := QuotientRing => (R,I) -> I.cache.QuotientRing = (
      runHooks(R,QuotientRingHook,S);
      S)
 
-Ring / ZZ := (R,f) -> R / ideal f_R
+-- basic methods
+ideal QuotientRing := R -> R.ideal
+monoid QuotientRing := o -> monoid @@ ambient
+ambient QuotientRing := Ring => (cacheValue symbol ambient) (R -> last R.baseRings)
+generators QuotientRing := List => o -> R -> (
+    if o.CoefficientRing === R    then {} else
+    if o.CoefficientRing === null then R.generators
+    else apply(generators(ambient R, o), m -> promote(m, R)))
+random QuotientRing := RingElement => o -> R -> (
+    if R.baseRings === {ZZ} then (random char R)_R else notImplemented()) -- TODO
 
-Ring / RingElement := QuotientRing => (R,f) -> (
-     try f = promote(f,R);
-     if ring f =!= R then error "expected element of the same ring or promotable to it";
-     R / ideal f)
+-- TODO: are all these necessary?
+scan({	coefficientRing, degreeLength, degrees, degreesMonoid, degreesRing, options, precision},
+    methodfunc -> methodfunc QuotientRing := methodfunc @@ ambient)
 
-Ring / List := Ring / Sequence := QuotientRing => (R,f) -> R / promote(ideal f, R)
+-- property checks
+isHomogeneous     QuotientRing := R -> isHomogeneous ideal R
+isSkewCommutative QuotientRing := isSkewCommutative @@ ambient
+isWeylAlgebra     QuotientRing := isWeylAlgebra     @@ ambient
+
+isQuotientRing = method(TypicalValue => Boolean)
+isQuotientRing Ring := R -> false
+isQuotientRing QuotientRing := R -> true
+
+isQuotientOf = method(TypicalValue => Boolean)
+isQuotientOf(Ring, Ring) := (R, S) -> false
+isQuotientOf(Type, Ring) := (X, S) -> false
+isQuotientOf(Ring, QuotientRing) := (R, S) -> R === ambient S or isQuotientOf(R, ambient S)
+isQuotientOf(Type, QuotientRing) := (X, S) -> instance(ambient S, X) or isQuotientOf(X, ambient S)
+
+-- printing
+prettyprint := relns -> (
+     s := toSequence flatten entries relns;
+     if #s === 1 then s = first s;
+     s)
+expression       QuotientRing := S -> if hasAttribute(S, ReverseDictionary) then expression getAttribute(S, ReverseDictionary) else (
+    new Divide from { unhold expression ambient S, unhold expression prettyprint S.relations })
+describe         QuotientRing := S -> Describe Divide { expression ambient S, expression prettyprint S.relations }
+toExternalString QuotientRing := toString @@ describe
+
+-- miscellaneous
+-- retrieve a variable with the given symbol
+QuotientRing_String := (R, s) -> if R#?s then R#s else (
+    S := ultimate(ambient, R);
+    R#s = promote(S_s, R))
+
+-----------------------------------------------------------------------------
+-- presentation
+-----------------------------------------------------------------------------
 
 presentation PolynomialRing := Matrix => R -> map(R^1, R^0, 0)
 presentation QuotientRing   := Matrix => R -> (
@@ -228,7 +264,7 @@ presentation QuotientRing   := Matrix => R -> (
 presentation(QuotientRing,   QuotientRing)   :=
 presentation(QuotientRing,   PolynomialRing) :=
 presentation(PolynomialRing, QuotientRing)   :=
-presentation(PolynomialRing, PolynomialRing) := (R,S) -> (
+presentation(PolynomialRing, PolynomialRing) := Matrix => (R,S) -> (
      if not (R === S or isQuotientOf(R,S)) then error "expected ring and a quotient ring of it";
      v := map(R^1,R^0,0);
      while S =!= R do (
@@ -237,7 +273,9 @@ presentation(PolynomialRing, PolynomialRing) := (R,S) -> (
 	  );
      v)
 
-dim QuotientRing := (R) -> (
+-----------------------------------------------------------------------------
+
+dim QuotientRing := R -> (
      if isField R then 0
      else if R.?SkewCommutative then notImplemented()
      else (
@@ -247,17 +285,11 @@ dim QuotientRing := (R) -> (
 	  )
      )
 
-monoid QuotientRing := o -> (cacheValue monoid) (S -> monoid ambient S)
-degreesMonoid QuotientRing := (cacheValue degreesMonoid) (S -> degreesMonoid ambient S)
-degreesRing QuotientRing := (cacheValue degreesRing) (S -> degreesRing ambient S)
-QuotientRing_String := (S,s) -> if S#?s then S#s else (
-     R := ultimate(ambient, S);
-     S#s = promote(R_s, S))
+-----------------------------------------------------------------------------
 
-generators QuotientRing := opts -> (S) -> (
-     if opts.CoefficientRing === S then {}
-     else apply(generators(ambient S,opts), m -> promote(m,S)))
-char QuotientRing := (stashValue symbol char) ((S) -> (
+isFinitePrimeField = F -> isQuotientRing F and ambient F === ZZ and F.?char
+
+char QuotientRing := (stashValue symbol char) (S -> (
      p := char ambient S;
      if p == 1 then return 1;
      if isPrime p or member(QQ,S.baseRings) then return if S == 0 then 1 else p;
@@ -268,13 +300,18 @@ char QuotientRing := (stashValue symbol char) ((S) -> (
      if g == 0 then return char ring g;
      m := g_(0,0);
      if liftable(m,ZZ) then lift(m,ZZ) else 0))
-singularLocus(Ring) := QuotientRing => (R) -> (
-     f := presentation R;
-     A := ring f;
-     A / (ideal f + minors(codim(R,Generic=>true), jacobian presentation R)))
 
-singularLocus(Ideal) := QuotientRing => (I) -> singularLocus(ring I / I)
+-----------------------------------------------------------------------------
+-- singularLocus
+-----------------------------------------------------------------------------
 
+singularLocus Ideal := QuotientRing => I -> singularLocus(ring I / I)
+singularLocus Ring  := QuotientRing => (cacheValue symbol singularLocus) (R -> (
+    f := presentation R;
+    ring f / (minors(codim(R, Generic => true), jacobian f) + ideal f)))
+
+-----------------------------------------------------------------------------
+-- TODO: why is this here?
 toField = method()
 toField Ring := R -> (
      if isField R then error "toField: ring is already a field";
@@ -289,10 +326,14 @@ toField Ring := R -> (
 	  S)
      else error "toField: no method for declaring this type of ring to be a field")
 
+-----------------------------------------------------------------------------
+-- retrieve a previously discovered non-unit
 getNonUnit = R -> if R.?Engine and R.Engine then (
      r := rawGetNonUnit raw R;
      if r != 0 then new R from r)
 
+-----------------------------------------------------------------------------
+-- TODO: move elsewhere
 -- nextPrime and getPrimeWithRootOfUnity, written by Frank Schreyer.
 nextPrime=method(TypicalValue=>ZZ)
 nextPrime Number := n -> (
@@ -309,7 +350,7 @@ getPrimeWithRootOfUnity(ZZ,ZZ) := opt-> (n,r1) -> (
      a := opt.Range_0;
      b := opt.Range_1;
      --(a,b)=(100,200),n=12,r=12
-     if b<a+2*log a or b<2 or not ( class a === ZZ and class b === ZZ) then 
+     if b<a+2*log a or b<2 or not ( class a === ZZ and class b === ZZ) then
          error "the range (a,b) should be an integral interval of diameter b-a > 2*log a";
      if n==2 then return (nextPrime(a+random(b-a)),-1);
      r2 := r1-1;
@@ -324,18 +365,18 @@ getPrimeWithRootOfUnity(ZZ,ZZ) := opt-> (n,r1) -> (
                      L = delete(q,L);
                      q = last L;
                      p = first q
-                     ) 
+                     )
                  else (
-                     r2 = r2+1; 
+                     r2 = r2+1;
                      L = toList factor(r2^n-1);
                      q = last L;
                      p = first q
                      );
                  );
-         -- r2 is now a root of unity in ZZ/p with a <= p <= b  
+         -- r2 is now a root of unity in ZZ/p with a <= p <= b
          #select(ds, d-> (r2^d)%p == 1) !=0)  --check for primitive
-     do ( 
-         r2 = r2+1; 
+     do (
+         r2 = r2+1;
          L = toList factor(r2^n-1);
          q = last L;
          p = first q

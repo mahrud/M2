@@ -1,3 +1,10 @@
+restart
+-- TODO: R = ZZ[x]/ideal 2
+R = ZZ[x]/x
+assert({0_R} === gens R)
+assert({} === gens(R, CoefficientRing => R))
+assert(matrix{{0_R}} === vars R)
+
 A = ZZ[x]
 B = A/8
 f = 6*x

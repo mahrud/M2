@@ -540,6 +540,33 @@ endif()
 #_ADD_COMPONENT_DEPENDENCY(libraries cddlib mp CDDLIB_FOUND)
 
 
+# https://gitlab.lip6.fr/safey/msolve
+string(REGEX REPLACE
+  "./configure$" "${CMAKE_SOURCE_DIR}/submodules/msolve/autogen.sh" msolve_AUTOGEN "${CONFIGURE}")
+ExternalProject_Add(build-msolve
+  PREFIX            libraries/msolve
+  SOURCE_DIR        ${CMAKE_SOURCE_DIR}/submodules/msolve
+  BINARY_DIR        libraries/msolve/build
+  CONFIGURE_COMMAND ${msolve_AUTOGEN} --prefix=${M2_HOST_PREFIX}
+                      #-C --cache-file=${CONFIGURE_CACHE}
+                      ${shared_setting}
+                      CPPFLAGS=${CPPFLAGS}
+                      CFLAGS=${CFLAGS}
+                      LDFLAGS=${LDFLAGS}
+                      CC=${CMAKE_C_COMPILER}
+		      "OPENMP_CFLAGS=${OpenMP_C_FLAGS} ${OpenMP_C_LDLIBS}"
+  BUILD_COMMAND     ${MAKE} -j${PARALLEL_JOBS}
+  INSTALL_COMMAND   ${MAKE} -j${PARALLEL_JOBS} install
+          COMMAND   ${CMAKE_COMMAND} -E make_directory ${M2_INSTALL_LICENSESDIR}/msolve
+          COMMAND   ${CMAKE_COMMAND} -E copy_if_different COPYING ${M2_INSTALL_LICENSESDIR}/msolve
+  TEST_COMMAND      ${MAKE} -j${PARALLEL_JOBS} check
+  EXCLUDE_FROM_ALL  ON
+  TEST_EXCLUDE_FROM_MAIN ON
+  STEP_TARGETS      install test
+  )
+_ADD_COMPONENT_DEPENDENCY(libraries msolve "mp;mpfr;flint" MSOLVE_FOUND)
+
+
 # https://numpi.dm.unipi.it/software/mpsolve
 # Known issue: tests don't work with static library
 ExternalProject_Add(build-mpsolve

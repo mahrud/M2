@@ -195,6 +195,7 @@ if firstTime then (
 	  | "  MPSolve " | version#"mpsolve version" | ", by D. Bini et al." | newline
 	  | "  Eigen " | version#"eigen version" | ", by B. Jacob et al." | newline
 	  | "  TBB " | version#"tbb version" | ", by Intel" | newline
+	  | "  Normaliz " | version#"normaliz version" | ", by W. Bruns et al." | newline
           | "  Memtailor " | version#"memtailor version" | ", by B. Roune" | newline
           | "  Mathic " | version#"mathic version" | ", by B. Roune and M. Stillman" | newline
           | "  MathicGB " | version#"mathicgb version" | ", by B. Roune and M. Stillman"

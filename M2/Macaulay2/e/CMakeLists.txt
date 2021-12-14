@@ -119,6 +119,8 @@ set(CPPONLYFILES
   interface/computation.h # no .cpp yet
   interface/cra.cpp
   interface/cra.h
+  interface/cone.cpp
+  interface/cone.h
   interface/factory.cpp
   interface/factory.h
   interface/flint.cpp

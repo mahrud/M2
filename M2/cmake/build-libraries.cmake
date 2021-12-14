@@ -1021,7 +1021,7 @@ _ADD_COMPONENT_DEPENDENCY(programs nauty "" NAUTY)
 
 
 # https://www.normaliz.uni-osnabrueck.de/
-# normaliz needs libgmp, libgmpxx, boost and is used by the package Normaliz
+# normaliz needs libgmp, libgmpxx, boost, and openmp, and is used by the package Normaliz
 ExternalProject_Add(build-normaliz
   URL               https://github.com/Normaliz/Normaliz/releases/download/v3.10.1/normaliz-3.10.1.tar.gz
   URL_HASH          SHA256=365e1d1e2a338dc4df1947a440e606bb66dd261307e617905e8eca64eaafcf6e
@@ -1047,16 +1047,15 @@ ExternalProject_Add(build-normaliz
                       "OPENMP_CXXFLAGS=${OpenMP_CXX_FLAGS} ${OpenMP_CXX_LDLIBS}"
             COMMAND patch --fuzz=10 --batch -p1 < ${CMAKE_SOURCE_DIR}/libraries/normaliz/patch-libtool
   BUILD_COMMAND     ${MAKE} -j${PARALLEL_JOBS}
-  INSTALL_COMMAND   ${CMAKE_STRIP} source/normaliz # TODO: for polymake ${MAKE} -j${PARALLEL_JOBS} install-strip
+  INSTALL_COMMAND   ${MAKE} -j${PARALLEL_JOBS} install
           COMMAND   ${CMAKE_COMMAND} -E make_directory ${M2_INSTALL_LICENSESDIR}/normaliz
           COMMAND   ${CMAKE_COMMAND} -E copy_if_different COPYING ${M2_INSTALL_LICENSESDIR}/normaliz
-          COMMAND   ${CMAKE_COMMAND} -E copy_if_different source/normaliz ${M2_INSTALL_PROGRAMSDIR}/
   TEST_COMMAND      ${MAKE} -j${PARALLEL_JOBS} check
   EXCLUDE_FROM_ALL  ON
   TEST_EXCLUDE_FROM_MAIN ON
   STEP_TARGETS      install test
   )
-_ADD_COMPONENT_DEPENDENCY(programs normaliz "mp;nauty" NORMALIZ)
+_ADD_COMPONENT_DEPENDENCY(libraries normaliz "mp;nauty" NORMALIZ_FOUND)
 
 
 # https://www.wm.uni-bayreuth.de/de/team/rambau_joerg/TOPCOM/

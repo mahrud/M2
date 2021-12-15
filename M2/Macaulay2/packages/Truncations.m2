@@ -31,7 +31,7 @@ newPackage(
 importFrom_Core {
     "concatCols",
     "freeComponents",
-    "raw", "rawSelectByDegrees",
+    "raw", "rawHilbertBasis", "rawSelectByDegrees",
     "tryHooks",
     }
 
@@ -192,8 +192,7 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
         F := freeComponents target A;
         b := transpose matrix{d_F};
         P := truncationPolyhedron(A^F, b, opts);
-        H := hilbertBasis cone P; -- ~50% of computation
-        H = for h in H list flatten entries h;
+        H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~50% of computation
         J := leadTerm ideal R1;
         ambR := ring J;
         -- generates the Nef cone
@@ -334,8 +333,7 @@ basisMonomials(List, Ring) := (d, R) -> (
         -- TODO: would be better if basisPolyhedron could also account for torsion
         P := basisPolyhedron(A^F, b,
             Exterior => (options R1).SkewCommutative);
-        H := hilbertBasis cone P; -- ~40% of computation
-        H = for h in H list flatten entries h;
+        H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~40% of computation
         J := leadTerm ideal R1;
         ambR := ring J;
         -- generates the degree zero part of the basis

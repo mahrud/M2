@@ -27,3 +27,5 @@ protect Base
 protect Jacobian
 
 protect Iterate
+
+protect InputType

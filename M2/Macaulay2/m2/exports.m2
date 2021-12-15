@@ -217,6 +217,7 @@ export {
 	"InfiniteNumber",
 	"InfoDirSection",
 	"Inhomogeneous",
+	"InputType",
 	"Inputs",
 	"InstallPrefix",
 	"Intersection",

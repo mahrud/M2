@@ -90,3 +90,8 @@ document {
 	  },
      SeeAlso => { "ReesAlgebra::ReesAlgebra" }
      }
+
+-- for miscellaneous functions symbols
+undocumented {
+    "InputType",
+    }

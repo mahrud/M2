@@ -28,6 +28,7 @@ newPackage(
 	Configuration => { "path" => "",
 	     "keep files" => true
 	      },
+	PackageExports => {"Polyhedra"}, -- for hilbertBasis
     	DebuggingMode => false
     	)
 
@@ -39,8 +40,6 @@ export {
      "toricGroebner",
      "toricCircuits",
      "toricGraver",
-     "hilbertBasis",
-     "InputType",
      "toricGraverDegrees"
      }
 
@@ -161,7 +160,6 @@ toricGraver Matrix := Matrix => (A ->(
      ))
 toricGraver (Matrix,Ring) := Ideal => ((A,S)->toBinomial(toricGraver(A),S))
 
-hilbertBasis = method(Options=> {InputType => null})
 hilbertBasis Matrix := Matrix => o -> (A ->(
      filename := getFilename();
      if debugLevel >= 1 then << "using temporary file name " << filename << endl;
@@ -392,7 +390,7 @@ doc ///
 	       polynomial ring in which the toric ideal $I_A$ should live
      Outputs
      	  B:Matrix 
-	       whose rows form a Markov Basis of the lattice $\{z {\rm integral} : A z = 0\}$
+	       whose rows form a Markov Basis of the lattice $\{z : z \text{ is integral and } A z = 0\}$
 	       or the lattice spanned by the rows of {\tt A} if the option {\tt InputType => "lattice"} is used
      Description
      	  Text
@@ -499,7 +497,6 @@ doc ///
 
 doc ///
      Key
-     	  hilbertBasis
           (hilbertBasis, Matrix)
 	  [hilbertBasis, InputType]
      Headline
@@ -512,7 +509,7 @@ doc ///
      Outputs
      	  B:Matrix 
 	       whose rows form the Hilbert basis of the cone $\{z : Az = 0, z \ge 0 \}$
-	       or the cone $\{z A : z {\rm {} is an integral vector and } z A \ge 0 \}$ if {\tt InputType => "lattice"} is used
+	       or the cone $\{z A : z \text{ is an integral vector and } z A \ge 0 \}$ if {\tt InputType => "lattice"} is used
      Description
 	  Example
 	       A = matrix "1,1,1,1; 1,2,3,4"
@@ -577,17 +574,6 @@ doc ///
 	  Example
 	       a*d-b*c % I -- this binomial is in I:
 	       a*d-b*c % Icircuit -- but not in Icircuit:
-///;
-
-doc ///
-     Key
-     	  InputType
-     Description
-          Text
-     	      Put {\tt InputType => "lattice"} as an argument in the functions toricMarkov and hilbertBasis
-     SeeAlso
-     	  toricMarkov
-	  hilbertBasis
 ///;
 
 

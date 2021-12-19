@@ -85,6 +85,7 @@ set(DLIST
   threads.dd
   python.d	# removed unless WITH_PYTHON
   interface.dd interface2.d
+  interface_aring.dd
   texmacs.d
   boostmath.dd
   ffi.d		# removed unless WITH_FFI

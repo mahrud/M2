@@ -58,16 +58,13 @@ M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f);
    where each entry is an integer */
 
 const Ring /* or null */ *rawARingTower1(const Ring *K, M2_ArrayString names);
+/* create a tower ring with the given variable names and base ring */
 
 const Ring /* or null */ *rawARingTower2(const Ring *R1,
                                          M2_ArrayString new_names);
 
 const Ring /* or null */ *rawARingTower3(const Ring *R1,
                                          engine_RawRingElementArray eqns);
-
-const RingElement *rawMultiplicativeGenerator(const Ring *R);
-/* given an ARingGF, return the  the generator of the multiplicative group.
- */
 
 /**
    ARing Flint routines

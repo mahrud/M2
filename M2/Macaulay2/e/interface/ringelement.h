@@ -55,6 +55,7 @@ gmp_RRiorNull IM2_RingElement_to_Interval(const RingElement *a);
 long rawDiscreteLog(const RingElement *h);
 
 const RingElement *rawMultiplicativeGenerator(const Ring *R);
+/* given an ARingGF, return the generator of the multiplicative group. */
 
 const RingElement /* or null */ *IM2_RingElement_make_var(const Ring *R, int v);
 

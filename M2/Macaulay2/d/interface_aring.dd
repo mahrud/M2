@@ -1,0 +1,123 @@
+-- connects engine routines exposed in interface/aring.h to the top level
+
+use struct;
+
+header "#include <interface/aring.h>";
+
+export rawARingZZp(e:Expr):Expr := (
+    when e is p:ZZcell do
+    if isULong(p) then toExpr(Ccode(RawRingOrNull, "rawARingZZp(", toULong(p), ")"))
+    else WrongArgSmallInteger(1)
+    else WrongArgZZ());
+setupfun("rawARingZZp", rawARingZZp);
+
+-- flint rings
+export rawARingZZpFlint(e:Expr):Expr := (
+    when e is p:ZZcell do
+    if isULong(p) then toExpr(Ccode(RawRingOrNull, "rawARingZZpFlint(", toULong(p), ")"))
+    else WrongArgSmallInteger(1)
+    else WrongArgZZ());
+setupfun("rawARingZZpFlint", rawARingZZpFlint);
+
+export rawARingZZFlint(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 0
+    then toExpr(Ccode(RawRingOrNull, "rawARingZZFlint()"))
+    else WrongNumArgs(0)
+    else WrongNumArgs(0)
+    );
+setupfun("rawARingZZFlint", rawARingZZFlint);
+
+export rawARingQQFlint(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 0
+    then toExpr(Ccode(RawRingOrNull, "rawARingQQFlint()"))
+    else WrongNumArgs(0)
+    else WrongNumArgs(0)
+    );
+setupfun("rawARingQQFlint", rawARingQQFlint);
+
+-- galois fields
+export rawARingGaloisField1(e:Expr):Expr := (
+    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisField1(", f.p, ")"))
+    else WrongArg("a raw ring element"));
+setupfun("rawARingGaloisField1", rawARingGaloisField1);
+
+export rawARingGaloisFieldFlintBig(e:Expr):Expr := (
+    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisFieldFlintBig(", f.p, ")"))
+    else WrongArg("a raw ring element"));
+setupfun("rawARingGaloisFieldFlintBig", rawARingGaloisFieldFlintBig);
+
+export rawARingGaloisFieldFlintZech(e:Expr):Expr := (
+    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisFieldFlintZech(", f.p, ")"))
+    else WrongArg("a raw ring element"));
+setupfun("rawARingGaloisFieldFlintZech", rawARingGaloisFieldFlintZech);
+
+export rawARingGaloisFieldFromQuotient(e:Expr):Expr := (
+     when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisFieldFromQuotient(", f.p, ")"))
+     else WrongArg("a raw ring element"));
+setupfun("rawARingGaloisFieldFromQuotient", rawARingGaloisFieldFromQuotient);
+
+export rawARingGaloisField(e:Expr):Expr := (
+    when e is a:Sequence do if length(a) == 2 then
+    when a.0 is p:ZZcell do if !isInt(p) then WrongArgSmallInteger() else
+    when a.1 is n:ZZcell do if !isInt(n) then WrongArgSmallInteger() else (
+	toExpr(Ccode(RawRingOrNull, "rawARingGaloisField(", toInt(p), ",", toInt(n), ")")))
+    else WrongArgZZ(2)
+    else WrongArgZZ(1)
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawARingGaloisField", rawARingGaloisField);
+
+export rawARingGFPolynomial(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(RawArrayIntOrNull, "rawARingGFPolynomial(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawARingGFPolynomial", rawARingGFPolynomial);
+
+export rawARingGFCoefficients(e:Expr):Expr := (
+    when e is a:RawRingElementCell do toExpr(Ccode(RawArrayIntOrNull, "rawARingGFCoefficients(", a.p, ")"))
+    else WrongArg("a raw ring element"));
+setupfun("rawARingGFCoefficients", rawARingGFCoefficients);
+
+-- tower rings
+export rawARingTower(e:Expr):Expr := (
+    -- e = (Ring, list of var names)
+    when e is a:Sequence do if length(a) == 2 then
+    when a.0 is R:RawRingCell do
+    if isSequenceOfStrings(a.1) then (
+	names := getSequenceOfStrings(a.1);
+	toExpr(Ccode(RawRingOrNull, "rawARingTower1(", R.p, ", ", names, ")")))
+    else WrongArg(2, "a list of strings")
+    else WrongArg(1, "a ring")
+    else WrongNumArgs(2)
+    else WrongNumArgs(2)
+    );
+setupfun("rawARingTower", rawARingTower);
+
+export rawARingTowerAdjoinVariables(e:Expr):Expr := (
+    -- e = (Ring, list of var names)
+    when e is a:Sequence do
+    if length(a) == 2 then
+    when a.0 is R:RawRingCell do
+    if isSequenceOfStrings(a.1) then (
+	names := getSequenceOfStrings(a.1);
+	toExpr(Ccode(RawRingOrNull, "rawARingTower2(", R.p, ", ", names, ")")))
+    else WrongArg(2, "a list of strings")
+    else WrongArg(1, "a ring")
+    else WrongNumArgs(2)
+    else WrongNumArgs(2)
+    );
+setupfun("rawARingTowerAdjoinVariables", rawARingTowerAdjoinVariables);
+
+export rawARingTowerQuotient(e:Expr):Expr := (
+    -- e = (R:Ring, Fs:RawRingElementArray)
+    when e is a:Sequence do
+    if length(a) == 2 then
+    when a.0 is R:RawRingCell do
+    if isSequenceOfRingElements(a.1) then (
+	Fs := getSequenceOfRingElements(a.1);
+	toExpr(Ccode(RawRingOrNull, "rawARingTower3(", R.p, ", ", Fs, ")")))
+    else WrongArg(2, "a sequence of ring elements")
+    else WrongArg(1, "a ring")
+    else WrongNumArgs(2)
+    else WrongNumArgs(2)
+    );
+setupfun("rawARingTowerQuotient", rawARingTowerQuotient);

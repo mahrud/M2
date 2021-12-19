@@ -171,12 +171,6 @@ target_include_directories(M2-interpreter
 
 # TODO: Including most of these is only necessary because of version.dd
 # changing or moving that file would allow moving this to e/CMakeLists.txt
-foreach(LIB IN LISTS PKGLIB_LIST)
-  if(${LIB}_FOUND)
-    target_link_libraries(M2-interpreter PUBLIC PkgConfig::${LIB})
-  endif()
-endforeach()
-
 foreach(LIB IN LISTS LIBRARIES_LIST)
   if(${LIB}_FOUND)
     target_link_libraries(M2-interpreter PUBLIC ${${LIB}_LIBRARIES})
@@ -204,13 +198,9 @@ target_compile_options(M2-interpreter PRIVATE
   # FIXME: mismatched-tags and parentheses-equality errors are caused by scc1
   $<$<COMPILE_LANG_AND_ID:C,AppleClang,Clang>:-Wno-parentheses-equality>
   $<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-mismatched-tags -Wno-parentheses-equality>
-  # FIXME: caused by SIMD macro redefinition in fflas_ffpack
-  $<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-macro-redefined>
 
   # FIXME: __builtin_frame_address M2lib.c:165 causes this:
   $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-frame-address>
-  # Givaro and fflas_ffpack cause these:
-  $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-deprecated-copy -Wno-unknown-pragmas>
   )
 # add other compilers (eg: Intel, MSVC) here
 # for Intel: -diag-disable 981,869,383,2259,444 -debug

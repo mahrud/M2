@@ -156,7 +156,7 @@ For a complete list, along with descriptions, try `cmake -LAH .` or see `cmake/c
 - `WITH_XML:BOOL=ON`: link with the libxml2 library
 - `BUILD_DOCS:BOOL=OFF`: build internal documentation
 - `BUILD_NATIVE:BOOL=ON`: use native SIMD instructions
-  - `AUTOTUNE:BOOL=OFF`: autotune library parameters (NTL and FFLAS-FFPACK)
+  - `AUTOTUNE:BOOL=OFF`: autotune library parameters (NTL)
 - `BUILD_SHARED_LIBS:BOOL=OFF`: build shared libraries
 - `BUILD_TESTING:BOOL=ON`: build the testing targets
   - `SKIP_TESTS:STRING="mpsolve;googletest"`: tests to skip
@@ -204,10 +204,8 @@ Macaulay2 uses several external libraries and programs, which can be built using
   - `build-cddlib`:	[cddlib] library for the Double Description Method of Motzkin et al.
   - `build-eigen`:	[Eigen3] C++ template library for linear algebra
   - `build-factory`: [Singular-Factory] library for multivariate polynomal representations
-  - `build-fflas_ffpack`: [fflas-ffpack] library for finite field linear algebra routines
   - `build-flint`:	[FLINT] Fast Library for Number Theory
   - `build-frobby`:	[Frobby] library for computations with monomial ideals
-  - `build-givaro`:	[Givaro] library for algebraic computations over prime and finite fields
   - `build-glpk`:	[GLPK] GNU Linear Programming Kit
   - `build-googletest`: [Googletest] C++ unit-testing library
   - `build-mathic`:	[Mathic] library for symbolic algebra data structures
@@ -223,10 +221,8 @@ Macaulay2 uses several external libraries and programs, which can be built using
 [cddlib]: https://github.com/cddlib/cddlib
 [Eigen3]: http://eigen.tuxfamily.org
 [Singular-Factory]: https://github.com/Singular/Sources/tree/spielwiese/factory
-[fflas-ffpack]: https://linbox-team.github.io/fflas-ffpack/
 [FLINT]: http://www.flintlib.org/
 [Frobby]: https://www.broune.com/frobby/
-[Givaro]: https://github.com/linbox-team/givaro
 [GLPK]: https://www.gnu.org/software/glpk/
 [Googletest]: https://github.com/google/googletest
 [Mathic]: https://github.com/broune/mathic
@@ -269,7 +265,6 @@ Note that the targets for individual libraries and programs only build the respe
 
 ### Targets for Autotuning Libraries
 Targets for autotuning various parameters in libraries:
-- `build-fflas_ffpack-autotune`: generates `fflas-ffpack-thresholds.h`
 - `build-ntl-wizard`: run the NTL wizard
 
 Note: rerun the corresponding `build-[library]-install` target after the targets above.

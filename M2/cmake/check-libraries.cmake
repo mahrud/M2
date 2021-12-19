@@ -9,7 +9,6 @@
 # These are some of the libraries linked with Macaulay2 in Macaulay2/{d,e,bin}/CMakeLists.txt
 # Others, like TBB::tbb, FFI::ffi, and Boost::regex, are linked as imported libraries in those files.
 # TODO: turn all these libraries into imported libraries and find incompatibilities another way.
-set(PKGLIB_LIST    FFLAS_FFPACK GIVARO)
 set(LIBRARIES_LIST MPSOLVE FROBBY FACTORY FLINT NTL MPFI MPFR MP BDWGC LAPACK)
 set(LIBRARY_LIST   READLINE HISTORY GDBM ATOMICOPS)
 
@@ -137,8 +136,6 @@ endforeach()
 #   mpsolve	Multiprecision Polynomial SOLVEr	(needs gmp, mpfr)
 #   googletest	C++ unit-testing library
 #   glpk	GNU Linear Programming Kit              (needs gmp)
-#   givaro	prime field and algebraic computations	(needs gmp)
-#  fflas_ffpack	Finite Field Linear Algebra Routines	(needs gmp, givaro + LAPACK)
 
 find_package(Eigen3	3.3.0 PATHS ${M2_HOST_PREFIX})
 find_package(BDWGC	7.6.4)
@@ -157,13 +154,8 @@ find_package(GTest	1.10)
 #find_package(Mathicgb  1.0.0)
 find_package(GLPK      4.59.0)
 
-pkg_search_module(FFLAS_FFPACK	IMPORTED_TARGET	fflas-ffpack>=2.4.3)
-pkg_search_module(GIVARO	IMPORTED_TARGET	givaro>=4.1.1)
-# TODO: add FindModules for these two as well
-
 set(LIBRARY_OPTIONS
-  Eigen3 BDWGC MPIR MPFR MPFI NTL Flint Factory Frobby cddlib MPSolve
-  GTest GLPK Givaro FFLAS_FFPACK)
+  Eigen3 BDWGC MPIR MPFR MPFI NTL Flint Factory Frobby cddlib MPSolve GTest GLPK)
 
 ###############################################################################
 ## Optional libraries:
@@ -187,7 +179,6 @@ endif()
 ###############################################################################
 ## TODO: Do we still want these libraries?
 #   fplll	Lattice algorithms using floating-point arithmetic	(uses mpir and mpfr)
-#   linbox	Exact computational linear algebra	(needs fflas and givaro)
 #   arb		arbitrary-precision ball arithmetic
 ## Requested by Greg Smith for future use:
 #   cddplus	Double Description Method
@@ -327,15 +318,6 @@ endif()
 
 ###############################################################################
 ## Set four library related definitions
-
-if(GIVARO_FOUND)
-  set(CMAKE_REQUIRED_INCLUDES "${GIVARO_INCLUDE_DIRS}")
-  # whether givaro has isUnit (4.0.3) or isunit (4.0.2)
-  check_cxx_source_compiles([[#include <givaro/gfq.h>
-    int main(){class Givaro::GFqDom<long int> foo; foo.isunit(0);return 0;}]] HAVE_GIVARO_isunit)
-else()
-  unset(HAVE_GIVARO_isunit CACHE)
-endif()
 
 if(FACTORY_FOUND)
   set(CMAKE_REQUIRED_INCLUDES "${FACTORY_INCLUDE_DIR}")

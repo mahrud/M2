@@ -171,11 +171,9 @@ interface.o :						\
 	@srcdir@/../e/aring-zz-flint.hpp		\
 	@srcdir@/../e/aring-zzp.hpp			\
 	@srcdir@/../e/aring-zzp-flint.hpp		\
-	@srcdir@/../e/aring-zzp-ffpack.hpp		\
 	@srcdir@/../e/aring-qq.hpp			\
 	@srcdir@/../e/aring-qq-flint.hpp		\
 	@srcdir@/../e/aring-qq-gmp.hpp			\
-	@srcdir@/../e/aring-gf-givaro.hpp		\
 	@srcdir@/../e/polyring.hpp			\
 	@srcdir@/../e/skew.hpp				\
 	@srcdir@/../e/qring.hpp				\
@@ -205,7 +203,6 @@ interface.o :						\
 	@srcdir@/../e/lapack.hpp			\
 	@srcdir@/../e/dmat-lu.hpp			\
 	@srcdir@/../e/dmat-lu-inplace.hpp		\
-	@srcdir@/../e/dmat-lu-zzp-ffpack.hpp		\
 	@srcdir@/../e/dmat-lu-zzp-flint.hpp		\
 	@srcdir@/../e/dmat-lu-qq.hpp			\
 	@srcdir@/../e/dmat-qq-interface-flint.hpp	\

@@ -34,7 +34,7 @@ private:
 #include "poly.hpp"
 #include "interrupted.hpp"
 
-#include "aring-m2-gf.hpp"
+#include "aring-gf-m2.hpp"
 
 bool GF::initialize_GF(const RingElement *prim)
 {

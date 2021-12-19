@@ -1,12 +1,13 @@
 // Copyright 2012 Michael E. Stillman
 
+#include "aring-gf-m2.hpp"
+
 #include <vector>
 #include <iostream>
 
 #include "interface/random.h"
 #include "relem.hpp"
 #include "polyring.hpp"
-#include "aring-m2-gf.hpp"
 #include "ringmap.hpp"
 #include "monoid.hpp"
 #include "interrupted.hpp"

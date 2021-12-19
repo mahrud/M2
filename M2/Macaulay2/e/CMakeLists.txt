@@ -182,7 +182,7 @@ set(SRCLIST
   aring-RRR
   aring-gf-flint-big
   aring-gf-flint
-  aring-m2-gf
+  aring-gf-m2
   aring-qq-flint
   aring-qq-gmp
   aring-tower

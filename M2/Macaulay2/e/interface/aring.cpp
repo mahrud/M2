@@ -8,8 +8,8 @@
 #include "aring-gf-givaro.hpp"
 #include "aring-gf-flint-big.hpp"
 #include "aring-gf-flint.hpp"
+#include "aring-gf-m2.hpp"
 #include "aring-glue.hpp"
-#include "aring-m2-gf.hpp"
 #include "aring-qq.hpp"
 #include "aring-tower.hpp"
 #include "aring-zz-flint.hpp"
@@ -81,7 +81,7 @@ static const PolynomialRing * /* or null */ checkGaloisFieldInput(
     }
   return R;
 }
-const Ring /* or null */ *rawARingGaloisField1(const RingElement *f)
+const Ring /* or null */ *rawARingGaloisFieldM2(const RingElement *f)
 {
   const PolynomialRing *R = checkGaloisFieldInput(f);
   if (R == 0) return 0;  // error message has already been logged
@@ -142,8 +142,6 @@ const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
     }
   try
     {
-#if 1
-
       if (prime <= 1)
         {
           ERROR("givaroGF/FFPACK: expected a prime number p ");
@@ -171,10 +169,6 @@ const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
           return 0;
         }
       return M2::ConcreteRing<M2::ARingGFGivaro>::create(prime, dimension);
-#else
-      ERROR("add --enable-fflas-ffpack --enable-givaro when building M2");
-      return 0;
-#endif
   } catch (const exc::engine_error& e)
     {
       ERROR(e.what());
@@ -241,7 +235,6 @@ const Ring /* or null */ *rawARingGaloisFieldFromQuotient(const RingElement *a)
 
 M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
 {
-#if 1
   const M2::ConcreteRing<M2::ARingGFGivaro> *RGF =
       dynamic_cast<const M2::ConcreteRing<M2::ARingGFGivaro> *>(R);
   if (RGF == 0)
@@ -251,15 +244,10 @@ M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
     }
   const M2::ARingGFGivaro &A = RGF->ring();
   return A.getModPolynomialCoeffs();
-#else
-  ERROR("add --enable-fflas-ffpack --enable-givaro when building M2");
-  return 0;
-#endif
 }
 
 M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f)
 {
-#if 1
   const M2::ConcreteRing<M2::ARingGFGivaro> *RGF =
       dynamic_cast<const M2::ConcreteRing<M2::ARingGFGivaro> *>(f->get_ring());
   if (RGF == 0)
@@ -271,10 +259,6 @@ M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f)
   M2::ARingGFGivaro::ElementType a;
   A.from_ring_elem(a, f->get_value());
   return A.fieldElementToM2Array(a);
-#else
-  ERROR("add --enable-fflas-ffpack --enable-givaro when building M2");
-  return 0;
-#endif
 }
 
 const Ring /* or null */ *rawARingTower1(const Ring *K, M2_ArrayString names)

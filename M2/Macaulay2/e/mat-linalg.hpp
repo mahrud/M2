@@ -17,7 +17,7 @@
 #include "aring-RRR.hpp"
 #include "aring-CCC.hpp"
 #include "aring-zzp.hpp"
-#include "aring-m2-gf.hpp"
+#include "aring-gf-m2.hpp"
 typedef DMat<M2::ARingZZp> DMatZZp;
 typedef DMat<M2::ARingGFM2> DMatGFM2;
 

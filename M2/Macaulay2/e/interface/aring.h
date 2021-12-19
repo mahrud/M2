@@ -23,7 +23,7 @@ extern "C" {
 const Ring /* or null */ *rawARingZZp(unsigned long p); /* connected */
 /* Expects a prime number p in range 2 <= p <= 32749 */
 
-const Ring /* or null */ *rawARingGaloisField1(
+const Ring /* or null */ *rawARingGaloisFieldM2(
     const RingElement *prim); /* connected */
 /* same interface as rawGaloisField, but uses different internal code */
 

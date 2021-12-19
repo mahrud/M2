@@ -36,10 +36,10 @@ export rawARingQQFlint(e:Expr):Expr := (
 setupfun("rawARingQQFlint", rawARingQQFlint);
 
 -- galois fields
-export rawARingGaloisField1(e:Expr):Expr := (
-    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisField1(", f.p, ")"))
+export rawARingGaloisFieldM2(e:Expr):Expr := (
+    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisFieldM2(", f.p, ")"))
     else WrongArg("a raw ring element"));
-setupfun("rawARingGaloisField1", rawARingGaloisField1);
+setupfun("rawARingGaloisFieldM2", rawARingGaloisFieldM2);
 
 export rawARingGaloisFieldFlintBig(e:Expr):Expr := (
     when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawARingGaloisFieldFlintBig(", f.p, ")"))

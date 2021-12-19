@@ -18,7 +18,7 @@
 #include "aring-zz-flint.hpp"
 #include "aring-zzp.hpp"
 #include "aring-zzp-flint.hpp"
-#include "aring-m2-gf.hpp"
+#include "aring-gf-m2.hpp"
 #include "aring-glue.hpp"
 #include "aring-tower.hpp"
 #include "aring-qq.hpp"

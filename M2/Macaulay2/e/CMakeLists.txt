@@ -23,7 +23,6 @@ endif()
 
 # TODO: determine the fate of these files
 set(UNDETERMINED
-  dmat-ffpack.cpp
   franzi-brp-test.cpp
   gb-trace.hpp
   overflow-test.cpp
@@ -69,7 +68,6 @@ set(HPPONLYFILES
   dmat-gf-flint.hpp
   dmat-lu-inplace.hpp
   dmat-lu-qq.hpp
-  dmat-lu-zzp-ffpack.hpp
   dmat-lu-zzp-flint.hpp
   dmat-lu.hpp
   dmat-qq-flint.hpp
@@ -184,14 +182,12 @@ set(SRCLIST
   aring-RRR
   aring-gf-flint-big
   aring-gf-flint
-  aring-gf-givaro
   aring-m2-gf
   aring-qq-flint
   aring-qq-gmp
   aring-tower
   aring-zz-flint
   aring-zz-gmp
-  aring-zzp-ffpack
   aring-zzp-flint
   aring-zzp
   aring

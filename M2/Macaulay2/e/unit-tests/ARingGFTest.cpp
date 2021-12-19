@@ -9,7 +9,6 @@
 #include <mpfr.h>
 
 #include "debug.hpp"
-#include "aring-gf-givaro.hpp"
 #include "ARingTest.hpp"
 
 static const int nelements = 200;

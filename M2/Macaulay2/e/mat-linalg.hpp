@@ -21,10 +21,6 @@
 typedef DMat<M2::ARingZZp> DMatZZp;
 typedef DMat<M2::ARingGFM2> DMatGFM2;
 
-#include "aring-zzp-ffpack.hpp"
-typedef M2::ARingZZpFFPACK ZZpFFPACK;
-#define DMatZZpFFPACK DMat<ZZpFFPACK>
-
 #include "aring-zz-gmp.hpp"
 #include "aring-qq.hpp"
 #include "aring-zz-flint.hpp"
@@ -577,22 +573,6 @@ inline bool solveInvertible(const DMat<RT>& A, const DMat<RT>& B, DMat<RT>& X)
   DMatLinAlg<RT> LUdecomp(A);
   return LUdecomp.solveInvertible(B, X);
 }
-
-////////////////////////
-// ZZpFFPACK ///////////
-////////////////////////
-// namespace MatrixOps
-void mult(const DMatZZpFFPACK& A,
-          const DMatZZpFFPACK& B,
-          DMatZZpFFPACK& result_product);
-
-void addMultipleTo(DMatZZpFFPACK& C,
-                   const DMatZZpFFPACK& A,
-                   const DMatZZpFFPACK& B);
-
-void subtractMultipleTo(DMatZZpFFPACK& C,
-                        const DMatZZpFFPACK& A,
-                        const DMatZZpFFPACK& B);
 
 //////////////////////
 // ZZ (ARingZZGMP) ///

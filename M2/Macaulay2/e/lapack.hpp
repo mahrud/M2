@@ -216,36 +216,6 @@ int zungqr_(int *m,      // #rows m >= 0
               __CLPK_integer *__info);
 #endif
 
-#ifndef __FFLASFFPACK_config_blas_H
-/* cblas routines */
-// computes "ax + y"
-void cblas_daxpy(const int n,      // length of vectors
-                 const double a,   // scalar alpha
-                 const double *x,  // vector x
-                 const int incx,   // increment of x
-                 double *y,        // vector y
-                 const int incy);  // increment of y
-
-// computes "alpha AB + beta C"
-// NOTE: first 3 args should formally be ENUMS, not ints.
-//       Problem? e.g., what if enums change?
-void cblas_dgemm(
-    const int Order,     // how matrices are stored, by column or row.
-    const int TransA,    // whether to transform A, e.g. take transpose
-    const int TransB,    // whether to transform B
-    const int M,         // rows of A
-    const int N,         // columns of B
-    const int K,         // columns of A, which must = rows of B
-    const double alpha,  // scalar alpha
-    const double *A,     // matrix A
-    const int lda,       // rows of A
-    const double *B,     // matrix B
-    const int ldb,       // rows of B
-    const double beta,   // scalar bet
-    double *C,           // matrix C; on output, alphaAB+betaC
-    const int ldc);      // rows of C
-#endif
-
 // computes ax
 void cblas_dscal(const int n,      // length of vectors
                  const double a,   // scalar alpha
@@ -352,17 +322,6 @@ int zgelss_(int *rows,      // rows
             int *lwork,     // size of workspace
             double *rwork,  // workspace
             int *info);     // error info
-
-#ifndef __FFLASFFPACK_config_blas_H
-/* cblas routines */
-// computes "ax + y"
-void cblas_daxpy(const int n,      // length of vectors
-                 const double a,   // scalar alpha
-                 const double *x,  // vector x
-                 const int incx,   // increment of x
-                 double *y,        // vector y
-                 const int incy);  // increment of y
-#endif
 
 // computes ax
 void cblas_dscal(const int n,      // length of vectors

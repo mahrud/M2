@@ -466,6 +466,7 @@ M2_bool rawLinAlgSubMult(MutableMatrix *C,
 MutableMatrix * /* or null */ rawLinAlgMult(const MutableMatrix *A,
                                             const MutableMatrix *B);
 
+// TODO: the next three are not implemented
 engine_RawRingElementArrayOrNull rawLinAlgCharPoly(MutableMatrix *A);
 // returns an array whose coefficients give the characteristic polynomial of the
 // square matrix A
@@ -473,54 +474,6 @@ engine_RawRingElementArrayOrNull rawLinAlgCharPoly(MutableMatrix *A);
 engine_RawRingElementArrayOrNull rawLinAlgMinPoly(MutableMatrix *A);
 // returns an array whose coefficients give the minimal polynomial of the square
 // matrix A
-
-#  if 0
-RingElement *rawFFPackDeterminant(MutableMatrix *M);
-/* connected to rawFFPackDeterminant, MES */
-/* requires: M should be a square matrix over a prime finite field */
-
-size_t rawFFPackRank(MutableMatrix *M);
-/* connected to rawFFPackRank, MES */
-/* requires: M should be a matrix over a prime finite field */
-
-MutableMatrix /* Or Null */ *rawFFPackNullSpace(MutableMatrix *M,
-                                                M2_bool right_side);
-/* connected to rawFFPackNullSpace, MES */
-/* requires: M should be a matrix over a prime finite field */
-/* computes either left or right nullspace */
-
-MutableMatrix /* or null */ *rawFFPackSolve(MutableMatrix *A,
-                                            MutableMatrix *B,
-                                            M2_bool right_side);
-/* connected to rawFFPackSolve, MES */
-/* requires: M should be a matrix over a prime finite field */
-/* returns solution of AX=B or XA=B, depending on right_side */
-
-MutableMatrix /* or null */ *rawFFPackInvert(MutableMatrix *M);
-/* connected to rawFFPackInvert, MES */
-/* requires: M should be a square matrix over a prime finite field */
-
-MutableMatrix /* or null */ *rawFFPackAddMultipleTo(MutableMatrix *C,
-                                                    const MutableMatrix *A,
-                                                    const MutableMatrix *B,
-                                                    M2_bool transposeA,
-                                                    M2_bool transposeB,
-                                                    const RingElement *a,
-                                                    const RingElement *b);
-/* A,B,C should be mutable matrices over a finite prime field, and a,b
-   elements of this field.
-   C = b*C + a * op(A)*op(B),
-   where op(A) = A or transpose(A), depending on transposeA
-   where op(B) = B or transpose(B), depending on transposeB
-   connected to rawFFPackAddMultipleTo, MES
-*/
-
-M2_arrayintOrNull rawFFPackRowRankProfile(MutableMatrix *A);
-/* connected, MES */
-
-M2_arrayintOrNull rawFFPackColumnRankProfile(MutableMatrix *A);
-/* connected, MES */
-#  endif
 
 engine_RawArrayIntPairOrNull rawLQUPFactorization(MutableMatrix *A);
 

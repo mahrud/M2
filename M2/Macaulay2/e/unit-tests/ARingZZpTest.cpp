@@ -10,7 +10,6 @@
 
 #include "reader.hpp"
 #include "ZZp.hpp"
-#include "aring-zzp-ffpack.hpp"
 #include "aring-zzp.hpp"
 #include "ARingTest.hpp"
 
@@ -145,116 +144,6 @@ TEST(ARingZZp, fromStream)
       std::cout << o.str() << " peek: " << i.peek() << std::endl;
     }
   R.clear(a);
-}
-
-template <>
-void getElement<M2::ARingZZpFFPACK>(const M2::ARingZZpFFPACK& R,
-                                    int index,
-                                    M2::ARingZZpFFPACK::ElementType& result)
-{
-  if (index < 50)
-    R.set_from_long(result, index - 25);
-  else
-    {
-      gmp_ZZ a = getRandomInteger();
-      R.set_from_mpz(result, a);
-    }
-}
-
-TEST(ARingZZpFFPACK, create)
-{
-  M2::ARingZZpFFPACK R(101);
-
-  EXPECT_EQ(ringName(R), "ZZpFPACK(101,1)");
-  testSomeMore(R);
-
-  std::cout << "max modulus for ffpack zzp: "
-            << M2::ARingZZpFFPACK::getMaxModulus() << std::endl;
-
-  M2::ARingZZpFFPACK::ElementType a;
-  R.init(a);
-  R.set_from_long(a, 99);
-  R.set_from_long(a, 101);
-  R.set_from_long(a, 103);
-  R.clear(a);
-}
-
-TEST(ARingZZpFFPACK, arithmetic101)
-{
-  M2::ARingZZpFFPACK R(101);
-  testFiniteField(R, ntrials);
-}
-
-// TODO: commented out because it appears wrong.  Perhaps p=2 isn't allowed
-// here?
-// strange: does not fail on my thinkpad...
-TEST(ARingZZpFFPACK, arithmetic2)
-{
-  M2::ARingZZpFFPACK R(2);
-  testFiniteField(R, ntrials);
-
-  testCoerceToLongInteger(R);
-}
-
-TEST(ARingZZpFFPACK, arithmetic3)
-{
-  M2::ARingZZpFFPACK R(3);
-  testFiniteField(R, ntrials);
-
-  testCoerceToLongInteger(R);
-}
-
-TEST(ARingZZpFFPACK, arithmetic66000007)
-{
-  M2::ARingZZpFFPACK R(66000007);
-
-  testCoerceToLongInteger(R);
-
-  testCoercions(R);
-  testNegate(R, ntrials);
-  testAdd(R, ntrials);
-  testSubtract(R, ntrials);
-  testMultiply(R, ntrials);
-  testDivide(R, ntrials);
-  testReciprocal(R, ntrials);
-  testPower(R, ntrials);
-  testAxioms(R, ntrials);
-}
-
-// TODO: commented out because it takes too long:
-// Actually: now this characteristic seems too big?!
-TEST(ARingZZpFFPACK, arithmetic67108859)
-{
-  M2::ARingZZpFFPACK R(67108859);
-
-  testCoerceToLongInteger(R);
-
-  testCoercions(R);
-  testNegate(R, ntrials);
-  testAdd(R, ntrials);
-  testSubtract(R, ntrials);
-  testMultiply(R, ntrials);
-  testDivide(R, ntrials);
-  testReciprocal(R, ntrials);
-  testPower(R, ntrials);
-  testAxioms(R, ntrials);
-}
-
-TEST(ARingZZpFFPACK, arithmetic33500479)
-{
-  M2::ARingZZpFFPACK R(33500479);
-
-  testCoerceToLongInteger(R);
-
-  testCoercions(R);
-  testNegate(R, ntrials);
-  testAdd(R, ntrials);
-  testSubtract(R, ntrials);
-  testMultiply(R, ntrials);
-  testDivide(R, ntrials);
-  testReciprocal(R, ntrials);
-  testPower(R, ntrials);
-  testAxioms(R, ntrials);
 }
 
 TEST(ARingZZp, read)

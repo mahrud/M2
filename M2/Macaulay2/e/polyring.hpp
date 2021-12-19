@@ -3,6 +3,7 @@
 #ifndef _polyring_hpp_
 #define _polyring_hpp_
 
+#include "ring.hpp"
 #include "ringelem.hpp"
 
 #include <vector>
@@ -12,7 +13,6 @@
 
 class buffer;
 class Monoid;
-class Ring;
 class MonomialIdeal;
 class MonomialTable;
 class MonomialTableZZ;

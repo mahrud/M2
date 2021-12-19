@@ -5,6 +5,8 @@
 #ifndef _slp_defs_hpp_
 #define _slp_defs_hpp_
 
+#include <memory>
+
 // SLP
 class SLProgram;
 

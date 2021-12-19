@@ -176,63 +176,6 @@ const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
   }
 }
 
-const Ring /* or null */ *rawARingGaloisFieldFromQuotient(const RingElement *a)
-{
-  // Check that the ring R of f is a polynomial ring in one var over a ZZ/p
-  // Check that f has degree >= 2
-  // Check that f is monic
-  // If any of these fail, then return 0.
-  const PolynomialRing *R = a->get_ring()->cast_to_PolynomialRing();
-  if (R == 0)
-    {
-      ERROR("expected poly ring of the form ZZ/p[x]/(f)");
-      return 0;
-    }
-  if (R->n_vars() != 1)
-    {
-      ERROR("expected poly ring of the form ZZ/p[x]/(f)");
-      return 0;
-    }
-  if (R->n_quotients() != 1)
-    {
-      ERROR("expected poly ring of the form ZZ/p[x]/(f)");
-      return 0;
-    }
-  if (R->characteristic() == 0)
-    {
-      ERROR("expected poly ring of the form ZZ/p[x]/(f)");
-      return 0;
-    }
-
-  if (!R->is_equal(a->get_value(), R->var(0)))
-    {
-      ERROR(
-          "primitive element needs to be the generator of the ring, we "
-          "think...!");
-      return 0;
-    }
-
-  try
-    {
-      RingElement F(R, R->quotient_element(0));
-      M2_arrayint modPoly = F.getSmallIntegerCoefficients();
-      if (modPoly == 0)
-        {
-          ERROR("internal error: this should not happen");
-          return NULL;
-        }
-      M2_arrayint primitiveElementPoly = a->getSmallIntegerCoefficients();
-      if (primitiveElementPoly == 0) return NULL;
-
-      return M2::ConcreteRing<M2::ARingGFGivaro>::create(
-          R->characteristic(), modPoly, primitiveElementPoly, *R);
-  } catch (const exc::engine_error& e)
-    {
-      ERROR(e.what());
-      return NULL;
-  }
-}
-
 M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
 {
   const M2::ConcreteRing<M2::ARingGFGivaro> *RGF =

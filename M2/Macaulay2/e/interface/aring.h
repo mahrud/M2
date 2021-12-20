@@ -37,9 +37,8 @@ const Ring /* or null */ *rawARingGaloisFieldFlintZech(
 /* same interface as rawGaloisField, but uses Flint GF code designed for
    wordsize p, and uses lookup tables */
 
-const Ring /* or null */ *rawARingGaloisField(int p, int n); /* connected */
-/* creates a ring GF(p^n).  Constraints on p, n? */
-/* returns null if the values p,n are too large  */
+const Ring /* or null */ *rawARingGaloisField(long p, long d); /* connected */
+/* creates the finite field GF(p^d), assumes p^d < 2^FLINT_BITS */
 
 M2_arrayintOrNull rawARingGFPolynomial(const Ring *R);
 /* given an ARingGF, return the coefficient array of the quotient polynoials.

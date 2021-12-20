@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "LLL.hpp"
-#include "aring-zzp-ffpack.hpp"
+#include "aring-zzp-flint.hpp"
 #include "buffer.hpp"
 #include "error.h"
 #include "exceptions.hpp"
@@ -929,7 +929,7 @@ MutableMatrix * /* or null */ rawLinAlgMult(const MutableMatrix *A,
 
 engine_RawRingElementArray convertRingelemsToArray(
     const Ring *R,
-    std::vector<M2::ARingZZpFFPACK::ElementType> &elems)
+    std::vector<M2::ARingZZpFlint::ElementType> &elems)
 {
   size_t len = elems.size();
   engine_RawRingElementArray result =

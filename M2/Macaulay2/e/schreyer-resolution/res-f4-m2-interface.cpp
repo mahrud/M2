@@ -4,7 +4,6 @@
 #include "ZZ.hpp"                                         // for RingZZ
 #include "aring-RRR.hpp"                                  // for ARingRRR
 #include "aring-zz-gmp.hpp"                               // for ARingZZGMP
-#include "aring-zzp-ffpack.hpp"                           // for ARingZZpFFPACK
 #include "aring-zzp-flint.hpp"                            // for ARingZZpFlint
 #include "aring.hpp"                                      // for ring_RR
 #include "coeffrings.hpp"                                 // for Coefficient...
@@ -768,39 +767,6 @@ int SchreyerFrame::rankUsingSparseMatrix(Gen& D)
 
 template<typename Gen>
 int SchreyerFrame::rankUsingDenseMatrix(Gen& D, bool transposed)
-{
-  unsigned int charac =
-      static_cast<unsigned int>(gausser().get_ring()->characteristic());
-  M2::ARingZZpFFPACK R(charac);
-  DMat<M2::ARingZZpFFPACK> M(R, 0, 0);
-  if (!transposed)
-    setDMatFromSparseMatrixGenerator(D, M);
-  else
-    setDMatFromSparseMatrixGeneratorTransposed(D, M);
-  auto a = DMatLinAlg<M2::ARingZZpFFPACK>(M);
-  //  std::cout << "---- dense matrix ----" << std::endl;
-  //  displayMat(M);
-  //  std::cout << "----------------------" << std::endl;
-  auto timeA = timer();
-  int rk = static_cast<int>(a.rank());
-  auto timeB = timer();
-  double nsecs = seconds(timeB - timeA);
-
-  timeComputeRanks += nsecs;
-
-  if (M2_gbTrace >= 2)
-    {
-      if (M.numRows() > 0 and M.numColumns() > 0)
-        std::cout << "   dense rank = " << rk
-                  << " time = " << nsecs << " sec"
-                  << std::endl;
-    }
-
-  return rk;
-}
-
-template<typename Gen>
-int SchreyerFrame::rankUsingDenseMatrixFlint(Gen& D, bool transposed)
 {
   unsigned int charac =
       static_cast<unsigned int>(gausser().get_ring()->characteristic());

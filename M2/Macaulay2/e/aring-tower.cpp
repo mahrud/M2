@@ -38,7 +38,7 @@ ARingTower::ARingTower(const BaseRingType &baseRing,
     }
 }
 
-ARingTower *ARingTower::create(const ARingZZpFFPACK &baseRing,
+ARingTower *ARingTower::create(const ARingZZpFlint &baseRing,
                                const std::vector<std::string> &names)
 {
   std::vector<ElementType> extensions;
@@ -79,7 +79,7 @@ ARingPolynomial ARingTower::alloc_poly_n(int deg) const
 ARingPolynomial ARingTower::alloc_poly_0(int deg) const
 {
   ARingPolynomial result = new ARingPolynomialStruct;
-  result->coeffs = new ARingZZpFFPACK::ElementType[deg + 1];
+  result->coeffs = new ARingZZpFlint::ElementType[deg + 1];
   result->deg = deg;
   result->len = deg + 1;
   for (int i = 0; i <= deg; i++) result->coeffs[i] = 0;
@@ -423,8 +423,8 @@ void ARingTower::mult_by_coeff(ARingPolynomial &f, const BaseCoefficientType &b)
       clear(f);
       return;
     }
-  // TODO: add this line one is_one is implemented in ZZpFFPACK: if
-  // (mBaseRing.is_one(b)) return;
+  // TODO: add this line one is_one is implemented in ZZpFlint:
+  // if (mBaseRing.is_one(b)) return;
   mult_by_coeff(mStartLevel, f, b);
 }
 

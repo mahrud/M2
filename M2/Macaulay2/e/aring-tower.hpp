@@ -4,9 +4,9 @@
 
 #include <vector>
 #include <string>
-#include "aring-zzp-ffpack.hpp"
 
 #include "style.hpp"
+#include "aring-zzp-flint.hpp"
 #include "aring.hpp"
 #include "ringelem.hpp"
 
@@ -24,8 +24,7 @@ struct ARingPolynomialStruct
   int len;
   union
   {
-    ARingZZpFFPACK::ElementType *coeffs;
-    //      long* ints;  // array of integers.  at level == 0
+    ARingZZpFlint::ElementType *coeffs;
     ARingPolynomial *polys;  // array of more ptrs to poly structs, at level > 0
   };
 };
@@ -43,7 +42,7 @@ class ARingTower : public RingInterface
   friend class ARingTowerEvaluator;
 
  public:
-  typedef ARingZZpFFPACK BaseRingType;
+  typedef ARingZZpFlint BaseRingType;
   typedef BaseRingType::ElementType BaseCoefficientType;
 
   static const RingID ringID = ring_tower_ZZp;
@@ -69,7 +68,7 @@ class ARingTower : public RingInterface
                             const std::vector<ElementType> &extensions);
 
   size_t n_vars() const { return mNumVars; }
-  const ARingZZpFFPACK &baseRing() const { return mBaseRing; }
+  const ARingZZpFlint &baseRing() const { return mBaseRing; }
   const std::vector<std::string> &varNames() const { return mVarNames; }
   unsigned long characteristic() const { return mBaseRing.characteristic(); }
   ///////////////////////////////////
@@ -258,7 +257,7 @@ class ARingTower : public RingInterface
   void clear(int level, ARingPolynomial &f) const;
 
  private:
-  const ARingZZpFFPACK &mBaseRing;
+  const ARingZZpFlint &mBaseRing;
   int mStartLevel;
   int mNumVars;
 

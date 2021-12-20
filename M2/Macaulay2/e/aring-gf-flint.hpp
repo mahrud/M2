@@ -29,34 +29,34 @@ namespace M2 {
 \ingroup rings
 */
 
+// TODO: many classes should change to fmpz_t or slong
 class ARingGFFlint : public RingInterface
 {
  public:
   static const RingID ringID = ring_GFFlintZech;
   typedef fq_zech_struct ElementType;
   typedef ElementType elem;
-  typedef std::vector<elem> ElementContainerType;
+  typedef std::vector<ElementType> ElementContainerType;
 
   ARingGFFlint(const PolynomialRing& R, const ring_elem a);
+  ARingGFFlint(const long p, const long d);
 
   ~ARingGFFlint();
 
   const fq_zech_ctx_struct* flintContext() const { return mContext; }
   long characteristic() const { return mCharacteristic; }
   long dimension() const { return mDimension; }
-  const PolynomialRing& originalRing() const { return mOriginalRing; }
+  const PolynomialRing& originalRing() const { return *mOriginalRing; }
   void getGenerator(ElementType& result_gen) const;
-
-  void text_out(buffer& o) const;
+  M2_arrayint getModulusPolynomialCoeffs() const;
 
  private:
   fq_zech_ctx_t mContext;
   fq_nmod_ctx_t mBigContext;
 
-  const PolynomialRing& mOriginalRing;   // This is a quotient ring k[a]/f(a).
+  const PolynomialRing *mOriginalRing;   // This is a quotient ring k[a]/f(a).
   const RingElement* mPrimitiveElement;  // element in the original ring
-  ulong*
-      mPPowers;  // array 0..mDimension of powers of mCharacteristic (mod 2^64)
+
   long mCharacteristic;
   long mDimension;
   mutable flint_rand_t mRandomState;
@@ -69,27 +69,29 @@ class ARingGFFlint : public RingInterface
   ////////////////////////////////
 
  public:
-  unsigned int computeHashValue(const elem& a) const
+  unsigned int computeHashValue(const ElementType& a) const
   {
     return static_cast<unsigned int>(a.value);
   }
 
   void to_ring_elem(ring_elem& result, const ElementType& a) const
   {
-    // we only use this data type for GF's smaller than 32 bits, since
-    // this class creates lookup tables that are way too big otherwise.
-    result = ring_elem(static_cast<int>(a.value));
+    result = ring_elem(static_cast<long>(a.value));
   }
 
   void from_ring_elem(ElementType& result, const ring_elem& a) const
   {
-    result.value = a.get_int();
+    result.value = a.get_long();
   }
 
   bool is_unit(const ElementType& f) const { return not is_zero(f); }
   bool is_zero(const ElementType& f) const
   {
     return fq_zech_is_zero(&f, mContext);
+  }
+  bool is_one(const ElementType& f) const
+  {
+    return fq_zech_is_one(&f, mContext);
   }
   bool is_equal(const ElementType& f, const ElementType& g) const
   {
@@ -113,8 +115,8 @@ class ARingGFFlint : public RingInterface
   void clear(ElementType& result) const { fq_zech_clear(&result, mContext); }
   void set_from_long(ElementType& result, long a) const
   {
-    long a1 = a % characteristic();
-    if (a1 < 0) a1 += characteristic();
+    long a1 = a % mCharacteristic;
+    if (a1 < 0) a1 += mCharacteristic;
     fq_zech_set_ui(&result, a1, mContext);
   }
 
@@ -128,7 +130,7 @@ class ARingGFFlint : public RingInterface
 
   void set_from_mpz(ElementType& result, mpz_srcptr a) const
   {
-    int b = static_cast<int>(mpz_fdiv_ui(a, characteristic()));
+    int b = static_cast<int>(mpz_fdiv_ui(a, mCharacteristic));
     set_from_long(result, b);
   }
 
@@ -253,6 +255,7 @@ class ARingGFFlint : public RingInterface
     fq_zech_swap(&a, &b, mContext);
   }
 
+  void text_out(buffer& o) const;
   void elem_text_out(buffer& o,
                      const ElementType& a,
                      bool p_one = true,

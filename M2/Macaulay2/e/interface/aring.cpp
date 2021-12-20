@@ -155,8 +155,7 @@ M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
       return 0;
     }
   const M2::ARingGFFlint &A = RGF->ring();
-  // return A.getMinimalPolynomialCoeffs();
-  return 0;
+  return A.getModulusPolynomialCoeffs();
 }
 
 M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f)

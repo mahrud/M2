@@ -25,9 +25,7 @@ conwayPolynomial ZZ := opts -> q -> (
      if #factors =!= 1 or factors#0#0 === -1
      then error "expected a power of a prime";
      conwayPolynomial(factors#0#0,factors#0#1,opts))
-addHook(GaloisField,FindOne,(p,n,a) -> (
-     cp := getCP(p,n);
-     if cp != {} then break fix(p,n,cp,a)))
+addHook((GF, ZZ, ZZ), Strategy => symbol ConwayPolynomials, (p, n, a) -> if (cp := getCP(p,n)) != {} then fix(p,n,cp,a))
 isConway := (F) -> (gens ideal ambient F)_(0,0) == sub(conwayPolynomial(F.char,F.degree, Variable=>F_0),ambient ambient F)
 map(GaloisField,GaloisField) := RingMap => o -> (K,F) -> (
      p := char F;

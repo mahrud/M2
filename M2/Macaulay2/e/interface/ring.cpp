@@ -65,8 +65,8 @@ const Ring /* or null */ *IM2_Ring_ZZp(int p)
 {
   if (p <= 1 || p >= 32750)
     {
-      ERROR("ZZP: expected a prime number p in range 2 <= p <= 32749");
-      return 0;
+      ERROR("ZZ/p: expected a prime number p in range 2 <= p <= 32749");
+      return nullptr;
     }
   return Z_mod::create(p);
 }

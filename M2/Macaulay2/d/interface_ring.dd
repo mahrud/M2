@@ -1,0 +1,280 @@
+-- connects engine routines exposed in interface/ring.h to the top level
+
+use struct;
+
+header "#include <interface/ring.h>";
+
+-- arithmetic rings
+export rawZZ(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 0
+    then toExpr(Ccode(RawRing, "IM2_Ring_ZZ()"))
+    else WrongNumArgs(0)
+    else WrongNumArgs(0));
+setupfun("rawZZ", rawZZ);
+
+export rawQQ(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 0
+    then toExpr(Ccode(RawRing, "IM2_Ring_QQ()"))
+    else WrongNumArgs(0)
+    else WrongNumArgs(0));
+setupfun("rawQQ", rawQQ);
+
+export rawZZp(e:Expr):Expr := (
+    when e is p:ZZcell do if !isInt(p) then WrongArgSmallInteger(1)
+    else toExpr(Ccode(RawRingOrNull, "IM2_Ring_ZZp(", toInt(p), ")"))
+    else WrongArgZZ(1));
+setupfun("rawZZp", rawZZp);
+
+export rawGaloisField(e:Expr):Expr := (
+    when e is f:RawRingElementCell do toExpr(Ccode(RawRingOrNull, "rawGaloisField(", f.p, ")"))
+    else WrongArg("a raw ring element"));
+setupfun("rawGaloisField", rawGaloisField);
+
+export rawRRi(e:Expr):Expr := (
+    when e is prec:ZZcell do if !isInt(prec) then WrongArgSmallInteger(1)
+    else toExpr(Ccode(RawRingOrNull, "IM2_Ring_RRi(", toInt(prec), ")"))
+    else WrongArgZZ(1));
+setupfun("rawRRi", rawRRi);
+
+export rawRR(e:Expr):Expr := (
+    when e is prec:ZZcell do if !isInt(prec) then WrongArgSmallInteger(1)
+    else toExpr(Ccode(RawRingOrNull, "IM2_Ring_RRR(", toInt(prec), ")"))
+    else WrongArgZZ(1));
+setupfun("rawRR", rawRR);
+
+export rawCC(e:Expr):Expr := (
+    when e is prec:ZZcell do if !isInt(prec) then WrongArgSmallInteger(1)
+    else toExpr(Ccode(RawRingOrNull, "IM2_Ring_CCC(", toInt(prec), ")"))
+    else WrongArgZZ(1));
+setupfun("rawCC", rawCC);
+
+-- polynomial rings and algebras
+export rawPolynomialRing(e:Expr):Expr := (
+    when e is s:Sequence do
+    if length(s) == 0 then toExpr(Ccode(RawRing, "IM2_Ring_trivial_polyring()")) else
+    if length(s) == 2 then (
+	when s.0 is K:RawRingCell do
+	when s.1 is M:RawMonoidCell do toExpr(Ccode(RawRingOrNull, "IM2_Ring_polyring(", K.p, ",", M.p, ")"))
+	else WrongArg(2, "a raw monoid")
+	else WrongArg(1, "a raw ring"))
+    else WrongArg("0 or 2 arguments")
+    else WrongArg("0 or 2 arguments"));
+setupfun("rawPolynomialRing", rawPolynomialRing);
+
+export rawSkewPolynomialRing(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do if isSequenceOfSmallIntegers(s.1)
+	then toExpr(Ccode(RawRingOrNull, "IM2_Ring_skew_polyring(", R.p, ",", getSequenceOfSmallIntegers(s.1), ")")) -- skew variables
+	else WrongArg(2, "a sequence of small integers")
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawSkewPolynomialRing", rawSkewPolynomialRing);
+
+export rawWeylAlgebra(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 4 then (
+	when s.0 is R:RawRingCell do
+	if !isSequenceOfSmallIntegers(s.1) then WrongArg(2, "a sequence of small integers") else
+	if !isSequenceOfSmallIntegers(s.2) then WrongArg(3, "a sequence of small integers") else
+	if !isSmallInt(s.3) then WrongArgSmallInteger(4)
+	else toExpr(Ccode(RawRingOrNull, "IM2_Ring_weyl_algebra(", R.p, ",",
+		getSequenceOfSmallIntegers(s.1), ",",  -- commvars
+		getSequenceOfSmallIntegers(s.2), ",", -- diff vars
+		getSmallInt(s.3), ")")) -- homog var
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(4)
+    else WrongNumArgs(4));
+setupfun("rawWeylAlgebra", rawWeylAlgebra);
+
+export rawSolvableAlgebra(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do
+	when s.1 is Q:RawMatrixCell
+	do toExpr(Ccode(RawRingOrNull, "IM2_Ring_solvable_algebra(", R.p, ",", Q.p, ")")) -- Q describes how to rewrite x_j*x_i
+	else WrongArgMatrix(2)
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawSolvableAlgebra", rawSolvableAlgebra);
+
+export rawNCFreeAlgebra(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 6 then (
+	when s.0 is R:RawRingCell do
+	when s.2 is degR:RawRingCell do
+	if isSequenceOfStrings(s.1) then
+	if isSequenceOfSmallIntegers(s.3) then
+	if isSequenceOfSmallIntegers(s.4) then
+	if isSequenceOfSmallIntegers(s.5)
+	then toExpr(Ccode(RawRingOrNull, "rawRingM2FreeAlgebra(", R.p, ",",
+		getSequenceOfStrings(s.1), ",", degR.p, ",",
+		getSequenceOfSmallIntegers(s.3), ",",
+		getSequenceOfSmallIntegers(s.4), ",",
+		getSequenceOfSmallIntegers(s.5), ")"))
+	else WrongArg(6, "a sequence of small integers")
+	else WrongArg(5, "a sequence of small integers")
+	else WrongArg(4, "a sequence of small integers")
+	else WrongArg(2, "a sequence of strings to be used as names")
+	else WrongArg(3, "a raw ring")
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(6)
+    else WrongNumArgs(6));
+setupfun("rawNCFreeAlgebra", rawNCFreeAlgebra);
+
+export rawRingM2FreeAlgebraQuotient(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is wa:RawMatrixCell do
+	when s.1 is wb:ZZcell do if !isInt(wb) then WrongArgSmallInteger(1)
+	else toExpr(Ccode(RawRingOrNull, "rawRingM2FreeAlgebraQuotient(", wa.p, ",", toInt(wb), ")"))
+	else WrongArgZZ(1)
+	else WrongArg(0, "a raw matrix"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawRingM2FreeAlgebraQuotient", rawRingM2FreeAlgebraQuotient);
+
+export rawFractionRing(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(RawRingOrNull, "IM2_Ring_frac(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawFractionRing", rawFractionRing);
+
+-- localization at a prime ideal
+export rawLocalRing(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do
+	when s.1 is P:RawComputationCell -- Groebner basis of prime ideal
+	do toExpr(Ccode(RawRingOrNull, "IM2_Ring_localization(", R.p, ",", P.p, ")"))
+	else WrongArg(2, "a raw computation")
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawLocalRing", rawLocalRing);
+
+export rawQuotientRing(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do
+	when s.1
+	-- 1 by n matrix generating the ideal
+	is I:RawMatrixCell do toExpr(Ccode(RawRingOrNull, "IM2_Ring_quotient(", R.p, ",", I.p, ")"))
+	-- quotient ring of the base ring
+	is B:RawRingCell do toExpr(Ccode(RawRingOrNull, "IM2_Ring_quotient1(", R.p, ",", B.p, ")"))
+	else WrongArg(2, "a raw ring or raw matrix")
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawQuotientRing", rawQuotientRing);
+
+-- Schur rings
+export rawSchurRing(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(RawRingOrNull, "IM2_Ring_schur(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawSchurRing", rawSchurRing);
+
+export rawSchurRing1(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(RawRingOrNull, "rawSchurRing1(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawSchurRing1", rawSchurRing1);
+
+export rawSchurRing2(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is A:RawRingCell do
+	when s.1 is p:ZZcell do if !isInt(p) then WrongArgSmallInteger(2)
+	else toExpr(Ccode(RawRingOrNull, "rawSchurRing2(", A.p, ",", toInt(p), ")"))
+	else WrongArgZZ(2)
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawSchurRing2", rawSchurRing2);
+
+export rawSchurSnRing(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is A:RawRingCell do
+	when s.1 is p:ZZcell do if !isInt(p) then WrongArgSmallInteger(2)
+	else toExpr(Ccode(RawRingOrNull, "rawSchurSnRing(", A.p, ",", toInt(p), ")"))
+	else WrongArgZZ(2)
+	else WrongArg(1, "a raw ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawSchurSnRing", rawSchurSnRing);
+
+-- tower rings
+export rawTowerRing(e:Expr):Expr := (
+    -- e = (charac, list of var names)
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is p:ZZcell do
+	if !isInt(p) then WrongArgSmallInteger(1) else
+	if isSequenceOfStrings(s.1) then WrongArg(2, "a list of strings")
+	else toExpr(Ccode(RawRingOrNull, "rawTowerRing1(", toInt(p), ",", getSequenceOfStrings(s.1), ")"))
+	else WrongArgZZ(1))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawTowerRing", rawTowerRing);
+
+export rawTowerRingAdjoinVariables(e:Expr):Expr := (
+    -- e = (Ring, list of var names)
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do
+	if isSequenceOfStrings(s.1)
+	then toExpr(Ccode(RawRingOrNull, "rawTowerRing2(", R.p, ",", getSequenceOfStrings(s.1), ")"))
+	else WrongArg(2, "a list of strings")
+	else WrongArg(1, "a ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawTowerRingAdjoinVariables", rawTowerRingAdjoinVariables);
+
+export rawTowerQuotientRing(e:Expr):Expr := (
+    -- e = (R:Ring, Fs:RawRingElementArray)
+    when e is s:Sequence do if length(s) == 2 then (
+	when s.0 is R:RawRingCell do
+	if isSequenceOfRingElements(s.1)
+	then toExpr(Ccode(RawRingOrNull, "rawTowerRing3(", R.p, ",", getSequenceOfRingElements(s.1), ")"))
+	else WrongArg(2, "a sequence of ring elements")
+	else WrongArg(1, "a ring"))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawTowerQuotientRing", rawTowerQuotientRing);
+
+export rawAmbientRing(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(RawRingOrNull, "rawAmbientRing(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawAmbientRing", rawAmbientRing);
+
+export rawDenominatorRing(e:Expr):Expr := (
+    when e is R:RawRingCell do toExprOrNull(Ccode(RawRingOrNull, "rawDenominatorRing(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawDenominatorRing", rawDenominatorRing);
+
+-- field helpers
+export rawIsField(e:Expr):Expr := (
+    when e is K:RawRingCell do toExpr(Ccode(bool, "IM2_Ring_is_field(", K.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawIsField", rawIsField);
+
+export rawDeclareField(e:Expr):Expr := (
+    when e is K:RawRingCell do (
+	if Ccode(bool, "IM2_Ring_declare_field(", K.p, ")") then nullE
+	else buildErrorPacket(EngineError("ring can't be declared to be field")))
+    else WrongArg("a raw ring"));
+setupfun("rawDeclareField", rawDeclareField);
+
+export rawGetNonUnit(e:Expr):Expr := (
+    when e is K:RawRingCell do toExpr(Ccode(RawRingElement, "rawGetNonUnit(", K.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawGetNonUnit", rawGetNonUnit);
+
+-- misc
+export rawCharacteristic(e:Expr):Expr := (
+    when e is R:RawRingCell do toExpr(Ccode(long, "rawRingCharacteristic(", R.p, ")"))
+    else WrongArg("a raw ring"));
+setupfun("rawCharacteristic", rawCharacteristic);
+
+export rawConwayPolynomial(e:Expr):Expr := (
+    when e is s:Sequence do if length(s) == 3 then (
+	when s.0 is charac:ZZcell do if !isInt(charac) then WrongArgSmallInteger(1) else
+	when s.1 is deg:ZZcell do if !isInt(deg) then WrongArgSmallInteger(2) else
+	if isBoolean(s.2)
+	then toExpr(Ccode(arrayint, "rawConwayPolynomial(", toInt(charac), ",", toInt(deg), ",", toBoolean(s.2), ")"))
+	else WrongArgBoolean(3)
+	else WrongArgSmallInteger(2)
+	else WrongArgSmallInteger(1))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("rawConwayPolynomial", rawConwayPolynomial);

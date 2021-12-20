@@ -117,7 +117,7 @@ newSchurEngineRing = R -> (
 newSchur2(Ring,Symbol,ZZ) := (A,p,n) -> (
      if not (A.?Engine and A.Engine) 
      then error "expected coefficient ring handled by the engine";
-     SR := newSchurEngineRing rawSchurRing1(raw A,n);
+     SR := newSchurEngineRing rawSchurRing2(raw A,n);
      SR.Symbol = p;
      SR.baseRings = append(A.baseRings,A);
      SR.generators = {};

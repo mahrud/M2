@@ -59,8 +59,6 @@ document {
 	  TO "BLAS",
 	  TO "NTL library",
 	  TO "FLINT",
-	  TO "givaro",
-	  TO "fflas-ffpack",
 	  TO "MPSolve",
 	  TO "Boost",
 	  "programs and their libraries",
@@ -97,23 +95,6 @@ document {
      PARA {
 	  "The program ", TT "csdp", ", by Brian Borchers, solves semidefinite programming problems
 	  and is available from ", HREF "http://www.coin-or.org/download/source/Csdp", "."
-	  }
-     }
-
-document {
-     Key => "givaro",
-     PARA {
-	  "The library ", TT "givaro", " is a library for arithmetic and algebraic computations, is required for ", TO "fflas-ffpack", ", 
-	  and is available from ", HREF "https://github.com/linbox-team/givaro", "."
-	  }
-     }
-
-document {
-     Key => "fflas-ffpack",
-     PARA {
-	  "The library ", TT "fflas-ffpack", " is a library
-	  for dense and sparse linear algebra over a finite field or the ring of integers,
- 	  available from ", HREF "https://github.com/linbox-team/fflas-ffpack", "."
 	  }
      }
 

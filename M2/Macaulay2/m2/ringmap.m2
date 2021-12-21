@@ -7,30 +7,26 @@ needs "modules.m2"
 needs "modules2.m2"
 needs "mutablemat.m2"
 
-RingMap = new Type of HashTable
+-----------------------------------------------------------------------------
+-- TODO
+-----------------------------------------------------------------------------
 
-RingMap.synonym = "ring map"
-matrix RingMap := opts -> f -> f.matrix
-source RingMap := f -> f.source
-target RingMap := f -> f.target
-raw RingMap := f -> f.RawRingMap
-
-expression RingMap := f -> (expression map) (expression (target f, source f, first entries matrix f))
-toString RingMap := f -> toString expression f
-net RingMap := f -> net expression f
-texMath RingMap := x -> texMath expression x
-
-describe RingMap := f -> Describe expression f
-toExternalString RingMap := f -> toString describe f
--- should do something about the degree map here
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
 
 degmap0 := n -> ( d := toList ( n : 0 ); e -> d )
 
-map(RingFamily,Thing,Thing) := RingMap => opts -> (R,S,m) -> map(default R,S,m,opts)
-map(Thing,RingFamily,Thing) := RingMap => opts -> (R,S,m) -> map(R,default S,m,opts)
+workable := f -> try (f(); true) else false
 
-workable = f -> try (f(); true) else false
+-----------------------------------------------------------------------------
+-- RingMap type declarations, constructors, and basic methods
+-----------------------------------------------------------------------------
 
+RingMap = new Type of HashTable
+RingMap.synonym = "ring map"
+
+-- constructors
 map(Ring,Ring,Matrix) := RingMap => opts -> (R,S,m) -> (
      if not isFreeModule target m or not isFreeModule source m
      then error "expected a homomorphism between free modules";
@@ -130,19 +126,24 @@ map(Ring,Ring,Matrix) := RingMap => opts -> (R,S,m) -> (
 	  }
      )
 
-map(Ring,Matrix) := RingMap => opts -> (S,m) -> map(ring m,S,m)
+Ring#id = R -> map(R, R, vars R)
 
-map(Ring,Ring) := RingMap => opts -> (S,R) -> map(S,R,{},opts)
+map(Ring, Matrix) := RingMap => opts -> (S, m) -> map(ring m, S, m,  opts)
+map(Ring, Ring)   := RingMap => opts -> (R, S) -> map(R,      S, {}, opts)
 
-Ring#id = (R) -> map(R,R,vars R)
+-- undocumented constructors for inexact fields
+map(RingFamily, Thing, Thing) := RingMap => opts -> (R, S, m) -> map(default R, S, m, opts)
+map(Thing, RingFamily, Thing) := RingMap => opts -> (R, S, m) -> map(R, default S, m, opts)
 
-RingMap#{Standard,AfterPrint} = RingMap#{Standard,AfterNoPrint} = f -> (
-     << endl;				  -- double space
-     << concatenate(interpreterDepth:"o") << lineNumber << " : " << class f;
-     << " " << target f << " <--- " << source f << endl;
-     )
+-- basic methods
+matrix RingMap := opts -> f -> f.matrix
+source RingMap := f -> f.source
+target RingMap := f -> f.target
+raw RingMap := f -> f.RawRingMap
 
-RingMap RingElement := RingElement => fff := (p,m) -> (
+-- ring map evaluation
+-- TODO: simplify the fff thing
+RingMap RingElement := RingElement => fff := (p, m) -> (
      R := source p;
      S := target p;
      if R =!= ring m then (
@@ -150,7 +151,7 @@ RingMap RingElement := RingElement => fff := (p,m) -> (
 	  );
      promote(rawRingMapEval(raw p, raw m),S))
 
-RingMap Number := (p,m) -> fff(p, promote(m,source p))
+RingMap Number := (p, m) -> fff(p, promote(m, source p))
 
 RingMap Matrix := Matrix => (p,m) -> (
      R := source p;
@@ -172,6 +173,28 @@ RingMap MutableMatrix := MutableMatrix => (p,m) -> (
 RingMap Vector := Vector => (p,m) -> (
      f := p new Matrix from m;
      new target f from f)
+
+-- printing
+expression RingMap := f -> (expression map) (expression (target f, source f, first entries matrix f))
+describe   RingMap := f -> Describe expression f
+
+net              RingMap :=      net @@ expression
+texMath          RingMap :=  texMath @@ expression
+toString         RingMap := toString @@ expression
+toExternalString RingMap := toString @@ describe
+-- TODO: should do something about the degree map here
+
+-- afterprint
+RingMap#{Standard, AfterPrint} =
+RingMap#{Standard, AfterNoPrint} = f -> (
+    << endl << concatenate(interpreterDepth:"o") << lineNumber << " : "; -- standard template
+    << class f << " " << target f << " <--- " << source f;
+    << endl;
+    )
+
+-----------------------------------------------------------------------------
+-- kernel
+-----------------------------------------------------------------------------
 
 kernel = method(Options => { SubringLimit => infinity })
 kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (
@@ -279,7 +302,15 @@ kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (
 	       if R' === R and F' === F then error "kernel RingMap: not implemented yet";
 	       p^-1 kernel (r * f * p^-1))))
 
+isInjective RingMap := f -> kernel f == 0
+
 coimage RingMap := QuotientRing => f -> f.source / kernel f
+
+preimage(RingMap, Ideal) := Ideal => (f, J) -> (
+    R := ring J;
+    kernel(map(R/J, R) * f))
+
+-----------------------------------------------------------------------------
 
 RingMap * RingMap := RingMap => (g,f) -> (
      if source g =!= target f then error "ring maps not composable";
@@ -442,12 +473,6 @@ RingMap ** Matrix := Matrix => (f,m) -> (
 
 tensor(RingMap, Module) := Module => {} >> opts -> (f, M) -> f ** M
 tensor(RingMap, Matrix) := Matrix => {} >> opts -> (f, m) -> f ** m
-
-isInjective RingMap := (f) -> kernel f == 0
-
-preimage(RingMap,Ideal) := (f,J) -> (
-     R := ring J;
-     kernel ( map(R/J,R) * f ))
 
 List / RingMap := List => (v,f) -> apply(v,x -> f x)
 RingMap \ List := List => (f,v) -> apply(v,x -> f x)

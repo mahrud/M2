@@ -57,6 +57,7 @@ set(HPPONLYFILES
   NCAlgebras/Range.hpp
   VectorArithmetic.hpp
   ARingElem.hpp
+  ARing/fflas-ffpack-flint.hpp
   newdelete.hpp
   timing.hpp
   SLP-defs.hpp

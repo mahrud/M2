@@ -272,17 +272,17 @@ fSeq := new HashTable from splice {
 
     -- Functors
     -- TODO: make sure hh.argument is also covered
-    (4, class, Functor, ZZ) => s -> (
+    (4, class, ScriptedFunctor, ZZ) => s -> (
 	hh := s#0;
 	if hh.?subscript
 	then (toString hh, "_", toString s#1, "(", toString s#2, ",", toString s#3, ")")
 	else (toString hh, "^", toString s#1, "(", toString s#2, ",", toString s#3, ")")),
-    (3, class, Functor, ZZ) => s -> (
+    (3, class, ScriptedFunctor, ZZ) => s -> (
 	hh := s#0;
 	if hh.?subscript
 	then (toString hh, "_", toString s#1, " ", toString s#2)
 	else (toString hh, "^", toString s#1, " ", toString s#2)),
-    (2, class, Functor    ) => s -> (
+    (2, class, ScriptedFunctor    ) => s -> (
 	hh := s#0;
 	if hh.?subscript and hh.?superscript then (
 	    printerr("warning: ambiguous functor, with both subscript method and superscript method: ", toString s);
@@ -290,6 +290,7 @@ fSeq := new HashTable from splice {
 	else if hh.?subscript   then (toString hh, " _ ", toString s#1)
 	else if hh.?superscript then (toString hh, " ^ ", toString s#1)
 	else (toString hh, " ", toString s#1)),
+    (2, class, Functor) => s ->      (toString s#0, " ",  toString s#1),
 
     -- Methods
     5 => s -> (

@@ -266,9 +266,10 @@ truncate(List, Module) := Module => truncateModuleOpts >> opts -> (degs, M) -> (
 truncate(List, Matrix) := Matrix => truncateModuleOpts >> opts -> (degs, f) -> (
     F := truncate(degs, source f, opts);
     G := truncate(degs, target f, opts);
-    -- FIXME, what is right?
     fgenF := (f * inducedMap(source f, F) * inducedMap(F, source gens F, gens F));
     map(G, F, inducedMap(G, source fgenF, fgenF) // inducedMap(G, source gens G, gens G)))
+
+-- TODO: implement subtruncate, i.e. truncate the source of a map more than the target
 
 --------------------------------------------------------------------
 

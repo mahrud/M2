@@ -358,6 +358,13 @@ TEST /// -- test of truncationPolyhedron with Nef option
   assert(HH_0 D == M1 and HH_1 D == 0 and HH_2 D == 0) -- good, fixed in v1.0
 ///
 
+TEST /// -- test of inducedTruncationMap and subtruncate
+  debug needsPackage "Truncations"
+  S = QQ[x,y]
+  M = S^1
+  assert(truncate(1, 2, id_M) == map(truncate(1, M), truncate(2, M), {{y, 0, 0}, {0, y, x}}))
+///
+
 end--
 
 restart

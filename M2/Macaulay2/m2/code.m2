@@ -46,6 +46,7 @@ getSourceLines Sequence := x -> (
 limit := 4
 indent := n -> "| "^(height n, depth n) | n
 
+-- TODO: also show _where_ a method is declared
 codeFunction := (f,depth) -> (
      if depth <= limit then (
 	  if locate f === null then concatenate("function ", toString f, ": source code not available")

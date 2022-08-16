@@ -88,6 +88,7 @@ VisibleList /  Function := VisibleList => (v,f) -> apply(v,f)
 codeHelper = new MutableHashTable
 
 Function @@ Function := Function => (f,g) -> x -> f g x
+-- TODO: improve this, so code(net, Variety) or code(options, PolynomialRing) look readable
 codeHelper#(functionBody(identity @@ identity)) = h -> { 
      ("-- function f:", value' (first localDictionaries h)#"f"),
      ("-- function g:", value' (first localDictionaries h)#"g")

@@ -690,25 +690,18 @@ inducesWellDefinedMap(Module,Nothing,Matrix) := (M,N,f) -> inducesWellDefinedMap
 inducesWellDefinedMap(Nothing,Module,Matrix) := (M,N,f) -> inducesWellDefinedMap(target f,N,f)
 inducesWellDefinedMap(Nothing,Nothing,Matrix) := (M,N,f) -> true
 
-vars Ring := Matrix => R -> (
-     g := generators R;
-     if R.?vars then R.vars else R.vars =
-     map(R^1,,{g}))
+vars Ring := Matrix => (stashValue symbol vars) (R -> map(R^1, , {generators R}))
 
+-- TODO: why are there two places for generators?
+relations  Module := Matrix => M -> (
+    if M.?relations then M.relations
+    else map(ambient M, (ring M)^0, 0))
 generators Module := Matrix => opts -> M -> (
      if M.?generators then M.generators
      else if M.cache.?generators then M.cache.generators
      else M.cache.generators = id_(ambient M))
 
 Module_* := M -> apply(numgens M, i -> M_i)
-
-relations Module := Matrix => M -> (
-     if M.?relations then M.relations 
-     else (
-	  R := ring M;
-	  map(ambient M,R^0,0)
-	  )
-     )
 
 degrees Matrix := f -> {degrees target f, degrees source f}
 

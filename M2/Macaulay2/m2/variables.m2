@@ -3,30 +3,38 @@
 needs "expressions.m2"
 needs "methods.m2"
 
--- indexed variables
+protect symbol$ -- not exported, to avoid interference with the user
+
+-----------------------------------------------------------------------------
+-- Local utilities
+-----------------------------------------------------------------------------
+
+checkValue := x -> if x#?symbol$ then if value(X := x#symbol$) =!= x then (
+    if value X =!= X then warningMessage("clearing value of symbol ", toString X,
+	" to allow access to subscripted variables based on it");
+    X <- x;)
+
+-----------------------------------------------------------------------------
+-- IndexedVariable and IndexedVariableTable type declarations and basic methods
+-----------------------------------------------------------------------------
 
 IndexedVariable = new Type of BasicList
 IndexedVariable.synonym = "indexed variable"
-expressionValue IndexedVariable := value				    -- do we really want this?
+
 IndexedVariableTable = new Type of MutableHashTable
 IndexedVariableTable.synonym = "indexed variable table"
-protect symbol$						    -- not exported, to avoid interference with the user
+
 new IndexedVariableTable from Symbol := (IndexedVariableTable,X) -> (
      x := new IndexedVariableTable;
      x#symbol$ = X;
      x)
-checkValue = x -> if x#?symbol$ then (
-     X := x#symbol$;
-     if value X =!= x then (
-     	  if value X =!= X then warningMessage("clearing value of symbol ", toString X, " to allow access to subscripted variables based on it");
-     	  X <- x;
-	  )
-     )
+
 IndexedVariableTable _ Thing := (x,i) -> (
      if x#?i then x#i
      else if x#?symbol$ then new IndexedVariable from {x#symbol$,i}
      else error "attempted to make new indexed variable from indexed variable table associated with no symbol")
 IndexedVariableTable _ Thing  = (x,i,e) -> (checkValue x; x#i = e)
+
 IndexedVariableTable.GlobalAssignHook = (X,x) -> (
      globalAssignFunction(X,x);
      if not x#?symbol$ then x#symbol$ = X;
@@ -35,18 +43,31 @@ IndexedVariableTable.GlobalReleaseHook = (X,x) -> (
      globalReleaseFunction(X,x);
      if x#?symbol$ and x#symbol$ === X then remove(x,symbol$);
      )
+
+-----------------------------------------------------------------------------
+-- printing methods
+-----------------------------------------------------------------------------
+
+expressionValue IndexedVariable := value -- do we really want this?
 expression IndexedVariable := x -> (expression x#0) _ (expression x#1)
-net IndexedVariable := v -> net expression v
-toString IndexedVariable := v -> toString expression v
-texMath IndexedVariable := v -> texMath expression v
+
+net      IndexedVariable :=      net @@ expression
+toString IndexedVariable := toString @@ expression
+texMath  IndexedVariable :=  texMath @@ expression
+
 expression IndexedVariableTable := x -> if x#?symbol$ then expression x#symbol$ else expression "-*an indexed variable table*-"
+
 net IndexedVariableTable := net @@ expression
 toString IndexedVariableTable := toString @@ expression
-texMath IndexedVariableTable := x -> texMath expression x
+texMath IndexedVariableTable := texMath @@ expression
+
+-----------------------------------------------------------------------------
 
 IndexedVariable ? IndexedVariable := (x,y) -> toSequence x ? toSequence y
 Symbol ? IndexedVariable := (x,y) -> if x === (y#0) then symbol > else x ? (y#0)
+
 Symbol _ Thing := (X,i) -> new IndexedVariable from {X,i}
+
 value IndexedVariableTable := x -> x
 value IndexedVariable := v -> (
      (x,i) := toSequence v;
@@ -54,6 +75,12 @@ value IndexedVariable := v -> (
      x' := value x;
      if x' === x or not instance(x',IndexedVariableTable) then return v;
      if x'#?i then x'#i else v)
+
+-----------------------------------------------------------------------------
+-- assignment methods
+-----------------------------------------------------------------------------
+-- TODO: are these correct?
+
 Symbol _ Thing = (x,i,e) -> (
      x' := value x;
      if not instance(x',IndexedVariableTable) then x' = new IndexedVariableTable from x;
@@ -66,6 +93,7 @@ installMethod(symbol <-, Sequence, (x,y) -> (
 	  scan(x,y,(i,j) -> i <- j);
 	  y))
 
+-- dotdot
 IndexedVariable .. IndexedVariable := Sequence => (v,w) -> apply(toSequence v .. toSequence w, xi -> new IndexedVariable from xi)
 IndexedVariable ..< IndexedVariable := Sequence => (v,w) -> apply(toSequence v ..< toSequence w, xi -> new IndexedVariable from xi)
 

@@ -135,6 +135,12 @@ assert(set first entries basis(degree D, S) === set L)
 -- FIXME should be homogeneous
 isHomogeneous sum({1,1,1,1}, L, times)
 
+-- test truncate
+needsPackage "Truncations"
+-- FIXME should have at least two more generators
+truncate({0,3}, S)
+monomials(3*X_0)
+
 --- test passing a map of ZZ-modules for Degrees
 M = monoid[a,b,c, Degrees => A]
 assert(degreeGroup M == G)

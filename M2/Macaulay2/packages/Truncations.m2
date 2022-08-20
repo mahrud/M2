@@ -30,6 +30,7 @@ newPackage(
 
 importFrom_Core {
     "concatCols",
+    "freeComponents",
     "raw", "rawSelectByDegrees",
     "tryHooks",
     }
@@ -169,13 +170,15 @@ truncationMonomials(List, Module) := opts -> (degs, F) -> (
     (R1, phi1) := flattenRing (R := ring F);
     ext := if opts.Exterior =!= null then opts.Exterior else (options R1).SkewCommutative;
     nef := if opts.Nef      =!= null then opts.Nef      else  nefCone R1; -- changing to effCone gives an alternative result
+    -- the free components of the degree group
+    free := freeComponents degreeGroup R; -- TODO: is this correct?
     -- TODO: call findMins on degs, but with respect to the Nef cone!
     -- checks to see if twist S(-a) needs to be truncated
-    isInNef := if nef === null then a -> any(degs, d -> d << a) else (
-	truncationCone := nef + convexHull matrix transpose degs;
+    isInNef := if nef === null then a -> any(degs, d -> d_free << a) else (
+        truncationCone := nef + convexHull((matrix transpose degs)^free);
 	a -> contains(truncationCone, convexHull matrix transpose{a}));
     -- TODO: either figure out a way to use cached results or do this in parallel
-    directSum apply(degrees F, a -> if isInNef a then gens R^{a} else concatCols(
+    directSum apply(degrees F, a -> if isInNef a_free then gens R^{a} else concatCols(
 	     apply(degs, d -> truncationMonomials(d - a, R, Exterior => ext, Nef => nef)))))
 truncationMonomials(List, Ring) := opts -> (d, R) -> (
     -- inputs: a single multidegree, a graded ring
@@ -187,7 +190,9 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;
-        P := truncationPolyhedron(A, transpose matrix{d}, opts);
+        F := freeComponents target A;
+        b := transpose matrix{d_F};
+        P := truncationPolyhedron(A^F, b, opts);
         H := hilbertBasis cone P; -- ~50% of computation
         H = for h in H list flatten entries h;
         J := leadTerm ideal R1;
@@ -317,13 +322,17 @@ basisMonomials(List, Ring) := (d, R) -> (
         -- opportunistically use cached truncation results
         -- TODO: is this always correct? with negative degrees?
         truncgens := R#(symbol truncate, d);
-        psrc := rawSelectByDegrees(raw source truncgens, d, d);
+        -- psrc := rawSelectByDegrees(raw source truncgens, d, d); -- FIXME bugging out
+        psrc := positions(degrees source truncgens, deg -> deg == d);
         submatrix(truncgens, , psrc))
     else R#(symbol basis', d) = (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;
-        P := basisPolyhedron(A, transpose matrix{d},
+        F := freeComponents target A;
+        b := transpose matrix{d_F};
+        -- TODO: would be better if basisPolyhedron could also account for torsion
+        P := basisPolyhedron(A^F, b,
             Exterior => (options R1).SkewCommutative);
         H := hilbertBasis cone P; -- ~40% of computation
         H = for h in H list flatten entries h;
@@ -335,7 +344,10 @@ basisMonomials(List, Ring) := (d, R) -> (
         result := mingens ideal(mongens % J); -- ~40% of computation
         if R1 =!= ambR then result = result ** R1;
         if R =!= R1 then result = phi1^-1 result;
-        result))
+        -- wip
+        -- psrc := rawSelectByDegrees(raw source result, d, d); -- FIXME bugging out
+        psrc = positions(degrees source result, deg -> deg == d);
+        submatrix(result, , psrc)))
 
 -- FIXME: when M has relations, it should be pruned
 basis' = method(Options => options basis)

@@ -96,6 +96,11 @@ assert(heft B == {0,1,0,1})
 S = (ZZ/3) A
 T = (ZZ/3) B
 
+--- degrees monoids or rings with torsion in degree group
+-- FIXME: these two should have torsion, and probably not be ordered either
+degreesMonoid A
+degreesRing A
+
 -- module over ring with torsion degree group
 assert(degrees S^{{3,3}} == {{0,-3}})
 assert(S^{{3,3}} == S^{{0,3}})
@@ -117,10 +122,12 @@ J = graphIdeal g
 assert isHomogeneous J
 assert(degreeGroup monoid S == degreeGroup monoid ring J)
 
---- TODO
+--- test degreeGroup of rings
 use S
 R = S/(x-y)
-monoid R
+assert(degreeGroup S == G)
+assert(degreeGroup R == G)
+-- degreeGroup frac R -- TODO: what should this be?
 
 --- test Cox rings with torsion degree group
 needsPackage "NormalToricVarieties"

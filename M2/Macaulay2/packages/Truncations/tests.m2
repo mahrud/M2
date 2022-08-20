@@ -372,6 +372,31 @@ TEST /// -- test of truncation of complexes
   truncate(3, C)
 ///
 
+TEST /// -- test of truncationPolyhedron with torsion in class group
+  debug needsPackage "Truncations"
+  needsPackage "NormalToricVarieties"
+  needsPackage "Polyhedra"
+  -- TODO
+  --X = normalToricVariety (id_(ZZ^3) | -id_(ZZ^3));
+  --Y = makeSimplicial X;
+  --Bl1 = toricBlowup({0}, X);
+  --Y = toricBlowup({7}, Bl1);
+  B = matrix {{2, -1}, {-1, 2}, {-1,-1}}
+  Y = normalToricVariety(entries B,
+      {{0, 1}, {1, 2}, {2, 0}})
+  S = ring Y
+  D = 3 * Y_0
+  deg = degree D
+
+  -- TODO: is this correct?
+  truncate(deg, S)
+  degrees oo
+  -- TODO: which order is correct? why?
+  basis'(deg, module S)
+  basis(deg, module S)
+  matrix { monomials D }
+///
+
 end--
 
 restart

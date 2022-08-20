@@ -101,6 +101,9 @@ assert(degrees S^{{3,3}} == {{0,-3}})
 assert(S^{{3,3}} == S^{{0,3}})
 -- assert(S^{{3,3}} === S^{{0,3}}) -- TODO: should this be true?
 
+-- elements of ring with torsion degree group
+degree S_0^3 == {0,3} -- FIXME in the engine
+
 --- testing graphIdeal
 f = map(T, S, {T_0, T_1, T_2}, DegreeMap => d -> join(d, {0,0}))
 assert isHomogeneous f

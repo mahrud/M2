@@ -247,6 +247,7 @@ parts RingElement := f -> (
 
 -----------------------------------------------------------------------------
 
+-- FIXME: this bit is not thread-safe
 off := 0
 pw := (v,wts) -> (
      for i in v list if i<off then continue else if i>=off+#wts then break else wts#(i-off))
@@ -258,23 +259,17 @@ pn := (v,nw) -> (
      n)
 selop = new HashTable from { GRevLex => pg, Weights => pw, Lex => pn, RevLex => pn, GroupLex => pn, GroupRevLex => pn, NCLex => pn }
 selmo = (v,mo) -> ( off = 0; apply(mo, x -> if instance(x,Option) and selop#?(x#0) then x#0 => selop#(x#0)(v,x#1) else x))
-ord := (v,nv) -> (
-     n := -1;
-     for i in v do (
-	  if not instance(i,ZZ) or i < 0 or i >= nv then error("selectVariables: expected an increasing list of numbers in the range 0..",toString(nv-1));
-	  if i <= n then error "selectVariables: expected a strictly increasing list";
-	  n = i;
-	  ))     
 selectVariables = method()
-selectVariables(List,PolynomialRing) := (v,R) -> (
-     v = splice v;
-     ord(v,numgens R);
-     o := new MutableHashTable from options R;
-     o.MonomialOrder = selmo(v,o.MonomialOrder);
-     o.Variables = o.Variables_v;
-     o.Degrees = o.Degrees_v;
-     o = new OptionTable from o;
-     (S := (coefficientRing R)(monoid [o]),map(R,S,(generators R)_v)))
+selectVariables(List, PolynomialRing) := (v, R) -> (
+    v  = sort unique monoidIndices_(monoid R) splice v;
+    K := coefficientRing R;
+    o := options R;
+    M := monoid[o,
+	Degrees       => o.Degrees_v,
+	Variables     => o.Variables_v,
+	MonomialOrder => selmo(v, o.MonomialOrder),
+	];
+    (S := K M, map(R, S, R_*_v)))
 
 -----------------------------------------------------------------------------
 

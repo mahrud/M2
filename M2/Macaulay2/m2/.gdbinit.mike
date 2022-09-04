@@ -27,8 +27,8 @@ set startup-with-shell off
 # b random.cpp:37
 # b random.cpp:44
 # b fatalarrayindex
-# b evaluate_eval
-# b evaluate.d:1179
+# b methods_eval
+# b methods.dd:1179
 # d 1
 # b GC_default_warn_proc
 # can only to this after the program starts:

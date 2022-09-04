@@ -1,6 +1,6 @@
 --		Copyright 1994,2010 by Daniel R. Grayson
 use hashtables;
-use evaluate;
+use methods;
 
 newtypeof(parent:HashTable):HashTable := newHashTable(typeClass,parent);
 export VirtualTally := newtypeof(hashTableClass);

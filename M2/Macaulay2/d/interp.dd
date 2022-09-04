@@ -1,7 +1,7 @@
 --		Copyright 1994-2000 by Daniel R. Grayson
 
 newStartupMethod := true;				    -- for testing purposes
-use evaluate;
+use methods;
 use parser;
 use texmacs;
 use actors5;

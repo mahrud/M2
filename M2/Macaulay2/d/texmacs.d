@@ -2,7 +2,7 @@
 
 use getline;
 use util;
-use evaluate;
+use methods;
 
 TeXmacsEvaluate := makeProtectedSymbolClosure("TeXmacsEvaluate");
 

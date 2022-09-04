@@ -49,8 +49,8 @@
 	#6  0x0809ff29 in presentfun (e_33={type_ = 34, ptr_ = 0x9cf54e0})
 	    at actors4.d:820
 	(gdb) up
-	#7  0x080d0441 in evaluate_apply_4 (f_12={type_ = 5, ptr_ = 0x83e08b0}, e_1=
-	      {type_ = 34, ptr_ = 0x9cf54e0}) at evaluate.d:585
+	#7  0x080d0441 in methods_apply_4 (f_12={type_ = 5, ptr_ = 0x83e08b0}, e_1=
+	      {type_ = 34, ptr_ = 0x9cf54e0}) at methods.dd:585
 
     Let's say I'm suddenly interested in this pointer, f_12;
 

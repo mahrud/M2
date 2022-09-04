@@ -1,6 +1,6 @@
 --		Copyright 1994,2010 by Daniel R. Grayson
 
-use evaluate;
+use methods;
 use actors;
 
 isOption(e:Expr):bool := (

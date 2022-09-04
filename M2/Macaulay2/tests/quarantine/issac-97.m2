@@ -62,5 +62,5 @@ GC_debug_malloc(340424) returning NULL (../../Macaulay2/e/gmp-util.h:11)
 14# GBProxy::start_computation() at /home/mahrud/Projects/M2/PD/M2/BUILD/build/../../Macaulay2/e/comp-gb-proxy.hpp:55
 15# rawStartComputation at /home/mahrud/Projects/M2/PD/M2/BUILD/build/../../Macaulay2/e/x-gb.cpp:607
 16# interface_rawStartComputation at /home/mahrud/Projects/M2/PD/M2/Macaulay2/d/interface.dd:3428
-17# evaluate_evalraw at /home/mahrud/Projects/M2/PD/M2/Macaulay2/d/evaluate.d:1293
+17# methods_evalraw at /home/mahrud/Projects/M2/PD/M2/Macaulay2/d/methods.dd:1293
 *-

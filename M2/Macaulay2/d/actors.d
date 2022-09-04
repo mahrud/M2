@@ -1,6 +1,6 @@
 --		Copyright 1994 by Daniel R. Grayson
 
-use evaluate;
+use methods;
 use struct;
 
 export plus0():Expr := zeroE;

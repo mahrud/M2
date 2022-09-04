@@ -294,7 +294,7 @@ export Frame := {
 			    -- 0 for the globalFrame, and 1 for the thread local threadFrame
      valuesUsed:int,        -- sigh, we really need this only for static frames
      	       	    	    -- we don't need it for the thread local threadFrame, but use it as a high water mark
-     notrecyclable:bool,    -- if the frame should not be recycled back into the recyclebin in evaluate.d
+     notrecyclable:bool,    -- if the frame should not be recycled back into the recyclebin in methods.dd
      values:Sequence
      };
 

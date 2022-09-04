@@ -1256,17 +1256,17 @@ handleError(c:Code,e:Expr):Expr := (
 
 header "extern void M2_stack_push(char*);";
 header "extern void M2_stack_pop();";
-header "extern void M2_stack_trace();";
-stacktrace(e:Expr):Expr := (
-    Ccode(void,"M2_stack_trace()"); e );
-setupfun("stacktrace",stacktrace);
+--header "extern void M2_stack_trace();";
+--stacktrace(e:Expr):Expr := (
+--    Ccode(void,"M2_stack_trace()"); e );
+--setupfun("stacktrace",stacktrace);
 
 evalprof(c:Code):Expr;
 evalraw(c:Code):Expr;
 export eval(c:Code):Expr := (
     if Ccode(bool,"PROFILING == 1")
-    then Ccode(Expr,"evaluate_evalprof(",c,")")
-    else Ccode(Expr,"evaluate_evalraw(",c,")"));
+    then Ccode(Expr,"methods_evalprof(",c,")")
+    else Ccode(Expr,"methods_evalraw(",c,")"));
 export evalprof(c:Code):Expr := (
     when c is f:semiCode do ( -- what makes semiCode special?
         -- printErrorMessage(codePosition(c),"--evaluating a semiCode");
@@ -1952,5 +1952,5 @@ export notFun(a:Expr):Expr := if a == True then False else if a == False then Tr
 applyEEEpointer = applyEEE;
 
 -- Local Variables:
--- compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d evaluate.o "
+-- compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d methods.o "
 -- End:

@@ -131,14 +131,15 @@ void stack_trace(std::ostream &stream, bool M2) {
 
 extern "C" {
   void M2_stack_trace() { stack_trace(std::cout, false); }
-#if PROFILING
-  void M2_stack_push(char* M2_frame) { M2_stack.emplace_back(M2_frame); }
-  void M2_stack_pop() { M2_stack.pop_back(); }
-#else
-  void M2_stack_push(char* M2_frame) {}
-  void M2_stack_pop() {}
-#endif
 }
+
+#if PROFILING
+void M2_stack_push(char* M2_frame) { M2_stack.emplace_back(M2_frame); }
+void M2_stack_pop() { M2_stack.pop_back(); }
+#else
+void M2_stack_push(char* M2_frame) {}
+void M2_stack_pop() {}
+#endif
 
 void* profFunc(ArgCell* p)
 {

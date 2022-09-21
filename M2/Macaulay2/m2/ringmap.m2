@@ -50,6 +50,7 @@ RingMap#AfterNoPrint = f -> (
 -----------------------------------------------------------------------------
 -- RingMap constructors
 -----------------------------------------------------------------------------
+-- TODO: support installing default ring map
 
 Ring#id = R -> map(R, R, vars R)
 
@@ -229,6 +230,7 @@ RingMap \ List := List => (f,v) -> apply(v,x -> f x)
 -----------------------------------------------------------------------------
 -- kernel
 -----------------------------------------------------------------------------
+-- TODO: should work over ZZ
 
 kernel = method(Options => { SubringLimit => infinity })
 kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (f -> (

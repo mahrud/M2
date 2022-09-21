@@ -40,6 +40,8 @@ newRing QuotientRing := opts -> R -> (
 -----------------------------
 -- tensor product of rings --
 -----------------------------
+-- TODO: implement for towers of rings
+-- TODO: support passing a base ring
 
 -- made a method and documented elsewhere.
 Ring ** Ring := Ring => (R,S) -> tensor(R,S)
@@ -82,6 +84,7 @@ tensor(QuotientRing,   QuotientRing) := monoidTensorDefaults >> optns -> (R, S) 
 -------------------------
 -- Graph of a ring map --
 -------------------------
+-- TODO: should work over ZZ
 
 graphIdeal = method( Options => apply( {MonomialOrder, MonomialSize, VariableBaseName}, o -> o => monoidDefaults#o ))
 graphRing = method( Options => options graphIdeal )

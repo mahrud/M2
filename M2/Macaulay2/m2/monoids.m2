@@ -36,6 +36,12 @@ indices := (M, variables) -> apply(variables, x -> (
 
 sameMonoid := (x, y) -> if (M := class x) === class y then M else error "expected elements in the same monoid"
 
+isSmall := i -> class i === ZZ and i < 2^15 and i > -2^15
+isCount := i -> class i === ZZ and i < 2^15 and i >= 0
+isListOfIntegers        = L -> instance(L, List) and all(L, i -> instance(i, ZZ))
+isListOfListsOfIntegers = L -> instance(L, List) and all(L, isListOfIntegers)
+listZ = listZZ = v -> if isListOfIntegers(v = toList splice v) then v else error "expected a list of integers"
+
 -----------------------------------------------------------------------------
 -- MonoidElement type declarations and basic methods
 -----------------------------------------------------------------------------
@@ -460,6 +466,155 @@ processDegrees = (degs, degrk, group, nvars) -> (
     else error "expected Degrees option to be list of degrees")
 
 -----------------------------------------------------------------------------
+-- Monomial Orderings
+-----------------------------------------------------------------------------
+
+Eliminate = new SelfInitializingType of BasicList
+new Eliminate from ZZ := (Eliminate, n) -> Eliminate {n}
+expression Eliminate := v -> ( if #v === 1
+    then new FunctionApplication from {Eliminate, v#0}
+    else new FunctionApplication from {Eliminate, toList v})
+ProductOrder = new SelfInitializingType of BasicList
+
+--
+
+-- TODO: remove this
+processMOkey := (opts, key) -> (
+    -- omit the default of 32 on purpose, so that opts#"monsize"=0 will work out.
+    if key === Lex     then (
+	if opts#"monsize" === 8 then LexTiny     else if opts#"monsize" === 16 then LexSmall     else Lex     ) else
+    if key === GRevLex then (
+	if opts#"monsize" === 8 then GRevLexTiny else if opts#"monsize" === 16 then GRevLexSmall else GRevLex ) else key)
+
+bump := (opts, n) -> (opts#"offset" = opts#"offset" + n; n)
+
+intOption := (opts, k, n) -> (
+    if not isCount n then error "expected small positive integers in monomial orders";
+    k => bump(opts, n))
+
+processMonSize := (opts, monsize) -> opts#"monsize" = (
+    if not isCount monsize then error "expected a small positive integer for MonomialSize";
+    if monsize <= 8 then 8 else if monsize <= 16 then 16 else 32)
+
+processMOfunctions := hashTable {
+    Weights      => (opts, k, v) -> k => if instance(v, List) then spliceInside v else v,
+    Position     => (opts, k, v) -> k => (opts.Position = v),
+    -- FIXME: MonomialSize => 16, Lex => 2 has two MonomialSizes
+    MonomialSize => (opts, k, v) -> k => processMonSize(opts, v),
+    NCLex        => intOption, -- TODO: remove?
+    Lex          => intOption,
+    RevLex       => intOption,
+    GroupLex     => intOption,
+    GroupRevLex  => intOption,
+    GRevLex      => (opts, k, v) -> (
+	if instance(v, ZZ)
+	-- get m-th through n-th degree
+	then v = take(opts#"heftdegs", {opts#"offset", opts#"offset" + v - 1})
+	else (
+	    v = if instance(v, List) then spliceInside v else v;
+	    if not isListOfIntegers v then error "expected an integer or a list of integers";
+	    );
+	bump(opts, #v);
+	k => v)
+    }
+
+processMO = method() -- stage 1, everything except Tiny and Small
+processMO(MutableHashTable, Thing) := (opts, mo) -> error("unrecognized monomial ordering block: ", toString mo)
+
+fillMO := (opts, mo) -> if opts#"nvars" > opts#"offset" then processMO(opts, mo => opts#"nvars" - opts#"offset")
+symbolFixes := hashTable {
+    Lex     => fillMO,
+    GLex    => (opts, mo) -> (Weights => toList(opts#"nvars" : 1), processMO(opts, Lex)),
+    RevLex  => fillMO,
+    GRevLex => fillMO,
+    }
+processMO(MutableHashTable, Symbol)   := (opts, s) -> if symbolFixes#?s then symbolFixes#s(opts, s) else
+    error("unrecognized monomial ordering keyword: ", toString s)
+processMO(MutableHashTable, Sequence) := (opts, v) -> v / (x -> processMO(opts, x))
+processMO(MutableHashTable, List)     := (opts, v) -> splice(toSequence v / (x -> processMO(opts, x)))
+processMO(MutableHashTable, ZZ)           := (opts, n) -> processMO(opts, GRevLex => n) -- default setting
+processMO(MutableHashTable, ProductOrder) := (opts, v) -> processMO(opts, toSequence v / (x -> processMO(opts, x)))
+processMO(MutableHashTable, Eliminate)    := (opts, w) -> Weights => toList(w#0 : 1)
+
+-- check that Inverses => true is compatible with the monomial order
+checkInverses := key -> (
+    if key === Lex    then GroupLex    else
+    if key === RevLex then GroupRevLex else
+    if isMember(key, {GroupLex, GroupRevLex}) then key else
+    if isMember(key, {Weights, Position, MonomialSize}) then key else
+    error("Inverses => true not compatible with ", toString key))
+
+processMO(MutableHashTable, Option) := (opts, mo) -> (
+    (key, val) := toSequence mo;
+    if opts.Inverses then key = checkInverses key;
+    if processMOfunctions#?key then processMOfunctions#key(opts, key, val)
+    else error("unrecognized monomial ordering block: ", toString key))
+
+processWeights = (nvars, vecs) -> (
+    vecs = spliceInside toList vecs;
+    -- e.g. allows {}, {1,1,1,1}, {{1,1,1,1}}, {{{0,0},1,1},{1,1,{0,0}}}
+    vecs = if isListOfIntegers vecs and #vecs > 0 then {vecs} else apply(vecs, deepSplice);
+    if not isListOfListsOfIntegers vecs then error "expected a list of integers or a list of lists of integers";
+    apply(vecs, wt -> if #wt < nvars then join(wt, nvars - #wt : 0) else if #wt == nvars then wt
+	else error("encountered weight vector of length ", #wt)))
+
+-- TODO: remove these
+stage2Options := hashTable {
+    MonomialSize => (opts, k, v) -> ( processMonSize(opts, v); null ),
+    Lex          => (opts, k, n) -> processMOkey(opts, k) => bump(opts, n),
+    GRevLex      => (opts, k, v) -> processMOkey(opts, k) => v
+    }
+
+stage2 := method()			    -- stage 2, Tiny and Small
+stage2(MutableHashTable, Thing)    := (opts, mo) -> mo
+stage2(MutableHashTable, List)     := (opts, v) -> toSequence v / (x -> stage2(opts, x))
+stage2(MutableHashTable, Sequence) := (opts, v) -> v / (x -> stage2(opts, x))
+stage2(MutableHashTable, Option)   := (opts, mo) -> (
+    (key, val) := toSequence mo;
+    if stage2Options#?key then stage2Options#key(opts, key, val) else mo)
+
+newMonomialOrder = (ordering, monsize, inverses, weights, heftdegs, nvars) -> (
+    -- 'ordering' is a list of ordering options, e.g., { Lex => 4, GRevLex => 4 }
+    --    If it's not a list, we'll make a list of one element from it.
+    -- 'monsize' is the old MonomialSize option, usually 8 or 16, or 'null' if unset
+    -- 'inverses' is true or false, and tells whether the old "Inverses => true" option was used.
+    -- 'nvars' tells the total number of variables.  Any extra variables will be ordered with GRevLex or GroupLex.
+    -- 'degs' is a list of integers, the first components of the multi-degrees of the variables
+    --      if it's too short, additional degrees are taken to be 1.  Could be an empty list.
+    -- 'weights' is the list of integers or the list of lists of integers provided by the user under
+    --    the *separate* Weights option.  Could be an empty list.
+    if not isListOfIntegers heftdegs then error "expected a list of integers";
+    if not instance(ordering, List)  then ordering = {ordering};
+    if instance(monsize, ZZ)         then ordering = prepend(MonomialSize => monsize, ordering);
+    weights = processWeights(nvars, weights);
+    ordering = join(weights / (v -> Weights => v), ordering);
+    opts := new MutableHashTable from {
+	Inverses => inverses,
+	Position => null,
+	"heftdegs" => heftdegs,
+	"monsize" => 0,
+	"offset" => 0,
+	"nvars" => nvars};
+    ordering = toList nonnull splice processMO(opts, ordering);
+    -- use default GRevLex for remaining variables and Position => Up if not specified
+    if opts#"offset" < nvars  then ordering = append(ordering, processMO(opts, GRevLex));
+    if opts#Position === null then ordering = append(ordering, processMO(opts, Position => Up));
+    -- second pass
+    opts#"monsize" = opts#"offset" = 0;
+    MOopts := toList nonnull stage2(opts, ordering);
+    rawMO := rawMonomialOrdering MOopts;
+    (MOopts, ordering, rawMO))
+
+-*
+restart
+errorDepth=1
+R = ZZ/101[a,b,c,d]/(a^4+b^4+c^4+d^4)
+     X = Proj R
+     errorDepth=1
+     result = table(3,3,(p,q) -> timing ((p,q) => rank HH^q(cotangentSheaf(p,X))))
+*-
+
+-----------------------------------------------------------------------------
 
 makeVars = (n, var) -> toList(
     (name, ind) := if instance(var = baseName' var, IndexedVariable) then toSequence var else (var, null);
@@ -565,15 +720,14 @@ newMonoid = opts -> (
     degs    := M.degrees      = opts.Degrees;
     nvars   := M.numgens      = #varlist;
     M.vars   = M.generators   = apply(nvars, i -> new M from rawVarMonomial(i, 1));
+    -- TODO: why is this set to degrk:0?
     heftvec := M.heft         = if opts.Heft === null then toList(degrk:0) else opts.Heft;
+    heftdegrees := if degrk == 0 or opts.Heft === null then toList(nvars:1)
+    else apply(degs, d -> if (w := dotprod(d, heftvec)) > 0 then w else 1);
     -- see engine.m2
-    (MOopts, MOoptsint, rawMO, logMO) := makeMonomialOrdering(
-	opts.MonomialSize, opts.Inverses, nvars,
-	if degreeLength M == 0 or opts.Heft === null then toList(nvars:1)
-	else apply(degs, d -> if (w := dotprod(d, heftvec)) > 0 then w else 1),
-	opts.Weights, opts.MonomialOrder);
+    (MOopts, MOoptsint, rawMO) := newMonomialOrder(
+	opts.MonomialOrder, opts.MonomialSize, opts.Inverses, opts.Weights, heftdegrees, nvars);
     M.RawMonomialOrdering = rawMO;
-    M#"raw creation log" = new Bag from {logMO};
     M#"options" = MOopts; -- these are exactly the arguments given to rawMonomialOrdering
     -- these are the options given to rawMonomialOrdering minus MonomialSize,
     -- except Tiny and Small aren't there yet and GRevLex=>nvars hasn't been expanded

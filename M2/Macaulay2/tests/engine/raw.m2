@@ -18,6 +18,10 @@ rawMonomialOrdering {Lex => 1, LexSmall => 2, LexTiny => 4}
 rawMonomialOrdering {GRevLex => {1,1,1}, GRevLexSmall => {2,2}, GRevLexTiny => {4,4,4,4}}
 rawMonomialOrdering {GroupLex => 3, NCLex => 4, Weights => {3,4,5}}
 
+-- FIXME: fix this file
+makeMonomialOrdering = (monsize,inverses,nvars,heftdegs,weights,ordering) ->
+    processMO(ordering,monsize,inverses,weights,heftdegs,nvars)
+
 makeMonomialOrdering( null, false, 0, {1,2,3,4,5,6,7,8}, {}, {} )
 makeMonomialOrdering( null, false, 4, {1,2,3,4,5,6,7,8}, {}, {} )
 makeMonomialOrdering( null, false, 10, {1,2,3,4,5,6,7,8}, {}, {} )

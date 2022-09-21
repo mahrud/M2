@@ -219,6 +219,7 @@ makeMonomialOrdering = lock((monsize,inverses,nvars,degs,weights,ordering) -> (
 RawMonomialOrdering ** RawMonomialOrdering := RawMonomialOrdering => rawProductMonomialOrdering
 
 -- used for debugging mgb interface, moved from ofcm.m2
+-- TODO: use this in newring.m2
 monomialOrderMatrix = method()
 monomialOrderMatrix RawMonomialOrdering := mo -> (
     nvars := rawNumberOfVariables mo;

@@ -48,6 +48,7 @@ RingMap#AfterNoPrint = f -> (
 -----------------------------------------------------------------------------
 -- RingMap constructors
 -----------------------------------------------------------------------------
+-- TODO: support installing default ring map
 
 Ring#id = R -> map(R, R, vars R)
 
@@ -227,6 +228,7 @@ RingMap \ VisibleList := VisibleList => (f,v) -> apply(v,x -> f x)
 -----------------------------------------------------------------------------
 -- kernel
 -----------------------------------------------------------------------------
+-- TODO: should work over ZZ
 
 kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (f -> (
     (F, R) := (target f, source f);

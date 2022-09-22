@@ -153,7 +153,6 @@ interface.o :						\
 	@srcdir@/../e/buffer.hpp			\
 	@srcdir@/../e/mem.hpp				\
 	@srcdir@/../e/../system/mutex.h			\
-	@srcdir@/../e/imonorder.hpp			\
 	@srcdir@/../e/aring.hpp				\
 	@srcdir@/../e/exceptions.hpp			\
 	@srcdir@/../e/ZZ.hpp				\
@@ -246,7 +245,6 @@ engine.o :						\
 	@srcdir@/../e/ZZ.hpp				\
 	@srcdir@/../e/matrix.hpp			\
 	@srcdir@/../e/monoid.hpp			\
-	@srcdir@/../e/imonorder.hpp			\
 	@srcdir@/../e/interface/monomial-ordering.h	\
 	@srcdir@/../e/freemod.hpp			\
 	@srcdir@/../e/schorder.hpp			\

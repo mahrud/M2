@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "interface/monomial-ordering.h"
-#include "monordering.hpp"
 #include "interface/ring.h"
 #include "interface/aring.h"
 #include "monoid.hpp"

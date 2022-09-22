@@ -155,6 +155,7 @@ set(CPPONLYFILES
 # these files all have .hpp and .cpp files
 # MES TODO: put these NCAlgebra files (and friends) into alpha order in list
 set(SRCLIST
+  MonomialOrder
   BasicPoly
   BasicPolyList
   BasicPolyListParser
@@ -231,7 +232,6 @@ set(SRCLIST
   gbweight
   hermite
   hilb
-  imonorder
   int-bag
   interreduce
   interrupted
@@ -463,6 +463,8 @@ if(BUILD_TESTING)
     unit-tests/basics-test.cpp
 
     unit-tests/MatrixIOTest.cpp
+    unit-tests/MonomialOrderTest.cpp
+
     unit-tests/fromStream.cpp
     unit-tests/testMain.cpp # not needed, except for GC_INIT
     )

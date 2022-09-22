@@ -3,7 +3,11 @@
 
 #  include "engine-includes.hpp"
 
+#  if defined(__cplusplus)
+class MonomialOrdering;
+#  else
 typedef struct MonomialOrdering MonomialOrdering;
+#  endif
 
 /**
    MonomialOrdering interface routines
@@ -26,20 +30,6 @@ enum MonomialOrdering_type {
   MO_NC_LEX = 14,         /* Lex order, non-commutative */
   MO_POSITION_UP = 15,
   MO_POSITION_DOWN = 16
-};
-
-typedef struct mon_part_rec_
-{
-  enum MonomialOrdering_type type;
-  int nvars;
-  int *wts;
-} * mon_part;
-
-struct MonomialOrdering
-{
-  unsigned int _hash;
-  unsigned int len;
-  mon_part array[1];
 };
 
 #  if defined(__cplusplus)
@@ -89,6 +79,8 @@ MonomialOrdering *rawJoinMonomialOrdering(engine_RawMonomialOrderingArray mo);
 /* drg: connected rawMonomialOrdering*/
 /* default, when making monoids and polynomial rings */
 
+//////// Informational ////////////////////////////////
+  
 int rawNumberOfVariables(const MonomialOrdering *mo);
 /* drg: connected rawNumberOfVariables*/
 
@@ -134,7 +126,7 @@ M2_arrayintOrNull rawMonomialOrderingToMatrix(
 }
 #  endif
 
-#endif /* _monomial-ordering_h_ */
+#endif /* _monomial_ordering_h_ */
 
 // Local Variables:
 // indent-tabs-mode: nil

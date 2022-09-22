@@ -9,6 +9,7 @@ INTERFACE2 = interrupted
 #  NCAlgebras/SuffixTree \
 
 INTERFACE = \
+	MonomialOrder \
 	myalloc \
 	BasicPoly \
 	BasicPolyList \
@@ -104,7 +105,6 @@ INTERFACE = \
 	SLP \
 	overflow \
 	memory-status \
-	imonorder \
 	sagbi \
 	monideal-minprimes \
 	lapack \

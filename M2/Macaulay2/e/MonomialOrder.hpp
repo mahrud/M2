@@ -63,7 +63,7 @@ struct mo_block
   deg_t *weights;
 };
 
-struct MonomialOrder_rec
+struct MonomialOrder
 {
   int nvars;
   int nslots;
@@ -77,9 +77,12 @@ struct MonomialOrder_rec
                  Any graded rev lex block assumes graded wrt these degrees. */
   struct mo_block *blocks; /* 0..nblocks-1 with each entry a struct mo_block */
   int *is_laurent; /* 0..nvars-1: 0 or 1: 1 means negative exponents allowed */
+
+public:
+  enum overflow_type { OVER, OVER1, OVER2, OVER4 } * overflow;
+  std::vector<int> overflow_flags() const;
 };
 
-typedef struct MonomialOrder_rec MonomialOrder;
 MonomialOrder *monomialOrderMake(const MonomialOrdering *mo);
 void monomialOrderFree(MonomialOrder *mo);
 void monomialOrderEncodeFromActualExponents(const MonomialOrder *mo,

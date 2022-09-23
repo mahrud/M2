@@ -1252,6 +1252,66 @@ static void MO_unpack2(int nvars, const int *slots, int *expon)
     }
 }
 
+std::vector<int> MonomialOrder::overflow_flags() const
+{
+  std::vector<int> overflow;
+  enum overflow_type flag;
+  int i = 0;
+  int k = 0;
+  for (; i < nblocks; i++)
+    {
+      mo_block *b = &blocks[i];
+      switch (b->typ)
+        {
+          case MO_REVLEX:
+          case MO_WEIGHTS:
+          case MO_LAURENT:
+          case MO_LAURENT_REVLEX:
+          case MO_NC_LEX:
+            flag = OVER;
+            goto fillin;
+          case MO_POSITION_UP:
+          case MO_POSITION_DOWN:
+            ERROR(
+                "internal error - MO_POSITION_DOWN or MO_POSITION_UP "
+                "encountered");
+            assert(0);
+            break;
+          case MO_LEX:
+          case MO_GREVLEX:
+          case MO_GREVLEX_WTS:
+            flag = OVER1;
+            goto fillin;
+          case MO_LEX2:
+          case MO_GREVLEX2:
+          case MO_GREVLEX2_WTS:
+            flag = OVER2;
+            goto fillin;
+          case MO_LEX4:
+          case MO_GREVLEX4:
+          case MO_GREVLEX4_WTS:
+            flag = OVER4;
+            goto fillin;
+          fillin:
+            assert(b->first_slot == k);
+            for (int p = b->nslots; p > 0; p--)
+              {
+                assert(k < nslots);
+                overflow.push_back(flag);
+                k++;
+              }
+            break;
+          default:
+            ERROR("internal error - missing case");
+            assert(0);
+            break;
+        }
+    }
+  assert(k == nslots);
+}
+
+
+
 void monomialOrderEncodeFromActualExponents(const MonomialOrder *mo,
                                             const_exponents expon,
                                             monomial result_psums)

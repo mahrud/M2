@@ -9,10 +9,13 @@ class MonomialOrdering;
 typedef struct MonomialOrdering MonomialOrdering;
 #  endif
 
+#  if defined(__cplusplus)
+extern "C" {
+#  endif
+
 /**
    MonomialOrdering interface routines
  */
-
 enum MonomialOrdering_type {
   MO_LEX = 1,
   MO_LEX2 = 2,
@@ -31,10 +34,6 @@ enum MonomialOrdering_type {
   MO_POSITION_UP = 15,
   MO_POSITION_DOWN = 16
 };
-
-#  if defined(__cplusplus)
-extern "C" {
-#  endif
 
 MonomialOrdering *rawLexMonomialOrdering(int nvars, int packing);
 /* drg: connected rawMonomialOrdering*/

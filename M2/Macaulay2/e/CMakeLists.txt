@@ -156,6 +156,7 @@ set(CPPONLYFILES
 # MES TODO: put these NCAlgebra files (and friends) into alpha order in list
 set(SRCLIST
   MonomialOrder
+  MonomialOrderOld
   BasicPoly
   BasicPolyList
   BasicPolyListParser

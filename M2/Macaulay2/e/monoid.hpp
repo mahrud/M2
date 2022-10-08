@@ -11,7 +11,7 @@
 #include "ExponentList.hpp"
 #include "ExponentVector.hpp"
 #include "hash.hpp"
-#include "MonomialOrder.hpp"
+#include "MonomialOrderOld.hpp"
 #include "newdelete.hpp"
 #include "style.hpp"
 

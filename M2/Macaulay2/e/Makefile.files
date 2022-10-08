@@ -10,6 +10,7 @@ INTERFACE2 = interrupted
 
 INTERFACE = \
 	MonomialOrder \
+	MonomialOrderOld \
 	myalloc \
 	matrix-ncbasis \
 	M2FreeAlgebraQuotient \

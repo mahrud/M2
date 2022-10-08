@@ -1,6 +1,6 @@
 #include "interface/monomial-ordering.h"
 
-#include "MonomialOrder.hpp"
+#include "MonomialOrderOld.hpp"
 
 M2_arrayint rawMonomialOrderingToMatrix(const struct MonomialOrdering *mo)
 {

@@ -152,6 +152,7 @@ set(CPPONLYFILES
 # MES TODO: put these NCAlgebra files (and friends) into alpha order in list
 set(SRCLIST
   MonomialOrder
+  MonomialOrderOld
   myalloc
   matrix-ncbasis
   M2FreeAlgebraQuotient

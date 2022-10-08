@@ -14,7 +14,7 @@
 #include "NCAlgebras/OverlapTable.hpp"
 #include "NCAlgebras/SuffixTree.hpp"
 #include "NCAlgebras/NCReduction.hpp"
-#include "MonomialOrder.hpp"
+#include "MonomialOrderOld.hpp"
 #include "monoid.hpp"
 
 /** MemoryBlock tests

@@ -26,6 +26,8 @@ const Matrix /* or null */ *rawFourierMotzkin(const Matrix *C);
 
 const Matrix /* or null */ *rawHilbertBasis(const Matrix *C);
 
+const Matrix /* or null */ *rawInteriorVector(const Matrix *C);
+
 #  if defined(__cplusplus)
 }
 #  endif

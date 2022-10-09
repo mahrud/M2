@@ -3872,6 +3872,11 @@ export rawHilbertBasis(e:Expr):Expr := (
      else WrongArgMatrix());
 setupfun("rawHilbertBasis", rawHilbertBasis);
 
+export rawInteriorVector(e:Expr):Expr := (
+     when e is G:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawInteriorVector(", G.p, ")"))
+     else WrongArgMatrix());
+setupfun("rawInteriorVector", rawInteriorVector);
+
 -----------------------------------------------------------------------------
 -- LU
 -----------------------------------------------------------------------------

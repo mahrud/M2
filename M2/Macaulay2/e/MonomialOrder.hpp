@@ -4,7 +4,19 @@
 #include <vector>
 #include <iostream>
 
-#include "interface/monomial-ordering.h" // Just for enum MonomialOrdering_type
+using ExponentVector = int*;
+using EncodedMonomial = int*;
+
+///TODO: maybe we need 2 classes here.
+/// 1. MonomialOrder
+/// 2. MonomialEncoder (and decoder).
+///   this is like the current intermal monomial ordering code.
+///   it has a list of parts (monomial order parts, and (firstslot, numslot, packing, overflow) info for each.
+///   operations
+///   - encodeExponentVector
+///   - decodeToExponentVector
+///   - mult (with overflow checks) (this needs the encoder for the over flow fields)
+///   - comparison (this might not need the Encoder at all).
 
 /// TODO: this is in some sense a todo list for my current modifications
 /// In Macaulay2, a MonomialOrder is a data structure that allows teh following options:
@@ -28,20 +40,22 @@
 /// MO = monomial order types, internal functions and types for monomial orders */
 namespace MO {
   enum order_type {
-    Lex = 1, /**< lexicographic order on a specified number of variables */
-    GRevLex = 4, /**< graded reverse lexicographic order
+    Packing, /**< # exponents per (currently 32 bit) word.  Only affects Lex, GRevLex, GRevLexWeights
+                     (but not the weight part).  Does not affect the monomial order. */
+    Lex, /**< lexicographic order on a specified number of variables */
+    GRevLex, /**< graded reverse lexicographic order
                            on a specified number of variables,
                            with weights 1 for each variable */
-    GRevLexWeights = 7, /**< graded reverse lexicographic order
+    GRevLexWeights, /**< graded reverse lexicographic order
                        with specified positive weights, on a number of variables */
-    RevLex = 10, /**< reverse lexicographic order
+    RevLex, /**< reverse lexicographic order
                            on a specified number of variables.
                            Not a global order! */
-    Weights = 11,
-    GroupLex = 12, // previously MO_LAURENT
-    GroupRevLex = 13, // previously MO_LAURENT_REVLEX
-    PositionUp = 15,
-    PositionDown = 16
+    Weights,
+    GroupLex, // previously MO_LAURENT
+    GroupRevLex, // previously MO_LAURENT_REVLEX
+    PositionUp,
+    PositionDown
   };
   //Previous names and values  
   // MO_LEX = 1, 
@@ -54,14 +68,18 @@ namespace MO {
   // MO_POSITION_UP = 15,
   // MO_POSITION_DOWN = 16
 
-  class Block
+  std::string toString(MO::order_type t);
+
+  class MonomialBlock
   {
   private:
     enum order_type mType;
   
-    /** number of bits per exponent/value for this type (currently 8, 16, or 32)
-     *
-     */
+    /** This is the number of exponents to pack in to a word.  This is
+        the one piece of data that isn't part of the monomial order.
+        But we keep it, because it is easier to collect the
+        information once from the front end
+    */
     int mPacking;
 
     /** number of variables for this block
@@ -74,26 +92,45 @@ namespace MO {
 
     /// index of the first variable for this block
     int mStartVariable;
-
-    /// the starting 
-    int mStartEncoded;
-    int mNumEncoded;
-
     std::vector<int> mWeights; // Only used for MO::Weights, MO::GRevLex
-
   public:
     /** constructor */
-    Block(enum order_type t,
+    MonomialBlock(enum order_type t,
           const std::vector<int>& data,
-          int& next_var,
-          int& next_slot
+          int packing,
+          int& next_var
           );
 
     enum order_type type() const { return mType; }
     int numVars() const { return mNumVars; }
     auto weights() const -> const std::vector<int>& { return mWeights; }
+    int packing() const { return mPacking; }
+    void debugDisplay(std::ostream& o) const;
+    std::pair<enum MO::order_type, std::vector<int>> toMonomialType() const;
+  };
+
+  class EncodingBlock
+  {
+  private:
+    MonomialBlock mBlock;
+
+    /// encoded locations (start, length).
+    int mStartEncoded;
+    int mNumEncoded;
+  public:
+    /** constructor */
+    EncodingBlock(MonomialBlock b,
+                  int& next_slot
+                  );
+    
+    //TODO: reinstate the ones needed here.
+    // enum order_type type() const { return mType; }
+    // int numVars() const { return mNumVars; }
+    // auto weights() const -> const std::vector<int>& { return mWeights; }
+    void debugDisplay(std::ostream& o) const;
   };
 }; // end namespace MO
+
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -101,8 +138,45 @@ class NewAgeMonomialOrder
 {
   friend std::ostream& operator<<(std::ostream&, const NewAgeMonomialOrder& mo);
 private:
+  /// Number of variables
+  int mNumVars;
+
   // The sequence of blocks for the monomial order
-  std::vector<MO::Block> mParts; 
+  std::vector<MO::MonomialBlock> mParts; 
+
+  // Informational about the order
+  std::vector<int> mIsLocalVariable;
+  std::vector<int> mIsGroupVariable;
+  
+public:
+  using MOInput = std::vector<std::pair<enum MO::order_type, std::vector<int>>>;
+  NewAgeMonomialOrder(int nvars, const MOInput& input);
+
+  MOInput toMonomialType() const;
+
+  /// TODO
+  bool isWellDefined(int verbose_level) const;
+
+  void debugDisplay(std::ostream& o) const;
+public:
+  // informational functions
+public:
+  // unencoded comparison.
+  int compareExponentVectors(const ExponentVector &a, const ExponentVector* b) const;
+};
+
+std::ostream& operator<<(std::ostream& o, const std::vector<int>& a);
+std::ostream& operator<<(std::ostream& o, MO::order_type t);
+std::ostream& operator<<(std::ostream& o, const std::pair<enum MO::order_type, std::vector<int>>& a);
+std::ostream& operator<<(std::ostream& o, const NewAgeMonomialOrder& mo);
+std::ostream& operator<<(std::ostream& o, const NewAgeMonomialOrder::MOInput& a);
+
+
+/////////////// Encoder code /////////////////////////////
+class MonomialEncoder
+{
+private:
+  std::vector<MO::EncodingBlock> mParts; 
 
   /// Number of variables
   int mNumVars;
@@ -110,35 +184,27 @@ private:
   /// Size of encoded monomial
   int mEncodedSize;
 
-  /// which block contains the component
-  int mComponentLocation;
+  /// the component comes after the following block #.
+  int mComponentOccursBeforeThisBlock;
 
+  /// the component value in the encoded monomial is at this location
+  int mEncodedComponentLocation;
+  
   /// if true, components are encoded via negation, so comparison will be faster
   bool mPositionUp;
   
-  ///
-  std::vector<int> mIsLocalVariable;
-  std::vector<int> mIsGroupVariable;
-  
 public:
+  MonomialEncoder(const NewAgeMonomialOrder& mo);
 
-  using MOInput = std::vector<std::pair<enum MO::order_type, std::vector<int>>>;
-  NewAgeMonomialOrder(int nvars, MOInput input);
+  //TODO.
+  int compareEncodedMonomials();
+  void multEncodedMonomials(); // can overflow
+  void encode(const ExponentVector& a, EncodedMonomial& result) const;
+  void decode(const EncodedMonomial& a, ExponentVector& b) const;
 
-  MOInput toMonomialType() const;
-
-  /// TODO
-  bool isWellDefined(int verbose_level) const;
-
-  /// TODO
-  std::ostream debugOutput(std::ostream& o) const;
-public:
-  // informational functions
-public:
-  // encoding/decoding/comparison of monomials.
+  void debugDisplay(std::ostream& o) const;
 };
 
-std::ostream& operator<<(std::ostream& o, const NewAgeMonomialOrder& mo);
 
 /*
 // Local Variables:

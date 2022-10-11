@@ -159,12 +159,16 @@ addCone(List, Fan) := (L, F) -> (
    result
 )
 
-fan List := inputCones -> (
-   if instance(inputCones, Cone) then error("Why did I arrive here?");
-   if not all(inputCones, c -> instance(c, Cone)) then error("This constructor needs a list of cones.");
-   result := fan(inputCones#0);
-   for i from 1 to #inputCones - 1 do (
-      result = addCone(result, inputCones#i);
-   );
-   result
-)
+importFrom_Core {"concatCols"}
+cols = m -> apply(numcols m, j -> m_{j})
+
+fan List := Fan => inputCones -> (
+    A := apply(inputCones, C ->
+	if instance(C, Cone) then cols rays C else
+	if instance(C, Matrix) then cols C else
+	error "This constructor needs a list of cones or matrices.");
+    B := unique flatten A;
+    H := hashTable apply(toList pairs B, reverse);
+    rayList := concatCols B;
+    maxList := apply(A, C -> apply(C, ray -> H#ray));
+    fan(rayList, -* linealityGens, *- maxList))

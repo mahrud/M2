@@ -66,11 +66,77 @@ TEST(MonomialOrder, packing)
   
 }
 
-// TEST(MonomialOrder, arrayFromMonomialOrder)
-// {
-// }
+TEST(MonomialOrder, localVariables)
+{
+  NewAgeMonomialOrder mo1 {10, {
+      {MO::Packing, {4}},
+      {MO::Lex, {3}},
+      {MO::RevLex, {2}},
+      {MO::GroupRevLex, {2}},
+      {MO::PositionUp, {}},
+      {MO::Weights, {0, 0,0,0,0,0,0,0,1, -1, 1}},
+      {MO::Lex, {3}}
+    }};
 
-// TEST(MonomialOrder, matrixFromMonomialOrder)
-// {
-// }
+  std::cout << mo1 << std::endl;
+
+  auto locals = mo1.localVariablesPredicate();
+  std::vector<bool> locals_ans {
+    false, false, false,
+    true, true,
+    true, true,
+    false, true, false
+  };
+  EXPECT_EQ(locals, locals_ans);
+
+  auto inverts = mo1.invertibleVariablesPredicate();
+  std::vector<bool> inverts_ans {
+    false, false, false,
+    false, false,
+    true, true,
+    false, false, false
+  };
+  EXPECT_EQ(inverts, inverts_ans);
+}
+
+TEST(MonomialOrder, matrixFromMonomialOrder)
+{
+  NewAgeMonomialOrder mo1 {6, {
+      {MO::Packing, {4}},
+      {MO::Lex, {3}},
+      {MO::PositionUp, {}},
+      {MO::Weights, {0, 0,0,0,1, -1, 1}},
+      {MO::Lex, {3}}
+    }};
+
+  std::vector<int> mat;
+  bool base_is_revlex;
+  int component_dir;
+  int comp_is_before_row;
+  EXPECT_TRUE(mo1.monomialOrderingToMatrix(mat, base_is_revlex, component_dir, comp_is_before_row));
+  std::cout << mat << std::endl;
+  EXPECT_FALSE(base_is_revlex);
+  EXPECT_EQ(component_dir, 1);
+  EXPECT_EQ(comp_is_before_row, 3);
+}
+
+TEST(MonomialOrder, matrixFromMonomialOrder2)
+{
+  NewAgeMonomialOrder mo1 {6, {
+      {MO::Packing, {4}},
+      {MO::Lex, {3}},
+      {MO::PositionUp, {}},
+      {MO::GRevLex, {3}}
+    }};
+
+  std::vector<int> mat;
+  bool base_is_revlex;
+  int component_dir;
+  int comp_is_before_row;
+  EXPECT_TRUE(mo1.monomialOrderingToMatrix(mat, base_is_revlex, component_dir, comp_is_before_row));
+  std::cout << mat << std::endl;
+  EXPECT_TRUE(base_is_revlex);
+  EXPECT_EQ(component_dir, 1);
+  EXPECT_EQ(comp_is_before_row, 3);
+}
 

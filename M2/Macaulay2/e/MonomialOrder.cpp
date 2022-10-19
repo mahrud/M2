@@ -42,7 +42,7 @@ namespace MO {
       }
 
     switch (t) {
-    case MO::GroupLex: // Lex
+    case MO::GroupLex:
     case MO::GroupRevLex:
       mPacking = 1;
       break;
@@ -53,11 +53,12 @@ namespace MO {
     case MO::Lex:
     case MO::RevLex:
     case MO::GRevLex:
-    // The following should not occur here.
+      // The following should not occur here (they are handled above)
     case MO::Weights:
     case MO::PositionUp:
     case MO::PositionDown:
       break;
+    // The following should not occur here (they are never placed into this type).
     case MO::Packing:
       throw exc::engine_error("internal error: received incorrect monomial block");
     };
@@ -292,6 +293,249 @@ void NewAgeMonomialOrder::debugDisplay(std::ostream& o) const
       m.debugDisplay(o);
       o << std::endl;
     }
+}
+
+std::vector<int> NewAgeMonomialOrder::invertibleVariables() const
+{
+  auto isInvertible = invertibleVariablesPredicate();
+  std::vector<int> result;
+  for (int i=0; i < isInvertible.size(); ++i)
+    {
+      if (isInvertible[i]) result.push_back(i);
+    }
+  return result;
+}
+
+std::vector<bool> NewAgeMonomialOrder::invertibleVariablesPredicate() const
+{
+  std::vector<bool> result;
+  for (int i=0; i < numVars(); ++i)
+    result.push_back(false);
+  for (const auto& b : mParts)
+    {
+      if ((b.type() == MO::GroupRevLex) or (b.type() == MO::GroupLex))
+        {
+          for (int i = 0; i < b.numVars(); ++i)
+            result[b.firstVar() + i] = true;
+        }
+    }
+  return result;
+}
+
+std::vector<int> NewAgeMonomialOrder::localVariables() const
+{
+  auto isLocal = localVariablesPredicate();
+  std::vector<int> result;
+  for (int i=0; i < isLocal.size(); ++i)
+    {
+      if (isLocal[i]) result.push_back(i);
+    }
+  return result;
+}
+
+std::vector<bool> NewAgeMonomialOrder::localVariablesPredicate() const
+{
+  std::vector<int> status(numVars(), 0); // initialized to 0's. meaning: 0: don't know yet, 1: is global, -1: is local.
+  for (const auto& b : mParts)
+    {
+      switch (b.type())
+        {
+        case MO::Lex:
+        case MO::GroupLex:
+        case MO::GRevLex:
+        case MO::GRevLexWeights:
+          // these are global variables
+          for (int i=0; i<b.numVars(); ++i)
+            {
+              int v = b.firstVar() + i;
+              if (status[v] == 0) status[v] = 1;
+            }
+          break;
+        case MO::GroupRevLex:
+        case MO::RevLex:
+          // these are local variables
+          for (int i=0; i<b.numVars(); ++i)
+            {
+              int v = b.firstVar() + i;
+              if (status[v] == 0) status[v] = -1;
+            }
+          break;
+        case MO::Weights:
+          // these depend on the weight values
+          for (int i=0; i<b.weights().size(); ++i)
+            {
+              int v = b.firstVar() + i;
+              if (status[v] == 0)
+                {
+                  if (b.weights()[i] > 0) status[v] = 1;
+                  else if (b.weights()[i] < 0) status[v] = -1;
+                  // don't change value if weight is 0.
+                }
+            }
+          break;
+        case MO::PositionUp:
+        case MO::PositionDown:
+        case MO::Packing:
+          // these are ignored
+          break;
+        }
+    }
+  // At this point status[v] should be +1 or -1 for each v.
+  // now we create the result
+  std::vector<bool> result;
+  for (int i=0; i<status.size(); ++i)
+    {
+      result.push_back(status[i] == -1);
+      if (status[i] == 0)
+        throw exc::engine_error("internal error: logic to compute local vars is messed up");
+    }
+  return result;
+}
+
+static void write_row(std::vector<int> &grading,
+                      int nvars,
+                      int which,
+                      int value)
+{
+  for (int i = 0; i < nvars; i++)
+    if (i == which)
+      grading.push_back(value);
+    else
+      grading.push_back(0);
+}
+static void write_weights(std::vector<int> &grading,
+                          int nvars,
+                          int firstvar,
+                          const std::vector<int>& wts,
+                          int nwts)
+// place nvars ints into grading:  0 ... 0 wts[0] wts[1] ... wts[nwts-1] 0 ....
+// 0
+// where wts[0] is in the 'firstvar' location.  If wts is NULL, treat it as the
+// vector with nwts '1's.
+{
+  for (int i = 0; i < firstvar; i++) grading.push_back(0);
+  if (wts.size() == 0)
+    for (int i = 0; i < nwts; i++) grading.push_back(1);
+  else
+    for (int i = 0; i < nwts; i++) grading.push_back(wts[i]);
+  for (int i = firstvar + nwts; i < nvars; i++) grading.push_back(0);
+}
+
+bool NewAgeMonomialOrder::monomialOrderingToMatrix(
+    std::vector<int>& mat,
+    bool& base_is_revlex,
+    int& component_direction,     // -1 is Down, +1 is Up, 0 is not present
+    int& component_is_before_row  // -1 means: at the end. 0 means before the
+                                  // order.
+    // and r means considered before row 'r' of the matrix.
+    ) const
+{
+  // a false return value means: this order cannot be used in GB computations (i.e. there are invertible variables).
+  int nvars = numVars();
+  base_is_revlex = true;
+  enum LastBlock { LEX, REVLEX, WEIGHTS, NONE };
+  LastBlock last = NONE;
+  int nrows = 0;
+  int firstvar = 0;
+  component_direction = 0;
+  component_is_before_row = -2; // what should the default value be?  Probably: -1.
+  size_t last_element = 0;  // The vector 'mat' will be resized back to this
+                            // value if the last part of the order is lex or
+                            // revlex.
+  for (const auto& b : mParts)
+    {
+      switch (b.type())
+        {
+        case MO::Lex:
+          // printf("lex %d\n", p->nvars);
+          last_element = mat.size();
+          for (int j = 0; j < b.numVars(); ++j)
+            {
+              write_row(mat, nvars, firstvar + j, 1);
+            }
+          last = LEX;
+          firstvar += b.numVars();
+          nrows += b.numVars();
+          break;
+        case MO::GRevLex:
+          // printf("grevlex %d %ld\n", p->nvars, p->wts);
+          // TODO: write the 1's here directly, as b.weights() is not set...
+          write_weights(mat, nvars, firstvar, b.weights(), b.numVars());
+          last_element = mat.size();
+          for (int j = b.numVars() - 1; j >= 1; --j)
+            {
+              write_row(mat, nvars, firstvar + j, -1);
+            }
+          last = REVLEX;
+          firstvar += b.numVars();
+          nrows += b.numVars();
+          break;
+        case MO::GRevLexWeights:
+          // printf("grevlex_wts %d %ld\n", p->nvars, p->wts);
+          write_weights(mat, nvars, firstvar, b.weights(), b.numVars());
+          last_element = mat.size();
+          for (int j = b.numVars() - 1; j >= 1; --j)
+            {
+              write_row(mat, nvars, firstvar + j, -1);
+            }
+          last = REVLEX;
+          firstvar += b.numVars();
+          nrows += b.numVars();
+          break;
+        case MO::RevLex:
+          // printf("revlex %d\n", p->nvars);
+          last_element = mat.size();
+          for (int j = b.numVars() - 1; j >= 0; --j)
+            {
+              write_row(mat, nvars, firstvar + j, -1);
+            }
+          last = REVLEX;
+          firstvar += b.numVars();
+          nrows += b.numVars();
+          break;
+        case MO::Weights:
+          // printf("matsize= %d weights %d p->wts=%lu\n", mat.size(),
+          // p->nvars, p->wts);
+          write_weights(mat, nvars, b.firstVar(), b.weights(), b.weights().size());
+          nrows++;
+          last_element = mat.size();
+          last = WEIGHTS;
+          break;
+        case MO::GroupLex:
+        case MO::GroupRevLex:
+          return false;
+        case MO::PositionUp:
+          component_direction = 1;
+          component_is_before_row = nrows;
+          break;
+        case MO::PositionDown:
+          component_direction = -1;
+          component_is_before_row = nrows;
+          break;
+        case MO::Packing:
+          // DO nothing
+          break;
+        }
+    }
+  if (last == LEX)
+    {
+      // last block was lex, so use lex tie-breaker
+      mat.resize(last_element);
+      if (nrows == component_is_before_row) component_is_before_row = -1;
+      base_is_revlex = false;
+    }
+  else if (last == REVLEX)
+    {
+      // last block was revlex, so use revlex tie-breaker
+      if (nrows == component_is_before_row) component_is_before_row = -1;
+      mat.resize(last_element);
+    }
+  else
+    {
+      // last block is a weight vector, so use revlex as the tie-breaker.
+      // nothing to change here.
+    }
+  return true;
 }
 
 //////////////////////////// Encoder code /////////////////////////////////////

@@ -103,6 +103,7 @@ namespace MO {
 
     enum order_type type() const { return mType; }
     int numVars() const { return mNumVars; }
+    int firstVar() const { return mStartVariable; }
     auto weights() const -> const std::vector<int>& { return mWeights; }
     int packing() const { return mPacking; }
     void debugDisplay(std::ostream& o) const;
@@ -158,11 +159,39 @@ public:
   bool isWellDefined(int verbose_level) const;
 
   void debugDisplay(std::ostream& o) const;
+
+  int numVars() const { return mNumVars; }
 public:
-  // informational functions
+  ////// informational functions ///////
+
+  // Is the monomial order Lex or GRevLex?
+  
+  
+  // The list of indices of variables which are < 1.
+  std::vector<int> localVariables() const;
+  std::vector<int> invertibleVariables() const;
+
+  std::vector<bool> invertibleVariablesPredicate() const; // aka laurentVariables
+  std::vector<bool> localVariablesPredicate() const; // aka non term order variables.
+
+  bool hasLocalVariables() const { return localVariables().size() > 0; }
+  bool hasInvertibleVariables() const { return invertibleVariables().size() > 0; }
 public:
-  // unencoded comparison.
+  //TODO  unencoded comparison.
   int compareExponentVectors(const ExponentVector &a, const ExponentVector* b) const;
+
+  //TODO: is an unencoded monomial in the subring where the first n parts are 0?
+
+  //TODO: to and from std::vector<int> data for mgb and the front end.
+
+  bool monomialOrderingToMatrix(
+                           std::vector<int>& mat,
+                           bool& base_is_revlex,
+                           int& component_direction,     // -1 is Down, +1 is Up, 0 is not present
+                           int& component_is_before_row  // -1 means: at the end. 0 means before the
+                           // order.
+                           // and r means considered before row 'r' of the matrix.
+                           ) const;
 };
 
 std::ostream& operator<<(std::ostream& o, const std::vector<int>& a);
@@ -181,7 +210,7 @@ private:
   /// Number of variables
   int mNumVars;
 
-  /// Size of encoded monomial
+  /// Size of encoded monomial (includes component, if present).
   int mEncodedSize;
 
   /// the component comes after the following block #.

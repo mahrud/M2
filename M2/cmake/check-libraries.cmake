@@ -41,6 +41,7 @@ endif()
 # See `cmake --help-module FindLAPACK` for the list of options
 #set(BLA_VENDOR OpenBLAS)
 
+# TODO: make sure libraries in usr-host are prioritized over those on the system
 find_package(Threads	REQUIRED QUIET)
 find_package(LAPACK	REQUIRED QUIET)
 find_package(Boost	REQUIRED QUIET COMPONENTS regex OPTIONAL_COMPONENTS stacktrace_backtrace stacktrace_addr2line)

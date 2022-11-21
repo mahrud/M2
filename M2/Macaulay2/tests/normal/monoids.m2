@@ -162,6 +162,9 @@ assert(degrees M == splice {{1, 0}, 2:{0, 1}})
 --- test passing degrees from generators of the degree group
 H = subquotient(ambient A, relations G)
 M = monoid[a,b,c, DegreeGroup => H]
+-- TODO: should we allow degrees to coefficients of the generators of H?
+-- in that case, freeComponents and torsionComponents need to be fixed, because numgens H changes
+-- M = monoid[a,b,c, DegreeGroup => H, Degrees => entries id_(ZZ^3)]
 assert(degreeGroup M == G)
 assert(degrees M == degrees S)
 

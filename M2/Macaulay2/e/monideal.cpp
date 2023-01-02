@@ -277,7 +277,8 @@ void MonomialIdeal::find_all_divisors(const_exponents exp, VECTOR(Bag *)& b) con
 
 int MonomialIdeal::search(const_varpower m, Bag *&b) const
 {
-  exponents_t exp = ARRAY_ON_STACK(int, get_ring()->n_vars());
+  // TODO: unify best practices; why alloca instead of getmem_atomic?
+  exponents_t exp = ALLOCATE_EXPONENTS(EXPONENT_BYTE_SIZE(get_ring()->n_vars()));
   varpower::to_expvector(get_ring()->n_vars(), m, exp);
   return search_expvector(exp, b);
 }

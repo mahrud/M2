@@ -122,7 +122,7 @@ TEST /// -- test of truncationPolyhedron with Exterior option
   P = truncationPolyhedron(A, {7,1}, Exterior => (options E).SkewCommutative)
   Q = truncationPolyhedron(A, {7,1})
   assert(#hilbertBasis cone P == 1321)
-  assert(#hilbertBasis cone Q == 1851)
+  assert(#hilbertBasis cone Q == 1851) -- gives 2035 for some reason
   assert(numcols truncationMonomials({7,1}, E) == 28)
 ///
 

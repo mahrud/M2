@@ -386,6 +386,7 @@ FreeModule *FreeModule::symm(int n) const
   return result;
 }
 
+// TODO: adjust this for arbitrary cone boxes
 static bool degree_in_box(int len, const_exponents deg, M2_arrayint lo, M2_arrayint hi)
 {
   if (lo->len != 0)

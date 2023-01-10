@@ -9,6 +9,8 @@
 
 #include <M2/config.h>
 
+// TODO: eventually the engine should not depend on
+// types from the interpreter, making this unnecessary.
 #if !defined(SAFEC_EXPORTS)
 #include <engine-exports.h>
 #endif

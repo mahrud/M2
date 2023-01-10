@@ -91,6 +91,7 @@ const RingElement /* or null */ *IM2_RingElement_lift(int *success_return,
 
 M2_bool IM2_RingElement_is_graded(const RingElement *a);
 
+// FIXME: why are there duplicates? which return type is correct?
 M2_arrayint IM2_RingElement_multidegree(const RingElement *a);
 
 const RingElement * /* or null */ rawRingElementAntipode(const RingElement *f);

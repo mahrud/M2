@@ -26,6 +26,7 @@ const CoefficientRingR *Ring::getCoefficientRingR() const
   return cR;
 }
 
+// TODO: get rid of this function and directly use constructors
 void Ring::initialize_ring(long P0,
                            const PolynomialRing *DR,
                            const std::vector<int> &heft_vector)

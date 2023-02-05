@@ -5,9 +5,6 @@ needs "max.m2"
 needs "methods.m2"
 needs "nets.m2"
 
-Constant = new Type of BasicList
-globalAssignment Constant
-
 precedence = method(Dispatch => Thing)
 rightPrecedence = method(Dispatch => Thing)
 lprec = prec = x -> (getParsing x)#0

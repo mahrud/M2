@@ -1,7 +1,8 @@
  --		Copyright 1993-2002 by Daniel R. Grayson
 
 needs "monoids.m2"  -- for degreesMonoid
-needs "reals.m2" -- for inexact number
+needs "polyrings.m2" -- for degreesRing
+needs "reals.m2" -- for InexactNumber
 
 -----------------------------------------------------------------------------
 -- Matrix

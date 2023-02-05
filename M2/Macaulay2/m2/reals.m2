@@ -1,6 +1,8 @@
 --		Copyright 1993-2008 by Daniel R. Grayson
 
 needs "enginering.m2"
+needs "max.m2" -- for Constant
+needs "shared.m2" -- for truncate
 
 -- ImmutableType
 

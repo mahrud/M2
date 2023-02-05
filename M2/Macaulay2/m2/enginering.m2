@@ -4,6 +4,7 @@
 needs "expressions.m2"
 needs "remember.m2"
 needs "rings.m2"
+needs "integers.m2" -- for abs
 
 RingElement.synonym = "ring element"
 value RingElement := identity

@@ -1,5 +1,6 @@
 --		Copyright 1993-1999 by Daniel R. Grayson
 
+needs "max.m2" -- for Constant
 needs "methods.m2"
 
 -----------------------------------------------------------------------------

@@ -6,6 +6,7 @@ needs "indeterminates.m2"
 needs "methods.m2"
 needs "shared.m2" -- for tensor
 needs "variables.m2"
+needs "remember.m2" -- for memoize
 
 -- TODO:
 -- 1. implement a free monoid M whose degrees have torsion [done]

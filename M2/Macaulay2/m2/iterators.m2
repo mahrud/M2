@@ -1,3 +1,5 @@
+needs "methods.m2"
+
 -- originally defined (as null) in evaluate.d
 iterator = method(Dispatch => Thing)
 next = method()

@@ -1,5 +1,7 @@
 --		Copyright 1993-1999 by Daniel R. Grayson
 
+needs "max.m2" -- for Constant, InfiniteNumber
+needs "methods.m2"
 
 simpson := (f,a,b,k) -> (
      count := 0;

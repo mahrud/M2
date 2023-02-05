@@ -3,6 +3,9 @@
 needs "fold.m2"
 needs "methods.m2"
 
+Constant = new Type of BasicList
+globalAssignment Constant
+
 InfiniteNumber = new Type of BasicList
 InfiniteNumber.synonym = "infinite number"
 infinity = new InfiniteNumber from {1}

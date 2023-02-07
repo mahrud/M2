@@ -373,7 +373,7 @@ degreesMonoid List := memoize lookup(degreesMonoid, List)
 -- findHeft
 -----------------------------------------------------------------------------
 
-checkHeft = (degs, heftvec) -> all(degs, d -> sum apply(d, heftvec, times) > 0)
+checkHeft = (degs, heftvec) -> all(degs, d -> sum(d, heftvec, times) > 0)
 -- vector that zeros the torsion part of the degrees
 -- TODO: what should happen when there are zero-divisors that are not torsion?
 -- compare with freeComponents and torsionComponents in basis.m2
@@ -401,10 +401,7 @@ findHeft List := opts -> degs -> (
     -- TODO: should this heuristic look at other degree components also?
      if all(degs,d->d#0 > 0) then return splice {  1, degrk-1:0 };
      if all(degs,d->d#0 < 0) then return splice { -1, degrk-1:0 };
-    B := map(ZZ, rawFourierMotzkin raw matrix degs);
-    f := matrix {toList(rank target B : -1)} * B;
-    if f == 0 then return;
-    heftvec := first entries f;
+    heftvec := - sum entries map(ZZ, rawFourierMotzkin raw matrix degs);
     if (g := gcd heftvec) > 1   then heftvec = apply(heftvec, h -> h // g);
     if checkHeft(degs, heftvec) then heftvec)
 

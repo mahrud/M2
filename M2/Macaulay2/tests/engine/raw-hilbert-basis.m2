@@ -24,6 +24,8 @@ m = matrix {
     {1, 0, 0, 0, 0, 0, 0, 15}};
 assert(rank target rawHilbertBasis raw m == 143)
 
+assert(map(ZZ, rawFourierMotzkin raw matrix {{1, 0}, {1, 0}, {-2, 1}, {0, 1}}) == matrix {{-1, -2}, {0, -1}})
+
 end--
 
 restart

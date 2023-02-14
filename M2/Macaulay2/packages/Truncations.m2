@@ -126,17 +126,11 @@ truncationPolyhedron(Matrix, Matrix) := Polyhedron => opts -> (A, b) -> (
         hdataLHS = hdataLHS || (I ^ (opts.Exterior));
         hdataRHS = hdataRHS || matrix toList(#opts.Exterior : {1_QQ});
         );
-    return if opts#Cone === null or rays opts#Cone == id_(target A)
+    if opts#Cone === null or rays opts#Cone == id_(target A)
     -- this is correct when the Nef cone equals the positive quadrant
     then polyhedronFromHData(hdataLHS, hdataRHS)
     -- otherwise, compute the preimage of the Nef cone
-    else affinePreimage(-hdataLHS, opts#Cone * convexHull(z, I), hdataRHS);
-    --
-    -- this is correct when the Nef cone equals the positive quadrant
-    P := polyhedronFromHData(hdataLHS, hdataRHS);
-    if opts#Cone === null or rays opts#Cone == id_(target A) then return P;
-    -- otherwise, intersect with the preimage of the Nef cone
-    intersection(P, affinePreimage(A, opts#Cone, -b)))
+    else affinePreimage(-hdataLHS, opts#Cone * convexHull(z, I), hdataRHS))
 
 -- Assume the same conditions as above,
 -- then basisPolyhedron returns a polyhedron in the lattice of
@@ -175,6 +169,7 @@ truncationMonomials(List, Module) := opts -> (degs, F) -> (
     -- TODO: call findMins on degs, but with respect to the Nef cone!
     -- checks to see if twist S(-a) needs to be truncated
     isInNef := if nef === null then a -> any(degs, d -> d_free << a) else (
+	-- FIXME
         truncationCone := nef + convexHull((matrix transpose degs)^free);
 	a -> contains(truncationCone, convexHull matrix transpose{a}));
     -- TODO: either figure out a way to use cached results or do this in parallel
@@ -184,9 +179,9 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
     -- inputs: a single multidegree, a graded ring
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
-    if  R#?(symbol truncate, d)
-    then R#(symbol truncate, d)
-    else R#(symbol truncate, d) = (
+    if  R#?(symbol truncate, d, rays opts#Cone)
+    then R#(symbol truncate, d, rays opts#Cone)
+    else R#(symbol truncate, d, rays opts#Cone) = (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;
@@ -318,11 +313,12 @@ basisMonomials(List, Ring) := opts -> (d, R) -> (
     partialdegs := opts#"partial degrees";
     if  R#?(symbol basis', d) and partialdegs === null
     then R#(symbol basis', d)
-    else if R#?(symbol truncate, d) and partialdegs === null
+    -- TODO: we should accept _any_ cached truncation as a hint
+    else if R#?(symbol truncate, d, null) and partialdegs === null
     then R#(symbol basis', d) = (
         -- opportunistically use cached truncation results
         -- TODO: is this always correct? with negative degrees?
-        truncgens := R#(symbol truncate, d);
+        truncgens := R#(symbol truncate, d, null);
         -- psrc := rawSelectByDegrees(raw source truncgens, d, d); -- FIXME bugging out
         psrc := positions(degrees source truncgens, deg -> deg == d);
         submatrix(truncgens, , psrc))

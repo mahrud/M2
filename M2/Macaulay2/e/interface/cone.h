@@ -48,7 +48,7 @@ extern "C" {
  *
  * \ingroup cones
  */
-const Matrix /* or null */ *rawFourierMotzkin(const Matrix *C);
+const Matrix /* or null */ *rawFourierMotzkin(const Matrix *A, const Matrix *B);
 
 /** \brief Hilbert basis of a polyhedral cone given by its rays, via
 libnormaliz.

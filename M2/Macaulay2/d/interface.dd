@@ -3863,19 +3863,14 @@ setupfun("rawNCReductionTwoSided",rawNCReductionTwoSided);
 -----------------------------------------------------------------------------
 
 export rawFourierMotzkin(e:Expr):Expr := (
-     when e is G:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawFourierMotzkin(", G.p, ")"))
-     else WrongArgMatrix());
-setupfun("rawFourierMotzkin", rawFourierMotzkin);
-
-export rawFourierMotzkinEqs(e:Expr):Expr := (
     when e is s:Sequence do
     if length(s) != 2 then WrongNumArgs(2) else
     when s.0 is A:RawMatrixCell do
-    when s.1 is B:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawFourierMotzkinEqs(", A.p, ", ", B.p, ")"))
+    when s.1 is B:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawFourierMotzkin(", A.p, ", ", B.p, ")"))
     else WrongArgMatrix()
     else WrongArgMatrix()
     else WrongNumArgs(2));
-setupfun("rawFourierMotzkinEqs", rawFourierMotzkinEqs);
+setupfun("rawFourierMotzkin", rawFourierMotzkin);
 
 export rawHilbertBasis(e:Expr):Expr := (
      when e is G:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawHilbertBasis(", G.p, ")"))

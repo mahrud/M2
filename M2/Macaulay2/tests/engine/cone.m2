@@ -1,6 +1,7 @@
 debug Core
 
 (A, B) = (map(ZZ^4, ZZ^2, {{1, 0}, {-3, 1}, {1, 0}, {0, 1}}), map(ZZ^4, ZZ^0, 0))
+o = transpose map(ZZ, rawFourierMotzkin(raw transpose A, raw transpose B))
 
 (A, B) = (map(ZZ^3, ZZ^4, 0) || id_(ZZ^4), map(ZZ^7, ZZ^0, 0))
 o = transpose map(ZZ, rawFourierMotzkin(raw transpose A, raw transpose B))

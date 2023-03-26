@@ -401,7 +401,11 @@ findHeft List := opts -> degs -> (
     -- TODO: should this heuristic look at other degree components also?
      if all(degs,d->d#0 > 0) then return splice {  1, degrk-1:0 };
      if all(degs,d->d#0 < 0) then return splice { -1, degrk-1:0 };
-    heftvec := - sum entries map(ZZ, rawFourierMotzkin(raw matrix degs, raw map(ZZ^0, ZZ^(#degs), 0)));
+    -- TODO: should FourierMotzkin become preloaded?
+    fm := symbolFrom_"FourierMotzkin" "fourierMotzkin";
+    heftvec := - sum entries transpose first fm transpose matrix degs;
+    -- TODO: switch back once the last column hack is fixed
+    --heftvec := - sum entries map(ZZ, rawFourierMotzkin(raw matrix degs, raw map(ZZ^0, ZZ^degrk, 0)));
     if (g := gcd heftvec) > 1   then heftvec = apply(heftvec, h -> h // g);
     if checkHeft(degs, heftvec) then heftvec)
 

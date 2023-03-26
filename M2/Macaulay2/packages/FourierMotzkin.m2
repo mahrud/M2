@@ -29,7 +29,7 @@ newPackage(
 
 export "fourierMotzkin"
 
-importFrom_Core { "raw", "rawFourierMotzkinEqs" }
+importFrom_Core { "raw", "rawFourierMotzkin" }
 
 -- Transposition along the antidiagonal; used to compute row-reduced 
 -- echelon form of a matrix
@@ -175,7 +175,7 @@ fourierMotzkin (Matrix, Matrix) := Sequence => (Z, H) -> (
      else error ("expected a matrix over 'ZZ' or 'QQ'");
      -- TODO: add as a strategy?
      if debugLevel > 1 then printerr "calling rawFourierMotzkinEqs";
-     ret := transpose map(ZZ, rawFourierMotzkinEqs(raw transpose Z, raw transpose H));
+     ret := transpose map(ZZ, rawFourierMotzkin(raw transpose Z, raw transpose H));
      m := ret_(0, numcols ret-1); -- FIXME: this is a hack to return two matrices at once
      A := ret_{0..m-1};
      E := ret_{m..numcols ret-2};

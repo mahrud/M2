@@ -173,12 +173,12 @@ fourierMotzkin (Matrix, Matrix) := Sequence => (Z, H) -> (
 	  Y = Z;
 	  B = H)
      else error ("expected a matrix over 'ZZ' or 'QQ'");
-     -- TODO: add as a strategy?
-     if debugLevel > 1 then printerr "calling rawFourierMotzkinEqs";
-     ret := transpose map(ZZ, rawFourierMotzkin(raw transpose Z, raw transpose H));
-     m := ret_(0, numcols ret-1); -- FIXME: this is a hack to return two matrices at once
-     A := ret_{0..m-1};
-     E := ret_{m..numcols ret-2};
+     (A, E) := if Z == 0 and H == 0 then (map(target Z, ZZ^0, 0), id_(target Z)) else (
+	-- TODO: add as a strategy?
+	if debugLevel > 1 then printerr "Calling rawFourierMotzkin";
+	ret := transpose map(ZZ, rawFourierMotzkin(raw transpose Z, raw transpose H));
+	m := ret_(0, numcols ret-1); -- FIXME: this is a hack to return two matrices at once
+	(ret_{0..m-1}, ret_{m..numcols ret-2}));
      -*
      -- expressing 'cone(Y) + affine(B)' in the form {x : Ax <= 0}
      d := rank target Y;

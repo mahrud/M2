@@ -234,7 +234,7 @@ kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (f -> (
     (F, R) := (target f, source f);
     if 0_F == 1_F then return ideal 1_R;
     -- the actual computation occurs here
-    I := runHooks((kernel, RingMap), (opts, f));
+    I := runHooks((kernel, RingMap), (opts, f), Strategy => opts.Strategy);
     if I =!= null then I else error "kernel: no method implemented for this type of ring map"))
 
 -- This is a map from method keys to strategy hash tables
@@ -301,7 +301,7 @@ algorithms#(kernel, RingMap) = new MutableHashTable from {
 					h
 				),
 				Strategy => LongPolynomial,
-				opts
+				SubringLimit => opts.SubringLimit
 			)
 		)
 	),
@@ -330,13 +330,14 @@ algorithms#(kernel, RingMap) = new MutableHashTable from {
 		);
 		n1 := numgens F;
 		mapback := map(R, ring graph, map(R^1, R^n1, 0) | vars R);
-		G := gb(graph,opts);
+		G := gb(graph, SubringLimit => opts.SubringLimit);
 		assert (not chh or G#?"rawGBSetHilbertFunction log"); -- ensure the Hilbert function hint was actually used in gb.m2
 		ideal mapback selectInSubring(1,generators G)
 	),
 
     ZZ => (opts, f) -> if source f === ZZ then ideal char target f,
 
+    -- TODO: should this part move to the main function?
     Default => (opts, f) -> (
 		(F, R) := (target f, source f);
 		numsame := 0;
@@ -354,7 +355,7 @@ algorithms#(kernel, RingMap) = new MutableHashTable from {
 		(R',p) := flattenRing(R, CoefficientRing => k);
 		(F',r) := flattenRing(F, CoefficientRing => k);
 		if R' === R and F' === F then return null;
-		p^-1 kernel (r * f * p^-1)
+		p^-1 kernel (r * f * p^-1, SubringLimit => opts.SubringLimit)
 	),
 }
 

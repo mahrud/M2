@@ -195,10 +195,10 @@ expression ToricDivisor := Expression => D -> (
     if S === {} then return expression 0;
     Sum apply(S, j -> (
 	    coeff := expression abs(D#j);
-	    if D#j === -1 then Minus Subscript{divisorSymbol, j}
-	    else if D#j < 0 then Minus {coeff * Subscript{divisorSymbol, j}}
-	    else if D#j === 1 then Subscript{divisorSymbol, j}
-	    else coeff * Subscript{divisorSymbol, j} 
+	    if D#j == -1 then Minus Subscript{divisorSymbol, j}
+	    else if D#j < 0 then Minus {coeff Subscript{divisorSymbol, j}}
+	    else if D#j == 1 then Subscript{divisorSymbol, j}
+	    else coeff Subscript{divisorSymbol, j} 
 	    )
 	)
     );  
@@ -218,7 +218,7 @@ entries ToricDivisor := List => D -> apply (# rays variety D, i -> D#i)
 vector ToricDivisor := Vector => D -> vector entries D
 support ToricDivisor := List => D -> (
     n := # rays variety D;
-    select ( toList (0..n-1), i -> D#i =!= 0)
+    select ( toList (0..n-1), i -> D#i != 0)
     );
 degree ToricDivisor := D -> entries ( (fromWDivToCl variety D) * (vector D));
 
@@ -232,7 +232,7 @@ monomials ToricDivisor := List => opts -> D -> (
     coeff := matrix vector D;
     points := if isEmpty P then {} else latticePoints P;
     sort for v in points list (
-	e := flatten entries (degs * v + coeff);
+	e := flatten entries sub(degs * v + coeff, ZZ);
 	S_e
 	)
     );
@@ -368,8 +368,7 @@ ToricDivisor == ToricDivisor := Boolean => (D, E) ->
 ToricDivisor == ZZ := Boolean => (D, m) -> (
     if m =!= 0 then 
 	error "attempted to compare a divisor with a nonzero integer";
-    all(entries D, e -> e === 0)
-    );
+    all(entries D, zero))
 ZZ == ToricDivisor := Boolean => (m, D) -> D == m   
 
 ToricDivisor + ToricDivisor := ToricDivisor => (D,E) -> (
@@ -428,8 +427,8 @@ isQQCartier ToricDivisor := Boolean => D -> (
 cartierCoefficients = method ()
 cartierCoefficients ToricDivisor := List => D -> (
     X := variety D;
-    rayMatrix := matrix rays X;
-    coeffs := transpose (matrix {entries D});
+    coeffs := transpose matrix {entries D};
+    rayMatrix := (matrix rays X) ** ring coeffs;
     apply (max X, sigma -> coeffs^sigma // rayMatrix^sigma)
     );
 
@@ -516,10 +515,10 @@ vertices ToricDivisor := Matrix => D -> (
     if not isCartier D then 
 	error "-- expected a Cartier divisor";
     X := variety D;
+    d := dim X;
     if not isComplete X then 
     	error "-- expected a divisor on a complete toric variety";
-    if not isEffective D then return null;
-    d := dim X;
+    if not isEffective D then return map(ZZ^d, ZZ^0, 0);
     V := transpose (matrix vector D | matrix rays variety D);
     V = V | transpose matrix {{1} | toList(d:0)};
     -( (fourierMotzkin V)#0)^{1..d} 
@@ -527,7 +526,7 @@ vertices ToricDivisor := Matrix => D -> (
 
 latticePoints ToricDivisor := Matrix => D -> (
     V := vertices D;
-    if V === null then return null;
+    if numcols V <= 1 then return V;
     c := matrix(vector \ latticePoints convexHull V);
     c_(sortColumns c) 
     );

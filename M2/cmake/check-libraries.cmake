@@ -348,6 +348,7 @@ if(FACTORY_FOUND)
   set(CMAKE_REQUIRED_INCLUDES "${FACTORY_INCLUDE_DIR}")
   # whether factory was built with --enable-streamio
   check_cxx_source_compiles([[#include <factory/factory.h>
+    #include <iostream>
     int main(){Variable x; x = Variable(); std::cout << x;return 0;}]] FACTORY_STREAMIO)
 else()
   unset(FACTORY_STREAMIO CACHE)

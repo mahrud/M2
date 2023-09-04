@@ -12,6 +12,36 @@ TEST(MonomialOrder, createFromArray)
     {MO::GRevLexWeights, {1, 1, 1, 1, 2}},
     {MO::PositionUp, {}}
   };
+
+  /*
+  //day 1: std::vector array1 coming from the top level;
+  //day 2: MonomialOrder {BLOCK{...}, BLOCK{...}, ..., list of beginning points, is it local order?, etc.};
+  //day 3: M->to_monomial(MO, exp, mon);
+
+  // hpp
+  template <MO::order_type mo>
+    int encode(m, int* vec, int* iter, ...);
+
+  // cpp
+  encoder(exp, monorder)
+    {
+      exp;
+      int *iter = monomial;
+      for (auto& mo : array1 + ...)
+	{
+	  // e.g. mo = {MO::Weights, {0, 1, 2, 3, 4}}
+	  switch mo.type:
+	  ... 
+	  //iter += encode<mo.type>(&exp, mo.content, iter)
+	}
+    }
+
+  inline int encode_Lex(exp, int* vec, int* iter, ...)
+  {
+    e++...
+  }
+  */
+
   NewAgeMonomialOrder mo1 {12, array1};
   auto array2 = mo1.toMonomialType();
   EXPECT_EQ(array1, array2);

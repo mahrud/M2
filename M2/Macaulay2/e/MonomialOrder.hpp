@@ -40,36 +40,39 @@ using EncodedMonomial = int*;
 /// MO = monomial order types, internal functions and types for monomial orders */
 namespace MO {
   enum order_type {
-    Packing, /**< # exponents per (currently 32 bit) word.  Only affects Lex, GRevLex, GRevLexWeights
-                     (but not the weight part).  Does not affect the monomial order. */
-    Lex, /**< lexicographic order on a specified number of variables */
+    Packing, /**< # exponents per (currently 32 bit) word.  Only affects Lex,
+                GRevLex, GRevLexWeights (but not the weight part).  Does not
+                affect the monomial order. */
+    Lex,     /**< lexicographic order on a specified number of variables */
     GRevLex, /**< graded reverse lexicographic order
                            on a specified number of variables,
                            with weights 1 for each variable */
     GRevLexWeights, /**< graded reverse lexicographic order
-                       with specified positive weights, on a number of variables */
-    RevLex, /**< reverse lexicographic order
-                           on a specified number of variables.
-                           Not a global order! */
+                       with specified positive weights, on a number of variables
+                     */
+    RevLex,         /**< reverse lexicographic order
+                                   on a specified number of variables.
+                                   Not a global order! */
     Weights,
-    GroupLex, // previously MO_LAURENT
-    GroupRevLex, // previously MO_LAURENT_REVLEX
+    GroupLex,     // previously MO_LAURENT
+    GroupRevLex,  // previously MO_LAURENT_REVLEX
     PositionUp,
-    PositionDown
+    PositionDown,
   };
-  //Previous names and values  
-  // MO_LEX = 1, 
-  // MO_GREVLEX = 4,
-  // MO_GREVLEX_WTS = 7,
-  // MO_REVLEX = 10,
-  // MO_WEIGHTS = 11,
-  // MO_LAURENT = 12,        /* Lex order here */
-  // MO_LAURENT_REVLEX = 13, /* Rev lex order here */
-  // MO_POSITION_UP = 15,
-  // MO_POSITION_DOWN = 16
+  // Previous names and values
+  //  MO_LEX = 1,
+  //  MO_GREVLEX = 4,
+  //  MO_GREVLEX_WTS = 7,
+  //  MO_REVLEX = 10,
+  //  MO_WEIGHTS = 11,
+  //  MO_LAURENT = 12,        /* Lex order here */
+  //  MO_LAURENT_REVLEX = 13, /* Rev lex order here */
+  //  MO_POSITION_UP = 15,
+  //  MO_POSITION_DOWN = 16
 
   std::string toString(MO::order_type t);
 
+  // Information about a piece of the monomial order
   class MonomialBlock
   {
   private:
@@ -92,7 +95,10 @@ namespace MO {
 
     /// index of the first variable for this block
     int mStartVariable;
-    std::vector<int> mWeights; // Only used for MO::Weights, MO::GRevLex
+
+    // Only used for MO::Weights, MO::GRevLex
+    std::vector<int> mWeights;
+
   public:
     /** constructor */
     MonomialBlock(enum order_type t,
@@ -110,6 +116,7 @@ namespace MO {
     std::pair<enum MO::order_type, std::vector<int>> toMonomialType() const;
   };
 
+  // Information for encoding and decoding monomials
   class EncodingBlock
   {
   private:
@@ -205,7 +212,7 @@ std::ostream& operator<<(std::ostream& o, const NewAgeMonomialOrder::MOInput& a)
 class MonomialEncoder
 {
 private:
-  std::vector<MO::EncodingBlock> mParts; 
+  std::vector<MO::EncodingBlock> mParts;
 
   /// Number of variables
   int mNumVars;

@@ -316,11 +316,11 @@ toMap (Ideal,ZZ,ZZ) := o -> (I,v,jj) -> (
    K := coefficientRing ring I; 
    d := numgens ring I -1;
    x := local x;
-   PP := K[x_0..x_d];
-   C := homComp(v-jj+1,sub(I,vars PP));
+   PPd := K[x_0..x_d];
+   C := homComp(v-jj+1,sub(I,vars PPd));
    n := numgens C -1;
    if n == -1 then return toMap(sub(matrix{{}},ring I),Dominant=>o.Dominant);
-   bs := gens homComp(v,sub(I,vars PP));
+   bs := gens homComp(v,sub(I,vars PPd));
    N := numgens source bs -1;
    if N == -1 then return toMap(sub(matrix{{}},ring I),Dominant=>o.Dominant);
    a := local a; b := local b;
@@ -332,8 +332,8 @@ toMap (Ideal,ZZ,ZZ) := o -> (I,v,jj) -> (
    sols := sub(ideal selectInSubring(1,gens gb sys),K[a_0..a_N]);
    f := map parametrize sols;
    if dim target f <= 0 then return toMap(sub(matrix{{}},ring I),Dominant=>o.Dominant);
-   PP' := PP[gens target f];
-   linSys := transpose sub(sub((coefficients (sub(matrix f,PP') * transpose sub(bs,PP'))_(0,0))_1,PP),vars ring I);
+   PPd' := PPd[gens target f];
+   linSys := transpose sub(sub((coefficients (sub(matrix f,PPd') * transpose sub(bs,PPd'))_(0,0))_1,PPd),vars ring I);
    toMap(linSys,Dominant=>o.Dominant)
 );
 
@@ -1947,8 +1947,8 @@ rationalMap (AbstractRationalMap) := o -> (Phi) -> (
    a := local a;
    R := K[flatten for i to m list toList(a_(i,0)..a_(i,binomial(n+d,d)-1))];
    x := local x;
-   PP := R[x_0..x_n];
-   F := matrix{for i to m list (matrix{toList(a_(i,0)..a_(i,binomial(n+d,d)-1))} * transpose gens (ideal vars PP)^d)_(0,0)};
+   PPn := R[x_0..x_n];
+   F := matrix{for i to m list (matrix{toList(a_(i,0)..a_(i,binomial(n+d,d)-1))} * transpose gens (ideal vars PPn)^d)_(0,0)};
    M := apply(N,i -> sub(F,apply(n+1,j -> x_j => B_(i,j))) || submatrix(V,{i},));
    eqs := sum(M,m -> trim minors(2,m));
    if Phi#"verbose" then <<"-- obtained "<<numgens eqs<<" linear equations with "<<toString((m+1) * binomial(n+d,d))<<" unknowns over "<<toString(K)<<endl;
@@ -1961,8 +1961,8 @@ rationalMap (AbstractRationalMap) := o -> (Phi) -> (
    if #S == 0 then error "something went wrong while calculating forms";
    S0 := first S;
    g := gens R;
-   PP = K[x_0..x_n];
-   G := sub(sub(sub(F,apply(#g,i -> g_i => S0_i)),PP),vars Pn);
+   PPn = K[x_0..x_n];
+   G := sub(sub(sub(F,apply(#g,i -> g_i => S0_i)),PPn),vars Pn);
    phi := rationalMap(Pn,Pm,G);
    if #S > 1 then maps phi;
    Phi#"degForms" = max flatten degrees ideal compress matrix phi;

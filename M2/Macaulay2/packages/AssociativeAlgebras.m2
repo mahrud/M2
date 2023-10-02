@@ -1782,8 +1782,8 @@ all(15, i -> #(flatten entries ncBasis(i, S)) == binomial(i + 3,3))
 LL = lineSchemeFourDim(S,M)
 primaryDecomposition radical LL
 netList oo
-PP = pointScheme(S,y)
-primaryDecomposition radical PP
+P = pointScheme(S,y)
+primaryDecomposition radical P
 netList oo
 
 restart
@@ -1792,12 +1792,12 @@ R = ZZ/32003 <|x_4,x_1,x_2,x_3|>
 I = ideal {x_3^2 - x_1*x_2, x_4^2 - x_2*x_1, x_1*x_3 - x_2*x_4,
            x_3*x_1 - x_2*x_3, x_1*x_4 - x_4*x_2, x_4*x_1 - x_3*x_2}
 S = R/I
-PP = pointScheme(S,y)
-netList minimalPrimes PP
+P = pointScheme(S,y)
+netList minimalPrimes P
 
-PPR = ring Mleft
-MleftSpecial = sub(Mleft, {PPR_0 => 1, PPR_1 => 2, PPR_2 => 0, PPR_3 => 0})
-MrightSpecial = sub(Mright, {PPR_0 => 1, PPR_1 => 2, PPR_2 => -1, PPR_3 => -2})
+PR = ring Mleft
+MleftSpecial = sub(Mleft, {PR_0 => 1, PR_1 => 2, PR_2 => 0, PR_3 => 0})
+MrightSpecial = sub(Mright, {PR_0 => 1, PR_1 => 2, PR_2 => -1, PR_3 => -2})
 C = first minimalPrimes minors(4,Mleft)
 Mleft % C
 ker (Mleft % C)
@@ -1824,9 +1824,9 @@ netList minimalPrimes P
 minimalPrimes ideal singularLocus P
 
 R = QQ[zz,a_1,a_2,a_3]
-PP = sub(P,R) + ideal {zz^2 + zz + 1}
-minPP = minimalPrimes PP
-minPP / degree
+P = sub(P,R) + ideal {zz^2 + zz + 1}
+minP = minimalPrimes P
+minP / degree
 
 x = baseName x
 R = ZZ/32003 <|x_4,x_1,x_2,x_3|>

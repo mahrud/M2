@@ -3760,8 +3760,8 @@ viewHelp "NoetherianOperators"
 -- We compute the ideal as explained in the introduction.
 U= QQ[x_1,x_2,x_3,x_4,u_1,u_2,u_3,u_4,y_1,y_2];
 A = matrix {{u_3,u_1,u_2},{u_1,u_2,u_4}};
-PP = minors(2,A);
-JJ=ideal{PP,x_1-u_1-y_1,x_2-u_2-y_2,x_3-u_3,x_4-u_4,y_1^3,y_2+x_2*y_1^2};
+P = minors(2,A);
+JJ=ideal{P,x_1-u_1-y_1,x_2-u_2-y_2,x_3-u_3,x_4-u_4,y_1^3,y_2+x_2*y_1^2};
 J=ideal{eliminate(JJ,{u_1,u_2,u_3,u_4,y_1,y_2})};
 R=QQ[x_1,x_2,x_3,x_4];
 F=map(R,U);

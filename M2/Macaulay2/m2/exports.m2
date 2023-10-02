@@ -312,6 +312,7 @@ export {
 	"Order",
 	"OrderedMonoid",
 	"Outputs",
+	"PP",
 	"POSIX",
 	"Package",
 	"PackageDictionary",

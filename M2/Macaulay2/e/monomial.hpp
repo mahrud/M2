@@ -35,6 +35,7 @@ class EngineMonomial : public EngineObject
   // [2n+1, v1, e1, v2, e2, ..., vn, en]
   // with each ei != 0.
 
+  // TODO: change to const_varpower?
   int * ints() { return val.data(); }
   const int * ints() const { return val.data(); }
 

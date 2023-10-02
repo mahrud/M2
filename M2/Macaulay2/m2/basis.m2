@@ -23,6 +23,9 @@ algorithms := new MutableHashTable from {}
 
 inf := t -> if t === infinity then -1 else t
 
+-- TODO: expand to multigraded case using isPointed Eff
+isPositivelyGraded = S -> degreeLength S == 1 and all(S.numallvars, i -> {0} < degree S_i)
+
 -----------------------------------------------------------------------------
 -- helpers for basis
 -----------------------------------------------------------------------------
@@ -244,9 +247,21 @@ basisHelper = (opts, lo, hi, M) -> (
     if not all(lo, i -> instance(i, ZZ)) then error("expected a list of integers: ", toString lo);
     if not all(hi, i -> instance(i, ZZ)) then error("expected a list of integers: ", toString hi);
 
-    -- e.g., basis(4, 2, QQ[x])
-    if #hi == 1 and #lo == 1 and hi - lo < {0}
+    -- e.g., basis(4, 2, QQ[x]) or basis(2, QQ[x, Degrees => 4])
+    -- TODO: make this a hook and generalize to higher degree groups
+    if isPositivelyGraded R and #hi == 1 and #lo == 1
+    and (hi - lo < {0} or all(degrees M, deg -> hi < deg)) -- TODO: really hi is not contained in deg + eff
     then return if S === R then map(M, S^0, {}) else map(M, S^0, phi, {});
+
+    -- trivial strategy when basis is simply a subset of generators
+    -- TODO: it's possible that this will need trimming
+    -- TODO: make this a hook and simplify this mess
+    if isPositivelyGraded R and #hi == 1 and lo == hi
+    and opts.Variables === null and all(degrees M, deg -> lo <= deg) -- TODO: really deg is contained in lo + eff
+    then return liftBasis(M, phi,
+	raw map(M, , submatrixByDegrees(generators M, (,), (lo, hi))), opts.Degree);
+    -- TODO: the multigraded version is slower, but works as follows:
+    -- lo <= coneMin(coneFromVData effGenerators ring M, degrees M)
 
     opts = opts ++ {
         Limit      => if opts.Limit == -1 then infinity else opts.Limit

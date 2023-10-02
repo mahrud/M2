@@ -348,6 +348,10 @@ basis'(List, Module) := Matrix => opts -> (degs, M) -> (
     then map(M, , basisMonomials(degs, M))
     else map(M, , basis'(degs, target presentation M, opts)))
 
+-- TODO: add this strategy:
+--    if deg === coneMin(coneFromVData effGenerators ring M, degrees M)
+--    then map(M, , submatrixByDegrees(gens M, (, {deg})))
+
 --------------------------------------------------------------------
 ----- Tests section
 --------------------------------------------------------------------

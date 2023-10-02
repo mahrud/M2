@@ -202,6 +202,26 @@ degreeLength tensor(A, M, Degrees => {{1,0},{0,1}}) == 2
 degreeLength tensor(A, M, DegreeRank => 3) == 3
 degreeLength tensor(A, M, DegreeGroup => coker matrix {{0}, {2}, {3}}) == 3
 
+--
+S=(ZZ/2)[x_0,x_1,x_2,y_0,y_1,y_2,Degrees=>{{1,0},{1,0},{1,0},{0,1},{0,1},{0,1}}]
+S0=(ZZ/2)[x_0,x_1,x_2]**(ZZ/2)[y_0,y_1,y_2];
+
+tensor(S0, S0, Join => false)
+tensor(S0, S0, Join => true)
+
+tensor(kk[x,y,DegreeRank => 2], kk[x,y,DegreeRank => 1], Join => false)
+tensor(kk[x,y,DegreeRank => 1], kk[x,y,DegreeRank => 2], Join => false)
+
+S = QQ[x,y]
+degrees(A = S[a1,a2])
+degrees(B = S[b1,b2, Join => false])
+
+degrees(A ** B)
+degrees(B ** A)
+
+degrees(A[b1,b2])
+degrees(B[a1,a2])
+
 -- test newRing
 G = coker matrix{{3}, {0}}
 R = QQ[x,y,z, Degrees => {{1,1}, {-1,1}, {0,1}}]

@@ -184,7 +184,7 @@ Ring Monoid := PolynomialRing => (R, M) -> (
 	else (
 	    dm := F.Options.DegreeMap;
 	    nd := F.Options.DegreeRank;
-	    degs -> apply(degs, deg -> degreePad(nd, dm deg))));
+	    degs -> apply(degs, degreePad(nd, dm))));
     RM.liftDegree = (
 	if F.Options.DegreeLift === null
 	then makepromoter degreeLength R -- lifing the zero degree map

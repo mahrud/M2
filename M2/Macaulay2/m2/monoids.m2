@@ -652,11 +652,11 @@ trimMO := o -> (
      numseen := 0;
      select(o, x -> not instance(x,Option) or x#0 =!= Position or 1 == (numseen = numseen + 1)))
 
-degreePad = (n,x) -> (
-     if instance(x,ZZ) then x = {x};
-     if not instance(x,List) or not all(x,i -> instance(i,ZZ)) then error "expected degree map to return a list of integers";
-     if #x > n then error("with Join => false, expected degree map to return a list of length at most ",toString n);
-     join(toList(n-#x:0),x));
+degreePad = (degrk, degreeMap) -> deg -> (
+    if instance(deg = degreeMap deg, ZZ) then deg = {deg} else
+    if not isListOfIntegers deg then error "expected degree map to return a list of integers";
+    if #deg > degrk then error("with Join => false, expected degree map to return a list of length at most ", toString degrk);
+    join(toList(degrk - #deg : 0), deg))
 
 degreeNoLift = () -> error "degree not liftable"
 
@@ -690,20 +690,21 @@ tensor(Monoid, Monoid) := Monoid => monoidTensorDefaults >> opts0 -> (M, N) -> (
      if opts.Degrees === null and opts.DegreeRank === null then (
 	  M0 := apply(Mopts.DegreeRank, i -> 0);
 	  N0 := apply(Nopts.DegreeRank, i -> 0);
+	  -- combine the degree lengths
 	  if opts.Join === null or opts.Join === true then (
 	       opts.DegreeRank = Mopts.DegreeRank + Nopts.DegreeRank;
 	       opts.Degrees = join( apply(Mopts.Degrees, d -> join(d,N0)), apply(Nopts.Degrees, e -> join(M0,e)) );
 	       if opts.Heft === null and Nopts.Heft =!= null and Mopts.Heft =!= null then opts.Heft = join(Mopts.Heft,Nopts.Heft);
 	       opts.DegreeMap = d -> join(M0,d);
-	       opts.DegreeLift = d -> (
-		    for i to #M0-1 do if d#i =!= 0 then degreeNoLift();
-		    drop(d,#M0));
+	       opts.DegreeLift = d -> if all(#M0, i -> zero d#i) then drop(d,#M0) else degreeNoLift();
 	       )
+	  -- FIXME: https://github.com/Macaulay2/M2/issues/2905
 	  else if opts.Join === false then (
-	       opts.DegreeRank = Mopts.DegreeRank;
-	       dm := if opts.DegreeMap =!= null then opts.DegreeMap else if Mopts.DegreeMap =!= null then Mopts.DegreeMap else identity;
-	       opts.DegreeMap = d -> degreePad(opts.DegreeRank,dm d);
+	       -- TODO: why get these from Mopts if not given?
+	       dm := if opts.DegreeMap  =!= null then opts.DegreeMap  else if Mopts.DegreeMap  =!= null then Mopts.DegreeMap else identity;
 	       lm := if opts.DegreeLift =!= null then opts.DegreeLift else if Mopts.DegreeLift =!= null then Mopts.DegreeLift;
+	       opts.DegreeRank = Mopts.DegreeRank; -- TODO: why?
+	       opts.DegreeMap = degreePad(opts.DegreeRank, dm);
 	       opts.DegreeLift = (
 		    if lm === null then (
 			 if dm === identity then (

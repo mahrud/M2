@@ -449,11 +449,11 @@ intersectInP(Ideal,Ideal) := o->(I,J) ->(
          error" ring should be a polynomial ring over a field";
     X:=symbol X;
     Y:=symbol Y;
-    PP := kk[X_0..X_(n-1),Y_0..Y_(n-1)];
+    P' := kk[X_0..X_(n-1),Y_0..Y_(n-1)];
     diag := ideal apply(n, i-> X_i-Y_i);
-    toP := map(P,PP/diag,vars P | vars P);
-    inX := map(PP,P,apply(n,i->X_i));
-    inY := map(PP,P,apply(n,i->Y_i));
+    toP := map(P,P'/diag,vars P | vars P);
+    inX := map(P',P,apply(n,i->X_i));
+    inY := map(P',P,apply(n,i->Y_i));
     II := inX I + inY J;
     L := distinguished(diag,II);
     apply(L, l-> {l_0, trim toP l_1})

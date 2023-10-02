@@ -202,6 +202,7 @@ setParametrizationOfWeightedProjectiveSpace = P -> (
     P.cache#"rationalParametrization" = g;
     P
 );
+-- TODO: conflicts with PP from Core
 PP = new ScriptedFunctor from {
     symbol ring => null,
     argument => (

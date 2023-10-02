@@ -80,13 +80,13 @@ isSmoothCurve (Ideal) := C -> (
 	dim(projectionCenter+C) != 0 or dim(projectionCenter+C) != 0) do();
         x := getSymbol"x";
 	y := getSymbol"y";	  
-	PP := kk[x_0..x_3,y_0..y_(n-5)];
-	f := map(S,PP, gens(projectionCenter) | random(S^1,S^{n-4:-1}) ); 
+	P := kk[x_0..x_3,y_0..y_(n-5)];
+	f := map(S, P, gens(projectionCenter) | random(S^1,S^{n-4:-1}) ); 
 	C' := preimage_f(C);
 	--C1'=eliminate(C' + ideal(x_0..x_3), toList(x_0..x_3));
         --if not dim(projectionCenter+C) == 0 then (use S; <<"bad projection center" <<endl; return false);
 --	use S; 
-	C1 := eliminate(C',toList(apply(n-4,i->PP_(i+4))));
+	C1 := eliminate(C',toList(apply(n-4,i->P_(i+4))));
 	 not (degree C1 == degree C)) do();
 	S1 := kk[x_0..x_3]; 
 	C2 := substitute(C1,S1);

@@ -39,6 +39,7 @@ isInclusionOfCoefficientRing RingMap := Boolean => inc -> (
     inc vars source inc == promote (vars source inc, target inc)
     )
 
+-- TODO: reduce code duplication, combine this with the segment in pushAuxHgs
 isFinite1 = (f) -> (
     A := source f;
     B := target f;
@@ -179,20 +180,13 @@ pushFwd(RingMap,Matrix):=Matrix=>o->(f,d)->
 --   and its kernel are the A-relations of the elements auxN
 
 makeModule=method()
-makeModule(Module,RingMap,Matrix):=(N,f,matB)->
-(
-     N = trim N;
-     auxN:=ambient N/image relations N;
-     A:=source f;
-     k:=(numgens ambient N) * (numgens source matB);
-     --mp:=try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N);
-     mp := if isHomogeneous f then 
-               try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N)
-           else
-               map(auxN,A^k,f,matB**gens N);
-     ke:=kernel mp;
-     (super ke)/ke
-     )
+makeModule(Module, RingMap, Matrix) := (N, f, matB) -> (
+    N = trim N;
+    auxN := ambient N/image relations N; -- TODO: is this super N?
+    m := matB ** gens N;
+    mp := map(auxN, if not isHomogeneous f then source f ** source m, f, m);
+    ke := kernel mp; -- TODO: this is a slow step, which actually ends up calling the Core's pushForward!!
+    (super ke)/ke) -- isomorphic to image mp by first isomorphism theorem
 
 -- what if B is an algebra over A (i.e. A is the coefficient ring of B)
 -*
@@ -202,20 +196,16 @@ makeModule(Module,RingMap,Matrix):=(N,f,matB)->
     coker last coefficients(g, Monomials => m)
 *-
 
-pushAuxHgs=method()
-pushAuxHgs(RingMap):=(f)-> (
-
+pushAuxHgs = method()
+pushAuxHgs RingMap := f -> (
     A:=source f;
     B:=target f;
-
-    matB := null;
-    mapf := null;
     
      if isInclusionOfCoefficientRing f then (
      --case when the source of f is the coefficient ring of the target:
 	 if not isModuleFinite target f then error "expected a finite map";
-	 matB = basis(B, Variables => 0 .. numgens B - 1);
-         mapf = if isHomogeneous f 
+	matB := basis(B, Variables => 0 .. numgens B - 1);
+	mapf := if isHomogeneous f
            then (b) -> (
              (mons,cfs) := coefficients(b,Monomials=>matB);
              lift(cfs, A)
@@ -247,6 +237,8 @@ pushAuxHgs(RingMap):=(f)-> (
      
      pols=pols_{0..(m-1)};
           
+     -- this fails when the original ring is already a tensor product
+     -- c.f. https://github.com/Macaulay2/M2/issues/2905
      R := try(tensor(RB, RA, Join => false)) else tensor(RB, RA, Join => true);
      xvars := (gens R)_{n..n+m-1};
      yvars := (gens R)_{0..n-1};
@@ -254,24 +246,23 @@ pushAuxHgs(RingMap):=(f)-> (
      iB:=sub(ideal FB,matrix{yvars});
      iGraph:=ideal(matrix{xvars}-sub(pols,matrix{yvars}));
      I:=iA+iB+iGraph;
-     inI:=leadTerm I;
-     
-     r:=ideal(sub(inI,matrix{yvars | splice{m:0}}));     
-     for i from 1 to n do
-	if ideal(sub(gens r,matrix{{(i-1):0,1_R,(m+n-i):0}}))!=ideal(1_R) then
-     	  error "map is not finite";
+     inI := leadTerm I; -- TODO: can a different GB algorithm help here?
 
-     mat:=lift(basis(R/(r+ideal(xvars))),R);
-     k:=numgens source mat;
-     matB = sub(mat,matrix{varsB|toList(m:0_B)});
-     assert(k == numcols matB);
-     phi:=map(R,B,matrix{yvars});
-     toA:=map(A,R,flatten{n:0_A,varsA});
-     mapf = (b)->(
-	  (mons,cfs):=coefficients((phi b)%I,Monomials=>mat,Variables=>yvars);
-	  toA cfs	  
-	  );
-     matB,mapf     
+     r := ideal sub(inI, matrix{yvars | 0 * xvars});
+     if any(n, i -> ideal 1_R != sub(r, matrix(R, exponents R_i))) then error "map is not finite";
+
+     -- TODO:
+     mat := lift(basis module quotient(r + ideal xvars), R);
+     matB = sub(mat, matrix{varsB | toList(m:0_B)});
+     -- FIXME: this is only for frobenius pushforwards
+     --matB = makeModule(N, f, first decomposeFrobeniusPresentation(1, matB));
+     --mat := basis comodule(r + ideal xvars);
+     --matB = basis comodule sub(r, matrix{gens RB | toList(m:0_RB)});
+     assert(numcols mat == numcols matB);
+     toR := map(R, B, yvars);
+     toA := map(A, R, flatten{n:0_A, varsA});
+     mapf = b -> toA last coefficients((toR b) % I, Monomials => mat, Variables => yvars);
+     matB, mapf
      )
 
 beginDocumentation()

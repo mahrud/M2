@@ -416,6 +416,7 @@ MutableMatrix* ResF4toM2Interface::to_M2_MutableMatrix(SchreyerFrame& C,
   Nterm** last = newarray(Nterm*, nrows);
 
   monomial m1 = M->make_one();
+  // TODO: should be exponents
   // FIXME: is exp a monomial or exponent vector?
   int* exp = new int[M->n_vars() + 1];
 

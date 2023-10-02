@@ -48,6 +48,7 @@ isInclusionOfCoefficientRing RingMap := Boolean => inc -> (
     inc vars source inc == promote (vars source inc, target inc)
     )
 
+-- TODO: reduce code duplication, combine this with the segment in pushAuxHgs
 isFinite1 = (f) -> (
     A := source f;
     B := target f;
@@ -245,6 +246,8 @@ pushAuxHgs(RingMap):=(f)-> (
 
      pols=pols_{0..(m-1)};
 
+     -- this fails when the original ring is already a tensor product
+     -- c.f. https://github.com/Macaulay2/M2/issues/2905
      R := try(tensor(RB, RA, Join => false)) else tensor(RB, RA, Join => true);
      xvars := (gens R)_{n..n+m-1};
      yvars := (gens R)_{0..n-1};

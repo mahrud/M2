@@ -311,6 +311,10 @@ basisDefaultStrategy = (opts, lo, hi, M) -> (
     B := value log;
     B)
 
+-- TODO: add this strategy:
+--    if deg === coneMin(coneFromVData effGenerators ring M, degrees M)
+--    then map(M, , submatrixByDegrees(gens M, (, {deg})))
+
 -- Note: for now, the strategies must return a RawMatrix
 algorithms#(basis, List, List, Module) = new MutableHashTable from {
     Default => basisDefaultStrategy,

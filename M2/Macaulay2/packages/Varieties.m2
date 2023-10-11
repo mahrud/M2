@@ -143,6 +143,7 @@ Proj Ring := (stashValue symbol Proj) (R ->
 	}
     )
 
+-*
 -- TODO: export and document
 -- Note: NormalToricVarieties may redefine
 PP = new ScriptedFunctor from {
@@ -168,6 +169,7 @@ PP Sequence := ProjectiveVariety => w -> Proj(ZZ[vars(0..#w#0-1), Degrees => lis
 PP(Ring, ZZ)       :=
 --PP(Ring, List)     := ProjectiveVariety => (K, N) -> PP^N ** K
 PP(Ring, Sequence) := ProjectiveVariety => (K, w) -> PP w ** K
+*-
 
 -- this is a kludge to make Spec ZZ/101[x,y]/(y^2-x^3) and Proj ZZ/101[x,y]/(x^2-y^2) work as expected
 -- TODO: also make Spec kk{x,y} or Spec kk<|x,y|> work when they are supported
@@ -698,10 +700,12 @@ minimalPresentation CoherentSheaf := prune CoherentSheaf := CoherentSheaf => opt
 
 -- TODO: is this correct?
 symmetricAlgebra CoherentSheaf := Ring => opts -> F -> symmetricAlgebra(HH^0 F(>=0), opts)
+-*
 -- TODO: is the dual right?
 -- TODO: add isLocallyFree and make sure F is locally free first?
 PP CoherentSheaf := ProjectiveVariety => F -> tryHooks((PP, CoherentSheaf), F,
     F -> Proj flattenRing(symmetricAlgebra dual F, Result => Thing))
+*-
 
 -----------------------------------------------------------------------------
 -- cotangentSheaf, tangentSheaf, and canonicalBundle

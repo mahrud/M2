@@ -1457,9 +1457,9 @@ doc ///
       three lines (although M2 has trouble detecting this outright):
     Example
       R = QQ[zz,X_1,X_2,X_3]
-      P = sub(P,R) + ideal {zz^2 + zz + 1}
-      minP = minimalPrimes P; netList minP
-      minP / degree
+      PP = sub(P,R) + ideal {zz^2 + zz + 1}
+      minPP = minimalPrimes PP; netList minPP
+      minPP / degree
     Text
       Indeed, this Sklyanin algebra is isomorphic to a skew polynomial algebra
       in three variables if the base field contains a cube root of unity.

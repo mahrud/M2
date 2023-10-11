@@ -771,8 +771,8 @@ rationalPoints(Ideal) := opts -> I -> (
                         -- shuffle and homogenize so that the first non-zero coordinate is 1
                         result = flatten table(pow_unused ELS, result, homogCoord @@ shuffle_ind);
                         -- extra points lying in a projective subspace
-                        PPts := findProjPoints(ideal 0_unusedR);
-                        result = result | PPts / (x->homogCoord shuffle(ind, x, ((n-unused):0_k)));
+                        PP := findProjPoints(ideal 0_unusedR);
+                        result = result | PP / (x->homogCoord shuffle(ind, x, ((n-unused):0_k)));
                     );
                 );
             ) else ( -- affine case
@@ -1211,7 +1211,7 @@ Description
   numbers the result will be given as a precise value.
  Example
   globalHeight {1/1,2/3,5/8}
-  P2 = Proj(QQ[x,y,z]); pt = P2(1/1,2/3,5/8);
+  PP = Proj(QQ[x,y,z]); pt = PP(1/1,2/3,5/8);
   globalHeight pt
   F = toField(QQ[u]/(u^3-5));
   globalHeight {u,u^2/5,1_F}

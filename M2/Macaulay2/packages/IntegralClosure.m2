@@ -2446,10 +2446,10 @@ TEST ///
   debug IntegralClosure
   kk=ZZ/2
   S=kk[a,b,c,d]
-  P = monomialCurveIdeal(S,{1,3,4})
-  betti res P
-  for count from 1 to 10 list parametersInIdeal P
-  for count from 1 to 10 list canonicalIdeal (S/P)
+  PP = monomialCurveIdeal(S,{1,3,4})
+  betti res PP
+  for count from 1 to 10 list parametersInIdeal PP
+  for count from 1 to 10 list canonicalIdeal (S/PP)
 ///     
 
 -- MES TODO: test canonicalIdeal1 here?
@@ -2482,10 +2482,10 @@ TEST ///
   kk=ZZ/101
   S=kk[a,b,c,d]
   canonicalIdeal S
-  P = monomialCurveIdeal(S,{1,3,4})
-  betti res P
-  R = S/P
-  w = canonicalIdeal R
+  PP = monomialCurveIdeal(S,{1,3,4})
+  betti res PP
+  R = S/PP
+  w=canonicalIdeal R
   w1 = canonicalIdeal1 R -- a different, somewhat less pleasing answer...
   -- check that these two different canonical ideals are isomorphic.
   F = homomorphism (Hom(w,w1))_{0}

@@ -591,8 +591,8 @@ schemeInProduct(Ideal, List, Symbol) := (I,Maps,X) ->(
     S := ring I;
     kkk := coefficientRing S;
     dims := apply(Maps, f -> numcols f-1);
-    P := productOfProjectiveSpaces (dims, symbol X, kkk);
-    schemeInProduct(I,Maps,P)
+    PP := productOfProjectiveSpaces (dims, symbol X, kkk);
+    schemeInProduct(I,Maps,PP)
 )
  ///
  restart

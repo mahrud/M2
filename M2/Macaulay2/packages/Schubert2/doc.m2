@@ -464,9 +464,9 @@ Node
      todd P
      chi OO_P(3)
    Text
-     The name is quite long.  Here is one way to make it shorter, by overwriting the @TO PP@ method:
+     The name is quite long.  Here is one way to make it shorter
    Example
-     PP ZZ := abstractProjectiveSpace
+     PP = abstractProjectiveSpace
      X = PP 4
    Text
      To compute the Hilbert polynomial of a sheaf on projective space, we work

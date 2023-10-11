@@ -62,8 +62,8 @@ getPropertyNames(List) := (F) -> (
       -- F is a list of lines, as from a polymake file
       -- returns a list of strings, names of known properties
       FF := removeComments(F);
-      names := select(FF, s -> match("^[[:space:]]*[[:alpha:]]", s));
-      apply(names, toString)
+      PP := select(FF, s-> match("^[[:space:]]*[[:alpha:]]", s));
+      apply(PP, s -> toString s)
       )     
  
 getProperty = method()

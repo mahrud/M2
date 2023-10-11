@@ -68,8 +68,6 @@ genmat.m2
 multilin.m2
 pushforward.m2
 Hom.m2
-ext.m2
-tor.m2
 gradedmodules.m2
 chaincomplexes.m2
 res.m2
@@ -80,9 +78,12 @@ factor.m2
 integrate.m2
 minPres.m2
 monomcurve.m2
+
+tor.m2
+ext.m2
+local.m2
 fano.m2
 schubert.m2
-local.m2
 
 packages.m2
 document.m2

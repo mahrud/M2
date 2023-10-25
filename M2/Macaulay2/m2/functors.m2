@@ -35,7 +35,7 @@ applyMethod'' = (F, X) -> (
 -- TODO: combine for all functors
 -- used in Ext
 applyMethodWithOpts' = (key, desc, X, opts) -> (
-    if (F := lookup key) =!= null then (F opts) X
+    if (F := lookup key) =!= null then if options F =!= null then (F opts) X else F X
     else error("no method for ", desc, " applied to ", X))
 
 applyMethodWithOpts'' = (F, X, opts) -> (

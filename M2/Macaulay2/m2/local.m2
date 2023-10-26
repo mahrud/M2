@@ -1,8 +1,11 @@
 --		Copyright 1993-1998 by Daniel R. Grayson, Michael E. Stillman
+-- TODO: move or expand?
 
 needs "complexes.m2" -- for Ext
 
 -- local cohomology
+-- TODO: add notation HH_I^i(M) for local cohomology
+-- TODO: HH_B^0(M) = saturate(image map(M, A^0, 0), B)
 
 truncatedDual := (M,e) -> (
      -- find (k-dual M), truncated in degrees >= e.

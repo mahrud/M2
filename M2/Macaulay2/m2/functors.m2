@@ -100,40 +100,27 @@ id = new ScriptedFunctor from {
 cohomology = method(Options => {Degree => 0}) -- for local cohomology and sheaf cohomology
 
 HH = new ScriptedFunctor from {
-     subscript => (
-	  i -> new ScriptedFunctor from {
-	       superscript => (
-		    j -> new ScriptedFunctor from {
-	       	    	 argument => (
-			      X -> cohomology functorArgs(i,j,X)
-			      )
-	       	    	 }
-		    ),
-	       argument => (
-		    X -> homology functorArgs(i,X)
-		    )
-	       }
-	  ),
-     superscript => (
-	  j -> new ScriptedFunctor from {
-	       subscript => (
-		    i -> new ScriptedFunctor from {
-	       	    	 argument => (
-			      X -> homology functorArgs(j,i,X)
-			      )
-	       	    	 }
-		    ),
-	       argument => (
-		    X -> cohomology functorArgs(j,X)
-		    )
-	       }
-	  ),
-     argument => (
-	  args -> homology(args)
-	  )
-     }
+    subscript => (
+	i -> new ScriptedFunctor from {
+	    -- HH_i^j X -> cohomology(i, j, X)
+	    superscript => j -> new Functor from { argument => X -> cohomology functorArgs(i, j, X) },
+	    -- HH_i X -> homology(i, X)
+	    argument => X -> homology functorArgs(i, X)
+	    }
+	),
+    superscript => (
+	j -> new ScriptedFunctor from {
+	    -- HH^j_i X -> homology(j, i, X)
+	    subscript => i -> new Functor from { argument => X -> homology functorArgs(j, i, X) },
+	    -- HH^j X -> cohomology(j, X)
+	    argument => X -> cohomology functorArgs(j, X)
+	    }
+	),
+    -- HH X -> homology X
+    argument => X -> homology X
+    }
 
-  homology(ZZ,Sequence) := opts -> (i,X) -> homology prepend(i,X)
+  homology(ZZ,Sequence) := opts -> (i,X) ->   homology prepend(i,X)
 cohomology(ZZ,Sequence) := opts -> (i,X) -> cohomology(prepend(i,X), opts)
 
 -- Local Variables:

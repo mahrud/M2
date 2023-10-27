@@ -102,6 +102,7 @@ ProjectiveVariety = new Type of Variety
 ProjectiveVariety.synonym = "projective variety"
 
 -- constructors
+-- TODO: find a way so toric algorithms from NormalToricVarieties can work seamlessly with these
 Spec = method(TypicalValue => AffineVariety)
 Spec Ring := (stashValue symbol Spec) (R ->
     new AffineVariety from {

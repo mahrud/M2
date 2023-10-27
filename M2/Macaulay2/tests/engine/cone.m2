@@ -21,3 +21,7 @@ assert((B, B) == fourierMotzkin fourierMotzkin(A, B))
 
 assert(findHeft {{-1, 0}, {-3, 1}, {-1, 0}, {0, 1}} == {-1, 1})
 assert(findHeft {{ 1, 0}, {-3, 1}, { 1, 0}, {0, 1}} == { 1, 4})
+
+A = matrix{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+B = map(ZZ^7,ZZ^0,0);
+transpose map(ZZ, rawFourierMotzkin(raw transpose A, raw transpose B))

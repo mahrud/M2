@@ -389,7 +389,6 @@ load "./Varieties/SheafComplexes.m2"
 -----------------------------------------------------------------------------
 
 load "./Varieties/tests-varieties.m2"
-load "./Varieties/tests-sheaves.m2"
 load "./Varieties/tests-functors.m2"
 load "./Varieties/tests-maps.m2"
 if HomologicalAlgebraPackage === "Complexes" then

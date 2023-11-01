@@ -45,21 +45,31 @@ sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     promote(Thing, X.cache.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
     X.cache.sheaf)
 
+-- twists don't make sense on an affine variety, so we forcefully remove them
+dehomogenizeMatrix = f -> (R := ring f; map(R^(numRows f), R^(numColumns f), f))
+dehomogenizeModule = M -> if isFreeModule M then (ring M)^(rank M) else subquotient(
+    if M.?generators then dehomogenizeMatrix M.generators,
+    if M.?relations  then dehomogenizeMatrix M.relations)
 
 -- TODO: should the module of a sheaf be fixed, or should it be allowed to change?
--- TODO: https://github.com/Macaulay2/M2/issues/1358
 sheaf Module := Module^~ := CoherentSheaf =>     M  -> sheaf(variety ring M, M)
-sheaf(Variety, Module)   := CoherentSheaf => (X, M) -> (
-    if M.cache#?(sheaf, X) then return M.cache#(sheaf, X);
-    M.cache#(sheaf, X) = (
-	if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
-	if instance(X, ProjectiveVariety) and not isHomogeneous M then error "sheaf: expected a homogeneous module";
-	new CoherentSheaf from {
-	    symbol variety => X,
-	    symbol module => M,
-	    symbol cache => new CacheTable
-	    }
-	))
+sheaf(AffineVariety, Module) := CoherentSheaf => (X, M) -> M.cache#(sheaf, X) ??= (
+    if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
+    new CoherentSheaf from {
+	symbol variety => X,
+	symbol module => dehomogenizeModule M,
+	symbol cache => new CacheTable
+	}
+    )
+sheaf(ProjectiveVariety, Module) := CoherentSheaf => (X, M) -> M.cache#(sheaf, X) ??= (
+    if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
+    if not isHomogeneous M then error "sheaf: expected a homogeneous module";
+    new CoherentSheaf from {
+	symbol variety => X,
+	symbol module => M,
+	symbol cache => new CacheTable
+	}
+    )
 
 -- TODO: consider adding IdealSheaf or SheafOfIdeals type
 sheaf Ideal := Ideal^~ := CoherentSheaf =>     I  -> sheaf(variety ring I, module I)

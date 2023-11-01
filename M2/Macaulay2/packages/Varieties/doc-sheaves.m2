@@ -155,7 +155,9 @@ document {
     SeeAlso => {OO, Proj, degrees, "graded and multigraded polynomial rings"}}
 
 document {
-    Key => (sheaf, Variety, Module),
+    Key => {
+	(sheaf, AffineVariety, Module),
+	(sheaf, ProjectiveVariety, Module)},
     Headline => "make a coherent sheaf",
     Usage => "sheaf(X,M)",
     Inputs => {"X","M"},

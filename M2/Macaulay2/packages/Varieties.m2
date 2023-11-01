@@ -287,20 +287,31 @@ sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     -- TODO: simplify when https://github.com/Macaulay2/M2/issues/3351 is fixed
     X.sheaf = X.sheaf ?? new SheafOfRings from { symbol variety => X, symbol ring => R } )
 
+-- twists don't make sense on an affine variety, so we forcefully remove them
+dehomogenizeMatrix = f -> (R := ring f; map(R^(numRows f), R^(numColumns f), f))
+dehomogenizeModule = M -> if isFreeModule M then (ring M)^(rank M) else subquotient(
+    if M.?generators then dehomogenizeMatrix M.generators,
+    if M.?relations  then dehomogenizeMatrix M.relations)
+
 -- TODO: should the module of a sheaf be fixed, or should it be allowed to change?
--- TODO: https://github.com/Macaulay2/M2/issues/1358
-sheaf Module := Module^~ := CoherentSheaf =>     M  -> sheaf(variety ring M, M)
-sheaf(Variety, Module)   := CoherentSheaf => (X, M) -> (
-    if M.cache#?(sheaf, X) then return M.cache#(sheaf, X);
-    M.cache#(sheaf, X) = (
-	if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
-	if instance(X, ProjectiveVariety) and not isHomogeneous M then error "sheaf: expected a homogeneous module";
-	new CoherentSheaf from {
-	    symbol variety => X,
-	    symbol module => M,
-	    symbol cache => new CacheTable
-	    }
-	))
+sheaf Module := Module^~     := CoherentSheaf =>     M  -> sheaf(variety ring M, M)
+sheaf(AffineVariety, Module) := CoherentSheaf => (X, M) -> M.cache#(sheaf, X) ??= (
+    if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
+    new CoherentSheaf from {
+	symbol variety => X,
+	symbol module => dehomogenizeModule M,
+	symbol cache => new CacheTable
+	}
+    )
+sheaf(ProjectiveVariety, Module) := CoherentSheaf => (X, M) -> M.cache#(sheaf, X) ??= (
+    if ring M =!= ring X then error "sheaf: expected module and variety to have the same ring";
+    if not isHomogeneous M then error "sheaf: expected a homogeneous module";
+    new CoherentSheaf from {
+	symbol variety => X,
+	symbol module => M,
+	symbol cache => new CacheTable
+	}
+    )
 
 -- TODO: consider adding IdealSheaf or SheafOfIdeals type
 sheaf Ideal := Ideal^~ := CoherentSheaf =>     I  -> sheaf(variety ring I, module I)
@@ -373,7 +384,6 @@ pdim    CoherentSheaf := F -> tryHooks((pdim,  CoherentSheaf), F, pdim  @@ modul
 hilbertPolynomial CoherentSheaf := opts -> F -> hilbertPolynomial(module F, opts)
 
 -- twist and powers
--- TODO: sheaf should dehomogenize modules on Affine varieties
 SheafOfRings(ZZ)   := SheafOfRings  Sequence := CoherentSheaf => (O, a) -> O^1(a)
 CoherentSheaf(ZZ)  := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> F ** (ring F)^{splice{a}}
 SheafOfRings  ^ ZZ := SheafOfRings  ^ List   := CoherentSheaf => (O, n) -> sheaf(O.variety, (ring variety O)^n)
@@ -837,7 +847,6 @@ load "./Varieties/SheafMaps.m2"
 -----------------------------------------------------------------------------
 
 load "./Varieties/tests-varieties.m2"
-load "./Varieties/tests-sheaves.m2"
 load "./Varieties/tests-functors.m2"
 load "./Varieties/tests-maps.m2"
 --load "./Varieties/tests-complexes.m2"

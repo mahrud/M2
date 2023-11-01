@@ -30,6 +30,24 @@ TEST /// -- twisted cubic curve
   assert first isIsomorphic(M, N, Strict => true)
 ///
 
+TEST /// -- sheaves on affine and projective varieties
+  debug Varieties
+  R = QQ[x,y,z]
+  I = ideal(z^2-y,y*z-x,y^2-x*z)
+  M = coker (res I).dd_2
+  -- Proj only accepts graded rings
+  assert try Proj(R/I) else true
+  -- sheaf only accepts graded modules over projective varieties
+  assert try sheaf(Proj R, M) else true
+  -- c.f. https://github.com/Macaulay2/M2/issues/1358
+  F = sheaf(Spec R, M)
+  assert(variety F === Spec R)
+  assert(F === F(1))
+  assert(F === sheaf(Spec R, M ** R^{1}))
+  assert(HH^0(F) == dehomogenizeModule M)
+  assert(HH^1(F) == 0)
+///
+
 TEST ///
   X = Spec ZZ/101[x,y]/(y^2-x^3)
   assert(toString ring X == "(ZZ/101)[x..y]/(-x^3+y^2)")

@@ -744,6 +744,7 @@ newMonoid = opts -> (
 	rawMonoid())
     else (
 	-- TODO: when degree group has torsion, this isn't correct yet
+	-- TODO: pass a ZZ-module, potentially with torsion, instead?
 	M.degreesRing = if opts.Heft =!= null then degreesRing heftvec else degreesRing degrk; -* shouldn't really be needed *-
 	M.degreesMonoid = monoid M.degreesRing;
 	rawMonoid(

@@ -9,7 +9,7 @@ monoid[(a,b,c),(x,y,z)]
 monoid[{a,b,c},{x,y,z}]
 monoid[vars(0..2,23..25)]
 monoid[vars(0..2),vars(23..25)]
-monoid[a_0..a_3,b_0..b_3] -- FIXME: this would fail if QQ[a,b,c] was defined before
+monoid[a_0..a_3,b_0..b_3]
 ---
 monoid[a,b, WeylAlgebra => a=>b]
 monoid[a,b, WeylAlgebra => 0=>1]
@@ -104,10 +104,20 @@ degreesRing A
 -- module over ring with torsion degree group
 assert(degrees S^{{3,3}} == {{0,-3}})
 assert(S^{{3,3}} == S^{{0,3}})
--- assert(S^{{3,3}} === S^{{0,3}}) -- TODO: should this be true?
+assert(S^{{3,3}} === S^{{0,3}}) -- TODO: do in the engine
 
 -- elements of ring with torsion degree group
-degree S_0^3 == {0,3} -- FIXME in the engine
+--restart
+--debug Core
+--G = coker matrix{{3}, {0}}
+--S = QQ[x,y,z,
+--    DegreeGroup => G,
+--    Degrees => {{1,1}, {-1,1}, {0,1}}]
+assert(degree S_0^3 == {0,3}) -- TODO: do in the engine
+--prepend(-sum(d = degree S_2, heft S, times), d)
+--code(degree, RingElement)
+--code(degrees, Module)
+--rawMultiDegree raw S_0^3
 
 --- testing graphIdeal
 f = map(T, S, {T_0, T_1, T_2}, DegreeMap => d -> join(d, {0,0}))

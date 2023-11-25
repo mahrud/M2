@@ -938,12 +938,13 @@ export rawInverse(e:Expr):Expr := (
 setupfun("rawInverse",rawInverse);
 
 export rawMultiDegree(e:Expr):Expr := (
-     when e
-     is x:RawRingElementCell do toExpr( Ccode(RawArrayIntOrNull, "IM2_RingElement_multidegree(", x.p, ")" ) )
-     is x:RawFreeModuleCell do toExpr( Ccode(RawArrayIntOrNull, "IM2_FreeModule_get_degrees(", x.p, ")" ) )
-     is x:RawMatrixCell do toExpr( Ccode(RawArrayIntOrNull, "IM2_Matrix_get_degree(", x.p, ")" ) )
-     else WrongArg("a raw ring element, matrix, or free module"));
-setupfun("rawMultiDegree",rawMultiDegree);
+    when e
+    -- TODO: unify these function names
+    is x:RawRingElementCell do toExpr( Ccode(RawArrayIntOrNull, "IM2_RingElement_multidegree(", x.p, ")" ) )
+    is x:RawFreeModuleCell  do toExpr( Ccode(RawArrayIntOrNull, "IM2_FreeModule_get_degrees(",  x.p, ")" ) )
+    is x:RawMatrixCell      do toExpr( Ccode(RawArrayIntOrNull, "IM2_Matrix_get_degree(",       x.p, ")" ) )
+    else WrongArg("a raw ring element, matrix, or free module"));
+setupfun("rawMultiDegree", rawMultiDegree);
 
 export rawDiscreteLog(e:Expr):Expr := (
      when e

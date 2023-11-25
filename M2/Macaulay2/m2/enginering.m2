@@ -445,7 +445,14 @@ leadCoefficient RingElement := RingElement => (f) -> (
      k := coefficientRing ring f;
      promote(rawLeadCoefficient(raw k, raw f),k))
 
-degree RingElement := f -> if f == 0 then -infinity else rawMultiDegree raw f
+-- TODO: would be better in the engine
+degree RingElement := f -> if f == 0 then -infinity else (
+    deg := rawMultiDegree raw f;
+    -- TODO: perhaps there should be a flag in the ring,
+    -- determining whether reduction should happen?
+    if not (M := monoid ring f).?degreeGroup
+    or isFreeModule(G := M.degreeGroup) then deg
+    else reduceDegree(G, deg))
 
 leadTerm RingElement := RingElement => (f) -> someTerms(f,0,1)
 

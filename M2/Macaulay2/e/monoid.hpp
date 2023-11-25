@@ -34,6 +34,7 @@ typedef const int *const_monomial;
 // TODO: make sure monoid is deconstructed and not garbage collected
 class Monoid : public MutableEngineObject
 {
+  // TODO: perhaps mDegreeMonoid should just be a ZZ-module (potentially with torsion?)
   const Monoid *mDegreeMonoid;
   const PolynomialRing *mDegreeRing;
 

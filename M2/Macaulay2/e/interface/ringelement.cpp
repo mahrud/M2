@@ -350,6 +350,7 @@ M2_bool IM2_RingElement_is_graded(const RingElement *a)
   return a->is_homogeneous();
 }
 
+// TODO: should this be M2_arrayint or M2_arrayintOrNull?
 M2_arrayint IM2_RingElement_multidegree(const RingElement *a)
 {
   try

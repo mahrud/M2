@@ -297,6 +297,7 @@ Module == Module := (M,N) -> M === N or (
 -- TODO: where is it set before being cached?
 degrees Module := -*(cacheValue symbol degrees) (*-N -> (
     r := degreeLength(R := ring N);
+    -- TODO: this check should be unnecessary once issue #3007 is fixed
     if r == 0 then toList(numgens N : {}) else (
 	degs := pack(r, rawMultiDegree raw cover N);
 	if not (M := monoid R).?degreeGroup
@@ -322,6 +323,11 @@ Ring ^ List := Module => (R, degs) -> (
     else if isListOfListsOfIntegers degs then ( if any(degs, deg -> degrk != #deg)
 	then error("expected each multidegree to be of length ", degrk))
     else error "expected a list of integers or a list of lists of integers";
+    -- TODO: perhaps there should be a flag in the ring,
+    -- determining whether reduction should happen?
+    degs = if not (M := monoid R).?degreeGroup
+    or isFreeModule(G := M.degreeGroup) then degs
+    else apply(degs, reduceDegree_G);
     -- then flatten the args
     fdegs := toSequence flatten degs;
     new Module from (R, rawFreeModule(R.RawRing, if #fdegs === 0 then #degs else fdegs)))

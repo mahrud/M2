@@ -246,6 +246,14 @@ trimHelper = ((opts, M) -> (
 
 addHook((trim, Module), Strategy => Inhomogeneous, (opts, M) -> trimHelper(opts ++ {Strategy => Inhomogeneous}, M))
 addHook((trim, Module), Strategy => Complement,    (opts, M) -> trimHelper(opts ++ {Strategy => Complement},    M))
+addHook((trim, Module), Strategy => "PID",
+    (opts, M) -> (
+	R := ring M;
+	if instance(R, PolynomialRing) and numgens R === 1 and isField coefficientRing R and not isHomogeneous M
+	then if isFreeModule M then M else subquotient(
+	    if M.?generators   then (prune image generators M).cache.pruningMap,
+	    if M.?relations    then (prune image relations  M).cache.pruningMap))
+    )
 
 syz Matrix := Matrix => opts -> (f) -> (
     c := runHooks((syz, Matrix), (opts, f));

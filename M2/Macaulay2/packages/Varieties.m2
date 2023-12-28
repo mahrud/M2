@@ -386,6 +386,7 @@ expression SheafOfRings := O -> Subscript { OO, expression O.variety }
 net        SheafOfRings :=      net @@ expression
 texMath    SheafOfRings :=  texMath @@ expression
 toString   SheafOfRings := toString @@ expression
+-- TODO: toExternalString?
 
 describe   CoherentSheaf := F -> Describe (Subscript { expression sheaf, expression F.variety }) (expression F.module)
 expression CoherentSheaf := F -> (
@@ -401,6 +402,7 @@ expression CoherentSheaf := F -> (
 net      CoherentSheaf :=      net @@ expression
 texMath  CoherentSheaf :=  texMath @@ expression
 toString CoherentSheaf := toString @@ expression
+-- TODO: toExternalString?
 
 -- used to be in m2/mathml.m2
 mathML SheafOfRings :=
@@ -452,6 +454,7 @@ expression SumOfTwists := S -> (expression S#0) (if S#1#0 === -infinity then exp
 net        SumOfTwists :=      net @@ expression
 texMath    SumOfTwists :=  texMath @@ expression
 toString   SumOfTwists := toString @@ expression
+-- TODO: toExternalString?
 
 -----------------------------------------------------------------------------
 -- helpers for sheaf cohomology

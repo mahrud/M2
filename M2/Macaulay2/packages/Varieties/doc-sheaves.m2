@@ -385,19 +385,20 @@ document {
 	}
     }
 
-document {
-    Key => (pdim, CoherentSheaf),
-    Headline => "calculate the projective dimension",
-    Usage => "pdim S",
-    Inputs => {"S" => CoherentSheaf},
-    Outputs => {ZZ => "the projective dimension"},
-    EXAMPLE {
-	"V = Proj(ZZ/101[x_0..x_2]);",
-	"S = sheaf(image matrix {{x_0^3+x_1^3+x_2^3}})",
-	"pdim S"}
-    }
+-- TODO: this is incorrect as implemented
+-- document {
+--     Key => (pdim, CoherentSheaf),
+--     Headline => "calculate the projective dimension",
+--     Usage => "pdim S",
+--     Inputs => {"S" => CoherentSheaf},
+--     Outputs => {ZZ => "the projective dimension"},
+--     EXAMPLE {
+-- 	"V = Proj(ZZ/101[x_0..x_2]);",
+-- 	"S = sheaf(image matrix {{x_0^3+x_1^3+x_2^3}})",
+-- 	"pdim S"}
+--     }
 
--- TODO: is this necessary here, or should it go back to engine?
+-- TODO: is this necessary here, or should it go back to core?
 document {
     Key => SheafExpression,
     Headline => "the class of sheaf expressions",

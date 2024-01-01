@@ -227,6 +227,7 @@ scan({Default, Quotient}, strategy ->
 -- kernel
 -----------------------------------------------------------------------------
 
+-- TODO: split into strategies?
 kernel Matrix := Module => opts -> (cacheValue symbol kernel) ((m) -> (
 	  N := source m;
 	  if m == 0 then return N;
@@ -242,7 +243,7 @@ kernel Matrix := Module => opts -> (cacheValue symbol kernel) ((m) -> (
 	       h := modulo(m, if P.?relations then P.relations);
 	       if N.?generators then h = N.generators * h;
 	       subquotient( h, if N.?relations then N.relations))))
-kernel RingElement := Module => options -> (m) -> kernel (matrix {{m}},options)
+kernel RingElement := Module => o -> m -> kernel(matrix {{m}}, o)
 
 -----------------------------------------------------------------------------
 -- RingMap_*: direct image functor (pushforward)

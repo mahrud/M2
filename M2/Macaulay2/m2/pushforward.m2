@@ -247,6 +247,7 @@ addHook((kernel, Matrix), Strategy => "PushForward",
 	f := m.RingMap;
 	M := coimage map(target m, f ** source m, raw m);
 	image pushNonLinear(options pushForward, f, M)))
+kernel RingElement := Module => o -> m -> kernel(matrix {{m}}, o)
 
 -----------------------------------------------------------------------------
 

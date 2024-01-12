@@ -591,6 +591,7 @@ formation ChainComplex := M -> if M.cache.?formation then M.cache.formation
 
 directSum ChainComplex := C -> directSum(1 : C)
 ChainComplex.directSum = args -> (
+    if #args === 1 then return args#0;
      C := new ChainComplex;
      C.ring = ring args#0;
      scan(args,D -> (complete D; complete D.dd;));

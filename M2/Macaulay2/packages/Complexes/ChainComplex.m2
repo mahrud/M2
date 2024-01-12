@@ -344,6 +344,7 @@ sum ComplexMap := Matrix => f -> (
     
 Complex.directSum = args -> (
     assert(#args > 0);
+    if #args === 1 then return args#0;
     R := ring args#0;
     if not all(args, C -> ring C === R) then error "expected all complexes to be over the same ring";
     concentrations := for C in args list C.concentration;

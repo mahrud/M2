@@ -222,6 +222,7 @@ formation GradedModule := M -> if M.cache.?formation then M.cache.formation
 
 directSum GradedModule := GradedModule => M -> directSum(1 : M)
 GradedModule.directSum = v -> (
+    if #v === 1 then return v#0;
      E := new GradedModule;
      rings := apply(v, ring);
      if not same rings

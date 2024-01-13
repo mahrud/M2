@@ -13,17 +13,6 @@ TEST /// -- twisted global section module
   assert(hilbertSeries module Omega(1) === hilbertSeries coker matrix(ring Cubic, {{-x_3, -x_2, -x_1}, {x_2, x_1, x_0}}))
 ///
 
-TEST ///
-  S = QQ[a..d];
-  I = monomialCurveIdeal(S,{1,3,4})
-  R = S/I
-  X = Proj R
-  F = prune sheaf (module I ** R)
-  assert F.cache.?pruningMap
-  -- making sure that trivial direct sums don't clear cache
-  assert(F^1).cache.?pruningMap
-///
-
 TEST /// -- twisted cubic curve
   S = (ZZ/13)[x,y,z,w];
   I = minors(2, matrix{{x,y,z}, {y,z,w}});

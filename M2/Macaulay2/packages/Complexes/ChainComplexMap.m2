@@ -397,7 +397,6 @@ ComplexMap.directSum = args -> (
     -- args: sequence of ComplexMap's
     -- args: f_i : C_i --> D_i, having same degree deg
     -- result : sum(C_i) --> sum(D_i)
-    if #args === 1 then return args#0;
     R := ring args#0;
     deg := degree args#0;
     if not all(args, f -> ring f === R) then 

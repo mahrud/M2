@@ -271,7 +271,6 @@ sameringMatrices = mats -> (
 
 directSum Matrix := f -> Matrix.directSum (1 : f)
 Matrix.directSum = args -> (
-    if #args === 1 then return args#0;
      args = sameringMatrices args;
      R := ring args#0;
      if not all(args, f -> ring f === R) then error "expected matrices all over the same ring";
@@ -297,9 +296,7 @@ Module.directSum = args -> (
 	  R := ring args#0;
 	  if not all(args, f -> ring f === R) 
 	  then error "expected modules all over the same ring";
-    -- this ensures that trivial direct sums don't clear the cache
-    N := if #args == 1 then args#0
-    else if all(args, M -> not M.?generators)
+	  N := if all(args, M -> not M.?generators) 
 	  then (
 	       if all(args, M -> not M.?relations) 
 	       then R ^ (- join toSequence apply(args, degrees))

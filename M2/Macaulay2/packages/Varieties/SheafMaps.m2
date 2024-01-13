@@ -322,7 +322,6 @@ inducedMap(CoherentSheaf, CoherentSheaf, SheafMap) := SheafMap => opts -> (G, F,
 --WARNING: the current direct sum of sheaves does not cache components
 SheafMap.directSum = args -> (
     assert(#args>0);
-    if #args === 1 then return args#0;
     X := variety args#0;
     if not same apply(args, variety) then error "expected maps of sheaves over the same variety";
     DS := map(

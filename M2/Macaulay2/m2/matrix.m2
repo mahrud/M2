@@ -297,7 +297,6 @@ Module.directSum = args -> (
 	  R := ring args#0;
 	  if not all(args, f -> ring f === R) 
 	  then error "expected modules all over the same ring";
-    -- TODO: I don't think we should set components and formation for M^1
     -- this ensures that trivial direct sums don't clear the cache
     N := if #args == 1 then args#0
     else if all(args, M -> not M.?generators)

@@ -416,6 +416,7 @@ sheafHom(SheafOfRings, SheafMap)  := SheafMap => o -> (O, phi) -> sheafHom(id_(O
 
 -- See [Hartshorne, Ch. III Exercise 6.1, pp. 237]
 -- TODO: these three calls could be simpler, but F^1 erases cached info of F
+-- TODO: should this be cached? Hom(Module, Module) is, but this does a lot more
 Hom(SheafOfRings, SheafOfRings)  := Module => opts -> (O, O') -> Hom(O^1, O'^1, opts)
 Hom(SheafOfRings, CoherentSheaf) := Module => opts -> (O, G)  -> Hom(O^1, G, opts)
 Hom(CoherentSheaf, SheafOfRings)  := Module => opts -> (F, O) -> Hom(F, O^1, opts)

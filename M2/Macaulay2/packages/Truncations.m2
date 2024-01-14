@@ -177,9 +177,10 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
     -- inputs: a single multidegree, a graded ring
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
-    if  R#?(symbol truncate, d, rays opts#Cone)
-    then R#(symbol truncate, d, rays opts#Cone)
-    else R#(symbol truncate, d, rays opts#Cone) = (
+    C := if opts#Cone =!= null then rays opts#Cone else id_(degreeGroup R);
+    if  R#?(symbol truncate, d, C)
+    then R#(symbol truncate, d, C)
+    else R#(symbol truncate, d, C) = (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;

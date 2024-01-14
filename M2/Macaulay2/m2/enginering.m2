@@ -61,31 +61,16 @@ makepromoter = memoize (
 		    )
 	       ))
 
-basicPromoteModule = (M,R,p) -> (
-     N := R^(p minus degrees M);
-     if M.cache.?components then N.cache.components = apply(M.cache.components, M -> basicPromoteModule(M,R,p)); -- lift the direct summands, too
-     N)
+-- TODO: should this just call multiplePromoteModule(M,{R,p})?
+basicLiftModule =
+basicPromoteModule = (M,R,p) -> directSum apply(components M, N -> R^(p minus degrees N))
 
-basicLiftModule = (M,R,p) -> (
-     N := R^(p minus degrees M);
-     if M.cache.?components then N.cache.components = apply(M.cache.components, M -> basicLiftModule(M,R,p)); -- lift the direct summands, too
-     N)
-
-multipleLiftModule = (M,v) -> (
-     dM := - degrees M;
-     local S;
-     scan(v, (R,p) -> (S,dM) = (R,p dM));
-     N := S^dM;
-     if M.cache.?components then N.cache.components = apply(M.cache.components, M -> multipleLiftModule(M,v)); -- lift the direct summands, too
-     N)
-
-multiplePromoteModule = (M,v) -> (
-     dM := - degrees M;
-     local S;
-     scan(v, (R,p) -> (S,dM) = (R,p dM));
-     N := S^dM;
-     if M.cache.?components then N.cache.components = apply(M.cache.components, M -> multiplePromoteModule(M,v)); -- lift the direct summands, too
-     N)
+multipleLiftModule =
+multiplePromoteModule = (M,v) -> directSum apply(components M, N -> (
+     S := first last v;
+     degs := - degrees N;
+     scan(v, (R, p) -> degs = p degs);
+     S^degs))
 
 basicPromoteMatrix = (m,R,p) -> (
      F := basicPromoteModule(target m,R,p);

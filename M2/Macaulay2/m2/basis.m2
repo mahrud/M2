@@ -231,9 +231,9 @@ basisHelper = (opts, lo, hi, M) -> (
     strategy := opts.Strategy;
 
     -- TODO: check that S is compatible; i.e. there is a map R <- S
-    -- perhaps the map should be given as the option instead?
-    S := if opts.SourceRing =!= null then opts.SourceRing else R;
-    phi := map(R, S);
+    phi := if instance(opts.SourceRing, RingMap) then        opts.SourceRing
+    else   if instance(opts.SourceRing, Ring)    then map(R, opts.SourceRing) else map(R, R);
+    S := source phi;
 
     if lo === -infinity then lo = {} else
     if lo ===  infinity then error "incongruous lower degree bound: infinity";

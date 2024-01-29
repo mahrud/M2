@@ -108,6 +108,18 @@ basis({0,1}, R, SourceRing => QQ)
 basis({0,1}, R, SourceRing => S)
 basis({0,1}, R, SourceRing => R)
 
+-- testing basis with a given ring map
+-- https://github.com/Macaulay2/M2/issues/3078
+needsPackage "ReesAlgebra"
+S = QQ[x_0..x_4]
+I = trim monomialCurveIdeal(S, {2,3,5,6})
+R = reesAlgebra I
+f = map(R, S, DegreeMap => prepend_0, DegreeLift => a -> drop(a, 1))
+B = basis(1, R^1, SourceRing => f)
+assert isWellDefined B
+isHomogeneous B -- FIXME
+
+
 R = QQ[x]
 assert try (basis R; false) else true
 assert(basis_-1 R == 0)

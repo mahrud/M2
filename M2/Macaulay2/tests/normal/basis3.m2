@@ -119,6 +119,13 @@ B = basis(1, R^1, SourceRing => f)
 assert isWellDefined B
 isHomogeneous B -- FIXME
 
+-- TODO: map with specified ring map should
+-- probably fail if the modules are not R^1
+m = map(R^1, S^1, f, {{1}})
+assert isWellDefined m
+assert isHomogeneous m
+-- TODO: should this work?
+-- basis(1, m)
 
 R = QQ[x]
 assert try (basis R; false) else true

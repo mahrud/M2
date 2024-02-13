@@ -1336,6 +1336,7 @@ exportMutable {
 	"loadDepth",
 	"loadedPackages",
 	"notify",
+    "numTBBThreads",
 	"oo",
 	"ooo",
 	"oooo",

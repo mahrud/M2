@@ -197,6 +197,9 @@ setup(AmpersandS,ampersandfun);
 hathatfun(lhs:Code,rhs:Code):Expr := binarymethod(lhs,rhs,HatHatS);
 setup(HatHatS,hathatfun);
 
+Differentialfun(rhs:Code):Expr := unarymethod(rhs,DifferentialS);
+setup(DifferentialS,Differentialfun);
+
 Tildefun(rhs:Code):Expr := unarymethod(rhs,TildeS);
 setuppostfix(TildeS,Tildefun);
 

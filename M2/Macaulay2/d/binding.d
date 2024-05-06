@@ -255,6 +255,8 @@ bumpPrecedence();
      export andS := makeKeyword(binaryrightword("and"));
 bumpPrecedence();
      export notS := makeKeyword(unaryword("not"));
+bumpPrecedence();
+     export DifferentialS := makeKeyword(unaryword("dd^"));
 -- binary predicates on terms:
 bumpPrecedence();
      export incomparableS := makeProtectedSymbolClosure("incomparable");
@@ -515,7 +517,8 @@ export opsWithBinaryMethod := array(SymbolClosure)(
 export opsWithUnaryMethod := array(SymbolClosure)(
      StarS, MinusS, PlusS, LessLessS, QuestionQuestionS,
      LongDoubleLeftArrowS, LongLongDoubleLeftArrowS, 
-     notS, DeductionS, QuestionS,LessS,GreaterS,LessEqualS,GreaterEqualS);
+     notS, DeductionS, DifferentialS, QuestionS,
+     LessS, GreaterS, LessEqualS, GreaterEqualS);
 export opsWithPostfixMethod := array(SymbolClosure)(
     ExclamationS,    PowerExclamationS, UnderscoreExclamationS,
     -- FIXME:        PowerSharpS,       UnderscoreSharpS,

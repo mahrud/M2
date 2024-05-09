@@ -108,6 +108,16 @@ basis({0,1}, R, SourceRing => QQ)
 basis({0,1}, R, SourceRing => S)
 basis({0,1}, R, SourceRing => R)
 
+R=QQ[x]; S=R[t];
+M=S^1/x^3
+basis(0, M, SourceRing => S) -- FIXME
+basis(0, M, SourceRing => R)
+basis(0, M, SourceRing => QQ) -- FIXME
+N=S^1/t^3
+basis(0, N, SourceRing => S) -- FIXME
+basis(0, N, SourceRing => R)
+basis(0, N, SourceRing => QQ) -- FIXME
+
 -- testing basis with a given ring map
 -- https://github.com/Macaulay2/M2/issues/3078
 needsPackage "ReesAlgebra"

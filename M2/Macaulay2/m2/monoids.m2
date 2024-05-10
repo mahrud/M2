@@ -409,6 +409,7 @@ findHeft List := opts -> degs -> (
     heftvec := - sum entries transpose first fm transpose matrix degs;
     -- TODO: switch back once the last column hack is fixed
     --heftvec := - sum entries map(ZZ, rawFourierMotzkin(raw matrix degs, raw map(ZZ^0, ZZ^degrk, 0)));
+    if instance(heftvec, ZZ) then return null;
     if (g := gcd heftvec) > 1   then heftvec = apply(heftvec, h -> h // g);
     if checkHeft(degs, heftvec) then heftvec)
 

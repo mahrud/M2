@@ -402,6 +402,10 @@ TEST /// -- test of truncationPolyhedron with torsion in class group
   matrix { monomials D }
 ///
 
+TEST /// -- test of inducedTruncationMap and subtruncate
+  debug needsPackage "Truncations"
+///
+
 end--
 
 restart

@@ -43,12 +43,6 @@ export {
 
 if version#"VERSION" < "1.4" then error "This package was written for Macaulay2 ver. 1.4 or higher";
 
--- Workaround because Macaulay2 ver. 1.6 has a minor bug --
-
-if version#"VERSION" == "1.6" then ( complete GradedModule := (M) -> M );
-
-
-
 --==========================================================================
 -- EXPORTED FUNCTIONS
 --==========================================================================

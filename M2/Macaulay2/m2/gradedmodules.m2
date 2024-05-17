@@ -7,6 +7,8 @@ GradedModule = new Type of MutableHashTable
 GradedModule.synonym = "graded module"
 ring GradedModule := (M) -> M.ring
 
+new GradedModule := GradedModule => T -> new MutableHashTable from { cache => new CacheTable }
+
 spots  = C -> select(keys C, i -> class i === ZZ)
 union := (x,y) -> keys(set x + set y)
 intersection := (x,y) -> keys(set x * set y)

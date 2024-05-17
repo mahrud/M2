@@ -301,7 +301,7 @@ cartesianProduct Sequence := args -> (
 	if meth === null then error "no method for cartesian product";
 	P := meth args;
 	if Y =!= null then Y.cache#key = P;
-	P.cache.components = toList args;
+	P.cache.components = toList flatten apply(args, components);
 	P
 	)
     )

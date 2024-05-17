@@ -298,7 +298,7 @@ SheafMap.directSum = args -> (
 	directSum apply(args, target),
 	directSum apply(args, source),
 	directSum apply(args, matrix));
-    DS.cache.components = toList args;
+    DS.cache.components = toList flatten apply(args, components);
     DS)
 
 directSum SheafMap := SheafMap => phi -> directSum(1:phi)

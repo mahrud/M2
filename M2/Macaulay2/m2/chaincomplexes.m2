@@ -358,7 +358,7 @@ ChainComplexMap ++ ChainComplexMap := ChainComplexMap => (f,g) -> (
      complete f;
      complete g;
      scan(union(spots f, spots g), i -> h#i = f_i ++ g_i);
-     h.cache.components = {f,g};
+     h.cache.components = join(components f, components g);
      h.cache.formation = BinaryOperation { symbol ++, f, g };
      h)
 
@@ -585,7 +585,7 @@ ChainComplex.directSum = args -> (
      scan(args,D -> (complete D; complete D.dd;));
      scan(unique flatten (args/spots), n -> C#n = directSum apply(args, D -> D_n));
      scan(spots C, n -> if C#?(n-1) then C.dd#n = directSum apply(args, D -> D.dd_n));
-     C.cache.components = toList args;
+     C.cache.components = toList flatten apply(args, components);
      C.cache.formation = FunctionApplication { directSum, args };
      C)
 ChainComplex ++ ChainComplex := ChainComplex => (C,D) -> directSum(C,D)

@@ -347,7 +347,7 @@ Complex.directSum = args -> (
             );
         complex maps
         );
-    D.cache.components = toList args;
+    D.cache.components = toList flatten apply(args, components);
     D    
     )
 Complex ++ Complex := Complex => (C,D) -> directSum(C,D)

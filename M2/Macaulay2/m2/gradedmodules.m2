@@ -231,7 +231,7 @@ GradedModule.directSum = v -> (
      spts = keys spts;
      scan(spts, i -> E#i = directSum apply(v, M -> M_i));
      if not E.?cache then E.cache = new CacheTable;
-     E.cache.components = v;
+     E.cache.components = toList flatten apply(v, components);
      E.cache.formation = FunctionApplication { directSum, v };
      E)
 
@@ -252,7 +252,7 @@ GradedModuleMap.directSum = args -> (
 	  j -> directSum apply(args, f -> f_j), Degree => d);
      g.cache = new CacheTable;
      if not g.?cache then g.cache = new CacheTable;
-     g.cache.components = toList args;
+     g.cache.components = toList flatten apply(args, components);
      g.cache.formation = FunctionApplication { directSum, args };
      g
      )

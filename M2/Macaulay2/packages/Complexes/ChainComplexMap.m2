@@ -419,7 +419,7 @@ ComplexMap.directSum = args -> (
     spots := unique flatten(args/(f -> keys f.map));
     maps := hashTable for i in spots list i => directSum(args/(f -> f_i));
     result := map(tar,src,maps,Degree=>deg);
-    result.cache.components = toList args;
+    result.cache.components = toList flatten apply(args, components);
     if all(args, isCommutativeCached) then 
         result.cache.isCommutative = true;
     result

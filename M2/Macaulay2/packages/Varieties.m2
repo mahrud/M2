@@ -380,7 +380,7 @@ CoherentSheaf ? CoherentSheaf := lookup(symbol ?, Module, Module)
 CoherentSheaf.directSum = args -> (
     assertSameVariety args;
     F := sheaf(variety args#0, directSum apply(args, module));
-    F.cache.components = toList args;
+    F.cache.components = toList flatten apply(args, components);
     F)
 CoherentSheaf ++ CoherentSheaf := CoherentSheaf => (F, G) -> CoherentSheaf.directSum(F, G)
 CoherentSheaf ** CoherentSheaf := CoherentSheaf => (F, G) -> sheaf(F.variety, F.module ** G.module)

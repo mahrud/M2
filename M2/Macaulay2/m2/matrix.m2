@@ -309,7 +309,7 @@ Module.directSum = args -> (
 	       else subquotient(
 		    directSum apply(args,generators), 
 		    directSum apply(args,relations)));
-	  N.cache.components = toList args;
+	  N.cache.components = toList flatten apply(args, components);
 	  N.cache.formation = FunctionApplication (directSum, args);
 	  N)
 Module ^ ZZ := Module => (M, i) -> if i > 0 then Module.directSum (i:M) else 0*M

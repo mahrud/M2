@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - feature/directSum
       - SheafMaps
       - quickfix/Hom
       - Dmodules

@@ -583,19 +583,19 @@ resolutionOfChainComplex ChainComplex := o -> C -> (
     if len >= 1 then(
 	G := reslist_1;
     	F = cone extend(F,G, mats_1);
-    	comp = comp | {F_1^[1]}
+	comp = comp | {F_1^[-1]}
 	);
     k := null;
     phi := null;
     for i from 2 to len do(
 	G = reslist_i;
 	k = syz F.dd_(i-1);
-	phi := (mats_i)//(F_(i-1)^[1]*k);
-	--note: F_(i-1)^[1] is the projection to the free cover of C_(i-1)
+	phi := mats_i // (F_(i-1)^[-1] * k);
+	--note: F_(i-1)^[-1] is the projection to the free cover of C_(i-1)
 	--so phi is the lifting of mats_i, to the source of k,
 	--and k*phi is the induced map to F_(i-1).
 	F = cone extendFromMiddle(F,G,k*phi,i-1);
-	comp = comp |{F_i^[1]};
+	comp = comp | {F_i^[-1]}
 	);
 --    compMap := chainComplexMap(C[minC],F,comp);
 --    compMap := chainComplexMap(C,F[-minC],comp);    

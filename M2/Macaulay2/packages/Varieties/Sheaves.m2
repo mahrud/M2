@@ -598,6 +598,7 @@ toString   SumOfTwists := toString @@ expression
 --      map(S^1, S^-(degrees S), {apply(generators S, flatten degrees S, times)})
 --      )
 
+-- TODO: make this a ScriptedFunctor so cotangentSheaf_X^2(2) computes \Omega_X^2(2)
 -- TODO: remove MinimalGenerators option and let user call prune?
 cotangentSheaf = method(TypicalValue => CoherentSheaf,
     Options => options exteriorPower ++ { MinimalGenerators => true })

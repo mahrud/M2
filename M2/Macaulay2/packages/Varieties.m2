@@ -63,8 +63,8 @@ export {
     "sheafExt",
     "sheafHom",
     "tangentSheaf",
-    "cotangentSheaf",
-    "canonicalBundle",
+    "cotangentSheaf",  "Ω" => "cotangentSheaf",
+    "canonicalBundle", "ω" => "canonicalBundle",
     "idealSheaf",
     "isProjective",
     "isLocallyFree",
@@ -713,6 +713,7 @@ PP CoherentSheaf := ProjectiveVariety => F -> tryHooks((PP, CoherentSheaf), F,
 --      map(S^1, S^-(degrees S), {apply(generators S, flatten degrees S, times)})
 --      )
 
+-- TODO: make this a ScriptedFunctor so cotangentSheaf_X^2(2) computes \Omega_X^2(2)
 -- TODO: this is the slowest part of hh and euler, look into other strategies
 -- TODO: simplify caching here and in minimalPresentation
 cotangentSheaf = method(TypicalValue => CoherentSheaf, Options => options exteriorPower ++ { MinimalGenerators => true })

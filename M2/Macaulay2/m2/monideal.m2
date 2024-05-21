@@ -9,7 +9,9 @@ needs "res.m2"
 
 MonomialIdeal = new Type of Ideal
 MonomialIdeal.synonym = "monomial ideal"
+
 monomialIdeal = method(TypicalValue => MonomialIdeal,Dispatch => Thing)
+ring MonomialIdeal := I -> I.ring
 numgens MonomialIdeal := I -> I.numgens
 raw MonomialIdeal := I -> I.RawMonomialIdeal
 generators MonomialIdeal := opts -> (cacheValue symbol generators) ( (I) -> map(ring I, rawMonomialIdealToMatrix raw I) )
@@ -116,8 +118,6 @@ monomialIdeal Module := MonomialIdeal => (M) -> (
      )
 
 monomialIdeal RingElement := MonomialIdeal => v -> monomialIdeal {v}
-ring MonomialIdeal := I -> I.ring
-numgens MonomialIdeal := I -> I.numgens
 MonomialIdeal _ ZZ := (I,n) -> (generators I)_(0,n)
 
 isMonomialIdeal = method(TypicalValue => Boolean)
@@ -165,6 +165,9 @@ jacobian MonomialIdeal := Matrix => (I) -> jacobian generators I
 resolution MonomialIdeal := ChainComplex => opts -> I -> resolution ideal I
 betti MonomialIdeal := opts -> I -> betti(ideal I,opts)
 minimalBetti MonomialIdeal := opts -> I -> minimalBetti(ideal I,opts)
+
+-- TODO: should this just call gb?
+trim MonomialIdeal := MonomialIdeal => opts -> I -> monomialIdeal trim(module I, opts)
 
 lcm MonomialIdeal := (I) -> (if I.cache.?lcm 
   then I.cache.lcm

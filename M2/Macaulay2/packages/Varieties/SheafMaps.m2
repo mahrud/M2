@@ -234,6 +234,7 @@ quotient'(SheafMap, SheafMap) := SheafMap => opts -> (f, g) -> (
 
 -- base change
 -- FIXME: this is a kludge; should we define Section as the parent of SheafOfRings?
+promote(Thing,    Nothing)     := Thing    => (x, O) -> promote(x, ring variety O)
 promote(SheafMap, Nothing)     := SheafMap => (f, O) -> if O === ring f         then f else error "base change of maps of sheaves is not yet implemented"
 promote(SheafMap, RingElement) := SheafMap => (f, R) -> if R === ring variety f then f else error "base change of maps of sheaves is not yet implemented"
 

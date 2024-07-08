@@ -472,6 +472,24 @@ texMath Complex := String => C -> (
         )
     )
 
+cover Complex := Complex => C -> (
+    (lo, hi) := concentration C;
+    if lo == hi
+    then complex(cover C_lo, Base => lo)
+    else complex applyValues(C.dd.map, cover))
+
+super Complex := Complex => C -> (
+    (lo, hi) := concentration C;
+    if lo == hi
+    then complex(super C_lo, Base => lo)
+    else complex applyValues(C.dd.map, super))
+
+ambient Complex := Complex => C -> (
+    (lo, hi) := concentration C;
+    if lo == hi
+    then complex(ambient C_lo, Base => lo)
+    else complex applyValues(C.dd.map, ambient))
+
 gradedModule Complex := Complex => C -> (
     (lo,hi) := concentration C;
     complex(for i from lo to hi list C_i, Base=>lo)

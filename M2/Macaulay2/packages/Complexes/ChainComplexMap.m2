@@ -247,6 +247,13 @@ net ComplexMap := Net => f -> (
 
 texMath ComplexMap := String => f -> texMath expression f
 
+cover ComplexMap := ComplexMap => f -> (
+    map(cover target f, cover source f, i -> cover f_i, Degree => degree f))
+super ComplexMap := ComplexMap => f -> (
+    map(super target f, super source f, i -> super f_i, Degree => degree f))
+ambient ComplexMap := ComplexMap => f -> (
+    map(ambient target f, ambient source f, i -> ambient f_i, Degree => degree f))
+
 ComplexMap _ ZZ := Matrix => (f,i) -> (
     if f.map#?i then f.map#i else map((target f)_(i + degree f), (source f)_i, 0))
 ComplexMap ^ ZZ := ComplexMap => (f,n) -> (

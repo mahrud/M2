@@ -440,6 +440,8 @@ submatrix'(Matrix, Nothing,     VisibleList) := (m, null, cols) -> submatrix'(m,
 submatrix'(Matrix, Nothing,     Nothing)     := (m, null, null) -> m
 
 submatrixByDegrees = method()
+submatrixByDegrees(Matrix, ZZ,       ZZ)       :=
+submatrixByDegrees(Matrix, List,     List)     := (m, tardeg, srcdeg) -> submatrixByDegrees(m, (tardeg, tardeg), (srcdeg, srcdeg))
 submatrixByDegrees(Matrix, Sequence, Sequence) := (m, tarBox, srcBox) -> (
     -- tarBox should be a sequence e.g. ({1},{4}), or ({1,2,3},{1,3,4}), or (, {1}) or ({1}, )
     -- each null is same as {}, meaning either no lower bound, or no higher bound.
@@ -472,8 +474,13 @@ submatrixByDegrees(Matrix, Sequence, Sequence) := (m, tarBox, srcBox) -> (
     psrc := rawSelectByDegrees(raw src, srcL, srcH);
     submatrix(m, ptar, psrc)
     )
-submatrixByDegrees(Matrix, ZZ, ZZ) := (m, lo, hi) -> submatrixByDegrees(m, ({lo},{lo}), ({hi},{hi}))
-submatrixByDegrees(Matrix, List, List) := (m, lo, hi) -> submatrixByDegrees(m, (lo,lo), (hi,hi))
+
+-- return the submatrix with given degrees of target and source
+submatrixByDegrees(Matrix, Sequence) := (m, degs) -> (
+    (tar, src) := degs;
+    col := if src =!= null then positions(degrees source m, deg -> isMember(deg, src));
+    row := if tar =!= null then positions(degrees target m, deg -> isMember(deg, tar));
+    submatrix(m, row, col))
 
 -----------------------------------------------------------------------------
 

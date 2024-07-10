@@ -259,7 +259,8 @@ basisHelper = (opts, lo, hi, M) -> (
     if isPositivelyGraded R and #hi == 1 and lo == hi
     and opts.Variables === null and all(degrees M, deg -> lo <= deg) -- TODO: really deg is contained in lo + eff
     then return liftBasis(M, phi,
-	raw map(M, , submatrixByDegrees(generators M, (,), (lo, hi))), opts.Degree);
+	-- TODO: make sure this inducedMap does not compute a gb
+	raw inducedMap(M, , submatrixByDegrees(generators M, (,), (lo, hi))), opts.Degree);
     -- TODO: the multigraded version is slower, but works as follows:
     -- lo <= coneMin(coneFromVData effGenerators ring M, degrees M)
 

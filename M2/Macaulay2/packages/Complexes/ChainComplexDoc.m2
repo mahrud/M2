@@ -2017,7 +2017,6 @@ doc ///
    SeeAlso
      (dual, Complex)
      (prune, Complex)
-     (homology, ZZ, Complex)
 ///
 
 
@@ -2025,16 +2024,18 @@ doc ///
 doc ///
    Key
      (homology,ZZ,Complex)
+     (cohomology,ZZ,Complex)
    Headline
-     homology of a complex
+     homology or cohomology module of a complex
    Usage
      HH_i C
+     HH^i C
    Inputs
      i:ZZ
      C:Complex
    Outputs
      :Module
-       the $i$-th homology of the complex
+       the $i$-th homology or cohomology of the complex
    Description
     Text
       The $i$-th homology of a complex $C$ is the quotient
@@ -2070,13 +2071,22 @@ doc ///
       C = complex {d1,d2}
       dd^C
       HH C
-      prune HH C
       prune HH_0 C
       prune HH_1 C
       prune HH_2 C
+    Text
+      The $i$-th cohomology of a complex $C$ is the $(-i)$-th
+      homology of $C$.
+    Example
+      S = ZZ/101[a..d, DegreeRank=>4];
+      I = intersect(ideal(a,b),ideal(c,d))
+      C = dual freeResolution (S^1/I)
+      prune HH^1 C
+      prune HH^2 C
+      prune HH^3 C
    SeeAlso
-     (prune, Complex)
-     (homology, Complex)
+     prune
+     (dual, Complex)
 ///
 
 doc ///

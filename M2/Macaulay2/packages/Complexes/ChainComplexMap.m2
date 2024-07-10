@@ -554,6 +554,7 @@ prune ComplexMap := ComplexMap => opts -> f -> (
 homology(ZZ,ComplexMap) := Matrix => opts -> (i,f) -> (
     inducedMap(homology(i+degree f,target f), homology(i,source f),f_i)
     )
+cohomology(ZZ,ComplexMap) := Matrix => opts -> (i,f) -> homology(-i, f)
 homology ComplexMap := ComplexMap => opts -> (f) -> (
     C := source f;
     D := target f;

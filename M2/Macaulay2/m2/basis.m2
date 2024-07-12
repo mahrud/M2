@@ -258,8 +258,10 @@ basisHelper = (opts, lo, hi, M) -> (
     -- TODO: make this a hook and simplify this mess
     if isPositivelyGraded R and #hi == 1 and lo == hi
     and opts.Variables === null and all(degrees M, deg -> lo <= deg) -- TODO: really deg is contained in lo + eff
+    and false -- this is currently broken, gives zero columns
     then return liftBasis(M, phi,
 	-- TODO: make sure this inducedMap does not compute a gb
+	-- FIXME: this mingens image is to trim the zero columns
 	raw inducedMap(M, , submatrixByDegrees(generators M, (,), (lo, hi))), opts.Degree);
     -- TODO: the multigraded version is slower, but works as follows:
     -- lo <= coneMin(coneFromVData effGenerators ring M, degrees M)

@@ -15,8 +15,8 @@ ring Matrix := f -> (
      if R =!= S then error "expected module map with source and target over the same ring";
      if f.?RingMap then error "expected module map with no ring map";
      R)
-source Matrix := f -> f.source
-target Matrix := f -> f.target
+source Matrix := Module => f -> f.source
+target Matrix := Module => f -> f.target
 
 precision Matrix := precision @@ ring
 

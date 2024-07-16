@@ -642,18 +642,22 @@ inducedMap = method (
 	  Degree => null 
 	  })
 -- TODO: hookify this, so people can add more application specific induced maps
-inducedMap(Module, Module)          := Matrix => opts -> (M, N) -> (
+inducedMap(Module,  Module)          := Matrix => opts -> (M, N) -> (
     if ambient M =!= ambient N then error "inducedMap: expected modules with same ambient free module";
     -- e.g. avoid a gb computation for inducedMap(M, image basis(d, M))
     if N.cache.?Monomials and M === target N.cache.Monomials
     then map(M, N, N.cache.Monomials, Degree => opts.Degree)
     else inducedMap(M, N, id_(ambient N), opts))
-inducedMap(Module, Nothing, Matrix) := Matrix => opts -> (M, N, f) -> (
+inducedMap(Module,  Nothing, Matrix) := Matrix => opts -> (M, N, f) -> (
     B := image f;
     -- e.g. avoid a gb computation for inducedMap(image f, , f)
     if M === target B.cache.Monomials
     then map(M, source B.cache.Monomials, B.cache.Monomials, Degree => opts.Degree)
     else inducedMap(M, source f, f, opts))
+inducedMap(Nothing, Module,  Matrix) := Matrix => opts -> (M, N, f) -> (
+    -- TODO: avoid a gb computation for inducedMap(, kernel f, f)
+    inducedMap(target f, N, f, opts))
+inducedMap(Nothing, Nothing, Matrix) := Matrix => opts -> (M, N, f) -> inducedMap(target f, source f, f, opts)
 inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
      N := target f;
      M := source f;
@@ -675,8 +679,6 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
 	  if not isWellDefined f' then error "inducedMap: expected matrix to induce a well-defined map";
 	  );
      f')
-inducedMap(Nothing,Module,Matrix) := o -> (M,N,f) -> inducedMap(target f,N, f,o)
-inducedMap(Nothing,Nothing,Matrix) := o -> (M,N,f) -> inducedMap(target f,source f, f,o)
 
 addHook((inducedMap, Module, Module, Matrix), Strategy => Default, (opts, N', M', f) -> (
      N := target f;

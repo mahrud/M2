@@ -185,7 +185,9 @@ inducedBasisMap = (G, F, f) -> (
     -- we previously computed basis for.
     psi := f * F.cache.Monomials; -- equivalent to f * inducedMap(source f, , gens F)
     phi := last coefficients(ambient psi, Monomials => generators G);
-    map(G, F, phi, Degree => degree f))
+    -- TODO: this line computes a presentation of G, which can be slow
+    -- TODO: get this to work: phi = G.cache.Monomials * phi;
+    elapsedTime map(G, F, phi, Degree => degree f))
     -- TODO: benchmark against inducedTruncationMap in Truncations.m2
     -- f' := f * inducedMap(source f, F)       * inducedMap(F, source generators F, generators F);
     -- map(G, F, inducedMap(G, source f', f') // inducedMap(G, source generators G, generators G), Degree => degree f))

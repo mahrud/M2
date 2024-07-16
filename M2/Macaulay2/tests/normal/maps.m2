@@ -20,3 +20,38 @@ assert isHomogeneous g
 assert (kernel g == 0)
 assert( coimage g == S^1 )
 
+end
+-- FIXME
+S = QQ[x,y]
+f = basis(1, image 1_S)
+target f
+map(target f, , f)
+
+F = image f
+debug Core
+
+restart
+R = QQ[a..d];
+M = coker matrix {{a*b, a*c, b*c, a*d}}
+N = image map(R^{4:-2}, , {{-c, -c, 0, -d}, {b, 0, -d, 0}, {0, a, 0, 0}, {0, 0, c, b}})
+P = image map(R^{4:-3}, , {{d}, {0}, {-c}, {b}})
+
+errorDepth=1
+gbTrace=1
+f = basis(4, map(P, R^0, 0))
+inducedMap(image f, , f)
+
+f = basis(5, P)
+F = image f
+target f
+F.Monomials
+gbTrace = 3
+inducedMap(target f, , F.Monomials)
+inducedMap(target f, F)
+map(target f, F, F.Monomials
+target f == F.Monomials.target
+F.Monomials
+
+
+gens F
+cover f

@@ -669,8 +669,17 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
      else (
 	if ambient N' =!= ambient N then error "inducedMap: expected new target and target of map provided to be subquotients of same free module";
 	if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module");
-     c := runHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f));
-     (f', g, gbN', gbM) := if c =!= null then c else error "inducedMap: no method implemented for this type of input";
+    (f', g, gbN', gbM) := tryHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f),
+	-- this is the default strategy which is used after
+	-- all additional strategies have been exhausted.
+	(opts, N', M', f) -> (
+	    N := target f;
+	    M := source f;
+	    gbM  := gb(M,  ChangeMatrix => true);
+	    gbN' := gb(N', ChangeMatrix => true);
+	    g := generators N * cover f * (generators M' // gbM);
+	    f' := map(N', M', g // gbN', Degree => opts.Degree ?? degree f);
+	    (f', g, gbN', gbM)));
      if opts.Verify then (
 	  if relations M % relations M' != 0 then error "inducedMap: expected new source not to have fewer relations";
 	  if relations N % relations N' != 0 then error "inducedMap: expected new target not to have fewer relations";
@@ -679,16 +688,6 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
 	  if not isWellDefined f' then error "inducedMap: expected matrix to induce a well-defined map";
 	  );
      f')
-
-addHook((inducedMap, Module, Module, Matrix), Strategy => Default, (opts, N', M', f) -> (
-     N := target f;
-     M := source f;
-     gbM  := gb(M,  ChangeMatrix => true);
-     gbN' := gb(N', ChangeMatrix => true);
-     g := generators N * cover f * (generators M' // gbM);
-     f' := g // gbN';
-     f' = map(N',M',f',Degree => if opts.Degree === null then degree f else opts.Degree);
-     (f', g, gbN', gbM)))
 
 -- TODO: deprecate this in favor of isWellDefined
 inducesWellDefinedMap = method(TypicalValue => Boolean)

@@ -666,7 +666,7 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
     if isFreeModule N and N =!= ambient N' and rank N === rank ambient N' then f = map(N = ambient N', source f, f);
     if isFreeModule M and M =!= ambient M' and rank M === rank ambient M' then f = map(target f, M = ambient M', f);
     if ambient N' =!= ambient N then error "inducedMap: expected new target and target of map provided to be subquotients of same free module";
-    if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module");
+    if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module";
     (f', f0, gbN', gbM) := tryHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f),
 	-- this is the default strategy which is used after
 	-- all additional strategies have been exhausted.

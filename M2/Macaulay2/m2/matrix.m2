@@ -667,7 +667,7 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
     if isFreeModule M and M =!= ambient M' and rank M === rank ambient M' then f = map(target f, M = ambient M', f);
     if ambient N' =!= ambient N then error "inducedMap: expected new target and target of map provided to be subquotients of same free module";
     if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module");
-    (f', g, gbN', gbM) := tryHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f),
+    (f', f0, gbN', gbM) := tryHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f),
 	-- this is the default strategy which is used after
 	-- all additional strategies have been exhausted.
 	(opts, N', M', f) -> (
@@ -675,14 +675,14 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
 	    M := source f;
 	    gbM  := gb(M,  ChangeMatrix => true);
 	    gbN' := gb(N', ChangeMatrix => true);
-	    g := generators N * cover f * (generators M' // gbM);
-	    f' := map(N', M', g // gbN', Degree => opts.Degree ?? degree f);
-	    (f', g, gbN', gbM)));
+	    f0 := generators N * cover f * (generators M' // gbM);
+	    f' := map(N', M', f0 // gbN', Degree => opts.Degree ?? degree f);
+	    (f', f0, gbN', gbM)));
      if opts.Verify then (
 	  if relations M % relations M' != 0 then error "inducedMap: expected new source not to have fewer relations";
 	  if relations N % relations N' != 0 then error "inducedMap: expected new target not to have fewer relations";
 	  if generators M' % gbM != 0 then error "inducedMap: expected new source not to have more generators";
-	  if g % gbN' != 0 then error "inducedMap: expected matrix to induce a map";
+	  if f0 % gbN' != 0 then error "inducedMap: expected matrix to induce a map";
 	  if not isWellDefined f' then error "inducedMap: expected matrix to induce a well-defined map";
 	  );
      f')

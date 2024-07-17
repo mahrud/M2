@@ -659,16 +659,14 @@ inducedMap(Nothing, Module,  Matrix) := Matrix => opts -> (M, N, f) -> (
     inducedMap(target f, N, f, opts))
 inducedMap(Nothing, Nothing, Matrix) := Matrix => opts -> (M, N, f) -> inducedMap(target f, source f, f, opts)
 inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
-     N := target f;
-     M := source f;
-     if ring N' =!= ring M' or ring N' =!= ring f then error "inducedMap: expected modules and map over the same ring";
-    if isFreeModule N and isFreeModule M and (
-	N =!= ambient N' and rank N === rank ambient N' or
-	M =!= ambient M' and rank M === rank ambient M')
-     then f = map(N = ambient N', M = ambient M', f)
-     else (
-	if ambient N' =!= ambient N then error "inducedMap: expected new target and target of map provided to be subquotients of same free module";
-	if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module");
+    if not same(ring \ {N', M', f}) then error "inducedMap: expected modules and map over the same ring";
+    N := target f;
+    M := source f;
+    -- if f is a map of free modules, we replace it with the induced map between ambients of N' and M'.
+    if isFreeModule N and N =!= ambient N' and rank N === rank ambient N' then f = map(N = ambient N', source f, f);
+    if isFreeModule M and M =!= ambient M' and rank M === rank ambient M' then f = map(target f, M = ambient M', f);
+    if ambient N' =!= ambient N then error "inducedMap: expected new target and target of map provided to be subquotients of same free module";
+    if ambient M' =!= ambient M then error "inducedMap: expected new source and source of map provided to be subquotients of same free module");
     (f', g, gbN', gbM) := tryHooks((inducedMap, Module, Module, Matrix), (opts, N', M', f),
 	-- this is the default strategy which is used after
 	-- all additional strategies have been exhausted.

@@ -31,15 +31,25 @@ F = image f
 debug Core
 
 restart
+gbTrace=1
+errorDepth=1
 R = QQ[a..d];
 M = coker matrix {{a*b, a*c, b*c, a*d}}
 N = image map(R^{4:-2}, , {{-c, -c, 0, -d}, {b, 0, -d, 0}, {0, a, 0, 0}, {0, 0, c, b}})
 P = image map(R^{4:-3}, , {{d}, {0}, {-c}, {b}})
+f = basis(5, P)
+F = image f
+inducedMap(P, , gens F) -- 4 gbTrace lines
 
-errorDepth=1
-gbTrace=1
-f = basis(4, map(P, R^0, 0))
+
+f = vars R
 inducedMap(image f, , f)
+
+f = basis(4, map(P, R^1, {P_0})) -- TODO: this should work
+f = basis(4, map(P, R^1, matrix P_0))
+B = image f
+inducedMap(P, , f) -- good
+inducedMap(B, , f) -- bad?
 
 f = basis(5, P)
 F = image f

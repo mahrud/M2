@@ -459,8 +459,6 @@ document {
 	  (symbol //, QQ, ZZ),
 	  (symbol //, ZZ, ZZ),
 	  (symbol //, Number, InfiniteNumber),
-	  (symbol //, Constant, InfiniteNumber),
-	  (symbol //, InfiniteNumber, Constant),
 	  (symbol //, InfiniteNumber, InfiniteNumber),
 	  (symbol //, InfiniteNumber, ZZ),
 	  (symbol //, InfiniteNumber, QQ),

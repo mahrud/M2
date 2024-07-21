@@ -13,6 +13,7 @@
 /* MES, On my mac, 10.12.4, lapack include file is at
   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers/clapack.h
 */
+#ifndef _MKL_LAPACK_H_
 extern "C" {
 int dgesv_(int *n,      // number of rows in A
            int *nrhs,   // number of right hand sides
@@ -389,6 +390,7 @@ void cblas_zgemm(
     void *C,            // matrix C; on output, alphaAB+betaC
     const int ldc);     // rows of C
 };
+#endif
 
 class Lapack
 {

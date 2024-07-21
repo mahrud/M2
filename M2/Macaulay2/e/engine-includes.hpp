@@ -7,6 +7,10 @@
 
 // IWYU pragma: begin_exports
 
+// For zgetrf_ from Intel MKL
+// See mkl_lapack.hpp and mkl_types.hpp
+#define MKL_Complex16 double
+
 #include <M2/config.h>
 
 #if !defined(SAFEC_EXPORTS)

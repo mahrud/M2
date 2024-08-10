@@ -1,36 +1,39 @@
+---------------------------------------------------------------------------
+-- PURPOSE: to compute push forwards of modules and coherent sheaves
+--
+-- UPDATE HISTORY:
+-- - Created Dec 2009 by Claudiu Raicu
+-- - Updated Oct 2015 by Karl Schwede
+-- - Updated May 2021 by Mike Stillman and David Eisenbud
+--
 -- TODO:
 --  finish doc
 --  how to interact with pushForward?
 --   issues: pushForward seems somewhat faster, in the homogeneous case...
 --           also, are these stashed in that case?  (They are not here, yet).
-
+---------------------------------------------------------------------------
 newPackage(
-        "PushForward",
-        Version => "0.6",
-        Date => "May 14, 2021",
-        Authors => {
-            {Name => "Claudiu Raicu", 
-                Email => "craicu@nd.edu", 
-                HomePage => "http://www3.nd.edu/~craicu"},
-            {Name => "David Eisenbud", 
-                Email => "de@msri.org", 
-                HomePage => "http://www.msri.org/~de"},
-            {Name => "Mike Stillman", 
-                Email => "mike@math.cornell.edu", 
-                HomePage => "http://pi.math.cornell.edu/~mike"}
-            },
-        Headline => "push forwards of finite ring maps",
-        Keywords => {"Commutative Algebra"}
-        )
-        
--- note, this version has a slight change added by Karl Schwede.  It has an option to turn off the prune calls.
--- Recently, David Eisenbud and Mike Stillman have extended it, fixing some bugs too.
+    "PushForward",
+    Version => "0.7",
+    Date => "May 14, 2024",
+    Authors => {
+	{ Name => "Claudiu Raicu",  Email => "craicu@nd.edu",         HomePage => "https://www3.nd.edu/~craicu" },
+	{ Name => "David Eisenbud", Email => "de@berkeley.edu",       HomePage => "https://math.berkeley.edu/~de" },
+	{ Name => "Mike Stillman",  Email => "mike@math.cornell.edu", HomePage => "https://pi.math.cornell.edu/~mike" }
+	},
+    Headline => "push forwards of ring maps",
+    Keywords => { "Commutative Algebra", "Algebraic Geometry" }
+    )
 
 export {
     "isModuleFinite",
-    "pushFwd", 
-    "NoPrune"
+    "pushFwd",
+    "NoPrune",
     }
+
+-----------------------------------------------------------------------------
+-- isModuleFinite
+-----------------------------------------------------------------------------
 
 isInclusionOfCoefficientRing = method()
 isInclusionOfCoefficientRing RingMap := Boolean => inc -> (
@@ -64,7 +67,7 @@ isFinite1 = (f) -> (
     iGraph := ideal(matrix{xvars}-sub(pols,matrix{yvars}));
     I := iA+iB+iGraph;
     inI := leadTerm I;
-    r := ideal(sub(inI,matrix{yvars | splice{m:0}}));     
+    r := ideal(sub(inI,matrix{yvars | splice{m:0}}));
     for i from 1 to n do
         if ideal(sub(gens r,matrix{{(i-1):0,1_R,(m+n-i):0}}))!=ideal(1_R) then
             return false;
@@ -84,6 +87,10 @@ isModuleFinite RingMap := Boolean => f -> (
         isFinite1 f
     )
 
+-----------------------------------------------------------------------------
+-- pushFwd
+-----------------------------------------------------------------------------
+
 pushFwd=method(Options => {NoPrune => false})
 pushFwd RingMap := Sequence => o -> (f) ->
 --pfB is B^1 as an A-module
@@ -98,7 +105,7 @@ pushFwd RingMap := Sequence => o -> (f) ->
 
      pfB := makeModule(B^1,f,matB);
      g := map(pfB,,gens pfB);
-     mapf := (b) -> g*(mapfaux b); 
+     mapf := (b) -> g*(mapfaux b);
      (pfB,matB,mapf)
      )
 
@@ -113,7 +120,7 @@ pushFwd(RingMap,Module):=Module=>o->(f,N)->
      C:=B/aN;
      bc:=map(C,B);
      g:=bc*f;
-     
+
      matB:=(pushAuxHgs g)_0;
      if (o.NoPrune == false) then prune makeModule(N**C,g,matB) else makeModule(N**C,g,matB)
      )
@@ -125,47 +132,47 @@ pushFwd(RingMap,Matrix):=Matrix=>o->(f,d)->
      pols:=f.matrix;
      pM:=source d;
      pN:=target d;
-     
+
      amn:=intersect(ann pM,ann pN);
      C:=B/amn;
      bc:=map(C,B);
-     g:=bc*f;     
+     g:=bc*f;
      M:=pM**C;
      N:=pN**C;
-   
+
      psh:=pushAuxHgs g;
      matB:=psh_0;
-     mapf:=psh_1;     
-          
+     mapf:=psh_1;
+
      pushM:=makeModule(M,g,matB);
      pushN:=makeModule(N,g,matB);
-     
+
      matMap:=symbol matMap;
      gR:=matB**matrix d;
      c:=numgens source gR;
      l:=numgens target gR;
      k := numcols matB;
      matMap=mutableMatrix(A,k*l,c);
-     
+
      for i1 from 0 to c-1 do
      	  for i2 from 0 to l-1 do
 	  (
        	       e:=mapf(gR_i1_i2);
-	       for i3 from 0 to k-1 do matMap_(i2+l*i3,i1)=e_0_i3;	       
+	       for i3 from 0 to k-1 do matMap_(i2+l*i3,i1)=e_0_i3;
 	   );
 
           if (o.NoPrune == false) then prune map(pushN,pushM,matrix matMap) else map(pushN,pushM,matrix matMap)
      )
 
-
 -- TODO: stash the matB, pf?  Make accessor functions to go to/from gens of R over A, or M to M_A.
 -- TODO: given: M = pushFwd N, get the maps from N --> M (i.e. stash it somewhere).
 --   also, we want the map going backwards too: given an element of M, lift it to N.
 
-
+-----------------------------------------------------------------------------
 -- makeModule
+-----------------------------------------------------------------------------
 -- internal function which implements the push forward of a module.
--- input: 
+-- input:
 --   N     : Module, a module over B
 --   f     : RingMap, A --> B
 --   matB  : matrix over B, with one row, whose entries form a basis for B over A.
@@ -186,7 +193,7 @@ makeModule(Module,RingMap,Matrix):=(N,f,matB)->
      A:=source f;
      k:=(numgens ambient N) * (numgens source matB);
      --mp:=try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N);
-     mp := if isHomogeneous f then 
+     mp := if isHomogeneous f then
                try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N)
            else
                map(auxN,A^k,f,matB**gens N);
@@ -202,6 +209,10 @@ makeModule(Module,RingMap,Matrix):=(N,f,matB)->
     coker last coefficients(g, Monomials => m)
 *-
 
+-----------------------------------------------------------------------------
+-- pushAuxHgs
+-----------------------------------------------------------------------------
+
 pushAuxHgs=method()
 pushAuxHgs(RingMap):=(f)-> (
 
@@ -210,12 +221,12 @@ pushAuxHgs(RingMap):=(f)-> (
 
     matB := null;
     mapf := null;
-    
+
      if isInclusionOfCoefficientRing f then (
      --case when the source of f is the coefficient ring of the target:
 	 if not isModuleFinite target f then error "expected a finite map";
 	 matB = basis(B, Variables => 0 .. numgens B - 1);
-         mapf = if isHomogeneous f 
+	 mapf = if isHomogeneous f
            then (b) -> (
              (mons,cfs) := coefficients(b,Monomials=>matB);
              lift(cfs, A)
@@ -224,14 +235,14 @@ pushAuxHgs(RingMap):=(f)-> (
              (mons,cfs) := coefficients(b,Monomials=>matB);
              -- strip degrees on the target, as otherwise, with differing degrees in A and B,
              -- the degree cannot always be lifted:
-             cfs = map(B^(numrows cfs),B^(numcols cfs),cfs); 
+             cfs = map(B^(numrows cfs),B^(numcols cfs),cfs);
 	     lift(cfs, A)
 	     );
          return(matB,mapf)
 	 );
 
      pols:=f.matrix;
-          
+
      FlatA:=flattenRing A;
      FA:=FlatA_0;
      iFA:=ideal FA;
@@ -244,9 +255,9 @@ pushAuxHgs(RingMap):=(f)-> (
      RB:=try(ring source presentation FB) else FB;
      m:=numgens FA;
      n:=numgens FB;
-     
+
      pols=pols_{0..(m-1)};
-          
+
      R := try(tensor(RB, RA, Join => false)) else tensor(RB, RA, Join => true);
      xvars := (gens R)_{n..n+m-1};
      yvars := (gens R)_{0..n-1};
@@ -255,8 +266,8 @@ pushAuxHgs(RingMap):=(f)-> (
      iGraph:=ideal(matrix{xvars}-sub(pols,matrix{yvars}));
      I:=iA+iB+iGraph;
      inI:=leadTerm I;
-     
-     r:=ideal(sub(inI,matrix{yvars | splice{m:0}}));     
+
+     r:=ideal(sub(inI,matrix{yvars | splice{m:0}}));
      for i from 1 to n do
 	if ideal(sub(gens r,matrix{{(i-1):0,1_R,(m+n-i):0}}))!=ideal(1_R) then
      	  error "map is not finite";
@@ -269,10 +280,14 @@ pushAuxHgs(RingMap):=(f)-> (
      toA:=map(A,R,flatten{n:0_A,varsA});
      mapf = (b)->(
 	  (mons,cfs):=coefficients((phi b)%I,Monomials=>mat,Variables=>yvars);
-	  toA cfs	  
+	  toA cfs
 	  );
-     matB,mapf     
+     matB,mapf
      )
+
+-----------------------------------------------------------------------------
+-- Documentation
+-----------------------------------------------------------------------------
 
 beginDocumentation()
 
@@ -286,14 +301,14 @@ doc ///
             Given a ring map $f \colon A \to B$, and a $B$-module $M$,
             $M$ has the structure of an $A$-module, and if this module is
             finitely generated over $A$, the routine @TO pushFwd@ in this package
-            will compute such an $A$-module.  This is also functorial, in that if a 
+            will compute such an $A$-module.  This is also functorial, in that if a
             map of $B$-modules (both of which are finitely generated over $A$), then
             @TO (pushFwd, RingMap, Matrix)@ will return the induced map
             on $A$-modules.
-            
+
             In an algebraic sense, this is really a pull back, but thinking geometrically,
             the functions here implement the push forward of a module (or sheaf).
-            
+
             This package was originally implemented by Claudiu Raicu, some changes were
             introduced by Karl Schwede, and later by David Eisenbud and Mike Stillman.
     Subnodes
@@ -310,12 +325,12 @@ doc ///
         push forward of a finite ring map
     Usage
         pushFwd f
-        pushFwd B	
+        pushFwd B
     Inputs
         f:RingMap
 	    or a ring B, and the map is taken to be the natural map from coefficientRing B
     Outputs
-        :Sequence 
+        :Sequence
     Description
         Text
             If $f: A \to B$ is a ring map, and $B$ is finitely generated as an $A$-module,
@@ -382,7 +397,7 @@ doc ///
 doc ///
     Key
         (pushFwd, RingMap, Matrix)
-        (pushFwd, Matrix)	
+        (pushFwd, Matrix)
     Headline
         push forward of a module map via a finite ring map
     Usage
@@ -412,18 +427,18 @@ doc ///
             target p == pushFwd(f, target g)
             kerg = pushFwd(f,ker g)
             kerp = prune ker p
-	    
+
 	    k = ZZ/32003
 	    A = k[x,y]/(y^4-2*x^3*y^2-4*x^5*y+x^6-y^7)
-	    A = k[x,y]/(y^3-x^7)	    
+	    A = k[x,y]/(y^3-x^7)
 	    B = integralClosure(A, Keep =>{})
     	    describe B
 	    f = map(B^1, B^1, matrix{{w_(3,0)}})
 	    g = pushFwd(icMap A, f)
 	    pushFwd(icMap A, f^2) == g*g
-	    
+
 	    A = kk[x]
-	    B = A[y, Join => false]/(y^3-x^7)	    
+	    B = A[y, Join => false]/(y^3-x^7)
 	    pushFwd B^1
 	    pushFwd matrix{{y}}
         Text
@@ -432,12 +447,12 @@ doc ///
 	    B = A[y,z,Join => false]/(y^3 - x*z, z^3-y^7);
             pushFwd B^1
 	    fy = pushFwd matrix{{y}}
-	    fz = pushFwd matrix{{z}};	    
+	    fz = pushFwd matrix{{z}};
 	    fx = pushFwd matrix{{x_B}};
     	    g =  pushFwd matrix{{y*z -x_B*z^2}}
 	    g == fy*fz-fx*fz^2
 	    fz^3-fy^7 == 0
-    SeeAlso   
+    SeeAlso
         (pushFwd, Module)
 ///
 
@@ -450,7 +465,7 @@ document{
        {TO (pushFwd,RingMap,Module), " - for a module"},
        {TO (pushFwd,RingMap,Matrix), " - for a map of modules"}
      }
-  }   
+  }
 
 -- document{
 --   Key => (pushFwd,RingMap),
@@ -471,7 +486,7 @@ document{
 --   g
 --   pf(a*b - c^2)
 --   ///,
---   Caveat => {TEX "In a previous version of this package, the third output was a function which assigned to each element of the target of ", TT "f", " its representation as an element of a free module 
+--   Caveat => {TEX "In a previous version of this package, the third output was a function which assigned to each element of the target of ", TT "f", " its representation as an element of a free module
 --       which surjected onto the pushed forward module."}
 --   }
 
@@ -564,7 +579,7 @@ Headline
 Description
  Text
   This is an optional argument for the @TO pushFwd@ function. Its default value is {\tt false},
-  which means that the presentation of a pushed forward module is pruned by default. If NoPrune 
+  which means that the presentation of a pushed forward module is pruned by default. If NoPrune
   is set to {\tt true}, then the prune calls in pushFwd are turned off.
  Example
   R5=QQ[a..e]
@@ -574,6 +589,10 @@ Description
   notpruned = pushFwd(G,M,NoPrune => true)
   pruned = pushFwd(G,M)
 ///
+
+-----------------------------------------------------------------------------
+-- Tests
+-----------------------------------------------------------------------------
 
 --test 0
 TEST ///
@@ -736,7 +755,7 @@ f = map(B,A)
 assert isModuleFinite f
 pN = pushFwd(f,N)
 assert(isFreeModule pN)
-assert(numgens pN == 3) 
+assert(numgens pN == 3)
 ///
 
 TEST///
@@ -768,7 +787,7 @@ TEST///
   restart
 *-
   debug  needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   A = kk[s,t]
   -- note: this ideal is NOT the rational quartic, and in fact has an annihilator over A.
@@ -790,7 +809,7 @@ TEST///
   restart
 *-
   debug  needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   A = kk[s,t]
   L = A[symbol b, symbol c, Join => false]/(b*c-s*t,c^3-b*t^2,s*c^2-b^2*t,b^3-s^2*c)
@@ -811,7 +830,7 @@ TEST///
   restart
 *-
   debug  needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   L = kk[s, symbol b, symbol c, t]/(b*c-s*t, t*b^2-s*c^2, b^3-s*c^2, c^3 - t*b^2)
   A = kk[s,t]
@@ -879,7 +898,7 @@ TEST ///
   (M,g,pf) = pushFwd B
   pushFwd B^1
   pushFwd B^{1}
-  fy = pushFwd matrix{{y}} 
+  fy = pushFwd matrix{{y}}
   fz = pushFwd matrix{{z}}
   assert(fy*fz == pushFwd matrix{{y*z}}) -- false
   assert(fy*fz - pushFwd matrix{{y*z}} == 0)
@@ -938,6 +957,10 @@ needsPackage "PushForward"
   assert(M1 == M2)
 ///
 
+-----------------------------------------------------------------------------
+-- Development
+-----------------------------------------------------------------------------
+
 end--
 
 restart
@@ -966,7 +989,7 @@ pushFwd f
 ///
   restart
   needsPackage "PushForward"
-  
+
 
   -- This one works
   kk = ZZ/101
@@ -986,14 +1009,14 @@ pushFwd f
   ker f
 ///
 
-TEST ///      
+TEST ///
 -*
   restart
- 
+
   needsPackage "NoetherNormalForm"
 *-
   needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   A = frac(kk[s,t])
   L = A[symbol a.. symbol d]/(d-t, a-s, b*c-s*t, b^2-(s/t)*c^2)
@@ -1004,7 +1027,7 @@ TEST ///
   -- FIX THIS: should not create a graph ring.
   restart
   debug needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   A = frac(kk[s,t])
   L = A[symbol b, symbol c]/(b*c-s*t, b^2-(s/t)*c^2)
@@ -1020,7 +1043,7 @@ TEST ///
   -- FIX ME?
   restart
   debug needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   A = QQ
   L = A[symbol b, symbol c]/(b*c-13, b^3-c^2)
   describe L
@@ -1033,7 +1056,7 @@ TEST ///
 
   restart
   debug needsPackage "PushForward"
-  s = symbol s; t = symbol t  
+  s = symbol s; t = symbol t
   kk = ZZ/101
   A = frac(kk[s,t])
   L = A[symbol b, symbol c]/(b^2-(s/t)*c^2 - c, c^3)
@@ -1046,20 +1069,7 @@ TEST ///
 
 
 ///
--- Case 1. 
+-- Case 1.
 -- ring map is f : A --> B = A[xs]/I, A is a polynomial ring, quotient field, basic field.
 
-///
-
-///
-    Key
-    Headline
-    Usage
-    Inputs
-    Outputs
-    Description
-        Text
-        Example
-    Caveat
-    SeeAlso
 ///

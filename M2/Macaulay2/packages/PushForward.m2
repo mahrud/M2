@@ -95,27 +95,24 @@ isModuleFinite RingMap := Boolean => f -> (
 -- pushFwd
 -----------------------------------------------------------------------------
 
-pushFwd=method(Options => {NoPrune => false})
-pushFwd RingMap := Sequence => o -> (f) ->
---pfB is B^1 as an A-module
---matB is the set of monomials in B that form a set of generators as an A-module
---mapf takes as arg an element of B, and returns ??
-(
-     A:=source f;
-     B:=target f;
-     deglenA:=degreeLength A;
-     deglenB:=degreeLength B;
-     (matB, mapfaux) := pushAuxHgs f;
-
-     pfB := makeModule(B^1,f,matB);
-     g := map(pfB,,gens pfB);
-     mapf := (b) -> g*(mapfaux b);
-     (pfB,matB,mapf)
-     )
-
-pushFwd Ring := Sequence => o -> B -> pushFwd(map(B, coefficientRing B), o)
+pushFwd Ring := Sequence => o -> B -> pushFwd(map(B,      coefficientRing B),         o)
 pushFwd Module := Module => o -> M -> pushFwd(map(ring M, coefficientRing ring M), M, o)
 pushFwd Matrix := Matrix => o -> d -> pushFwd(map(ring d, coefficientRing ring d), d, o)
+
+pushFwd = method(Options => { NoPrune => false })
+pushFwd RingMap := Sequence => o -> f -> (
+    -- Given ring map f: A --> B
+    -- Returns:
+    --   pfB is B^1 as an A-module
+    --   matB is the set of monomials in B that form a set of generators as an A-module
+    --   mapf takes as arg an element of B, and returns a vector in pfB
+    (B, A) := (target f, source f);
+    (matB, mapfaux) := pushAuxHgs f;
+    pfB := makeModule(B^1, f, matB);
+    g := map(pfB, , gens pfB);
+    mapf := (b) -> g * (mapfaux b);
+    (pfB,matB,mapf)
+    )
 
 pushFwd(RingMap,Module):=Module=>o->(f,N)->
 (

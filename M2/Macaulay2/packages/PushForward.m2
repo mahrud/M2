@@ -98,6 +98,7 @@ pushFwd Ring := Sequence => o -> B -> pushFwd(map(B,      coefficientRing B),   
 pushFwd Module := Module => o -> M -> pushFwd(map(ring M, coefficientRing ring M), M, o)
 pushFwd Matrix := Matrix => o -> d -> pushFwd(map(ring d, coefficientRing ring d), d, o)
 
+-- TODO: should this be an internal helper routine?
 pushFwd = method(Options => { MinimalGenerators => true })
 pushFwd RingMap := Sequence => o -> f -> (
     -- Given ring map f: A --> B
@@ -106,12 +107,10 @@ pushFwd RingMap := Sequence => o -> f -> (
     --   matB is the set of monomials in B that form a set of generators as an A-module
     --   mapf takes as arg an element of B, and returns a vector in pfB
     (B, A) := (target f, source f);
-    (matB, mapfaux) := pushAuxHgs f;
-    pfB := makeModule(B^1, f, matB);
-    g := map(pfB, , gens pfB);
-    mapf := (b) -> g * (mapfaux b);
-    (pfB,matB,mapf)
-    )
+    (matB, mapfAux) := pushAuxHgs f;
+    pushB := makeModule(B^1, f, matB);
+    mapf := (b) -> map(pfB, , gens pfB) * mapfAux b;
+    (pushB, matB, mapf))
 
 pushFwd(RingMap, Module) := Module => o -> (f, N) -> (
     B := target f;

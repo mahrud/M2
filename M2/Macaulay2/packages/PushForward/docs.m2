@@ -278,21 +278,23 @@ doc ///
 ///
 
 doc ///
-Key
-  NoPrune
-  [pushFwd,NoPrune]
-Headline
-  NoPrune option for pushFwd
-Description
- Text
-  This is an optional argument for the @TO pushFwd@ function. Its default value is {\tt false},
-  which means that the presentation of a pushed forward module is pruned by default. If NoPrune
-  is set to {\tt true}, then the prune calls in pushFwd are turned off.
- Example
-  R5=QQ[a..e]
-  R6=QQ[a..f]
-  M=coker genericMatrix(R6,a,2,3)
-  G=map(R6,R5,{a+b+c+d+e+f,b,c,d,e})
-  notpruned = pushFwd(G,M,NoPrune => true)
-  pruned = pushFwd(G,M)
+Node
+  Key
+    [pushFwd, MinimalGenerators]
+  Headline
+    whether to prune the result
+  Description
+    Text
+      This is an optional argument for the @TO pushFwd@ function. Its default value is {\tt true},
+      which means that the presentation of a resulting module is @TO2(prune, "pruned")@ by default.
+    Example
+      R5 = QQ[a..e]
+      R6 = QQ[a..f]
+      M = coker genericMatrix(R6, a, 2, 3)
+      G = map(R6, R5, {a+b+c+d+e+f, b, c, d, e})
+      N0 = pushFwd(G, M, MinimalGenerators => false)
+      N1 = pushFwd(G, M)
+  SeeAlso
+    prune
+    trim
 ///

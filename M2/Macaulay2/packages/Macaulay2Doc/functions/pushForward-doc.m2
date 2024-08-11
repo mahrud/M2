@@ -10,6 +10,7 @@ document {
 	  [pushForward,StopBeforeComputation],
 	  [pushForward,DegreeLimit],
 	  [pushForward,PairLimit],
+	  [pushForward,Strategy],
 	  },
      Headline => "",
      Usage => "pushForward(F,M)",

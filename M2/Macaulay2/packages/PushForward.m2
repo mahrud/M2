@@ -114,17 +114,15 @@ pushFwd RingMap := Sequence => o -> f -> (
     (pfB,matB,mapf)
     )
 
-pushFwd(RingMap,Module):=Module=>o->(f,N)->
-(
-     B:=target f;
-     aN:=ann N;
-     C:=B/aN;
-     bc:=map(C,B);
-     g:=bc*f;
-
-     matB:=(pushAuxHgs g)_0;
-     if (o.NoPrune == false) then prune makeModule(N**C,g,matB) else makeModule(N**C,g,matB)
-     )
+pushFwd(RingMap, Module) := Module => o -> (f, N) -> (
+    B := target f;
+    aN := ann N;
+    C := B/aN;
+    bc := map(C, B);
+    g := bc * f;
+    matB := first pushAuxHgs g;
+    M := makeModule(N**C,g,matB);
+    if (o.NoPrune == false) then prune M else M)
 
 pushFwd(RingMap,Matrix):=Matrix=>o->(f,d)->
 (

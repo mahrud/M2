@@ -166,21 +166,20 @@ pushFwd(RingMap, Matrix) := Matrix => o -> (f, d) -> (
 --     A^k --> auxN (over B)
 --   and its kernel are the A-relations of the elements auxN
 
-makeModule=method()
-makeModule(Module,RingMap,Matrix):=(N,f,matB)->
-(
+makeModule = method()
+makeModule(Module, RingMap, Matrix) := (N, f, matB) -> (
      N = trim N;
-     auxN:=ambient N/image relations N;
-     A:=source f;
-     k:=(numgens ambient N) * (numgens source matB);
-     --mp:=try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N);
-     mp := if isHomogeneous f then
-               try(map(auxN,,f,matB**gens N)) else map(auxN,A^k,f,matB**gens N)
-           else
-               map(auxN,A^k,f,matB**gens N);
-     ke:=kernel mp;
-     (super ke)/ke
-     )
+     auxN := ambient N / image relations N;
+     A := source f;
+     k := (numgens ambient N) * (numgens source matB);
+     --
+     mp := if isHomogeneous f
+     then try map(auxN, , f, matB ** gens N)
+     else map(auxN, A^k, f, matB ** gens N)
+     else map(auxN, A^k, f, matB ** gens N);
+     --
+     ke := kernel mp;
+     (super ke) / ke)
 
 -- what if B is an algebra over A (i.e. A is the coefficient ring of B)
 -*

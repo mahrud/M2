@@ -166,9 +166,9 @@ pushFwd(RingMap, Matrix) := Matrix => o -> (f, d) -> (
 
 makeModule = method()
 makeModule(Module, RingMap, Matrix) := (N, f, matB) -> (
+     A := source f;
      N = trim N;
      auxN := ambient N / image relations N;
-     A := source f;
      k := (numgens ambient N) * (numgens source matB);
      --
      mp := if isHomogeneous f

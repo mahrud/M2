@@ -33,6 +33,7 @@ newPackage(
 export {
     "isModuleFinite",
     "pushFwd",
+    -- deprecated:
     "NoPrune",
     }
 
@@ -96,7 +97,11 @@ isModuleFinite RingMap := Boolean => f -> (
 -- pushFwd
 -----------------------------------------------------------------------------
 
-pushFwd = method(Options => { NoPrune => false })
+warnNoPrune = o -> if not o.NoPrune then o else (
+    printerr "option NoPrune for pushFwd has been deprecated, use MinimalGenerators => false instead";
+    o = o ++ { MinimalGenerators => false })
+
+pushFwd = method(Options => { MinimalGenerators => true, NoPrune => false })
 pushFwd Ring := Sequence => o -> B -> pushFwd(map(B,      coefficientRing B),         o)
 pushFwd Module := Module => o -> M -> pushFwd(map(ring M, coefficientRing ring M), M, o)
 pushFwd Matrix := Matrix => o -> d -> pushFwd(map(ring d, coefficientRing ring d), d, o)
@@ -123,7 +128,8 @@ pushFwd(RingMap, Module) := Module => o -> (f, N) -> (
     g := bc * f;
     matB := first pushAuxHgs g;
     M := makeModule(N**C,g,matB);
-    if (o.NoPrune == false) then prune M else M)
+    o = warnNoPrune o;
+    if o.MinimalGenerators then prune M else M)
 
 pushFwd(RingMap, Matrix) := Matrix => o -> (f, d) -> (
     (B, A) := (target f, source f);
@@ -144,7 +150,8 @@ pushFwd(RingMap, Matrix) := Matrix => o -> (f, d) -> (
 	    numgens source gR,
 	    (r, c) -> mapf(gR_c_r)));
 
-    if (o.NoPrune == false) then prune pfd else pfd)
+    o = warnNoPrune o;
+    if o.MinimalGenerators then prune pfd else pfd)
 
 -- TODO: stash the matB, pf?  Make accessor functions to go to/from gens of R over A, or M to M_A.
 -- TODO: given: M = pushFwd N, get the maps from N --> M (i.e. stash it somewhere).

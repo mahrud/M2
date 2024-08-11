@@ -188,12 +188,6 @@ Node
 
 -----------------------------------------------------------------------------
 
-undocumented {
-    [adjoint, Strategy],
-    [adjoint, DegreeLimit],
-    [adjoint, MinimalGenerators],
-}
-
 doc ///
 Node
   Key
@@ -201,6 +195,9 @@ Node
    (adjoint, Matrix, Module, Module)
     adjoint'
    (adjoint', Matrix, Module, Module)
+   [adjoint, Strategy]
+   [adjoint, DegreeLimit]
+   [adjoint, MinimalGenerators]
   Headline
     the tensor-Hom adjunction maps
   Description

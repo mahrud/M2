@@ -124,44 +124,26 @@ pushFwd(RingMap, Module) := Module => o -> (f, N) -> (
     M := makeModule(N**C,g,matB);
     if (o.NoPrune == false) then prune M else M)
 
-pushFwd(RingMap,Matrix):=Matrix=>o->(f,d)->
-(
-     A:=source f;
-     B:=target f;
-     pols:=f.matrix;
-     pM:=source d;
-     pN:=target d;
+pushFwd(RingMap, Matrix) := Matrix => o -> (f, d) -> (
+    (B, A) := (target f, source f);
+    src := source d;
+    tar := target d;
+    --
+    C := B / intersect(ann src, ann tar);
+    g := map(C, B) * f;
+    --
+    (matB, mapf) := pushAuxHgs g;
+    gR := matB ** cover d;
+    --
+    psrc := makeModule(src ** C, g, matB);
+    ptar := makeModule(tar ** C, g, matB);
+    pfd := map(ptar, psrc,
+	matrix table(
+	    numgens target gR,
+	    numgens source gR,
+	    (r, c) -> mapf(gR_c_r)));
 
-     amn:=intersect(ann pM,ann pN);
-     C:=B/amn;
-     bc:=map(C,B);
-     g:=bc*f;
-     M:=pM**C;
-     N:=pN**C;
-
-     psh:=pushAuxHgs g;
-     matB:=psh_0;
-     mapf:=psh_1;
-
-     pushM:=makeModule(M,g,matB);
-     pushN:=makeModule(N,g,matB);
-
-     matMap:=symbol matMap;
-     gR:=matB**matrix d;
-     c:=numgens source gR;
-     l:=numgens target gR;
-     k := numcols matB;
-     matMap=mutableMatrix(A,k*l,c);
-
-     for i1 from 0 to c-1 do
-     	  for i2 from 0 to l-1 do
-	  (
-       	       e:=mapf(gR_i1_i2);
-	       for i3 from 0 to k-1 do matMap_(i2+l*i3,i1)=e_0_i3;
-	   );
-
-          if (o.NoPrune == false) then prune map(pushN,pushM,matrix matMap) else map(pushN,pushM,matrix matMap)
-     )
+    if (o.NoPrune == false) then prune pfd else pfd)
 
 -- TODO: stash the matB, pf?  Make accessor functions to go to/from gens of R over A, or M to M_A.
 -- TODO: given: M = pushFwd N, get the maps from N --> M (i.e. stash it somewhere).

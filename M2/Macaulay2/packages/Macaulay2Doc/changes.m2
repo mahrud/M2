@@ -45,12 +45,14 @@ document {
     UL {
 	LI { "functionality changed in a way that could break code:",
 	    UL {
-		LI { "The function ", TO remove, ", which previously had no return value, now returns the value that was removed." }
+		LI { "The function ", TO remove, ", which previously had no return value, now returns the value that was removed." },
+		LI { "The method ", TO (symbol\\, Matrix, Matrix), " is now a shortcut for ", TO (quotient', Matrix, Matrix), ". ",
+		    "The previous functionality is still available via ", TO (symbol//, Matrix, Matrix), ", which is a shortcut for ",
+		    TO (quotient, Matrix, Matrix), ". Additionally, both methods now work for maps of non-free modules."}
 		}
 	    }
 	}
     }
-
 
 document {
     Key => "changes, 1.24.05",

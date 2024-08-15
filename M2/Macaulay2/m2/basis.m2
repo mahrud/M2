@@ -28,9 +28,10 @@ inf := t -> if t === infinity then -1 else t
 -----------------------------------------------------------------------------
 
 -- the output of this is used in BasisContext
-getVarlist = (R, varlist) -> (
-    if varlist === null then toList(0 .. numgens R - 1)
-    else if instance(varlist, List) then apply(varlist, v ->
+getVarlist = (R, varlist) -> toList(
+    numvars := R.numallvars ?? numgens R;
+    if varlist === null then toList(0 .. numvars - 1)
+    else if instance(varlist, VisibleList) then apply(varlist, v ->
         -- TODO: what if R = ZZ?
         if instance(v, R)  then index v else
         if instance(v, ZZ) then v
@@ -64,6 +65,7 @@ findHeftandVars := (R, varlist, ndegs) -> (
 
 -- TODO: can this be done via a tensor or push forward?
 -- c.f. https://github.com/Macaulay2/M2/issues/1522
+-- TODO: think about how this compares with part
 liftBasis = (M, phi, B, offset) -> (
     -- lifts a basis B of M via a ring map phi
     (R, S) := (phi.target, phi.source);
@@ -127,7 +129,7 @@ basis = method(TypicalValue => Matrix,
 basis Module := opts -> M -> basis(-infinity, infinity, M, opts)
 basis Ideal  := opts -> I -> basis(module I, opts)
 basis Ring   := opts -> R -> basis(module R, opts)
--- TODO: add? basis Matrix := opts -> m -> basis(-infinity, infinity, m, opts)
+basis Matrix := opts -> m -> basis(-infinity, infinity, m, opts)
 
 -----------------------------------------------------------------------------
 
@@ -189,6 +191,25 @@ basis(ZZ,             ZZ,             Matrix) := opts -> (lo, hi, M) -> (
     -- TODO: is this general enough?
     BM := last coefficients(matrix (M * BG), Monomials => BF);
     map(image BF, image BG, BM))
+
+-----------------------------------------------------------------------------
+
+-- Note: f needs to be homogeneous, otherwise returns nonsense
+basis(ZZ,       RingMap) :=
+basis(List,     RingMap) := Matrix => opts -> (degs, f) -> basis((degs, degs), f, opts)
+basis(Sequence, RingMap) := Matrix => opts -> (degs, f) -> (
+    -- if not isHomogeneous f then error "expected a graded ring map (try providing a DegreeMap)";
+    if #degs != 2          then error "expected a sequence (tardeg, srcdeg) of degrees for target and source rings";
+    (T, S) := (target f, source f);
+    (tardeg, srcdeg) := degs;
+    if tardeg === null then tardeg = f.cache.DegreeMap  srcdeg;
+    if srcdeg === null then srcdeg = f.cache.DegreeLift tardeg;
+    targens := basis(tardeg, T);
+    srcgens := basis(srcdeg, S);
+    -- TODO: should matrix RingMap return this map instead?
+    -- mon := map(module T, image matrix(S, { S.FlatMonoid_* }), f, matrix f)
+    mat := last coefficients(f cover srcgens, Monomials => targens);
+    map(image targens, image srcgens, f, mat))
 
 -----------------------------------------------------------------------------
 
@@ -280,3 +301,26 @@ algorithms#(basis, List, List, Module) = new MutableHashTable from {
 -- Installing hooks for resolution
 scan({Default, Torsion}, strategy ->
     addHook(key := (basis, List, List, Module), algorithms#key#strategy, Strategy => strategy))
+
+-----------------------------------------------------------------------------
+-- part
+-----------------------------------------------------------------------------
+-- returns the graded component of an object in a specific degree
+
+-- gives a map back to the coefficient ring
+residueMap = (cacheValue symbol residueMap) (R -> map(A := coefficientRing R, R, DegreeMap => d -> take(d, - degreeLength A)))
+
+-- TODO: document these
+part(ZZ,   Ring) :=
+part(List, Ring) := Module => (deg, R) -> (residueMap R) source basis(deg, deg, module R)
+
+part(ZZ, Ideal)  :=
+part(ZZ, Module) :=
+part(List, Ideal)  :=
+part(List, Module) := Module => (deg, M) -> (residueMap ring M) source basis(deg, deg, M)
+
+part(ZZ,   Matrix) :=
+part(List, Matrix) := Matrix => (deg, f) -> (residueMap ring f) cover  basis(deg, f)
+
+-- TODO: currently doesn't work unless source f === target f
+part(Sequence, RingMap) := Matrix => (degs, f) -> (residueMap target f) cover basis(degs, f)

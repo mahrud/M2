@@ -24,6 +24,9 @@ isEmpty = method(TypicalValue => Boolean)
 isSmooth = method(TypicalValue => Boolean, Options => true)
 isVeryAmple = method(TypicalValue => Boolean, Options => true)
 
+isMorphism = method(TypicalValue => Boolean)
+isAbelianCategory = method(TypicalValue => Boolean)
+
 -- symbols
 
 protect Base

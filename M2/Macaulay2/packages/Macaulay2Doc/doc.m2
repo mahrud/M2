@@ -467,6 +467,8 @@ document {
 	  (symbol //, InfiniteNumber, InfiniteNumber),
 	  (symbol //, Number, RingElement),
 	  (symbol //, RingElement, Number),
+	  (symbol //, InexactNumber, RingElement),
+	  (symbol //, RingElement, InexactNumber),
 	  (symbol //, RingElement, RingElement),
 	  (symbol //, ZZ, MonomialIdeal)
 	  },

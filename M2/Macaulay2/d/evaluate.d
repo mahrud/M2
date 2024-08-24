@@ -77,6 +77,7 @@ export evalAllButTail(c:Code):Code := while true do c = (
 export RecursionLimit():Expr := buildErrorPacket("recursion limit of " + tostring(recursionLimit) + " exceeded");
 export InternalRecursionLimit():Expr := buildErrorPacket("internal recursion limit of " + tostring(recursionLimit) + " exceeded");
 
+-- TODO: should this be moved to hashtables.dd also? (with evalpointer used)
 export storeInHashTable(x:HashTable,i:Code,rhs:Code):Expr := (
      ival := eval(i);
      when ival is Error do ival else (

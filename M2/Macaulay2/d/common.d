@@ -45,10 +45,6 @@ export codePosition(c:Code):Position := ( -- TODO retire
      is f:whileListDoCode do f.position
      );
 
-export pos(c:Code):void := (					    -- for use in the debugger
-     stdIO << codePosition(c) << endl;
-     );
-
 export setup(word:Word):void := (
      makeSymbol(word,dummyPosition,globalDictionary);
      );

@@ -33,10 +33,6 @@ combinePositionR(L:Position, R:Position):Position := Position(
 combinePositionC(L:Position, R:Position, C:Position):Position := Position(
     L.filename, L.lineL, L.columnL, R.lineR, R.columnR, C.lineF, C.columnF, L.loadDepth);
 
--- combine two positions belonging to adjacent tokens (focus is on endpoint of the first one)
-combinePositionAdjacent(L:Position, R:Position):Position := Position(
-    L.filename, L.lineL, L.columnL, R.lineR, R.columnR, L.lineR, L.columnR, L.loadDepth);
-
 convert0(e:ParseTree):Code;
 convert(e:ParseTree):Code;
 unseq(c:Code):Code;
@@ -217,7 +213,7 @@ export convert0(e:ParseTree):Code := (
 	       else Code(localMemoryReferenceCode(nestingDepth(var.frameID,token.dictionary),var.frameindex,token.position))
 	       )
 	  )
-    is a:Adjacent do Code(adjacentCode(unseq(c:=convert0(a.lhs)), unseq(cc:=convert0(a.rhs)), combinePositionAdjacent(codePosition(c), codePosition(cc))))
+    is a:Adjacent do Code(adjacentCode(convert(a.lhs), convert(a.rhs), treePosition(e)))
     is p:EmptyParentheses do (
 	pp := combinePositionL(p.left.position, p.right.position);
 	  if p.left.word == leftparen then Code(sequenceCode(CodeSequence(),pp))

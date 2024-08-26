@@ -514,7 +514,11 @@ export unarynew(newToken:Token, file:TokenFile, prec:int, obeylines:bool):ParseT
 
 export treePosition(e:ParseTree):Position := (
     when e
-    is a:Adjacent         do treePosition(a.lhs)
+    is a:Adjacent do (
+	L := treePosition(a.lhs);
+	R := treePosition(a.rhs);
+	-- combine the two positions with focus on endpoint of lhs
+	Position(L.filename, L.lineL, L.columnL, R.lineR, R.columnR, L.lineR, L.columnR, L.loadDepth))
     is p:Parentheses      do p.left.position
     is p:EmptyParentheses do p.left.position
     is o:Arrow            do o.Operator.position

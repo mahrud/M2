@@ -182,11 +182,11 @@ export convert0(e:ParseTree):Code := (
     is n:New do (
 	if n.newparent == dummyTree
 	then if n.newinitializer == dummyTree
-	then Code(newCode(unseq(c:=convert0(n.newclass)),                                      combinePositionR(n.newtoken.position, codePosition(c))))
-	else Code(newFromCode(      convert(n.newclass), unseq(c:=convert0(n.newinitializer)), combinePositionR(n.newtoken.position, codePosition(c))))
+	then Code(newCode(unseq(c:=convert0(n.newclass)),                                      combinePositionR(n.newToken.position, codePosition(c))))
+	else Code(newFromCode(      convert(n.newclass), unseq(c:=convert0(n.newinitializer)), combinePositionR(n.newToken.position, codePosition(c))))
 	else if n.newinitializer == dummyTree
-	then Code(newOfCode(    convert(n.newclass), unseq(c:=convert0(n.newparent)),                                      combinePositionR(n.newtoken.position, codePosition(c))))
-	else Code(newOfFromCode(convert(n.newclass),           convert(n.newparent), unseq(c:=convert0(n.newinitializer)), combinePositionR(n.newtoken.position, codePosition(c)))))
+	then Code(newOfCode(    convert(n.newclass), unseq(c:=convert0(n.newparent)),                                      combinePositionR(n.newToken.position, codePosition(c))))
+	else Code(newOfFromCode(convert(n.newclass),           convert(n.newparent), unseq(c:=convert0(n.newinitializer)), combinePositionR(n.newToken.position, codePosition(c)))))
     is i:IfThen     do Code(ifCode(convert(i.predicate), unseq(c:=convert0(i.thenClause)), NullCode,                         combinePositionR(i.ifToken.position, codePosition(c))))
     is i:IfThenElse do Code(ifCode(convert(i.predicate),           convert(i.thenClause),  unseq(c:=convert0(i.elseClause)), combinePositionR(i.ifToken.position, codePosition(c))))
      is token:Token do (
@@ -333,20 +333,20 @@ export convert0(e:ParseTree):Code := (
 			      AssignNewFun,
 			      convert(n.newclass),
 			      unseq(c:=convert0(b.rhs)), 
-			      combinePositionC(n.newtoken.position, codePosition(c), b.Operator.position)))
+			      combinePositionC(n.newToken.position, codePosition(c), b.Operator.position)))
 		    else Code(ternaryCode(
 			      AssignNewFromFun,
 			      convert(n.newclass),
 			      convert(n.newinitializer),
 			      unseq(c:=convert0(b.rhs)),
-			      combinePositionC(n.newtoken.position, codePosition(c), b.Operator.position)))
+			      combinePositionC(n.newToken.position, codePosition(c), b.Operator.position)))
      	       	    else if n.newinitializer == dummyTree 
 		    then Code(ternaryCode(
 			      AssignNewOfFun,
 			      convert(n.newclass),
 			      convert(n.newparent),
 			      unseq(c:=convert0(b.rhs)),
-			      combinePositionC(n.newtoken.position, codePosition(c), b.Operator.position)))
+			      combinePositionC(n.newToken.position, codePosition(c), b.Operator.position)))
 		    else Code(multaryCode(
 			      AssignNewOfFromFun,
 			      CodeSequence(
@@ -354,7 +354,7 @@ export convert0(e:ParseTree):Code := (
 				   convert(n.newparent),
 				   convert(n.newinitializer),
 				   unseq(c:=convert0(b.rhs))),
-			      combinePositionC(n.newtoken.position, codePosition(c), b.Operator.position))))
+			      combinePositionC(n.newToken.position, codePosition(c), b.Operator.position))))
 	       is a:Adjacent do (
 		    Code(multaryCode(
 			      InstallMethodFun,

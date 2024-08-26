@@ -513,35 +513,33 @@ export unarynew(newToken:Token, file:TokenFile, prec:int, obeylines:bool):ParseT
     accumulate(ParseTree(New(newToken, newclass, newparent, newinitializer)), file, prec, obeylines));
 
 export treePosition(e:ParseTree):Position := (
-     while true do (
-	  when e
-	  is dummy do return dummyPosition
-	  is token:Token do return token.position
-	  is adjacent:Adjacent do e = adjacent.lhs
-	  is binary:Binary do return binary.Operator.position
-	  is a:Arrow do return a.Operator.position
-	  is unary:Unary do return unary.Operator.position
-	  is postfix:Postfix do return postfix.Operator.position
-	  is a:Quote do return a.Operator.position
-	  is a:GlobalQuote do return a.Operator.position
-	  is a:ThreadQuote do return a.Operator.position
-	  is a:LocalQuote do return a.Operator.position
-	  is ee:Parentheses do return ee.left.position
-	  is ee:EmptyParentheses do return ee.left.position
-     	  is i:IfThen do return i.ifToken.position
-	  is i:TryThenElse do return i.tryToken.position
-	  is i:TryThen do return i.tryToken.position
-	  is i:TryElse do return i.tryToken.position
-	  is i:Try do return i.tryToken.position
-	  is i:Catch do return i.catchToken.position
-     	  is i:IfThenElse do return i.ifToken.position
-     	  is w:For do return w.forToken.position
-     	  is w:WhileDo do return w.whileToken.position
-     	  is w:WhileList do return w.whileToken.position
-     	  is w:WhileListDo do return w.whileToken.position
-	  is n:New do return n.newToken.position
-	  )
-     );
+    when e
+    is a:Adjacent         do treePosition(a.lhs)
+    is p:Parentheses      do p.left.position
+    is p:EmptyParentheses do p.left.position
+    is o:Arrow            do o.Operator.position
+    is o:Binary           do o.Operator.position
+    is o:Unary            do o.Operator.position
+    is o:Postfix          do o.Operator.position
+    is o:Quote            do o.Operator.position
+    is o:GlobalQuote      do o.Operator.position
+    is o:ThreadQuote      do o.Operator.position
+    is o:LocalQuote       do o.Operator.position
+    is t:IfThen           do t.ifToken.position
+    is t:IfThenElse       do t.ifToken.position
+    is t:TryThenElse      do t.tryToken.position
+    is t:TryThen          do t.tryToken.position
+    is t:TryElse          do t.tryToken.position
+    is t:Try              do t.tryToken.position
+    is t:For              do t.forToken.position
+    is t:Catch            do t.catchToken.position
+    is t:WhileDo          do t.whileToken.position
+    is t:WhileList        do t.whileToken.position
+    is t:WhileListDo      do t.whileToken.position
+    is t:New              do t.newToken.position
+    is t:Token            do t.position
+    is dummy              do dummyPosition
+    );
 
 size(x:Token):int := Ccode(int,"sizeof(*",x,")");
 size(x:functionDescription):int := Ccode(int,"sizeof(*",x,")");

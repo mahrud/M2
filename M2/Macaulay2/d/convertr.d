@@ -183,8 +183,8 @@ export convert0(e:ParseTree):Code := (
 	else if n.newinitializer == dummyTree
 	then Code(newOfCode(    convert(n.newclass), unseq(c:=convert0(n.newparent)),                                      combinePositionR(n.newToken.position, codePosition(c))))
 	else Code(newOfFromCode(convert(n.newclass),           convert(n.newparent), unseq(c:=convert0(n.newinitializer)), combinePositionR(n.newToken.position, codePosition(c)))))
-    is i:IfThen     do Code(ifCode(convert(i.predicate), unseq(c:=convert0(i.thenClause)), NullCode,                         combinePositionR(i.ifToken.position, codePosition(c))))
-    is i:IfThenElse do Code(ifCode(convert(i.predicate),           convert(i.thenClause),  unseq(c:=convert0(i.elseClause)), combinePositionR(i.ifToken.position, codePosition(c))))
+    is i:IfThen     do Code(ifCode(convert(i.predicate), unseq(c:=convert0(i.thenClause)), NullCode,                         combinePositionL(i.ifToken.position, codePosition(c))))
+    is i:IfThenElse do Code(ifCode(convert(i.predicate),           convert(i.thenClause),  unseq(c:=convert0(i.elseClause)), combinePositionL(i.ifToken.position, codePosition(c))))
      is token:Token do (
 	  var := token.entry;
 	  wrd := token.word;

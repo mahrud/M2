@@ -48,28 +48,15 @@ export evalAllButTail(c:Code):Code := while true do c = (
 	  else (
 	       return Code(Error(codePosition(i.predicate),"expected true or false",nullE,false,dummyFrame));
 	       dummyCode))
-     is v:semiCode do (
-	  w := v.w;
-	  n := length(w);				    -- at least 2
-	  r := eval(w.0);
-	  when r is e:Error do return Code(e) else nothing;
-	  if n == 2 then w.1 else (
-	       r = eval(w.1);
-	       when r is e:Error do return Code(e) else nothing;
-	       if n == 3 then w.2 else (
-		    r = eval(w.2);
-		    when r is e:Error do return Code(e) else nothing;
-		    if n == 4 then w.3 else (
-			 r = eval(w.3);
-			 when r is e:Error do return Code(e) else nothing;
-			 if n == 5 then w.4 else (
-			      r = eval(w.4);
-			      when r is e:Error do return Code(e) else nothing;
-			      i := 5;
-			      while i < n-1 do (
-				   r = eval(w.i);
-				   when r is e:Error do return Code(e) else i = i+1);
-			      w.i)))))
+    is v:semiCode do (
+	i := 0;
+	w := v.w;
+	n := length(w); -- at least 2
+	r := nullE;
+	while i < n-1 do (
+	    r = eval(w.i);
+	    when r is e:Error do return Code(e) else i = i+1);
+	w.i)
      else (
 	  return c;
 	  dummyCode));
@@ -1510,28 +1497,15 @@ export evalraw(c:Code):Expr := (
 	  is v:integerCode do return Expr(ZZcell(v.x))
 	  is v:stringCode do return Expr(stringCell(v.x))
      	  is v:Error do Expr(v)
-	  is v:semiCode do (
-	       w := v.w;
-	       n := length(w);				    -- at least 2
-	       r := eval(w.0);
-	       when r is Error do r else (
-	       	    r = eval(w.1);
-	       	    when r is Error do r else (
-	       		 if n == 2 then return r;
-	       		 r = eval(w.2);
-	       		 when r is Error do r else (
-			      if n == 3 then return r;
-			      r = eval(w.3);
-			      when r is Error do r else (
-				   if n == 4 then return r;
-				   r = eval(w.4);
-				   when r is Error do r else (
-					i := 5;
-					while i < n do (
-					     r = eval(w.i);
-					     i = when r is Error do n else i+1;
-					     );
-					r))))))
+	is v:semiCode do (
+	    i := 0;
+	    w := v.w;
+	    n := length(w); -- at least 2
+	    r := nullE;
+	    while i < n do (
+		r = eval(w.i);
+		i = when r is Error do n else i+1);
+	    r)
 	  is v:sequenceCode do (
 	       if length(v.x) == 0 then return emptySequence;
 	       r := evalSequence(v.x);

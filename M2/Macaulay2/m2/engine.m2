@@ -60,11 +60,8 @@ fixup1 := method(Dispatch => Thing)			    -- stage 1, everything except Tiny and
 fixup2 := method(Dispatch => Thing)			    -- stage 2, Tiny and Small
 err := o -> error ("unrecognized ordering item " | toString o)
 
+-- FIXME: not thread-safe
 deglist := {}						    -- filled in below each time
-getdegs := (m,n) -> (
-     -- get m-th through n-th degree, using 1 when there aren't enough
-     join ( take(deglist, {m,n}), (n - (#deglist - 1)):1)
-     )
 numvars := 0						    -- re-initialized below each time
 varcount := 0						    -- re-initialized below each time
 MonSize := 0						    -- re-initialized below each time
@@ -112,7 +109,8 @@ fixList := v -> if instance(v,List) then spliceInside v else v
 grevOption := (key,v) -> (
      key = fix1 key;
      if instance(v,ZZ) 
-     then v = getdegs ( varcount, varcount + v - 1 )
+     -- get varcount-th through (varcount+v-1)-th degree, using 1 when there aren't enough
+     then v = join ( take(deglist, {varcount, varcount + v - 1}), (varcount + v - 1 - (#deglist - 1)):1 )
      else (
 	  v = fixList v;
 	  if not isListOfIntegers v then error "expected an integer or a list of integers";

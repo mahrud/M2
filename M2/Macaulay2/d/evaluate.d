@@ -2092,6 +2092,9 @@ export notFun(a:Expr):Expr := if a == True then False else if a == False then Tr
 -- to evaluate methods in hashtables.dd before it is defined.
 applyEEEpointer = applyEEE;
 
+binarymethod0(lhs:Expr,rhs:Expr,methodkey:SymbolClosure):Expr := binarymethod(lhs,rhs,methodkey);
+binarymethodpointer = binarymethod0;
+
 nullify(c:Code):Expr := (
     e := tryEval(c);
     if tryEvalSuccess

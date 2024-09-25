@@ -10,6 +10,9 @@ header "#include <cassert>";
 dummyapplyEEE(g:Expr,e0:Expr,e1:Expr):Expr := g;
 export applyEEEpointer := dummyapplyEEE;
 
+dummybinarymethod(lhs:Expr,rhs:Expr,methodkey:SymbolClosure):Expr := lhs;
+export binarymethodpointer := dummybinarymethod;
+
 export hash(x:HashTable):hash_t := (
      lockit := x.Mutable && !x.beingInitialized;
      if (lockit) then lockRead(x.mutex);
@@ -843,7 +846,7 @@ export subvalue(left:Expr,right:Expr):Expr := (
 		    else Expr(stringCell(x.rr)))
 	       else buildErrorPacket("net row index out of bounds"))
 	  else buildErrorPacket("expected subscript to be an integer"))
-     else buildErrorPacket("expected a list, sequence, string, net, hash table, database, or dictionary"));
+     else binarymethodpointer(left, right, SharpS));
 export subvalueQ(left:Expr,right:Expr):Expr := (
      -- don't change this without changing subvalue above
      -- # typical value: symbol #?, Sequence, ZZ, Boolean
@@ -902,7 +905,7 @@ export subvalueQ(left:Expr,right:Expr):Expr := (
 	  else False)
      -- # typical value: symbol #?, Nothing, Thing, Boolean
      is Nothing do False				    -- we think of "null" as a universal gadget with no parts
-     else WrongArg(1,"null, a list, sequence, string, net, hash table, database, or dictionary"));
+     else binarymethodpointer(left, right, SharpQuestionS));
 
 export (x:string) => (y:Expr) ::= Sequence(toExpr(x),y);
 export (x:string) => (y:int) ::= x => toExpr(y);

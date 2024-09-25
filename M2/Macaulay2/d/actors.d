@@ -1185,7 +1185,7 @@ lengthFun(rhs:Code):Expr := (
      is s:stringCell do toExpr(length(s.v))
      -- # typical value: symbol #, Net, ZZ
      is n:Net do toExpr(length(n.body))
-     else buildErrorPacket("expected a list, sequence, string, net, hash table, or dictionary"));
+     else unarymethod(rhs, SharpQuestionS));
 setup(SharpS,lengthFun,subvalue);
 
 subvalueQ(lhs:Code,rhs:Code):Expr := (

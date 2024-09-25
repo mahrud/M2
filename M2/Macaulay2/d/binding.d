@@ -503,6 +503,7 @@ export opsWithBinaryMethod := array(SymbolClosure)(
      LongDoubleLeftArrowS, LongLongDoubleLeftArrowS,
      ColonS, BarS, HatHatS, AmpersandS, DotDotS, DotDotLessS, MinusS, PlusS, PlusPlusS, StarStarS, StarS, BackslashBackslashS, DivideS, LeftDivideS, PercentS, SlashSlashS, AtS, 
      AdjacentS, AtAtS, orS, andS, xorS,
+     SharpS, DotS,
      -- TODO: why are these four not listed here?
      -- GreaterS, GreaterEqualS, LessS, LessEqualS,
      BarUnderscoreS,
@@ -514,6 +515,7 @@ export opsWithBinaryMethod := array(SymbolClosure)(
      PowerStarStarS
      );
 export opsWithUnaryMethod := array(SymbolClosure)(
+    SharpS,
      StarS, MinusS, PlusS, LessLessS, QuestionQuestionS,
      LongDoubleLeftArrowS, LongLongDoubleLeftArrowS, 
      notS, DeductionS, QuestionS,LessS,GreaterS,LessEqualS,GreaterEqualS);

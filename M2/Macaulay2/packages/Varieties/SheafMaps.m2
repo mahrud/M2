@@ -35,6 +35,10 @@ autotruncate = { MinimalGenerators => false } >> opts -> L -> (
 SheafMap = new Type of HashTable
 SheafMap.synonym = "Morphism of Sheaves"
 
+-- Temporarily moved here
+importFrom_Core { "isMorphism", "isAbelianCategory" }
+isMorphism SheafMap := isAbelianCategory CoherentSheaf := x -> true
+
 -- TODO: if over affine variety, dehomogenize the maps
 map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> (
     if variety G =!= variety F then error "expected sheaves over the same variety";
@@ -516,6 +520,7 @@ Ext(ZZ, CoherentSheaf, SheafMap) := Matrix => opts -> (m, F, f) -> (
 	M = truncate(r, M));
     part(0, Ext^m(M, matrix f, opts)))
 
+-*
 extLES = method(Options => {LengthLimit => null})
 extLES(Module, Matrix, Matrix) := ComplexMap => opts -> (M, g, f) -> (
     F := freeResolution(M, opts);
@@ -528,18 +533,22 @@ extLES(Matrix, Matrix, Module) := ComplexMap => opts -> (g, f, N) -> (
     -- TODO: the indexing on opts.Concentration needs to be negated
     longExactSequence(Hom(f', G), Hom(g', G))
     )
+*-
 
 --TODO: RHom(ZZ, SheafComplex, SheafComplex)
 --TODO: TorLongExactSequence
 
 -- Given f: G -> H, leading to SES 0 -> ker f -> G -> im f -> 0 and F a sheaf,
 -- this method returns Ext^i(F, im f) -> Ext^(i+1)(F, ker f)
+-*
 connectingExtMap(ZZ, CoherentSheaf, SheafMap)           := Matrix => opts -> (m, F, f) -> (
     (ExtLongExactSequence(F, inducedMap(image f, source f, f), inducedMap(source f, ker f), Concentration => (m, m + 1))).dd_(-3*m) )
+*-
 
 -- Given f: G -> H, leading to SES 0 -> ker f -> G -> im f -> 0 and F a sheaf,
 -- this method returns the long exact sequence in cohomology; the concentration argument will give Ext^(lo) -> ... -> Ext^(hi)
 
+-*
 ExtLongExactSequence = method(Options => {Concentration => null})
 ExtLongExactSequence(CoherentSheaf, SheafMap)           := Matrix => opts -> (F, f) -> (
     ExtLongExactSequence(F, inducedMap(image f, source f, f), inducedMap(source f, ker f), opts))
@@ -587,11 +596,13 @@ ExtLongExactSequence(CoherentSheaf, SheafMap, SheafMap) := Matrix => opts -> (F,
 	truncate(reg,    matrix f, MinimalGenerators => false),
 	subtruncate(reg, matrix g, MinimalGenerators => false),
 	LengthLimit => hi + 1))
+*-
 
 -----------------------------------------------------------------------------
 -- Yoneda Ext
 -----------------------------------------------------------------------------
 
+-*
 yonedaSheafExtension = method()
 yonedaSheafExtension Matrix := Complex => f -> (
     E := target f; -- Ext^d(F,G)
@@ -604,6 +615,7 @@ yonedaSheafExtension Matrix := Complex => f -> (
     f' := basis(0, E') * f;
     C := yonedaExtension f';
     complex apply(d + 1, i -> sheaf_X C.dd_(i+1)))
+*-
 
 --yonedaSheafExtension' = method(Options => options Ext.argument)
 --yonedaSheafExtension' Complex := Matrix => opts -> C -> ()
@@ -708,6 +720,8 @@ CoherentSheaf ^ Array := SheafMap => (F, v) -> (
 -----------------------------------------------------------------------------
 -- Common maps and complexes of sheaves
 -----------------------------------------------------------------------------
+
+end--
 
 -- TODO: Beilinson resolution of the diagonal for PP^n
 

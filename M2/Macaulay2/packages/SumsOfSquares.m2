@@ -1436,6 +1436,7 @@ TEST /// --solveSOS
 
 --11
 TEST /// --lowerBound
+    setRandomSeed 123
     debug needsPackage "SumsOfSquares"
     results := checkLowerBound("CSDP")
     assert all(results,t->t=!=false);

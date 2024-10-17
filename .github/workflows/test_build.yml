@@ -10,12 +10,9 @@ name: Build and Test Macaulay2
 
 on:
   workflow_dispatch:
-  pull_request:
+  push:
     branches:
-      - master
-      - development
-  schedule:
-    - cron: '0 6 * * SUN' # runs tests on the main branch every Sunday at 06:00 UTC
+      - test
 
 concurrency:
   # Cancel in-progress runs when a new workflow with the same group name is triggered
@@ -28,17 +25,14 @@ defaults:
 
 jobs:
   build:
-    if: github.repository == 'Macaulay2/M2' || contains(github.ref, 'global')
     name: ${{ matrix.build-system }}-${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         build-system:
-          - autotools
           - cmake
         os:
-          - ubuntu-24.04
           - macos-13
         compiler:
           - default
@@ -141,7 +135,9 @@ jobs:
       - name: Build Macaulay2 using Ninja
         if: matrix.build-system == 'cmake'
         run: |
-          cmake --build . --target M2-core M2-emacs install-packages
+          cmake --build . --target M2-core info-packages
+          cmake .
+          ctest -R SumsOfSquares --output-on-failure
           if [[ "${{ runner.os }}" == "Linux" ]] && [[ "${{ matrix.build-system }}" == "cmake" ]]; then
               sudo apt-get install -y -q --no-install-recommends dpkg-dev
               echo "GIT_COMMIT=`git describe --dirty --always --match HEAD`" >> $GITHUB_ENV

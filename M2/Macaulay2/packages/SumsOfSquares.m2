@@ -474,13 +474,17 @@ createSOSModel(Matrix,Matrix) := o -> (F,v) -> (
 
     -- monomials in vvT
     vvT := entries(v* transpose v);
-    mons := g -> set first entries monomials g;
-    K1 := toList \\ sum \\ mons \ flatten vvT;
+    mons := g -> unique first entries monomials g;
+    K1 := unique \\ flatten \\ mons \ flatten vvT;
+    print K1;
 
     -- monomials in F and not in vvT
-    lmf := sum \\ mons \ flatten entries F;
-    K2 := toList(lmf - K1);
+    lmf := unique \\ flatten \\ mons \ flatten entries F;
+    print lmf;
+    K2 := lmf - set K1;
+    print K2;
     K := K1 | K2;
+    print K;
 
     -- Linear constraints: b
     b := map(kk^#K, kk^1, (i,j) -> coefficient(K#i,F_(0,0)) );

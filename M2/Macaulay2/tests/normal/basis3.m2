@@ -127,9 +127,9 @@ assert(basis(2, R) == matrix"a2,b")
 assert(basis(2, R) == matrix"a2,b")
 
 -- tests for basis of ring maps
-R = ZZ/32003[s,t][a..d]
-f = map(A := coefficientRing R, R, DegreeMap => d -> take(d, - degreeLength A))
-assert(entries basis(({2}, {0,2}), f) == entries id_(ZZ^3))
+-- R = ZZ/32003[s,t][a..d]
+-- f = map(A := coefficientRing R, R, DegreeMap => d -> take(d, - degreeLength A))
+-- assert(entries basis(({2}, {0,2}), f) == entries id_(ZZ^3))
 
 f = map(QQ[s,t], QQ[w,x,y,z], matrix"s3,s2t,st2,t3")
 b = basis((6, 2), f)

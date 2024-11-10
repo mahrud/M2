@@ -702,4 +702,12 @@ TEST ///
   assert(11 == rank HH^0(X, OO(2*D')))
   assert(0  == numcols latticePoints(2*D'))
   assert(0  == numcols vertices(2*D'))
+  assert isEffective D
+  assert not isEffective D'
+  assert isAmple D
+  assert isAmple D'
+  assert not isVeryAmple D
+  assert not isVeryAmple D'
+  assert isVeryAmple(2*D)
+  assert isVeryAmple(2*D')
 ///

@@ -225,7 +225,7 @@ nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) 
 	    )
 	);
     fromPic := matrix fromPicToCl X;
-    indexOfPic := abs lcm (minors( rank source fromPic, fromPic^torsionlessCoord))_*;
+    indexOfPic := lcm (minors( rank source fromPic, fromPic^torsionlessCoord))_*;
     (indexOfPic * coneGens) // fromPic 
     ))
 

@@ -711,3 +711,10 @@ TEST ///
   assert isVeryAmple(2*D)
   assert isVeryAmple(2*D')
 ///
+
+-- test 19
+TEST ///
+  assert(1 == nefGenerators weightedProjectiveSpace {1,1,2})
+  assert(1 == nefGenerators weightedProjectiveSpace {1,2,1})
+  assert(1 == nefGenerators weightedProjectiveSpace {2,1,1})
+///

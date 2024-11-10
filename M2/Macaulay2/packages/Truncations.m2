@@ -171,7 +171,7 @@ truncationMonomials(List, Module) := opts -> (degs, F) -> (
     -- TODO: call findMins on degs, but with respect to the given cone!
     -- checks to see if twist S(-a) needs to be truncated
     isInCone := if nef === null then a -> any(degs, d -> d_free << a) else (
-	-- FIXME
+	-- FIXME: if nef is negative, this is messed up
         truncationCone := nef + convexHull(matrix (transpose degs)_free);
 	a -> contains(truncationCone, convexHull matrix transpose{a}));
     -- TODO: either figure out a way to use cached results or do this in parallel
@@ -261,6 +261,7 @@ truncate(List, Module) := Module => truncateModuleOpts >> opts -> (degs, M) -> (
         image map(M, , truncationMonomials(degs, cover M, Cone => opts#Cone)))
     else subquotient(
         gens truncate(degs, image generators M, opts ++ { MinimalGenerators => false }),
+	-- TODO: add an option for skipping truncation of the relations
         gens truncate(degs, image  relations M, opts ++ { MinimalGenerators => false }))
     )
 

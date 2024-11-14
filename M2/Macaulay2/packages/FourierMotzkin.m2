@@ -162,21 +162,16 @@ fourierMotzkin (Matrix, Matrix) := Sequence => (Z, H) -> (
      if (rank target Z =!= rank target H) then
      error ("expected matrices to have the same number of rows");
      -- making 'QQ' versions of the input
-     local Y;
-     local B;
      outputZZ := false; 
-     if (R === ZZ) then (
-	  outputZZ = true;
-	  Y = substitute(Z, QQ);
-	  B = substitute(H, QQ))
-     else if (R === QQ) then (
-	  Y = Z;
-	  B = H)
+     (Y, B) := if R === ZZ then (
+	 outputZZ = true;
+	 (Z ** QQ, H ** QQ))
+     else if R === QQ then (Z, H)
      else error ("expected a matrix over 'ZZ' or 'QQ'");
      (A, E) := if Z == 0 and H == 0 then (map(target Z, ZZ^0, 0), id_(target Z)) else (
 	-- TODO: add as a strategy?
 	if debugLevel > 1 then printerr "Calling rawFourierMotzkin";
-	ret := transpose map(ZZ, rawFourierMotzkin(raw transpose Z, raw transpose H));
+	ret := dual map(ZZ, rawFourierMotzkin(raw dual Z, raw dual H));
 	m := ret_(0, numcols ret-1); -- FIXME: this is a hack to return two matrices at once
 	(ret_{0..m-1}, ret_{m..numcols ret-2}));
      -*

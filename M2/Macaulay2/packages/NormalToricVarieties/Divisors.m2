@@ -189,8 +189,11 @@ fromCDivToPic NormalToricVariety := Matrix => X -> (
     X.cache.fromCDivToPic 
     );
 
-effCone NormalToricVariety := (cacheValue symbol effCone) (X -> convexHull(matrix{0_( classGroup X)}, effGenerators X))
-nefCone NormalToricVariety := (cacheValue symbol nefCone) (X -> convexHull(matrix{0_(picardGroup X)}, nefGenerators X))
+effCone NormalToricVariety := X -> X.cache.effCone ??= coneFromVData map(classGroup X, , effGenerators X)
+nefCone NormalToricVariety := X -> X.cache.nefCone ??= (
+    N := fromPicToCl X * nefGenerators X;
+    M := intersection(coneFromVData effGenerators X, coneFromVData N);
+    coneFromVData map(classGroup X, , rays M))
 
 effGenerators NormalToricVariety := fromWDivToCl
 nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) (X -> (

@@ -35,6 +35,8 @@ importFrom_Core {
     "reduce",
     }
 
+importFrom_Polyhedra "inputRays"
+
 -- "truncate" is exported by Core
 export {
     "effCone", "effGenerators",
@@ -87,6 +89,7 @@ isNegativeInfinity = degs -> degs === -infinity or instance(degs, List) and all(
 -- if this happens, truncation should return zero
 isPositiveInfinity = degs -> degs ===  infinity or instance(degs, List) and all(degs, isPositiveInfinity)
 
+-- FIXME: rawSelectByDegrees doesn't work with torsion degree groups at all
 -- c.f. https://github.com/Macaulay2/M2/issues/3578
 selectByDegrees = (M, lo, hi) -> rawSelectByDegrees(raw (ring M)^(-degrees M), lo, hi)
 
@@ -145,7 +148,7 @@ truncationPolyhedron(Matrix, Matrix) := Polyhedron => opts -> (A, b) -> (
     -- this is correct when the truncation cone equals the positive quadrant
     then polyhedronFromHData(hdataLHS, hdataRHS)
     -- otherwise, compute the preimage of the truncation cone
-    else affinePreimage(-hdataLHS, opts#Cone * convexHull(z, I), hdataRHS))
+    else affinePreimage(-hdataLHS, coneFromVData rays opts#Cone * convexHull(z, I), hdataRHS))
 
 -- Assume the same conditions as above,
 -- then basisPolyhedron returns a polyhedron in the lattice of
@@ -185,7 +188,8 @@ truncationMonomials(List, Module) := opts -> (degs, F) -> (
     -- checks to see if twist S(-a) needs to be truncated
     isInCone := if nef === null then a -> any(degs, d -> d_free << a) else (
 	-- FIXME: if nef is negative, this is messed up
-        truncationCone := nef + convexHull(matrix (transpose degs)_free);
+	-- FIXME: "coneFromVData rays" is here to fix ambDim(nef)
+        truncationCone := coneFromVData rays nef + convexHull(matrix (transpose degs)_free);
 	a -> contains(truncationCone, convexHull matrix transpose{a}));
     -- TODO: either figure out a way to use cached results or do this in parallel
     directSum apply(degrees F, a -> if isInCone a_free then gens R^{a} else concatCols(
@@ -194,7 +198,7 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
     -- inputs: a single multidegree, a graded ring
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
-    C := if opts#Cone =!= null then rays opts#Cone else id_(degreeGroup R);
+    C := if opts#Cone =!= null then opts#Cone.cache.inputRays else id_(degreeGroup R);
     R#(symbol truncate, d, C) ??= (
 	(R1, phi1) := flattenRing R;
         -- generates the effective cone
@@ -211,7 +215,11 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
         result := mingens ideal(mongens % J);
         if R1 =!= ambR then result = result ** R1;
         if R =!= R1 then result = phi1^-1 result;
-        result))
+	-- discard generators whose free component of degree matched,
+	-- but the torsion component was not feasible.
+	psrc := positions(degrees source result, deg -> isSubset(
+		image map(target C, , transpose{deg}), image C));
+	submatrix(result, , psrc)))
 
 truncation0 = (deg, M) -> (
     -- WARNING: valid for a polynomial ring with degree length = 1.

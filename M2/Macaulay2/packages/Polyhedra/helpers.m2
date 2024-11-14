@@ -141,19 +141,18 @@ makeRaysUniqueAndPrimitive(Matrix, Matrix) := (M, LS) -> (
          test := position(result, r -> pointInSameDirection(matrix r, matrix l, LS));
          if class test === Nothing then result = insert(0, l, result);
       );
-      sort matrix unique result
-   )
-   else map(ZZ^n, ZZ^0, 0)
-)
+	map(target M, , sort matrix unique result))
+    else map(target M, ZZ^0, 0))
+
 makeRaysUniqueAndPrimitive Matrix := M -> (
    M = makeRaysPrimitive M;
    n := numRows M;
    if numColumns M == 0 then return M;
    L := apply(numColumns M, i -> M_i);
    L = select(L, l -> gcd entries l != 0);
-   if #L != 0 then sort matrix unique L
-   else map(ZZ^n, ZZ^0, 0)
-)
+    if #L != 0
+    then map(target M, , sort matrix unique L)
+    else map(target M, ZZ^0, 0))
 
 makeRaysPrimitive = method()
 makeRaysPrimitive Matrix := M -> (
@@ -174,8 +173,7 @@ makeRaysPrimitive Matrix := M -> (
          newCols = append(newCols, vector newEntries)
       )
    );
-   lift(matrix newCols, ZZ)
-)
+    map(target M, , lift(matrix newCols, ZZ)))
 
 makeFacetsPrimitive = method()
 makeFacetsPrimitive Matrix := M -> (

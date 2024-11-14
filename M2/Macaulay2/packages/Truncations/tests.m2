@@ -446,6 +446,28 @@ TEST ///
   assert(basis({0,0,4}, M) == x_0*x_1*x_2*x_3)
 ///
 
+TEST ///
+  needsPackage "NormalToricVarieties"
+  N = ZZ^3
+  D = toricDivisor convexHull matrix {0_N, N_0, N_1, N_0 + N_1 + 2*N_2}
+  X = variety D
+  X.cache.nefCone = coneFromVData map(coker matrix {{2, 0}, {0, 2}, {0, 0}}, , transpose{{0,0,1}})
+  S = ring X
+
+  C = complex gens truncate(degree D, S)
+  basis(degree(2*D), C)
+  basis(degree(2*D), HH C)
+  basis(degree(2*D), HH_0 C)
+  basis(degree(2*D), HH_1 C)
+  assert(part(degree(2*D), HH C) == prune HH part(degree(2*D), C))
+
+  M = coker basis({0,0,2}, S)
+  assert(basis({0,0,1}, M) == x_3)
+  assert(basis({0,0,2}, M) == 0)
+  assert(basis({0,0,3}, M) == x_0*x_1*x_2)
+  assert(basis({0,0,4}, M) == x_0*x_1*x_2*x_3)
+///
+
 end--
 
 restart

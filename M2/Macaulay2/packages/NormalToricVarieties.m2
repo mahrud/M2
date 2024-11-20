@@ -71,7 +71,10 @@ export {
     "toricDivisor",  
     "weightedProjectiveSpace",  
     "weilDivisorGroup",
-    -- symbols  
+    "primitiveCollections",
+    "primitiveRelation",
+    -- symbols
+    "PrimitiveRelations",
     "WeilToClass"
     }
 

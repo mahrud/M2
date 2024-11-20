@@ -1,4 +1,33 @@
 ------------------------------------------------------------------------------
+-- Primitive collections and relations
+------------------------------------------------------------------------------
+
+-- TODO: intersect or intersection?
+intersect(List, List) := List => {} >> o -> (L1, L2) -> toList intersection(set L1, set L2)
+
+-- lists primitive collections of a toric variety
+-- see CLS Definition 5.1.5
+primitiveCollections = method()
+primitiveCollections NormalToricVariety := X -> indices \ (dual monomialIdeal X)_*
+
+-- returns the primitive relation associated to a collection
+-- we will use this to compute rows of the map WDiv X -> Cl X
+-- see CLS Definition 6.4.10
+primitiveRelation = method()
+primitiveRelation(NormalToricVariety, List) := (X, L) -> (
+    X.cache.PrimitiveRelations ??= new MutableHashTable;
+    X.cache.PrimitiveRelations#L ??= (
+	WDiv := weilDivisorGroup X;
+	A := matrix transpose rays X;
+	I := matrix { sum entries id_WDiv^L };
+	s := A * transpose I;
+	-- the rays generating the cone whose interior contains s
+	C := intersect select(max X, sigma -> contains(coneFromVData A_sigma, s));
+	CA := matrix apply(numcols A, i -> A_i * if isMember(i, C) then 1 else 0);
+	first entries(I - transpose(s // CA)))
+    )
+
+------------------------------------------------------------------------------
 -- Toric Divisors and Related Groups
 ------------------------------------------------------------------------------
 -- divisor, class, and Picard groups

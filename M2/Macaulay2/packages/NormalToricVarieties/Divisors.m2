@@ -29,6 +29,8 @@ primitiveRelation(NormalToricVariety, List) := (X, L) -> (
 	A := matrix transpose rays X;
 	I := matrix { sum entries id_WDiv^L };
 	s := A * transpose I;
+	-- shortcut for the case when the rays cancel
+	if s == 0 then return first entries I;
 	-- the rays generating the cone whose interior contains s
 	C := intersect select(max X, sigma -> contains(coneFromVData A_sigma, s));
 	CA := matrix apply(numcols A, i -> A_i * if isMember(i, C) then 1 else 0);

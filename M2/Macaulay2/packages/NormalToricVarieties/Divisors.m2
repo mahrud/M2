@@ -39,8 +39,13 @@ classGroup NormalToricVariety := Module => (
     	clX := prune rawClX;
     	-- we also compute the map to the group of Weil divisors
     	wDiv := weilDivisorGroup X;
-    	if X.cache.?fromWDivToCl then A := matrix X.cache.fromWDivToCl
-    	else A =  matrix (clX.cache.pruningMap)^(-1);
+	A := if X.cache.?fromWDivToCl then matrix X.cache.fromWDivToCl
+	-- TODO: is simplicial or complete/semiprojective sufficient?
+	-- FIXME: we can't call isProjective, because it calls classGroup!
+	-- so for now we at least call isComplete, but is that enough?
+	else if isSmooth X and isComplete X then matrix apply(
+	    primitiveCollections X, PC -> primitiveRelation(X, PC))
+	else matrix inverse clX.cache.pruningMap;
     	X.cache.fromWDivToCl = map(clX, wDiv, A);	  
     	clX 
 	)

@@ -2,8 +2,8 @@
 -- Primitive collections and relations
 ------------------------------------------------------------------------------
 
--- TODO: intersect or intersection?
-intersect(List, List) := List => {} >> o -> (L1, L2) -> toList intersection(set L1, set L2)
+-- workaround for a weird bug in List.intersect
+intersect' = L -> if #L == 1 then L#0 else intersect L
 
 -- lists primitive collections of a toric variety
 -- see CLS Definition 5.1.5
@@ -32,7 +32,8 @@ primitiveRelation(NormalToricVariety, List) := (X, L) -> (
 	-- shortcut for the case when the rays cancel
 	if s == 0 then return first entries I;
 	-- the rays generating the cone whose interior contains s
-	C := intersect select(max X, sigma -> contains(coneFromVData A_sigma, s));
+	-- TODO: this is the slow part, can we make it faster?
+	C := intersect' select(max X, sigma -> contains(coneFromVData A_sigma, s));
 	CA := matrix apply(numcols A, i -> A_i * if isMember(i, C) then 1 else 0);
 	first entries(I - transpose(s // CA)))
     )

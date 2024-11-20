@@ -44,6 +44,10 @@ intersect Sequence := true >> opts -> L -> (
 	if func =!= null then return func(opts, L));
     intersect(opts, new VisibleList from L))
 
+-- for intersecting a list of lists
+-- FIXME: why is this failing for {{1}}?
+List.intersect = {} >> o -> L -> toList intersect apply(L, set)
+
 -----------------------------------------------------------------------------
 -- Intersection of ideals and modules
 -----------------------------------------------------------------------------

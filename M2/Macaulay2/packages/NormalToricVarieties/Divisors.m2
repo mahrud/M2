@@ -8,7 +8,15 @@ intersect(List, List) := List => {} >> o -> (L1, L2) -> toList intersection(set 
 -- lists primitive collections of a toric variety
 -- see CLS Definition 5.1.5
 primitiveCollections = method()
-primitiveCollections NormalToricVariety := X -> indices \ (dual monomialIdeal X)_*
+primitiveCollections NormalToricVariety := X -> (
+    -- we need the Alexander dual of the irrelevant ideal,
+    -- but ring X can't be defined before Cl X is computed.
+    -- this is just indices \ (dual monomialIdeal X)_*
+    S := degreesRing(# rays X);
+    I := dual monomialIdeal apply(max X,
+	L -> product(numgens S,
+	    i -> if isMember(i, L) then 1_S else S_i));
+    indices \ I_*)
 
 -- returns the primitive relation associated to a collection
 -- we will use this to compute rows of the map WDiv X -> Cl X

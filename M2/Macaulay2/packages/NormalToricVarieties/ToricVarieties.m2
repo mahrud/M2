@@ -280,6 +280,10 @@ kleinschmidt (ZZ, List) := NormalToricVariety => opts -> (d,a) -> (
 	)
     );
 
+-- given a normal toric variety and one of its maximal cones,
+-- returns the corresponding locally affine toric variety
+affine = (X, sigma) -> normalToricVariety(
+    (rays X)_sigma, {toList(0..#sigma-1)})
 
 ------------------------------------------------------------------------------
 -- Products of normal toric varieties

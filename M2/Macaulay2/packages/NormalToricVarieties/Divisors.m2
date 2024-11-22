@@ -26,16 +26,21 @@ primitiveRelation(NormalToricVariety, List) := (X, L) -> (
     X.cache.PrimitiveRelations ??= new MutableHashTable;
     X.cache.PrimitiveRelations#L ??= (
 	WDiv := weilDivisorGroup X;
-	A := matrix transpose rays X;
+	A := matrix transpose rays X ** QQ;
 	I := matrix { sum entries id_WDiv^L };
 	s := A * transpose I;
 	-- shortcut for the case when the rays cancel
 	if s == 0 then return first entries I;
-	-- the rays generating the cone whose interior contains s
-	-- TODO: this is the slow part, can we make it faster?
-	C := intersect' select(max X, sigma -> contains(coneFromVData A_sigma, s));
-	CA := matrix apply(numcols A, i -> A_i * if isMember(i, C) then 1 else 0);
-	first entries(I - transpose(s // CA)))
+	-- when X is simplicial and complete then the sum s
+	-- will be in the relative interior of a cone of X
+	-- with unique and nonnegative coefficients
+	c := for sigma in max X do (
+	    v := flatten entries(s // A_sigma);
+	    if any(v, c -> c < 0) then continue;
+	    break sum(sigma, v, (i, c) -> c * WDiv^{i}));
+	b := first entries(I - c);
+	d := lcm apply(b, denominator);
+	entries lift(d * vector b, ZZ))
     )
 
 ------------------------------------------------------------------------------

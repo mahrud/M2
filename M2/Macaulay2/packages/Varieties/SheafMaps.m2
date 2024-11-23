@@ -34,12 +34,14 @@ autotruncate = { MinimalGenerators => false } >> opts -> L -> (
 SheafMap = new Type of HashTable
 SheafMap.synonym = "morphism of sheaves"
 
+varietyWarn = true
 -- TODO: if over affine variety, dehomogenize the maps
 -- TODO: toExternalString doesn't capture the source/target of phi;
 -- should it be inferred from G and F when reconstructing the map?
 map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> (
     if variety G =!= variety F then error "expected sheaves over the same variety";
-    if not instance(variety F, ProjectiveVariety) then error "maps of sheaves not yet implemented on other varieties";
+    if varietyWarn and not instance(variety F, ProjectiveVariety) then (
+	varietyWarn = false; printerr "maps of sheaves are experimental over the given variety");
     deg := if opts.Degree =!= null then opts.Degree else min flatten degrees source phi;
     phi  = if module G =!= target phi then inducedMap(module G, target phi) * phi else phi;
     new SheafMap from {

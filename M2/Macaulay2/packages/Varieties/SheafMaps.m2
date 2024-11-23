@@ -480,9 +480,10 @@ Hom(CoherentSheaf, CoherentSheaf) := Module => opts -> (F, G) -> (
     -- to a morphism between the underlying modules of F and G.
     phi := F'.cache.pruningMap;
     psi := G'.cache.pruningMap^-1;
-    B := basis(0, module H);
+    z := degree 1_(ring f);
+    B := basis(z, module H);
     g := inverse f * B;
-    V := part(0, source B);
+    V := part(z, source B);
     V.cache.homomorphism = h -> V.cache#(homomorphism, h) ??= (
 	psi * sheaf(phi.variety, homomorphism(g * h)) * phi);
     V.cache.formation = FunctionApplication { Hom, (F, G) };

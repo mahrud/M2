@@ -63,18 +63,37 @@ sheaf NormalToricVariety := SheafOfRings => X -> sheaf_X ring X
 
 installMethod(symbol _, OO, NormalToricVariety, SheafOfRings => (OO,X) -> sheaf(X, ring X))
 
+-- TODO: combine with killH0 in Varieties.m2
+killH0 := -*(cacheValue symbol TorsionFree)*- (M -> if (H0 := saturate(0*M, ideal variety ring M)) == 0 then M else M / H0)
+
 -- Add a new strategy as a hook
 addHook((minimalPresentation, CoherentSheaf), Strategy => symbol NormalToricVarieties, (opts, F) ->
     if instance(X := variety F, NormalToricVariety) then (
+	-- c.f. twistedGlobalSectionsModule in Varieties.m2
     	M := module F;
     	S := ring M;
     	B := ideal X;
-    	N := saturate(image map(M,S^0,0), B);
-    	if N != 0 then M = M/N;
-    	C := freeResolution M;
+	N := killH0 M;
+	C := freeResolution N;
     	-- is there a better bound?
 	a := max(1, max apply(length C + 1, i -> i + max flatten degrees C_i));
-	return sheaf(X, minimalPresentation Hom(B^[a], M)) )
+	F.cache.TorsionFree = N;
+	F.cache.GlobalSectionLimit = max(0, a);
+	M' := minimalPresentation if a <= 0 then N else target(
+	    -- consider the sequence 0 -> B^[a] -> S -> S/B^[a] -> 0
+	    inc := inducedMap(module S, module B^[a]);
+	    iso := inducedMap(Hom(S, N), N);
+	    -- we compute the map N -> Gamma_* F as a limit by
+	    -- applying Hom(-,N) to the sequence above
+	    phi := Hom(inc, N, MinimalGenerators => true) * iso);
+	-- now we compute the center map in the sequence
+	-- 0 -> HH^0_B(M) -> M -> Gamma_* F -> HH^1_B(M) -> 0
+	iota := inverse M'.cache.pruningMap; -- map from Gamma_* F to its minimal presentation
+	quot := inducedMap(N, M);            -- map from M to N = M/HH^0_B(M)
+	F.cache.SaturationMap = if a <= 0 then iota * quot else iota * phi * quot;
+	F' := sheaf(X, M');
+	F'.cache.pruningMap = sheaf(X, F.cache.SaturationMap);
+	F')
     )
 
 cotangentSheaf NormalToricVariety := CoherentSheaf => opts -> (

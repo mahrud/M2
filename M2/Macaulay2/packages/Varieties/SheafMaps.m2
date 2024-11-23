@@ -42,13 +42,13 @@ map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> 
     if variety G =!= variety F then error "expected sheaves over the same variety";
     if varietyWarn and not instance(variety F, ProjectiveVariety) then (
 	varietyWarn = false; printerr "maps of sheaves are experimental over the given variety");
-    deg := if opts.Degree =!= null then opts.Degree else min flatten degrees source phi;
+    deg := if opts.Degree =!= null then opts.Degree else min degrees source phi;
     phi  = if module G =!= target phi then inducedMap(module G, target phi) * phi else phi;
     new SheafMap from {
 	symbol variety => variety F,
         symbol source => F,
         symbol target => G,
-        symbol degree => deg,
+        symbol degree => if instance(deg, ZZ) then {deg} else deg,
         symbol map => phi,
         symbol cache => new CacheTable
         }
@@ -60,7 +60,8 @@ map(Nothing, CoherentSheaf, Matrix) := SheafMap => opts -> (null, G, psi) -> map
 -- TODO: accept a list of lists instead of matrix
 
 -- when phi is constructed by truncation >= d
-map(CoherentSheaf, CoherentSheaf, Matrix, ZZ)             := SheafMap => opts -> (G, F, phi, d) -> map(G, F, phi, Degree => d)
+map(CoherentSheaf, CoherentSheaf, Matrix, ZZ)             :=
+map(CoherentSheaf, CoherentSheaf, Matrix, List)           := SheafMap => opts -> (G, F, phi, d) -> map(G, F, phi, Degree => d)
 map(CoherentSheaf, CoherentSheaf, Matrix, InfiniteNumber) := SheafMap => opts -> (G, F, phi, d) -> (
     if d === -infinity then map(G, F, phi) else error "unexpected degree for map of sheaves")
 
@@ -81,9 +82,11 @@ map(Module, CoherentSheaf, ZZ) := SheafMap => opts -> (M, F, n) -> (
 
 sheaf SheafMap             := SheafMap =>  phi        -> sheaf matrix phi
 sheaf Matrix := Matrix^~   := SheafMap =>  phi        -> sheaf(variety ring phi, phi)
-sheaf(Matrix, ZZ)          := SheafMap => (phi, d)    -> sheaf(variety ring phi, phi, d)
+sheaf(Matrix, ZZ)          :=
+sheaf(Matrix, List)        := SheafMap => (phi, d)    -> sheaf(variety ring phi, phi, d)
 sheaf(Variety, Matrix)     := SheafMap => (X, phi)    -> map(sheaf_X target phi, sheaf_X source phi, phi)
-sheaf(Variety, Matrix, ZZ) := SheafMap => (X, phi, d) -> map(sheaf_X target phi, sheaf_X source phi,
+sheaf(Variety, Matrix, ZZ)   :=
+sheaf(Variety, Matrix, List) := SheafMap => (X, phi, d) -> map(sheaf_X target phi, sheaf_X source phi,
     truncate(d, phi, MinimalGenerators => false), d)
 
 random(CoherentSheaf, CoherentSheaf) := SheafMap => o -> (F, G) -> map(F, G, random(F.module, G.module, o))
@@ -103,7 +106,7 @@ isWellDefined SheafMap := f -> (
 	instance(f.target, CoherentSheaf) and
 	instance(f.cache, CacheTable) and
 	instance(f.map, Matrix) and
-	(instance(f.degree, ZZ) or f.degree == infinity),
+	(instance(f.degree, List) or f.degree == infinity),
 	"the hash table does not have the expected values")
     -- mathematical checks
     and assert'(ring matrix f === ring X,
@@ -131,7 +134,7 @@ variety SheafMap := Variety       => f -> f.variety
 ring    SheafMap := SheafOfRings  => f -> sheaf f.variety
 matrix  SheafMap := Matrix   => o -> f -> f.map
 -- TODO: does this make sense, or should all sheaf maps be degree zero?
-degree  SheafMap := ZZ            => f -> degree f.map
+degree  SheafMap := List          => f -> degree f.map
 -- TODO: add a method that returns f.degree
 
 kernel   SheafMap := CoherentSheaf => o -> f -> sheaf(f.variety,   kernel(f.map, o))
@@ -297,7 +300,8 @@ isLiftable(Matrix, Matrix) := (phi, eta) -> (
 --checks whether a sheaf map represented by a map
 --phi : M(\geq e) --> N can be factored through
 --a smaller truncation of the module M
-isLiftable(SheafMap, ZZ) := (shphi, d) -> (
+isLiftable(SheafMap, ZZ)   :=
+isLiftable(SheafMap, List) := (shphi, d) -> (
     phi := matrix shphi;
     M := module source shphi;
     eta := inducedMap(truncate(d, M, MinimalGenerators => false), source phi);
@@ -315,7 +319,8 @@ lift'(Matrix, Matrix) := Matrix => (phi, eta) -> (
 --phi : M(\geq d) --> N to a map M(\geq e) --> N that represents
 --the same morphism of sheaves, if possible
 --WARNING: this method does not actually verify if the lift is possible
-lift'(SheafMap,ZZ) := SheafMap => (shphi,e) -> (
+lift'(SheafMap, ZZ)   :=
+lift'(SheafMap, List) := SheafMap => (shphi, e) -> (
     d := shphi.degree;
     phi := matrix shphi;
     M := module source shphi;
@@ -400,7 +405,7 @@ Matrix  ^** ZZ := Matrix   => (f, n) -> BinaryPowerMethod(f, n, tensor,
     f -> error "Matrix ^** ZZ: expected non-negative integer")
 
 -- twist notation
-SheafMap(ZZ) := SheafMap => (phi, d) -> phi ** OO_(variety phi)^1(d)
+SheafMap(List) := SheafMap(ZZ) := SheafMap => (phi, d) -> phi ** OO_(variety phi)^1(d)
 
 -- TODO: can we also make the target to be the dual of the original source?
 dual SheafMap := SheafMap => options(dual, Matrix) >> o -> f -> map(null, dual target f, dual(matrix f, o))

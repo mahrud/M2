@@ -336,8 +336,10 @@ lift SheafMap := SheafMap => o -> shphi -> (
     if shphi == 0 then return shphi;
     d := shphi.degree;
     M := module source shphi;
-    m := min flatten degrees M;
-    while isLiftable(shphi,d-1) and d > m do d = d-1;
+    m := min degrees M;
+    -- TODO: use multigraded regularity?
+    for one in entries \ (degreeGroup ring M)_* do
+    while isLiftable(shphi, d-one) and d > m do d = d-one;
     lift'(shphi, d))
 
 -*lift(Matrix,Matrix) := Matrix => opts -> (phi,eta) -> (
@@ -698,15 +700,14 @@ yonedaSheafExtension Matrix := Complex => f -> (
 
 -- Consider the sequence 0 -> m^[p] -> S -> S/m^[p] -> 0 and apply Hom(-,M)
 prune SheafMap := minimalPresentation SheafMap := SheafMap => opts -> (cacheValue symbol minimalPresentation) (f -> (
-    (G, F) := (target f, source f);
+    (X, G, F) := (variety f, target f, source f);
     if f == 0 then return map(prune G, prune F, 0);
     prune G; prune F; -- these are pruned just to populate cached data
     -- F.cache.TorsionFree = M/H^0_B(M)
     g := inducedMap(G.cache.TorsionFree, truncate(f.degree, F.cache.TorsionFree, MinimalGenerators => false), matrix f);
     -- TODO: verify that f.degree is always sufficient here
-    p := max(G.cache.GlobalSectionLimit, F.cache.GlobalSectionLimit) + max(0, f.degree);
-    -- TODO: substitute with appropriate irrelevant ideal
-    Bp := module (ideal vars ring variety F)^[p];
+    p := max(G.cache.GlobalSectionLimit, F.cache.GlobalSectionLimit) + max(0, max f.degree);
+    Bp := module (irrelevantIdeal X)^[p];
     lift sheaf(f.variety, prune Hom(Bp, g)))
     )
 

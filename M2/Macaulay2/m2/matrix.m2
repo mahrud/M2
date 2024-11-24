@@ -697,7 +697,8 @@ inducedMap(Module,Module,Matrix) := Matrix => opts -> (N',M',f) -> (
      (f', g, gbN', gbM) := if c =!= null then c else error "inducedMap: no method implemented for this type of input";
      if opts.Verify then (
 	  if relations M % relations M' != 0 then error "inducedMap: expected new source not to have fewer relations";
-	  if relations N % relations N' != 0 then error "inducedMap: expected new target not to have fewer relations";
+	  -- TODO: maybe we need to reduce f with respect to the new target?
+	  --if relations N % relations N' != 0 then error "inducedMap: expected new target not to have fewer relations";
 	  if generators M' % gbM != 0 then error "inducedMap: expected new source not to have more generators";
 	  if g % gbN' != 0 then error "inducedMap: expected matrix to induce a map";
 	  if not isWellDefined f' then error "inducedMap: expected matrix to induce a well-defined map";

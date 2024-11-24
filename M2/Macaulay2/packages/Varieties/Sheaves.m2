@@ -248,7 +248,10 @@ dual CoherentSheaf := CoherentSheaf => options(dual, Module) >> o -> F -> sheaf(
 -- Here we use the first, but start with comparing Hilbert polynomials, which may be faster,
 -- TODO: benchmark different strategies
 CoherentSheaf == CoherentSheaf := Boolean => (F, G) -> hilbertPolynomial F === hilbertPolynomial G and module prune F == module prune G
-CoherentSheaf == ZZ            := Boolean => (F, z) -> if z == 0 then dim module F <= 0 else error "attempted to compare sheaf to nonzero integer"
+CoherentSheaf == ZZ            := Boolean => (F, z) -> (
+    -- FIXME: dim module F <= 0 breaks for toric varieties
+    if z == 0 then -* dim module F <= 0 *- hilbertPolynomial F == 0
+    else error "attempted to compare sheaf to nonzero integer")
 CoherentSheaf == Module        := Boolean => (F, M) -> F == sheaf M
 Module        == CoherentSheaf := Boolean => (M, F) -> sheaf M == F
 ZZ            == CoherentSheaf := Boolean => (z, F) -> F == z

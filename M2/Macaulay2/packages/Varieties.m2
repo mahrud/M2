@@ -79,6 +79,7 @@ export {
     "cotangentSheaf",  "Ω" => "cotangentSheaf",
     "canonicalBundle", "ω" => "canonicalBundle",
     "idealSheaf",
+    "irrelevantIdeal",
     "isProjective",
     "isLocallyFree",
     "degreeOnCurve",
@@ -287,6 +288,10 @@ euler ProjectiveVariety := ZZ => X -> (
 	output = output + (-1)^halfn * euler reflexiveDifferentials(halfn, X));
     output)
 eulers ProjectiveVariety := X -> eulers ring X
+
+irrelevantIdeal = method()
+irrelevantIdeal     AffineVariety := Ideal => X -> ideal 0_(ring X)
+irrelevantIdeal ProjectiveVariety := Ideal => X -> ideal vars ring X
 
 ambient     AffineVariety :=     AffineVariety => X -> Spec ambient ring X
 ambient ProjectiveVariety := ProjectiveVariety => X -> Proj ambient ring X

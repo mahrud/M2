@@ -27,7 +27,7 @@ newPackage(
 
 export{
     "multigradedPolynomialRing",
-    "irrelevantIdeal",
+    -- "irrelevantIdeal", moved to Varieties
     "diagonalMultidegrees",
     "findMins",
     "findRegion",
@@ -85,7 +85,6 @@ gradedPolynomialRing List := opts -> n -> (
     kk[yy]
     )
 
-irrelevantIdeal = method()
 --only works for products of projective spaces
 irrelevantIdeal Ring := S -> (
     degs := unique degrees S;
@@ -634,7 +633,7 @@ SeeAlso
   Truncations
 Subnodes
   multigradedPolynomialRing
-  irrelevantIdeal
+  (irrelevantIdeal, Ring)
   diagonalMultidegrees
   findMins
   findRegion
@@ -865,12 +864,11 @@ Caveat
   Use @TO "TateOnProducts :: productOfProjectiveSpaces"@ instead.
 SeeAlso
   productOfProjectiveSpaces
-  irrelevantIdeal
+  (irrelevantIdeal, Ring)
 ///
 
 doc ///
 Key
-   irrelevantIdeal
   (irrelevantIdeal,Ring)
 Headline
   gives the irrelevant ideal of the coordinate ring of a product of projective spaces
@@ -1100,7 +1098,7 @@ Description
 Caveat
   If the resolution of the truncation is longer than the resolution of $S/B$ then @TT "isQuasiLinear"@ will return false.
 SeeAlso
-  irrelevantIdeal
+  (irrelevantIdeal, Ring)
   truncate
 ///
 

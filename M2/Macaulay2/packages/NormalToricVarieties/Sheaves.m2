@@ -22,6 +22,8 @@ normalToricVariety Ring := NormalToricVariety => opts -> S -> (
     if S.?variety and instance(S.variety, NormalToricVariety) then S.variety
     else error "no normal toric variety associated with ring")
 
+-- TODO: document for consistency?
+irrelevantIdeal NormalToricVariety :=
 ideal NormalToricVariety := Ideal => (
     cacheValue symbol ideal) (
     X -> (

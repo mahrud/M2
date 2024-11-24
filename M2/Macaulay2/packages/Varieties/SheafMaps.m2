@@ -499,7 +499,7 @@ Hom(CoherentSheaf, CoherentSheaf) := Module => opts -> (F, G) -> (
 
 -- Note: homomorphism(Matrix) is defined to use V.cache.homomorphism
 -- TODO: target should have Hom info cached
-homomorphism' SheafMap := o -> h -> part(0, homomorphism'(matrix h, o))
+homomorphism' SheafMap := o -> h -> part(degree 1_(ring variety h), homomorphism'(matrix h, o))
 
 -----------------------------------------------------------------------------
 -- homology

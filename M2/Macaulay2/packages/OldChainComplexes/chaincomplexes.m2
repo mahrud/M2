@@ -12,7 +12,6 @@ importFrom_Core {
     "rawKoszul",
     "rawTensor",
     "concatBlocks",
-    "moduleAbbrv",
     "rawResolutionGetMatrix",
     "RawComputation",
     "RawMatrix",

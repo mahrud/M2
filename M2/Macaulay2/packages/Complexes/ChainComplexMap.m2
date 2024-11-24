@@ -1,3 +1,7 @@
+importFrom_Core {
+    "short",
+}
+
 -----------------------------------
 -- ComplexMap ------------
 -----------------------------------
@@ -238,11 +242,11 @@ expression ComplexMap := Expression => f -> (
 net ComplexMap := Net => f -> (
      v := between("",
             for i in sort keys f.map list (
-                horizontalJoin(
-		            net (i+f.degree), " : ", net target f_i, " <--",
-		            lineOnTop net f_i,
-		            "-- ", net source f_i, " : ", net i
-                    )
+	     horizontalJoin(
+		net (i+f.degree), " : ",
+		net short target f_i,
+		" <--", lineOnTop net matrix f_i, "-- ",
+		net short source f_i, " : ", net i)
                 ));
      if # v === 0 then net "0"
      else stack v

@@ -246,6 +246,12 @@ cohomology (ZZ, NormalToricVariety, CoherentSheaf) := Module => opts -> (i,X,F) 
 cohomology (ZZ, NormalToricVariety, SheafOfRings) := Module => opts -> 
     (i, X ,O) -> HH^i (X, O^1)
 
+cohomology (ZZ, NormalToricVariety, SheafMap) := Matrix =>
+    lookup(cohomology, ZZ, ProjectiveVariety, SheafMap)
+
+cohomology (ZZ, NormalToricVariety, Complex) := Complex =>
+    lookup(cohomology, ZZ, ProjectiveVariety, Complex)
+
 -- Add a new strategy as a hook
 addHook((euler, CoherentSheaf), Strategy => symbol NormalToricVarieties, F ->
     if instance(X := variety F, NormalToricVariety) then

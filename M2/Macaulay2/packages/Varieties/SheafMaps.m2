@@ -479,16 +479,14 @@ Hom(CoherentSheaf, CoherentSheaf) := Module => opts -> (F, G) -> (
     -- the previous method as a faster strategy.
     F' := prune F;
     G' := prune G;
-    -- TODO: add DegreeLimit => 0 for efficiency again,
-    -- but this causes inverse f to fail in some cases.
-    H := prune sheafHom(F', G', opts);
+    z := degree 1_(ring variety F);
+    H := prune sheafHom(F', G', opts, DegreeLimit => z);
     f := matrix H.cache.pruningMap;
     -- Note: we prune F and G so that f is an isomorphism of modules,
     -- otherwise there may be morphisms in H that do not correspond
     -- to a morphism between the underlying modules of F and G.
     phi := F'.cache.pruningMap;
     psi := G'.cache.pruningMap^-1;
-    z := degree 1_(ring f);
     B := basis(z, module H);
     g := inverse f * B;
     V := part(z, source B);

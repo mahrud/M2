@@ -292,16 +292,15 @@ truncate(List,    List, Matrix) := Matrix => truncateModuleOpts >> opts -> (tard
 
 --------------------------------------------------------------------
 
-truncate(InfiniteNumber, Thing) := truncateModuleOpts >> o -> (d, M) -> (
+truncate(InfiniteNumber, Ring)   := truncateModuleOpts >> o -> (d, R) -> ideal truncate(d, module R, o)
+truncate(InfiniteNumber, Ideal)  := truncateModuleOpts >> o -> (d, I) -> ideal truncate(d, module I, o)
+truncate(InfiniteNumber, Module) := truncateModuleOpts >> o -> (d, M) -> (
     if d === -infinity then M else (ring M)^0)
 
 -- TODO: implement union types in M2 and simplify stuff like this
 truncate(Nothing,        InfiniteNumber, Matrix) :=
 truncate(InfiniteNumber, InfiniteNumber, Matrix) := lookup(truncate, List, List, Matrix)
-
--- TODO: implement union types in M2 and simplify stuff like this
-truncate(Nothing,        InfiniteNumber, Matrix) :=
-truncate(InfiniteNumber, InfiniteNumber, Matrix) := lookup(truncate, List, List, Matrix)
+truncate(InfiniteNumber,                 Matrix) := lookup(truncate, List,       Matrix)
 
 --------------------------------------------------------------------
 -- basis using basisPolyhedron (experimental)

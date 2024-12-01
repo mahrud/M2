@@ -119,7 +119,7 @@ isWellDefined SheafMap := f -> (
 	"target of the sheaf map does not match the target of the underlying matrix")
     and assert'(F  == sheaf(X, source matrix f),
 	"source of the sheaf map does not match the source of the underlying matrix")
-    and assert'(d >= min flatten degrees F, -- maybe not strictly necessary
+    and assert'(d >= min degrees F, -- maybe not strictly necessary
 	"expected the degree of the sheaf map to be at least as high as the degrees of the source")
     and assert'(try ( isWellDefined map(module G, F' := truncate(d, module F, MinimalGenerators => false),
 	 -- TODO: should we use F' here or truncation of source matrix f?
@@ -529,8 +529,8 @@ homology(SheafMap, SheafMap) := CoherentSheaf => opts -> (g, f) -> (
 
 cohomology(ZZ,                    SheafMap) := Matrix => opts -> (p,    f) -> cohomology(p, variety f, f, opts)
 cohomology(ZZ, ProjectiveVariety, SheafMap) := Matrix => opts -> (p, X, f) -> (
-    -- TODO: need to base change to the base field
-    if p == 0 then part(0, matrix prune f) else (
+    z := degree 1_(ring X);
+    if p == 0 then part(z, matrix prune f) else (
 	-- pushforward F to a projective space first
 	g := flattenMorphism matrix f;
 	A := ring g;
@@ -540,7 +540,7 @@ cohomology(ZZ, ProjectiveVariety, SheafMap) := Matrix => opts -> (p, X, f) -> (
 	-- using Serre duality for coherent sheaves on schemes with mild
 	-- singularities, Cohen–Macaulay schemes, not just smooth schemes.
 	-- TODO: check that X is proper (or at least finite type)
-	transpose part(0, Ext^(n-p)(g, w)))
+	transpose part(z, Ext^(n-p)(g, w)))
     )
 
 --Some questions:

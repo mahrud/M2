@@ -56,23 +56,36 @@ truncateImplemented Ring := Boolean => R -> (
     or isPolynomialRing A and ZZ === coefficientRing A
     )
 
--- checkOrMakeDegreeList: takes a degree, and degree rank:ZZ
+-- TODO: combine with m2/engine.m2
+isListOfIntegers        = (r, x) -> instance(x, List) and all(x, i -> class i === ZZ) and #x == r
+isListOfListsOfIntegers = (r, x) -> instance(x, List) and all(x, isListOfIntegers_r)
+
+-- makeDegreeList: takes degree rank, one or more degrees, and degrees of a module
 -- output: a list of degrees, all of the correct length (degree rank), otherwise an error
 -- in the following n represents an integer, and d represents a list of integers:
 --  n          --> {{n}}          if degree rank is 1
 -- {n0,...,ns} --> {{n0,...,ns}}  if length is the degree rank
 -- {d0,...,ds} --> { d0,...,ds }  if length of each di is the degree rank
-checkOrMakeDegreeList = method()
-checkOrMakeDegreeList(ZZ,   ZZ) := (n, degrank) -> (
-    if degrank === 1 then {{n}} else error("expected a degree of length " | degrank))
-checkOrMakeDegreeList(List, ZZ) := (L, degrank) -> (
-    if #L === 0 then error "expected nonempty list of degrees";
-    if all(L, d -> instance(d, ZZ))
-    then if #L === degrank then {L} else error("expected a multidegree of length " | degrank)
-    else ( -- If L is a list of lists of integers, all the same length, L will be returned.
-        if all(L, deg -> instance(deg, VisibleList) and #deg === degrank and all(deg, d -> instance(d, ZZ)))
-        then sort L else error("expected a list of multidegrees, each of length " | degrank))
-    )
+makeDegreeList = method()
+makeDegreeList(ZZ,   ZZ, List) := (r, deg, degs) -> (
+    if 1 == r then {{deg}} else error("expected a degree of length ", r))
+makeDegreeList(ZZ, List, List) := (r, deg, degs) -> (
+    -- TODO: "min degs" above should respect the truncation cone, but doesn't
+    mindegs := if degs === {} then toList(r:0) else min degs;
+    if 0 <= #deg and isListOfListsOfIntegers(r, deg) then sort deg  else
+    if r == #deg then { apply(deg, mindegs, (d, d0) ->
+	if instance(d, ZZ) then d  else
+	-- replace -infinity entries with the minimum of the module degrees
+	if d === -infinity then d0 else
+	error("unexpected degree entry encountered: ", toString d)) } else
+    error("expected a single multidegree or a list of multidegrees, each of length ", r))
+makeDegreeList(ZZ, InfiniteNumber, List) := (r, deg, degs) -> (
+    if deg === -infinity then {min degs} else {{deg}})
+
+-- if this happens, truncation should be idempotent
+isNegativeInfinity = degs -> degs === -infinity or instance(degs, List) and all(degs, isNegativeInfinity)
+-- if this happens, truncation should return zero
+isPositiveInfinity = degs -> degs ===  infinity or instance(degs, List) and all(degs, isPositiveInfinity)
 
 -- c.f. https://github.com/Macaulay2/M2/issues/3578
 selectByDegrees = (M, lo, hi) -> rawSelectByDegrees(raw (ring M)^(-degrees M), lo, hi)
@@ -162,7 +175,7 @@ basisPolyhedron(Matrix, Matrix) := Polyhedron => opts -> (A, b) -> (
 truncationMonomials = method(Options => { Exterior => {}, Cone => null })
 truncationMonomials(List, Module) := opts -> (degs, F) -> (
     -- inputs: a list of multidegrees, a free module F = sum_i R(-a_i)
-    -- assume checkOrMakeDegreeList has already been called on degs
+    -- assume makeDegreeList has already been called on degs
     (R1, phi1) := flattenRing (R := ring F);
     ext := if opts.Exterior =!= null then opts.Exterior else (options R1).SkewCommutative;
     nef := if opts#Cone     =!= null then opts#Cone     else  nefCone R1; -- changing to effCone gives an alternative result
@@ -251,7 +264,9 @@ truncate(List, Ideal)  := Ideal  => truncateModuleOpts >> opts -> (degs, I) -> i
 truncate(List, Module) := Module => truncateModuleOpts >> opts -> (degs, M) -> (
     if M == 0 then return M;
     if not truncateImplemented(R := ring M) then error "cannot use truncate with this ring type";
-    degs = checkOrMakeDegreeList(degs, degreeLength R);
+    if isNegativeInfinity degs then return M;
+    if isPositiveInfinity degs then return R^0;
+    degs = makeDegreeList(degreeLength R, degs, degrees M);
     doTrim := if opts.MinimalGenerators then trim else identity;
     doTrim if degreeLength R === 1 and any(degrees R, d -> d =!= {0})
     then truncation1(min degs, M)
@@ -313,7 +328,7 @@ truncate(InfiniteNumber,                 Matrix) := lookup(truncate, List,      
 basisMonomials = method(Options => {"partial degrees" => null})
 basisMonomials(List, Module) := opts -> (degs, F) -> (
     -- inputs: a list of multidegrees, a free module
-    -- assume checkOrMakeDegreeList has already been called on degs
+    -- assume makeDegreeList has already been called on degs
     -- TODO: either figure out a way to use cached results or do this in parallel
     R := ring F; directSum apply(degrees F, a -> concatCols apply(degs, d -> basisMonomials(d - a, R, opts))))
 basisMonomials(List, Ring) := opts -> (d, R) -> (
@@ -363,7 +378,7 @@ basis' = method(Options => options basis ++ {"partial degrees" => null})
 basis'(List, Module) := Matrix => opts -> (degs, M) -> (
     if M == 0 then return map(M, 0, 0);
     if not truncateImplemented(R := ring M) then error "cannot use basis' with this ring type";
-    degs = checkOrMakeDegreeList(degs, degreeLength R);
+    degs = makeDegreeList(degreeLength R, degs, degrees M);
     B := if isFreeModule M then (
 	map(M, , basisMonomials(degs, M, "partial degrees" => opts#"partial degrees")))
     else if not M.?relations then (

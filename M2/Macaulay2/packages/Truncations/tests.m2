@@ -58,16 +58,16 @@ TEST /// -- ZZ^r grading
   assert(J == I)
 ///
 
-TEST /// -- test of checkOrMakeDegreeList
+TEST /// -- test of makeDegreeList
   debug needsPackage "Truncations"
-  assert(checkOrMakeDegreeList(3, 1) == {{3}})
-  assert(checkOrMakeDegreeList({3}, 1) == {{3}})
-  assert try checkOrMakeDegreeList(3, 2) else true
-  assert(checkOrMakeDegreeList({1,2}, 2) === {{1,2}})
-  assert try checkOrMakeDegreeList({1,2,3}, 2) else true
-  assert(checkOrMakeDegreeList({{1,0},{3,-5}}, 2) === {{1,0},{3,-5}})
-  assert try checkOrMakeDegreeList({{1,0},{3,-5},{3,4,5}}, 2) else true
-  assert try checkOrMakeDegreeList({{1,0},{3,-5},3}, 2) else true
+  assert(makeDegreeList(1, 3, {}) == {{3}})
+  assert(makeDegreeList(1, {3}, {}) == {{3}})
+  assert try makeDegreeList(2, 3, {}) else true
+  assert(makeDegreeList(2, {1,2}, {}) === {{1,2}})
+  assert try makeDegreeList(2, {1,2,3}, {}) else true
+  assert(makeDegreeList(2, {{1,0},{3,-5}}, {}) === {{1,0},{3,-5}})
+  assert try makeDegreeList(2, {{1,0},{3,-5},{3,4,5}}) else true
+  assert try makeDegreeList(2, {{1,0},{3,-5},3}) else true
 ///
 
 TEST /// -- test of truncateImplemented

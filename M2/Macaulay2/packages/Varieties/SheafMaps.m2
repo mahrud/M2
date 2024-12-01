@@ -488,7 +488,7 @@ Hom(CoherentSheaf, CoherentSheaf) := Module => opts -> (F, G) -> (
     phi := F'.cache.pruningMap;
     psi := G'.cache.pruningMap^-1;
     B := basis(z, module H);
-    g := inverse f * B;
+    g := B // f; -- inverse f * B
     V := part(z, source B);
     V.cache.homomorphism = h -> V.cache#(homomorphism, h) ??= (
 	psi * sheaf(phi.variety, homomorphism(g * h)) * phi);

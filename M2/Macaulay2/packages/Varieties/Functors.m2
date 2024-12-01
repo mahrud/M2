@@ -937,9 +937,7 @@ cohomology(ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (p, X, F) 
 	-- singularities, Cohen–Macaulay schemes, not just smooth schemes.
 	-- TODO: check that X is proper (or at least finite type)
 	Ext^(n-p)(M, w));
-    k := coefficientRing ring X;
-    -- TODO: use part?
-    H := k^(rank source basis(0, G));
+    H := part(degree 1_(ring X), G);
     -- TODO: to get koszul working
     --H.cache.koszul = h -> psi * sheaf(phi.variety, homomorphism(g * h)) * phi;
     --H.cache.formation = FunctionApplication { HH, (p, X, F) };
@@ -1069,8 +1067,7 @@ Ext(ZZ, CoherentSheaf, SheafOfRings)  :=
 Ext(ZZ, CoherentSheaf, CoherentSheaf) := Module => opts -> (n, F, G) -> (
     E := (Ext^n(F, G(>=0), opts ++ { MinimalGenerators => NonPrint }))#2;
     -- With the NonPrint option, Ext returns a sequence (b0,b1,M0), and we just want the module M0.
-    -- TODO: use part?
-    k := coefficientRing ring E;
+    H := part(degree 1_(ring X), G);
     V := k^(hilbertFunction(0, E));
     V.cache.formation = FunctionApplication { Ext, (n, F, G) };
     V.cache.TruncateDegree = E.cache.TruncateDegree;

@@ -296,6 +296,12 @@ TEST ///
 ///
 
 TEST ///
+  S = (ZZ/2)[x,y]
+  D = sheaf(S^1/x)
+  assert(sheafHom(id_D, D) == id_D)
+///
+
+TEST ///
   -- this may be the core of the bug mentioned above:
   S = QQ[x,y,z]
   A = S^{1}

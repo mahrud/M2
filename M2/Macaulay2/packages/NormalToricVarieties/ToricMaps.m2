@@ -365,6 +365,9 @@ rayMaxList ToricMap := List => (cacheValue symbol maxRayList) (f -> (
     )
 )		    
 
+-- TODO: the return type should be a functor
+ToricMap^* := f -> pullback_f
+
 pullback (ToricMap, ToricDivisor) := ToricDivisor => {} >> o -> (f, D) -> (
     if not isCartier D then error "-- expected a Cartier divisor";
     cartierData := cartierCoefficients D;

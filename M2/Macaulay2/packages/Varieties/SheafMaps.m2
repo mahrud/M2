@@ -660,16 +660,21 @@ connectingExtMap(ZZ, CoherentSheaf, SheafMap) := Matrix => opts -> (m, F, f0) ->
 -----------------------------------------------------------------------------
 
 yonedaSheafExtension = method()
+yonedaSheafExtension Vector := Complex => v -> yonedaSheafExtension matrix {v}
 yonedaSheafExtension Matrix := Complex => f -> (
     E := target f; -- Ext^d(F,G)
+    if E.cache#?(symbol yonedaSheafExtension, f) then
+    return E.cache#(symbol yonedaSheafExtension, f);
     (d, F, G) := if (try first formation E) === Ext then last formation E
     else error "expected target of map to be an Ext^d(F,G) module";
     X := variety F;
+    z := degree 1_(ring X);
+    -- Note: TruncateDegree is set by Ext^ZZ(CoherentSheaf, SumOfTwists)
     r := E.cache.TruncateDegree;
     M := truncate(r, module F, MinimalGenerators => false);
-    E' := Ext^d(M, module G);
-    f' := basis(0, E') * f;
-    C := yonedaExtension f';
+    B := basis(z, Ext^d(M, module G, DegreeLimit => z, MinimalGenerators => false));
+    C := yonedaExtension(B * f);
+    E.cache#(symbol yonedaSheafExtension, f) =
     complex apply(d + 1, i -> sheaf_X C.dd_(i+1)))
 
 --yonedaSheafExtension' = method(Options => options Ext.argument)

@@ -205,8 +205,8 @@ RHom(Complex, Complex,       ZZ) := Complex => (C, D, d) -> (
 
 Ext(ZZ, SheafOfRings,  Complex) := Complex => opts -> (m, O, D) -> Ext(m, O^1, D, opts)
 Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
-    if not instance(variety C, ProjectiveVariety)
-    then error "expected sheaves on a projective variety";
+    --if not instance(variety C, ProjectiveVariety)
+    --then error "expected sheaves on a projective variety";
     M := flattenModule module C;
     N := flattenComplex module D;
     R := ring M;

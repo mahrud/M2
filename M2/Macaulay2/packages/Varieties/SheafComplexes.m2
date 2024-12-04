@@ -210,6 +210,7 @@ Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
     M := flattenModule module C;
     N := flattenComplex module D;
     R := ring M;
+    z := degree 1_R;
     if not isAffineRing R
     then error "expected sheaves on a variety over a field";
     H := prune HH N;
@@ -224,11 +225,11 @@ Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
 	a := max for i from 0 to length(Resns)-1 list max apply(n - L_i .. P_i, j-> (max degrees (Resns_i)_j)#0 - j);
 	r := a - l + 1;
 	M = truncate(r, M));
-    complex applyValues(D.dd.map, f -> part(0, Ext^m(M, matrix f, opts))))
+    complex applyValues(D.dd.map, f -> part(z, Ext^m(M, matrix f, opts))))
 
 cohomology(ZZ, ProjectiveVariety, Complex) := Complex => opts -> (p, X, C) -> (
     C.cache.cohomology   ??= new MutableHashTable;
-    C.cache.cohomology#p ??= Ext^p(sheaf X, C, opts))
+    C.cache.cohomology#p ??= Ext^p(sheaf X, C)) -- TODO: use the options?
 
 -----------------------------------------------------------------------------
 

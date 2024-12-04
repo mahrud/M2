@@ -42,6 +42,7 @@ map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> 
     if variety G =!= variety F then error "expected sheaves over the same variety";
     if varietyWarn and not instance(variety F, ProjectiveVariety) then (
 	varietyWarn = false; printerr "maps of sheaves are experimental over the given variety");
+    -- FIXME: not correct in multigraded case if source phi is generated in multiple degrees
     deg := if opts.Degree =!= null then opts.Degree else min degrees source phi;
     phi  = if module G =!= target phi then inducedMap(module G, target phi) * phi else phi;
     new SheafMap from {
@@ -433,21 +434,43 @@ koszulComplex SheafMap := Complex => {} >> o -> f -> (
 -----------------------------------------------------------------------------
 -- inverse
 -----------------------------------------------------------------------------
+-- this is a hacky heuristic for finding a small degree
+-- to truncate before computing inverse of a sheaf map
+inverse' = g -> (
+    -- TODO: should use multigraded regularity
+    e := max(regularity ker g, regularity coker g);
+    r := degreeLength ring g;
+    d := toList(r : e + 1);
+    N := ZZ^r;
+    h := try inverse g;
+    if h =!= null then return (h, toList(r : -infinity));
+    for i to r - 1 do (
+	g0 := null;
+	d' := null;
+	g' := g;
+	while g' =!= g0 do (
+	    g0 = g';
+	    d' = d - entries N_i;
+	    g' = truncate(d', g, MinimalGenerators => false);
+	    try h = inverse g'
+	    then d = d' else break)
+	);
+    if h =!= null then (h, d) else
+    error "could not invert sheaf map")
+
 inverse SheafMap := SheafMap => f -> SheafMap.InverseMethod f
 SheafMap.InverseMethod = (cacheValue symbol inverse) (f -> (
     X := variety f;
     g := matrix f;
+    r := degreeLength ring g;
     -- truncate the underlying map so it is an isomorphism
-    -- TODO: make this more efficient, e.g. look at degrees of ann coker g
-    e := max(regularity ker g, regularity coker g);
-    -- TODO: this is kludgy, but maybe it works?
-    h := try inverse g else inverse truncate(e + 1, g);
     -- then invert and sheafify the new map
+    (h, d) := try (inverse g, toList(r : -infinity)) else inverse' g;
     -- We want:
     -- source f ==  target h
     -- target f === source h
     map(sheaf_X source g, sheaf_X source h,
-	inducedMap(source g, target h) * h, e + 1))
+	inducedMap(source g, target h) * h, d))
     )
 
 SheafMap#1 = f -> (

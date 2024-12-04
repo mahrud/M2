@@ -482,16 +482,20 @@ SheafMap^ZZ := SheafMap => BinaryPowerMethod
 -- sheafHom and Hom
 -----------------------------------------------------------------------------
 -- TODO: does sheafExt of sheaf maps also make sense?
-sheafHom(SheafMap, SheafMap)      := SheafMap => o -> (phi, psi) -> sheaf(variety phi,
-    Hom(matrix phi, matrix psi, o))
-sheafHom(SheafMap, CoherentSheaf) := SheafMap => o -> (phi, F) -> sheafHom(phi, id_F)
-sheafHom(CoherentSheaf, SheafMap) := SheafMap => o -> (F, phi) -> sheafHom(id_F, phi)
-sheafHom(SheafMap, SheafOfRings)  := SheafMap => o -> (phi, O) -> sheafHom(phi, id_(O^1))
-sheafHom(SheafOfRings, SheafMap)  := SheafMap => o -> (O, phi) -> sheafHom(id_(O^1), phi)
+sheafHom(SheafMap, CoherentSheaf) := SheafMap => o -> (f, G) -> sheafHom(f, id_G, o)
+sheafHom(CoherentSheaf, SheafMap) := SheafMap => o -> (F, g) -> sheafHom(id_F, g, o)
+sheafHom(SheafMap, SheafOfRings)  := SheafMap => o -> (f, O) -> sheafHom(f, id_(O^1), o)
+sheafHom(SheafOfRings, SheafMap)  := SheafMap => o -> (O, g) -> sheafHom(id_(O^1), g, o)
+sheafHom(SheafMap, SheafMap)      := SheafMap => o -> (f, g) -> sheaf(variety f, Hom(matrix f, matrix g, o))
+
+-- TODO: does homomorphism and homomorphism' also make sense for this?
+Hom(SheafMap, CoherentSheaf) :=
+Hom(CoherentSheaf, SheafMap) := Matrix => o -> (A, B) -> HH^0(variety A, sheafHom(A, B, o, DegreeLimit => 0))
 
 -- See [Hartshorne, Ch. III Exercise 6.1, pp. 237]
 -- TODO: these three calls could be simpler, but F^1 erases cached info of F
 -- TODO: should this be cached? Hom(Module, Module) is, but this does a lot more
+-- TODO: this should also work if e.g. one of O or O' is the structure sheaf of a subvariety
 Hom(SheafOfRings, SheafOfRings)  := Module => opts -> (O, O') -> Hom(O^1, O'^1, opts)
 Hom(SheafOfRings, CoherentSheaf) := Module => opts -> (O, G)  -> Hom(O^1, G, opts)
 Hom(CoherentSheaf, SheafOfRings)  := Module => opts -> (F, O) -> Hom(F, O^1, opts)

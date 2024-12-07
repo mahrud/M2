@@ -40,16 +40,26 @@ symExt(Matrix, PolynomialRing) := Matrix => (m,E) ->(
          ans));
 
 bgg = method()
-bgg(ZZ,Module,PolynomialRing) := Matrix => (i,M,E) ->(
-     S :=ring(M);
-     numvarsE := rank source vars E;
-     ev := map(E,S,vars E);
-     f0 := basis(i,M);
-     f1 := basis(i+1,M);
-     g := ((vars S)**f0)//f1;
-     b := (ev g)*((transpose vars E)**(ev source f0));
-     --correct the degrees (which are otherwise wrong in the transpose)
-     map(E^{(rank target b):i+1},E^{(rank source b):i}, b));
+bgg(ZZ, Module, PolynomialRing) := Matrix => (i, M, E) -> (
+    -- gives the map Hom(E, M_i) --> Hom(E, M_(i+1))
+    -- given by f -> [ e -> sum(x_i * f(e_i * e)) ]
+    -- where x_i and e_i are generators of S and E.
+    S := ring M;
+    ev := map(E, S, vars E);
+    -- TODO: there should be cached if we want
+    -- to compute the whole complex
+    f0 := basis(i, M);
+    f1 := basis(i+1, M);
+    -- the multiplication maps M_i --> M_(i+1)
+    -- TODO: compare speed with just g := (vars S ** f0) // f1;
+    g := concatCols apply(gens S,
+	x -> inducedBasisMap(image f1, image f0, x * id_M));
+    -- TODO: technically we need deg e_i = -1,
+    -- which would flip the signs here
+    src := E^{rank source f0 : i};
+    tar := E^{rank source f1 : i+1};
+    map(tar, src, matrix(ev ** g) * (transpose vars E ** src))
+    )
 
 tateResolution = method()
 tateResolution(Matrix, PolynomialRing, ZZ, ZZ) := Complex => (m,E,loDeg,hiDeg)->(

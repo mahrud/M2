@@ -239,9 +239,8 @@ hh(Sequence, ProjectiveVariety) := ZZ => (pq, X) -> (
     -- p and q are swapped here, because cotangentSheaf seems to be the
     -- slowest part of this algorithm, so we minimize the exterior powers
     (q,p) := (min'pq dim X) pq;
-    if not X.cache.?hh   then X.cache.hh = new MutableHashTable;
-    if X.cache.hh#?(p,q) then X.cache.hh#(p,q) else X.cache.hh#(p,q) = (
-	hh^q reflexiveDifferentials(p, X)))
+    X.cache.hh       ??= new MutableHashTable;
+    X.cache.hh#(p,q) ??= hh^q reflexiveDifferentials(p, X))
 
 -- This function hh^i(F) computes coherent sheaf cohomology for a coherent sheaf
 -- on a closed subspace of a weighted projective space. If you want to compute

@@ -264,15 +264,13 @@ describe Module := M -> Describe (
      )
 toExternalString Module := M -> toString describe M
 
--- TODO: where is it set before being cached?
-degrees Module := -*(cacheValue symbol degrees) (*-N -> (
+degrees Module := N -> N.cache.degrees ??= (
     r := degreeLength(R := ring N);
     if r == 0 then toList(numgens N : {}) else (
 	degs := pack(r, rawMultiDegree raw cover N);
 	if not (M := monoid R).?degreeGroup
 	or isFreeModule(G := M.degreeGroup) then degs
 	else apply(degs, reduceDegree_G)))
---    )
 
 -----------------------------------------------------------------------------
 -- free modules and vector spaces

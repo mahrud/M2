@@ -79,14 +79,11 @@ heft QuotientRing   := R -> heft ambient R
 poincare = method(TypicalValue => RingElement)
 poincare Ring   := R -> poincare module R
 poincare Ideal  := I -> poincare comodule I
-poincare Module := M -> (
-    computation := (cacheValue symbol poincare) (M -> runHooks((poincare, Module), M));
-    if (P := computation M) =!= null then return P;
-    error("no applicable strategy for computing poincare over ", toString ring M))
-
--- Use that the Poincare polynomial of a subquotient module M is the difference of the Poincare polynomials of two quotients.
--- This avoids having to find a presentation of M (unless that has already been done).
-addHook((poincare, Module), Strategy => Default, M -> (
+poincare Module := M -> M.cache.poincare ??= tryHooks((poincare, Module), M,
+    M -> (
+	-- Use that the Poincare polynomial of a subquotient module M is the
+	-- difference of the Poincare polynomials of two quotients.
+	-- This avoids having to find a presentation of M (unless it is cached).
         hf := if hasMinPres M then
                   rawHilbert raw leadTerm gb relations minimalPresentation M
               -- We cannot just call "poincare minimalPresentation M", because there are cases (such as M free)
@@ -123,12 +120,8 @@ dim Module := M -> if (c := codim M) === infinity then -1 else dim ring M - c
 
 degree Ring   := R -> degree module R
 degree Ideal  := I -> degree comodule I
-degree Module := M -> (
-    computation := (cacheValue symbol degree) (M -> runHooks((degree, Module), M));
-    if (d := computation M) =!= null then return d;
-    error("no applicable strategy for computing degree of modules over ", toString ring M))
-
-addHook((degree, Module), Strategy => Default, M -> (
+degree Module := M -> M.cache.degree ??= tryHooks((degree, Module), M,
+    M -> (
 	R := ring M;
 	if (hft := heft R) === null then error "degree: no heft vector defined";
 	T := degreesRing 1;
@@ -147,24 +140,16 @@ addHook((degree, Module), Strategy => Default, M -> (
 
 multidegree Ring   := R -> multidegree module R
 multidegree Ideal  := I -> multidegree comodule I
-multidegree Module := M -> (
-    computation := (cacheValue symbol multidegree) (M -> runHooks((multidegree, Module), M));
-    if (d := computation M) =!= null then return d;
-    error("no applicable strategy for computing multidegree of modules over ", toString ring M))
-
-addHook((multidegree, Module), Strategy => Default, M -> (
+multidegree Module := M -> M.cache.multidegree ??= tryHooks((multidegree, Module), M,
+    M -> (
     A := degreesRing ring M;
     if (c := codim M) === infinity then return 0_A;
     onem := map(A, A, apply(generators A, t -> 1 - t));
     part(c, numgens A:1, onem numerator poincare M))
     )
 
-length Module := ZZ => M -> (
-    computation := (cacheValue symbol length) (M -> runHooks((length, Module), M));
-    if (n := computation M) =!= null then return n;
-    error("no applicable strategy for computing length of modules over ", toString ring M))
-
-addHook((length, Module), Strategy => Default, M -> (
+length Module := ZZ => M -> M.cache.length ??= tryHooks((length, Module), M,
+    M -> (
     if not isHomogeneous M then notImplemented();
     if dim M > 0 then infinity else degree M))
 

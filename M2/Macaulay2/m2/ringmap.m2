@@ -230,7 +230,7 @@ RingMap \ VisibleList := VisibleList => (f,v) -> apply(v,x -> f x)
 -----------------------------------------------------------------------------
 -- TODO: should work over ZZ
 
-kernel RingMap := Ideal => opts -> (cacheValue (symbol kernel => opts)) (f -> (
+kernel RingMap := Ideal => opts -> f -> f.cache#(symbol kernel => opts) ??= ((
     (F, R) := (target f, source f);
     if 0_F == 1_F then return ideal 1_R;
     -- the actual computation occurs here
@@ -536,7 +536,7 @@ RingElement Number := RingElement RingElement := (f, n) -> f(1:n)
 -- inverse
 -----------------------------------------------------------------------------
 
-inverse RingMap := RingMap.InverseMethod = (cacheValue symbol inverse) ( f -> (
+inverse RingMap := RingMap.InverseMethod = f -> f.cache.inverse ??= ((
 	  R := target f;
 	  S := source f;
 	  I := graphIdeal f;

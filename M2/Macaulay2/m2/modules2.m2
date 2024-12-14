@@ -128,7 +128,7 @@ presentation Module := Matrix => M -> M.cache.presentation ??= (
 -- TODO: simplify this caching system
 hasMinPres = M -> any(select(keys M.cache, Option), o -> o#0 === symbol minimalPresentation)
 
-minimalPresentation(Module) := prune(Module) := Module => opts -> (cacheValue (symbol minimalPresentation => opts)) (M -> (
+minimalPresentation Module := prune Module := Module => opts -> M -> M.cache#(symbol minimalPresentation => opts) ??= (
 	  if isFreeModule M then (
 	       M.cache.pruningMap = id_M;
 	       return M);
@@ -138,7 +138,7 @@ minimalPresentation(Module) := prune(Module) := Module => opts -> (cacheValue (s
 	  if debugLevel > 0 and homog then popvar symbol flagInhomogeneity;
 	  if C =!= null then return C;
 	  error "minimalPresentation: internal error: no method for this type of module"
-	  ))
+    )
 
 addHook((minimalPresentation, Module), Strategy => Default, (opts, M) -> (
 	  -- we try to handle any module here, without any information about the ring

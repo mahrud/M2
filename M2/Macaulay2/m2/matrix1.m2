@@ -434,7 +434,7 @@ comodule Module := Module => M -> cokernel super map(M,M,1)
 quotient Module := Module => opts -> M -> comodule M
 comodule Ideal := Module => I -> cokernel generators I
 quotient Ideal := Module => opts -> I -> (ring I) / I
-module   Ideal := Module => (cacheValue symbol module) (I -> image generators I)
+module   Ideal := Module => I -> I.cache.module ??= image generators I
 
 genera Ideal := (I) -> genera ((ring I)^1/I)
 genus Ideal := (I) -> genus ((ring I)^1/I)
@@ -618,15 +618,13 @@ homology(Matrix,Matrix) := Module => opts -> (g,f) -> (
      -- i%m gives an error message if the module is not free, but i//m doesn't, so we can't use this code in inverse Matrix to check invertibility:
      -- if i % m != 0 then error "matrix not invertible";
 Matrix.InverseMethod =
-inverse Matrix := (cacheValue symbol inverse) (
-     m -> (
+inverse Matrix := m -> m.cache.inverse ??= (
       if hasEngineLinearAlgebra ring m and isBasicMatrix m then
           basicInverse m
       else (
 	      (quo,rem) := quotientRemainder(id_(target m), m);
 	      if rem != 0 then error "matrix not invertible";
 	      quo))
-     )
 
 Matrix _ Array := Matrix => (f,v) -> f * (source f)_v
 Matrix ^ Array := Matrix => (f,v) -> (target f)^v * f

@@ -17,7 +17,7 @@ algorithms := new MutableHashTable from {}
 -- TODO: can this be simplified using newRing?
 -- also used in Saturation package
 eliminationInfo = method()
-eliminationInfo Ring := (cacheValue symbol eliminationInfo) (R -> (
+eliminationInfo Ring := R -> R.cache.eliminationInfo ??= ((
 	X := local X;
 	n := numgens R;
 	R1 := (coefficientRing R)[X_0..X_n, MonomialOrder => Eliminate 1, MonomialSize => 16];

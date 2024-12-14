@@ -392,7 +392,7 @@ schreyerOrder RawMatrix := RawMatrix => (m) -> rawMatrixRemake2(rawTarget m, raw
 
 possiblyLift := x -> if denominator x === 1 then numerator x else x -- x is in QQ
 
-rank Module := (cacheValue symbol rank) (M -> (
+rank Module := M -> M.cache.rank ??= ((
 	  R := ring M;
 	  if isFreeModule M then numgens M 
 	  else if isField R or R === ZZ then (
@@ -447,8 +447,7 @@ Module#AfterPrint = M -> (
 RingElement * Module := Module => ZZ * Module := (r,M) -> subquotient (r ** generators M, relations M)
 Module * RingElement := Module => Module * ZZ := (M,r) -> subquotient ((generators M) ** r, relations M)
 
-isHomogeneous Module := Boolean => (cacheValue symbol isHomogeneous) (
-     (M) -> (
+isHomogeneous Module := Boolean => M -> M.cache.isHomogeneous ??= ((
      	  isHomogeneous ring M 
 	  and 
      	  (not M.?generators or isHomogeneous M.generators)

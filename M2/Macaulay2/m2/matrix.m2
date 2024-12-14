@@ -212,8 +212,7 @@ Matrix#1 = f -> (
     else id_M)
 Matrix ^ ZZ := Matrix => BinaryPowerMethod
 
-transpose Matrix := Matrix => (cacheValue symbol transpose) (
-     (m) -> (
+transpose Matrix := Matrix => m -> m.cache.transpose ??= ((
      	  if not (isFreeModule source m and isFreeModule target m) 
      	  then error "expected a map between free modules";
      	  map(dual source m, dual target m, rawDual m.RawMatrix)))
@@ -270,7 +269,7 @@ toExternalString Matrix := m -> toString describe m;
 isIsomorphism = method(TypicalValue => Boolean)
 isIsomorphism Matrix := f -> cokernel f == 0 and kernel f == 0
 
-isHomogeneous Matrix := (cacheValue symbol isHomogeneous) ( m -> ( isHomogeneous target m and isHomogeneous source m and rawIsHomogeneous m.RawMatrix ) )
+isHomogeneous Matrix := m -> m.cache.isHomogeneous ??= isHomogeneous target m and isHomogeneous source m and rawIsHomogeneous m.RawMatrix
 
 -- prints the message only if bool is false and debugLevel > 0
 assert' = (bool, msg) -> bool or ( if debugLevel > 0 then printerr msg; false )

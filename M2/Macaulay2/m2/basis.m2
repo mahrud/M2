@@ -336,7 +336,7 @@ scan({Default, Torsion}, strategy ->
 -- returns the graded component of an object in a specific degree
 
 -- gives a map back to the coefficient ring
-residueMap = (cacheValue symbol residueMap) (R -> map(A := coefficientRing R, R, DegreeMap => d -> take(d, - degreeLength A)))
+residueMap = R -> R.cache.residueMap ??= map(A := coefficientRing R, R, DegreeMap => d -> take(d, - degreeLength A))
 
 -- TODO: document these
 part(ZZ,   Ring) :=

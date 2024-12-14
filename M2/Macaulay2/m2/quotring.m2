@@ -28,20 +28,20 @@ isHomogeneous QuotientRing := R -> isHomogeneous ideal R
 isWeylAlgebra QuotientRing := R -> isWeylAlgebra ambient R
 isSkewCommutative QuotientRing := R -> isSkewCommutative ambient R
 
-coefficientRing QuotientRing := (cacheValue coefficientRing) (R -> coefficientRing ambient R)
-ambient QuotientRing := Ring => (cacheValue ambient) (R -> last R.baseRings)
-monoid QuotientRing := o -> (cacheValue monoid) (S -> monoid ambient S)
+coefficientRing QuotientRing := R -> R.cache.coefficientRing ??= coefficientRing ambient R
+ambient QuotientRing := Ring => R -> R.cache.ambient ??= last R.baseRings
+monoid QuotientRing := o -> S -> S.cache.monoid ??= monoid ambient S
 ideal QuotientRing := R -> R.ideal
 
-degreesRing   QuotientRing := (cacheValue degreesRing)   (S -> degreesRing   ambient S)
-degreesMonoid QuotientRing := (cacheValue degreesMonoid) (S -> degreesMonoid ambient S)
+degreesRing   QuotientRing := S -> S.cache.degreesRing   ??= degreesRing   ambient S
+degreesMonoid QuotientRing := S -> S.cache.degreesMonoid ??= degreesMonoid ambient S
 degreeLength QuotientRing := S -> degreeLength ambient S
 degreeGroup  QuotientRing := S -> degreeGroup  ambient S
 
 degrees QuotientRing := R -> degrees ambient R
 
 precision QuotientRing := precision @@ ambient
-numgens QuotientRing := (cacheValue numgens) (S -> numgens ambient S)
+numgens QuotientRing := S -> S.cache.numgens ??= numgens ambient S
 options QuotientRing := R -> options ambient R
 
 random QuotientRing := opts -> S -> (
@@ -277,7 +277,7 @@ dim QuotientRing := (R) -> (
 generators QuotientRing := opts -> (S) -> (
      if opts.CoefficientRing === S then {}
      else apply(generators(ambient S,opts), m -> promote(m,S)))
-char QuotientRing := (stashValue symbol char) ((S) -> (
+char QuotientRing := S -> S.char ??= ((
      p := char ambient S;
      if p == 1 then return 1;
      if isPrime p or isMember(QQ,S.baseRings) then return if S == 0 then 1 else p;

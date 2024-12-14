@@ -97,7 +97,7 @@ tensor(QuotientRing,   QuotientRing) := monoidTensorDefaults >> optns -> (R, S) 
 graphIdeal = method( Options => apply( {MonomialOrder, MonomialSize, VariableBaseName}, o -> o => monoidDefaults#o ))
 graphRing = method( Options => options graphIdeal )
 
-graphIdeal RingMap := Ideal => opts -> (cacheValue (symbol graphIdeal => opts)) ((f) -> (
+graphIdeal RingMap := Ideal => opts -> f -> f.cache#(symbol graphIdeal => opts) ??= ((
      -- return the ideal in the tensor product of the graph of f.
      -- if f is graded, then set the degrees correctly in the tensor ring.
      -- return the ideal (y_i - f_i : all i) in this ring.
@@ -201,7 +201,7 @@ flattenRing Ring := opts -> R -> (
      if k === R or k === null and (R.?isBasic or isField R) then flatCoerce(R,resultTemplate,triv R)
      else unable())
 
-flattenRing GaloisField := opts -> (cacheValue (symbol flattenRing => opts)) (F -> (
+flattenRing GaloisField := opts -> F -> F.cache#(symbol flattenRing => opts) ??= ((
      resultTemplate := preprocessResultTemplate(1:Ring, opts.Result);
      A := ambient F;
      (X,p,q) := flattenRing(A, opts, Result => (resultTemplate#0,,));
@@ -212,14 +212,14 @@ flatQuotient := method()
 flatQuotient(Ring,Ideal) := (R,I) -> R/I
 flatQuotient(QuotientRing,Ideal) := (R,I) -> flatQuotient(ambient R,lift(I,ambient R))
 
-flattenRing Ideal := opts -> (cacheValue (symbol flattenRing => opts)) (J -> (
+flattenRing Ideal := opts -> J -> J.cache#(symbol flattenRing => opts) ??= ((
      	  resultTemplate := preprocessResultTemplate(1:Ideal, opts.Result);
 	  R := ring J;
 	  (I,p,q) := flattenRing(R,opts,Result => (Ideal,,));
 	  I = if ring I === R then J else I + p J;
 	  flatCoerce(ring J, resultTemplate,(I,p,q))))
 
-flattenRing QuotientRing := opts -> (cacheValue (symbol flattenRing => opts)) (R -> (
+flattenRing QuotientRing := opts -> R -> R.cache#(symbol flattenRing => opts) ??= ((
      	  resultTemplate := preprocessResultTemplate(1:Ring, opts.Result);
 	  if instance(ambient R, PolynomialRing) and (
 	       k := coefficientRing R;
@@ -235,7 +235,7 @@ flattenRing QuotientRing := opts -> (cacheValue (symbol flattenRing => opts)) (R
 	  q = map(R, source q, promote(matrix q,R));
 	  r := flatCoerce(R, resultTemplate,(I,p,q))))
 
-flattenRing PolynomialRing := opts -> (cacheValue (symbol flattenRing => opts)) (R -> (
+flattenRing PolynomialRing := opts -> R -> R.cache#(symbol flattenRing => opts) ??= ((
      resultTemplate := preprocessResultTemplate(1:Ring, opts.Result);
      if instance(resultTemplate,VisibleList) then apply(resultTemplate,x -> if x === null then Thing else x);
      A := coefficientRing R;

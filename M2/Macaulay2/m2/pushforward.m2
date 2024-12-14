@@ -255,7 +255,7 @@ scan({Default, Quotient}, strategy ->
 -----------------------------------------------------------------------------
 
 addHook((kernel, Matrix), Strategy => "PushForward",
-    (opts, m) -> if m.?RingMap then (
+    (opts, m) -> if m.?RingMap then m.cache#(symbol kernel => opts) ??= (
 	N := source m;
 	P := target m;
 	f := m.RingMap;

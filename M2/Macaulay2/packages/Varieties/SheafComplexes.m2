@@ -267,7 +267,7 @@ naiveCotangentComplex = method(TypicalValue => Complex, Options => options exter
 -- than its cohomology sheaf in degree 0. Eventually, one might want to consider the full cotangent complex of X,
 -- or at least its truncation to degrees >= -1 rather than >= 0.
 --
-naiveCotangentComplex ProjectiveVariety := opts -> (cacheValue (symbol naiveCotangentComplex => opts)) (X -> (
+naiveCotangentComplex ProjectiveVariety := opts -> X -> X.cache#(symbol naiveCotangentComplex => opts) ??= (
 	R := ring X;
 	if degreeLength R =!= 1 then error "expected degreeLength of ring to be 1";
 	-- Here R is a graded ring with some positive integer grading,
@@ -291,7 +291,7 @@ naiveCotangentComplex ProjectiveVariety := opts -> (cacheValue (symbol naiveCota
 	M0 := cokernel e; -- This graded module represents Omega^1_Y, where Y is the affine cone over X, with its G_m-action.
 	map0 := map(M1, M0, d1, Degree => 0);
 	complex({map0}, Base => -1) -- The complex is in homological degrees 0 and -1, that is, cohomological degrees 0 and 1.
-	))
+	)
 
 -- The cotangent complex of a closed substack X of a weighted projective space P over a field k
 -- lives in cohomological degrees <= 1. This function computes its ith exterior power truncated to degrees >= 0,

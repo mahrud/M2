@@ -459,7 +459,7 @@ inverse' = g -> (
     error "could not invert sheaf map")
 
 inverse SheafMap := SheafMap => f -> SheafMap.InverseMethod f
-SheafMap.InverseMethod = (cacheValue symbol inverse) (f -> (
+SheafMap.InverseMethod = f -> f.cache.inverse ??= (
     X := variety f;
     g := matrix f;
     r := degreeLength ring g;
@@ -471,7 +471,6 @@ SheafMap.InverseMethod = (cacheValue symbol inverse) (f -> (
     -- target f === source h
     map(sheaf_X source g, sheaf_X source h,
 	inducedMap(source g, target h) * h, d))
-    )
 
 SheafMap#1 = f -> (
     if source f === target f then id_(target f)
@@ -730,7 +729,7 @@ yonedaSheafExtension Matrix := Complex => f -> (
 -----------------------------------------------------------------------------
 
 -- Consider the sequence 0 -> m^[p] -> S -> S/m^[p] -> 0 and apply Hom(-,M)
-prune SheafMap := minimalPresentation SheafMap := SheafMap => opts -> (cacheValue symbol minimalPresentation) (f -> (
+prune SheafMap := minimalPresentation SheafMap := SheafMap => opts -> f -> f.cache#(symbol minimalPresentation => opts) ??= (
     (X, G, F) := (variety f, target f, source f);
     if f == 0 then return map(prune G, prune F, 0);
     prune G; prune F; -- these are pruned just to populate cached data
@@ -740,7 +739,6 @@ prune SheafMap := minimalPresentation SheafMap := SheafMap => opts -> (cacheValu
     p := max(G.cache.GlobalSectionLimit, F.cache.GlobalSectionLimit) + max(0, max f.degree);
     Bp := module (irrelevantIdeal X)^[p];
     lift sheaf(f.variety, prune Hom(Bp, g)))
-    )
 
 -----------------------------------------------------------------------------
 -- Things to move to the Core
@@ -821,7 +819,7 @@ eulerSequence ProjectiveVariety := Complex => X -> (
     complex { sheaf_X vars(S := ring X), sheaf_X inducedMap(source vars S, ker vars S) })
 
 cotangentSurjection = method()
-cotangentSurjection ProjectiveVariety := SheafMap => (cacheValue symbol cotangentSurjection) (X -> (
+cotangentSurjection ProjectiveVariety := SheafMap => X -> X.cache.cotangentSurjection ??= ((
     -- Given a projective variety X \subset PP^n,
     -- returns the surjection Omega_P^n|X -> Omega_X
     C := eulerSequence X;
@@ -839,7 +837,7 @@ cotangentSequence ProjectiveVariety := Complex => X -> (
     )
 
 embeddedToAbstract = method()
-embeddedToAbstract(ProjectiveVariety) := Matrix => (cacheValue symbol embeddedToAbstract) (X -> (
+embeddedToAbstract ProjectiveVariety := Matrix => X -> X.cache.embeddedToAbstract ??= ((
      g := dual cotangentSurjection X;
      h := inducedMap(coker g, target g);
      connectingExtMap(0, OO_X^1, h, LengthLimit=>2)))

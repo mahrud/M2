@@ -275,7 +275,7 @@ CoherentSheaf  / Ideal         := CoherentSheaf => (F, I) -> sheaf(F.variety, F.
 Ideal * CoherentSheaf          := CoherentSheaf => (I, F) -> sheaf(F.variety, I * F.module)
 directSum CoherentSheaf        := CoherentSheaf =>  F     -> CoherentSheaf.directSum(1 : F)
 
-components CoherentSheaf := List => (cacheValue symbol components) (F -> apply(components module F, N -> sheaf(F.variety, N)))
+components CoherentSheaf := List => F -> F.cache.components ??= apply(components module F, N -> sheaf(F.variety, N))
 
 component(CoherentSheaf, Thing) := (F, k) -> (
     if not F.cache.?indexComponents then error "expected Sheaf to be a direct sum with indexed components";
@@ -607,7 +607,7 @@ toString   SumOfTwists := toString @@ expression
 -- TODO: remove MinimalGenerators option and let user call prune?
 cotangentSheaf = method(TypicalValue => CoherentSheaf,
     Options => options exteriorPower ++ { MinimalGenerators => true })
-cotangentSheaf ProjectiveVariety := opts -> (cacheValue (symbol cotangentSheaf => opts)) (X -> (
+cotangentSheaf ProjectiveVariety := opts -> X -> X.cache#(symbol cotangentSheaf => opts) ??= ((
 	-- This function computes the cotangent sheaf of a closed subscheme of a projective scheme
 	-- over a base ring.
 	--
@@ -645,7 +645,7 @@ cotangentSheaf ProjectiveVariety := opts -> (cacheValue (symbol cotangentSheaf =
 	-- Here om is the cotangent sheaf of X. By default, we simplify its description, as follows.
 	if opts.MinimalGenerators then minimalPresentation om else om))
 
-cotangentSheaf AffineVariety := opts -> (cacheValue (symbol cotangentSheaf => opts)) (X -> (
+cotangentSheaf AffineVariety := opts -> X -> X.cache#(symbol cotangentSheaf => opts) ??= ((
 	-- This function computes the cotangent sheaf of an affine scheme over a base ring.
 	R := ring X;
 	-- So X = Spec R.

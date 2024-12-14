@@ -58,8 +58,7 @@ degreeList = M -> (
 
 -- quotienting by the local cohomology H_m^0(M) to "saturate" M
 -- TODO: use irrelevant ideal here
-killH0 = -*(cacheValue symbol TorsionFree)*- M -> (
-    M.cache.TorsionFree = if (H0 := saturate(0*M)) == 0 then M else M / H0)
+killH0 := M -> M.cache.TorsionFree ??= if (H0 := saturate(0*M)) == 0 then M else M / H0
 -- We mainly remember M.cache.TorsionFree (as a quotient module of M) for use in SheafMaps.m2.
 
 

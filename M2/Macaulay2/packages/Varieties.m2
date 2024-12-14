@@ -155,7 +155,7 @@ ProjectiveVariety.synonym = "projective variety"
 -- constructors
 -- TODO: find a way so toric algorithms from NormalToricVarieties can work seamlessly with these
 Spec = method(TypicalValue => AffineVariety)
-Spec Ring := (stashValue symbol Spec) (R ->
+Spec Ring := R -> R.Spec ??= (
     R.variety = new AffineVariety from {
 	symbol ring => R,
 	symbol cache => new CacheTable
@@ -163,7 +163,7 @@ Spec Ring := (stashValue symbol Spec) (R ->
     )
 
 Proj = method(TypicalValue => ProjectiveVariety)
-Proj Ring := (stashValue symbol Proj) (R ->
+Proj Ring := R -> R.Proj ??= (
     R.variety = new ProjectiveVariety from {
 	symbol ring => if isHomogeneous R then R else error "Proj: expected a homogeneous ring",
 	symbol cache => new CacheTable

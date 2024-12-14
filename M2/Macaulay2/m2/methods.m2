@@ -288,7 +288,7 @@ setupMethods((), {
 gradedModule = method(Dispatch => Thing)
 
 assert = method()
-assert Thing := x -> assert' x
+assert Thing := x -> assert0 x
 
 use = method(Dispatch => Thing)
 use Thing := identity
@@ -360,7 +360,7 @@ map = method(
 
 setupMethods(Dispatch => Thing, {transpose} )
 setupMethods(TypicalValue => Boolean,
-     {isBorel, isWellDefined, isInjective, isSurjective, isUnit,
+     {isBorel, isInjective, isSurjective, isUnit,
       isSubset, isHomogeneous, isField
 	  })
 setupMethods(TypicalValue => ZZ, {

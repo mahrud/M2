@@ -110,7 +110,7 @@ export {
     }
 
 importFrom_Core {
-    "nonnull", "listZZ",
+    "assert'", "nonnull", "listZZ",
     "getAttribute", "hasAttribute", "ReverseDictionary",
     "applyMethod", "applyMethod''", "applyMethodWithOpts''", "functorArgs",
     "toString'", "expressionValue", "unhold", -- TODO: prune these
@@ -131,10 +131,6 @@ needsPackage "PushForward"
 checkRing = A -> (
     -- TODO: make this unnecessary
     if not degreeLength A === 1 then error "expected degreeLength of ring to be 1")
-
--- prints the message only if bool is false and debugLevel > 0
--- TODO: eventually turn into a method and move to Core
-assert' = (bool, msg) -> bool or ( if debugLevel > 0 then printerr msg; false )
 
 -- FIXME
 flattenMorphism = liftMorphism

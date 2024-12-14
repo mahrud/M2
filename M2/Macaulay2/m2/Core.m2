@@ -35,10 +35,10 @@ if class RawMutableMatrix =!= Type then error "where is RawMutableMatrix?"
 -- Temporary definitions to get error messages working early
 -----------------------------------------------------------------------------
 
-assert'( class between === Symbol )
+assert0( class between === Symbol )
 between = (m, v) -> mingle(v, (#v - 1):m)
 
-assert'( class toString === Symbol )
+assert0( class toString === Symbol )
 toString = x -> (
     if hasAttribute(x, ReverseDictionary) then simpleToString getAttribute(x, ReverseDictionary) else
     if class x === Net then concatenate between("\n", unstack x) else simpleToString x)

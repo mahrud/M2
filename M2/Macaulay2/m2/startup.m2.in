@@ -38,7 +38,7 @@ if firstTime then (
     -- we do this bit *before* "debug Core", so that Core (the symbol, not the package),
     -- which may not be there yet, ends up in the right dictionary
     match = x -> null =!= regex x;
-    assert' = x -> (
+    assert0 = x -> (
 	if class x =!= Boolean then error "assert: expected true or false";
 	if not x then error "assertion failed");
     printerr = msg -> endl(printString(stderr, concatenate(loadDepth, "-- ", msg)));
@@ -46,7 +46,7 @@ if firstTime then (
     --
     PackageDictionary = new Dictionary;
     dictionaryPath = append(dictionaryPath, PackageDictionary);
-    assert'( not isGlobalSymbol "Core" );
+    assert0( not isGlobalSymbol "Core" );
     PackageDictionary#("Package$Core") = getGlobalSymbol(PackageDictionary, "Core");
     )
 -- we can't make this an else-clause, because then "Core" will be in the wrong dictionary

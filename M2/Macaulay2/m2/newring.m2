@@ -259,13 +259,14 @@ flattenRing PolynomialRing := opts -> (cacheValue (symbol flattenRing => opts)) 
      (p,q) = (map(T,R, vars T), map(R,T, vars R | promote(matrix q,R)));
      r := flatCoerce(R, resultTemplate,(I',p,q))))
 
-isWellDefined RingMap := f -> (
+isWellDefined RingMap := f -> assert'(
      R := source f;
      (S,p,q) := flattenRing(R,Result=>3);
      T := ambient S;
      I := ideal S;
      g := f * q * map(S,T);
-     g I == 0)
+     g I == 0,
+     "the ring map is not well-defined")
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "

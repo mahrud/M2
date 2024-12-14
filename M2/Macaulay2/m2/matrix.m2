@@ -272,7 +272,13 @@ isIsomorphism Matrix := f -> cokernel f == 0 and kernel f == 0
 
 isHomogeneous Matrix := (cacheValue symbol isHomogeneous) ( m -> ( isHomogeneous target m and isHomogeneous source m and rawIsHomogeneous m.RawMatrix ) )
 
-isWellDefined Matrix := f -> matrix f * presentation source f % presentation target f == 0
+-- prints the message only if bool is false and debugLevel > 0
+assert' = (bool, msg) -> bool or ( if debugLevel > 0 then printerr msg; false )
+
+isWellDefined = method(TypicalValue => Boolean)
+isWellDefined Matrix := f -> assert'(
+    matrix f * presentation source f % presentation target f == 0,
+    "the matrix does not define a well-defined map between source and target")
 
 -----------------------------------------------------------------------------
 -- directSum and friends

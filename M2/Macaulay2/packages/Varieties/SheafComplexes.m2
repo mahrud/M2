@@ -172,9 +172,12 @@ RHom(Complex,       Complex) := Complex => (C, D) -> (
     if p >= n - l then (
 	a := max for i from 0 to length(Resns)-1 list max apply(n - L_i .. P_i, j-> (max degrees (Resns_i)_j)#0 - j);
 	r := a - l + 1;
-	M = truncate(r, M));
-    part(0, Hom(res M, N, DegreeLimit => 0))
-    )
+	M = truncate(r, M, MinimalGenerators => false));
+    z := degree 1_R;
+    E := Hom(res M, N,
+	DegreeLimit => z,
+	MinimalGenerators => false);
+    part(z, E))
 
 --this version of RHom computes the complex for all twists above a certain point
 RHom(CoherentSheaf, CoherentSheaf, ZZ) :=
@@ -199,9 +202,9 @@ RHom(Complex, Complex,       ZZ) := Complex => (C, D, d) -> (
     if p >= n - l then (
 	a := max for i from 0 to length(Resns)-1 list max apply(n - L_i .. P_i, j-> (max degrees (Resns_i)_j)#0 - j);
 	r := a - l - d + 1;
-	M = truncate(r, M));
-    truncate(d, Hom(res M, N))
-    )
+	M = truncate(r, M, MinimalGenerators => false));
+    E := Hom(res M, N, MinimalGenerators => false);
+    truncate(d, E, MinimalGenerators => false))
 
 Ext(ZZ, SheafOfRings,  Complex) := Complex => opts -> (m, O, D) -> Ext(m, O^1, D, opts)
 Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
@@ -224,7 +227,7 @@ Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
     if p >= n - l then (
 	a := max for i from 0 to length(Resns)-1 list max apply(n - L_i .. P_i, j-> (max degrees (Resns_i)_j)#0 - j);
 	r := a - l + 1;
-	M = truncate(r, M));
+	M = truncate(r, M, MinimalGenerators => false));
     complex applyValues(D.dd.map, f -> part(z, Ext^m(M, matrix f, opts))))
 
 cohomology(ZZ, ProjectiveVariety, Complex) := Complex => opts -> (p, X, C) -> (

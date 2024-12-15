@@ -28,16 +28,41 @@ export {
      "projectiveProduct"
      }
 
+importFrom_Core { "concatCols", "inducedBasisMap" }
+
 symExt = method()
-symExt(Matrix, PolynomialRing) := Matrix => (m,E) ->(
-     ev := map(E,ring m,vars E);
-     mt := transpose jacobian m;
+symExt(Matrix, PolynomialRing) := Matrix => (m, E) -> (
+    -- given a linear presentation m of a module
+    -- (e.g. presentation truncate(regularity M, M))
+    -- this is a quick computation of a BGG differential
+    S := ring m;
+    ev := map(E, S, vars E);
+    -- because m has only linear entries, the jacobian
+    -- selects the variables that appear in the entries
+    mt := transpose jacobian m;
      jn := gens kernel mt;
-     q  := vars(ring m)**id_(target m);
-     ans:= transpose ev(q*jn);
+     q  := vars S ** id_(target m);
+     ans:= transpose ev(q * jn);
      --now correct the degrees:
+     -- TODO: need to twist be degrees of target of m
      map(E^{(rank target ans):1}, E^{(rank source ans):0}, 
          ans));
+
+///
+S = ZZ/32003[x_0..x_2];
+E = ZZ/32003[e_0..e_2, SkewCommutative=>true];
+M = coker matrix {{x_0^2, x_1^2}};
+m = presentation truncate(regularity M,M);
+M = coker matrix {{x_0},{x_0}}
+m = presentation M
+symExt(m,E)
+
+S = ZZ/32003[x_0..x_2];
+E = ZZ/32003[e_0..e_2, SkewCommutative=>true];
+M = coker matrix {{x_0^2, x_1^2, x_2^2}};
+bgg(1,M,E)
+bgg(2,M,E)
+///
 
 bgg = method()
 bgg(ZZ, Module, PolynomialRing) := Matrix => (i, M, E) -> (
@@ -686,12 +711,12 @@ document {
 	  "E" => PolynomialRing => "exterior algebra"
 	  },
      Outputs => {
-	  Matrix => {"a matrix representing the map ",  TT "M_1 ** omega_E <-- M_0 ** omega_E"}  
+	  Matrix => {"a matrix representing the map $M_1 \\otimes \\omega_E \\gets M_0 \\otimes \\omega_E$"}
 	  },
      "This function takes as input a matrix ", TT "m", " with linear entries, which we think of as 
-     a presentation matrix for a positively graded ", TT "S", "-module ", TT "M", " matrix representing 
-     the map " , TT "M_1 ** omega_E <-- M_0 ** omega_E", " which is the first differential of 
-     the complex ", TT "R(M)",    ".", 
+     a presentation matrix for a positively graded ", TT "S", "-module ", TT "M", " and returns
+     the matrix representing the map $M_1 \\otimes \\omega_E \\gets M_0 \\otimes \\omega_E$,
+     where $\\omega_E = \\operatorname{Hom}(E, k)$. The result is the first differential of the complex ", TT "R(M)", ".",
      EXAMPLE lines ///
 	  S = ZZ/32003[x_0..x_2]; 
 	  E = ZZ/32003[e_0..e_2, SkewCommutative=>true];

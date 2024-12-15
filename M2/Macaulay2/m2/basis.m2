@@ -264,6 +264,7 @@ basisHelper = (opts, lo, hi, M) -> (
     if not all(hi, i -> instance(i, ZZ)) then error("expected a list of integers: ", toString hi);
 
     -- e.g., basis(4, 2, QQ[x])
+    -- FIXME: this needs to account for negatively graded rings
     if #hi == 1 and #lo == 1 and hi - lo < {0}
     then return if S === R then map(M, S^0, {}) else map(M, S^0, phi, {});
 

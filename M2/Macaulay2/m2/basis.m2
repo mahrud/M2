@@ -273,6 +273,7 @@ basisHelper = (opts, lo, hi, M) -> (
         };
 
     -- the actual computation of the basis occurs here
+    if debugLevel > 1 then printerr("computing basis of module with ", toString numgens M, " generators");
     B := runHooks((basis, List, List, Module), (opts, lo, hi, M), Strategy => strategy);
 
     if B =!= null then liftBasis(M, phi, B, opts.Degree) else if strategy === null

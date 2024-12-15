@@ -266,6 +266,7 @@ truncate(List, Module) := Module => truncateModuleOpts >> opts -> (degs, M) -> (
     if not truncateImplemented(R := ring M) then error "cannot use truncate with this ring type";
     if isNegativeInfinity degs then return M;
     if isPositiveInfinity degs then return R^0;
+    if debugLevel > 1 then printerr("truncating module with ", toString numgens M, " generators");
     degs = makeDegreeList(degreeLength R, degs, degrees M);
     doTrim := if opts.MinimalGenerators then trim else identity;
     doTrim if degreeLength R === 1 and any(degrees R, d -> d =!= {0})

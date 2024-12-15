@@ -795,6 +795,7 @@ truncate(List, Complex) := Complex => truncateModuleOpts >> opts -> (degs, C) ->
     -- this is the simplest way to truncate the whole complex:
     -- else complex applyValues(C.dd.map, f -> truncate(degs, f, opts)))
     else (
+	if debugLevel > 0 then printerr("truncating complex with ", toString(hi - lo + 1), " terms");
 	-- this construction requires ~half as many truncations
 	f := truncate(degs, dd^C_lo, opts);
 	complex hashTable for i from lo+1 to hi list i => (
@@ -817,6 +818,7 @@ basis(List, Complex) := Complex => opts -> (deg, C) -> (
     -- this is the simplest way to take the basis of the whole complex:
     -- else complex applyValues(C.dd.map, f -> basis(deg, f, opts)))
     else (
+	if debugLevel > 0 then printerr("computing basis of complex with ", toString(hi - lo + 1), " terms");
 	-- this construction requires ~half as many basis computations
 	f := basis(deg, dd^C_lo, opts);
 	complex hashTable for i from lo+1 to hi list i => (

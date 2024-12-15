@@ -24,7 +24,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #include <flint/flint.h> // for flint_set_abort
+#include <libnormaliz/general.h> // nmz_interrupted
 
 /* ######################################################################### */
 
@@ -246,6 +248,7 @@ void segv_handler(int sig) {
 
 void interrupt_handler(int sig) {
   (void) sig;
+  // libnormaliz::nmz_interrupted = 1;
   if (tryGlobalInterrupt() == 0) {
     if (test_Field(THREADLOCAL(interrupts_interruptedFlag, struct atomic_field)) ||
                    THREADLOCAL(interrupts_interruptPending, bool)) {

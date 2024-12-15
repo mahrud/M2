@@ -692,7 +692,7 @@ protect QuotientRingHook
 -----------------------------------------------------------------------------
 
 -- deprecated, but kept for backwards compatibility
-cacheValue = key -> f -> x -> ( try x.cache else x.cache = new CacheTable )#key ??= f(x)
+cacheValue = key -> f -> x -> ( x.cache ??= new CacheTable )#key ??= f(x)
 stashValue = key -> f -> x -> x#key ??= f(x)
 
 codeHelper#(functionBody (cacheValue null) null) = g -> {

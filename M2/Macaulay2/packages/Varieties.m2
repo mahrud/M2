@@ -116,7 +116,7 @@ importFrom_Core {
     "applyMethod", "applyMethod''", "applyMethodWithOpts''", "functorArgs",
     "toString'", "expressionValue", "unhold", -- TODO: prune these
     "concatBlocks", "concatCols", "concatRows",
-    "addHook", "tryHooks", "cacheHooks",
+    "addHook", "tryHooks",
     "liftModule", "liftMorphism",
     "isMorphism", "isAbelianCategory",
     "BinaryPowerMethod",

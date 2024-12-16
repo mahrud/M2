@@ -305,12 +305,11 @@ expression CoherentSheaf := F -> (
     if not isProjective X then return new Superscript from {expression OO_X, expression numgens M};
     -- That is, in the affine case, we ignore the grading of M, if any.
     degs := runLengthEncoding(- degrees M); -- a list of O_X^r(d) for each summand
-    sums := apply(degs, (r, d) -> (
-	    s := new Superscript from {expression OO_X, expression r};
-	    -- TODO: get rid of the extra space in OO_X^1 (1,2) when #d > 1
-	    if all(d, zero) then s else new Adjacent from {
-		s, (if #d == 1 then new Parenthesize from d else expression toSequence d)}));
-    fold((a, b) -> a++b, sums))
+    DirectSum apply(degs, (r, d) -> (
+           OX := Superscript { expression OO_X, r };
+           -- TODO: get rid of the extra spaces in OO_X^1000(1) when #d > 1
+           if all(d, zero) then OX else Adjacent { OX,
+               if #d === 1 then Parenthesize d else expression toSequence d }))
 net      CoherentSheaf :=      net @@ expression
 texMath  CoherentSheaf :=  texMath @@ expression
 toString CoherentSheaf := toString @@ expression

@@ -583,6 +583,7 @@ export {
 	"compose",
 	"compositions",
 	"compress",
+	"comultiplication",
 	"concatenate",
 	"cone",
 	"conjugate",

@@ -292,6 +292,7 @@ inducedTruncationMap = (G, F, f) -> (
     map(G, F, inducedMap(G, source f', f') // inducedMap(G, source gens G, gens G)))
 
 truncate(List, Matrix) := Matrix => truncateModuleOpts >> opts -> (degs, f) -> (
+    if degs === infinity then return id_((ring f)^0);
     inducedTruncationMap(truncate(degs, target f, opts), truncate(degs, source f, opts), f))
 
 -- TODO: document these

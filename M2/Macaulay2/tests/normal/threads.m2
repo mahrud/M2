@@ -110,6 +110,21 @@ h = lock(m, () -> x += 1)
 parallelApply(1..1000, i -> if i % 2 == 0 then g() else h())
 assert Equation(x, 2000)
 
+-- Tests for async and await
+f = x -> (sleep 2; 2*x)
+(t, r) = toSequence elapsedTiming f(2)
+assert(t < 2.1 and r == 4)
+
+g = async f
+(t, r) = toSequence elapsedTiming g(2)
+assert(t < 0.1 and instance(r, Task))
+(t, r) = toSequence elapsedTiming await r
+assert(t < 2.1 and r == 4)
+
+h = () -> await { g 2, g 3, g 4 }
+(t, r) = toSequence elapsedTiming h()
+assert(t < 2.1 and r == {4,6,8})
+
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages/Macaulay2Doc/test threads.out"
 -- End:

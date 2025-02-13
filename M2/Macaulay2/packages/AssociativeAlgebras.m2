@@ -1176,24 +1176,72 @@ ncGraphIdeal RingMap := phi -> (
 --- This code is not very useful at the moment, since NCGBs with commutative coefficient
 --- rings are not yet implemented
 
-endomorphismRingIdeal = method()
-endomorphismRingIdeal (Module,Symbol) := (M,X) -> (
+sortEndM = endGens -> (
+    L := new MutableList from endGens;
+    P := new MutableList from apply(#endGens, identity);
+    for i from 0   to #L-2 do
+    for j from i+1 to #L-1 do
+    if L#j * L#i != 0 then (
+	t := P#i; P#i = P#j; P#j = t;
+	t  = L#i; L#i = L#j; L#j = t;);
+    --matrix { homomorphism' \ toList L }
+    --matrix { homomorphism' \ endGens }
+    toList P)
+
+endomorphismRingIdeal = method(Options => options End)
+endomorphismRingIdeal Module          := opts ->  M     -> endomorphismRingIdeal(M, getSymbol "h", opts)
+endomorphismRingIdeal(Module, Symbol) := opts -> (M, X) -> (
    R := ring M;
-   endM := End M;
-   N := numgens endM;
-   endGens := apply(N, i -> homomorphism endM_{i});
+   endM := End(M, DegreeLimit => opts.DegreeLimit, MinimalGenerators => true);
+   endM0 := basis_(degree 1_R) endM;
+   endGens := apply(numcols endM0, i -> homomorphism endM0_i);
+   permGens := select(sortEndM endGens, i -> 0 != # support endGens_i);
+   endGens = endGens_permGens;
+   endM0 = endM0_permGens;
+   inc := inducedMap(endM, image endM0);
+   N := #endGens;
+   comps := set apply(subsets(endGens, 2), walk -> walk#0 * walk#1);
+   arrGens := select(N, i -> not comps#?(endGens_i));
+   monGens := toList(0..N-1) - set arrGens;
+   perm := arrGens | toList(0..N-1) - set arrGens;
+   rperm := sortColumns matrix { perm };
    endMVars := apply(N, i -> X_i);
-   A := freeAlgebra(R,endMVars | {UseVariables=>false});
+   A := freeAlgebra(R, endMVars | { UseVariables => false });
    gensA := ncBasis(1,A);
-   deg2A := ncBasis(2,A);
-   composites := apply(flatten entries deg2A, m -> evaluateAt(endGens, m)) / homomorphism';
+   --deg2A := ncBasis(2,A);
+   deg2A := flatten table(A_*_arrGens, A_*, times);
+   composites := apply(deg2A, evaluateAt_endGens);
+   composites  = apply(composites, f -> homomorphism' f // inc);
    -- relations from multiplication table
-   I := ideal(deg2A - (gensA)*(matrix entries matrix {composites}));
+   I := ideal(matrix { deg2A } - gensA * cover matrix { composites });
+   -- quiver relations
+   rels := select(numgens I, i -> 1 < # terms I_i);
+   H := new MutableHashTable;
+   H  = hashTable(splice, apply(I_*_rels,
+	   rel -> -last terms rel => 1:support first terms rel));
+   L := new MutableHashTable;
+   findRepsAndRels := memoize(somepath -> if not H#?somepath then {somepath} else (
+       allSplits := unique apply(toList H#somepath,
+	   subdiv -> findRepsAndRels subdiv#0 | findRepsAndRels subdiv#1);
+       L#somepath = apply(#allSplits - 1, i -> {allSplits#i, allSplits#(i+1)});
+       if L#somepath != {} then
+       L#somepath = apply(L#somepath, rel -> (
+	       (s0, s1) := (#rel#0, #rel#1);
+	       s := position(apply(min(s0, s1),
+		       i -> rel#0#(s0-i-1) != rel#1#(s1-i-1)), identity);
+	       product drop(rel#0, -s) - product drop(rel#1, -s)));
+       first allSplits));
+   scan(gens A, findRepsAndRels);
+   quiverRelations := unique flatten values L;
+   quiverRelations  = apply(quiverRelations,
+       binom -> apply(terms binom, mon -> endGens_(indices mon)));
    -- now must identify the identity map.
-   identM := homomorphism' id_M;
-   ff := 1_A - first flatten entries (ncBasis(1,A)*(matrix entries identM));
+   identM := (homomorphism' id_M) // inc;
+   ff := 1_A - first flatten entries (ncBasis(1,A) * cover identM);
    I = I + ideal ff;
    I.cache#"EndomorphismRingIdealGens" = endGens;
+   I.cache#"QuiverRelations" = quiverRelations;
+   I.cache#"DegreeZeroEndomorphisms" = (inc, endM0);
    I
 )
 

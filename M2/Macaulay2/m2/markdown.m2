@@ -18,6 +18,10 @@ markdown BODY := x -> concatenate(shorten apply(x, markdown))
 
 needs "format.m2"
 
+-- YAML Ain't Markup Language, but it is a MarkUpType! See yaml.org
+-- TODO: add parser and generator
+YAML = new IntermediateMarkUpType of HypertextContainer
+
 -----------------------------------------------------------------------------
 -- Local utilities
 -----------------------------------------------------------------------------
@@ -27,6 +31,9 @@ shorten := s -> replace("\n+$", "\n", concatenate(s, newline))
 
 -- Parse attributes
 parseAttr := (T, x) -> first override(T.Options, toSequence x)
+
+-- FIXME
+markdownLiteral := identity
 
 -----------------------------------------------------------------------------
 -- Setup default rendering
@@ -39,10 +46,13 @@ setupRenderer(markdown, concatenate, Hypertext)
 -- (markdown, MarkUpType) methods
 -----------------------------------------------------------------------------
 
+-- Markdown-native hypertext objects must begin with a YAML object rather than HEAD
+markdown YAML  := x -> concatenate("---\n", between_newline apply(toList x, markdown), "\n---\n")
+
 -- See hypertext.m2 for the full list
 markdown HTML  := x -> concatenate(apply(x, markdown))
-markdown HEAD  := x -> concatenate("---\n", apply(x, markdown), "---\n")
-markdown TITLE := x -> concatenate("title: ", apply(x, markdown), newline)
+markdown HEAD  := x -> concatenate("---\n",   apply(x, markdown), "\n---\n")
+markdown TITLE := x -> concatenate("title: ", apply(x, markdown))
 
 markdown BODY  := x -> concatenate(
     "{% raw %}", shorten apply(x, markdown), "{% endraw %}")
@@ -54,11 +64,11 @@ markdown DIV   := x -> (
 
 markdown LABEL :=
 markdown SMALL :=
-markdown MENU  :=
 markdown SUB   :=
 markdown SUP   := html
 
 markdown LINK  :=
+markdown MENU  :=
 markdown META  :=
 markdown STYLE :=
 markdown Option  :=
@@ -104,8 +114,12 @@ markdown DD := x -> shorten concatenate(lvl:"   ", ": ", apply(x, markdown))
 
 -- Links
 -- (markdown, TOH) defined in format.m2
-markdown TO     :=
-markdown TO2    :=
+markdown TO     := x -> markdown TO2{tag := x#0, format tag | if x#?1 then x#1 else ""}
+markdown TO2    := x -> (
+    (tag, name) := (getPrimaryTag fixup x#0, x#1);
+    title := if (excerpt := headline tag) =!= null then (1, format markdownLiteral excerpt) else "";
+    if isMissingDoc tag or isUndocumented tag then concatenate(markdown TT name, " (missing<!-- tag: ", toString tag.Key, " -->)") else
+    concatenate("[", name, "](/", markdownBasename tag, title, ")"))
 markdown ANCHOR := html
 markdown HREF   := x -> concatenate("[", markdown last x, "](", toURL first x, ")")
 

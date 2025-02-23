@@ -490,9 +490,9 @@ installMarkdown := (pkg, installPrefix, installLayout, verboseLog, rawDocumentat
     nodes := packageTagList(pkg, topDocumentTag);
 
     markdownDirectory := replace("PKG", pkg#"pkgname", installLayout#"packagedoc") | "markdown/";
-
-    makeDirectory(installPrefix | markdownDirectory);
     verboseLog("making markdown pages in ", minimizeFilename installPrefix | markdownDirectory);
+    makeDirectory(installPrefix | markdownDirectory);
+
     for n in (topFileName, indexFileName, tocFileName) do (
 	fn := installPrefix | markdownDirectory | n;
 	if fileExists fn then (

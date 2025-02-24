@@ -15,6 +15,11 @@ needs "validate.m2"
 -- Generate the package documentation (html, info, pdf)
 -----------------------------------------------------------------------------
 
+-- changes behavior of htmlFilename and html(TO), e.g.
+-- HTML:     <a title="print something" href="#Macaulay2Doc::print">print</a>
+-- Markdown: <a title="print something" href="[path]/Macaulay2Doc/html/_print.html">print</a>
+documentMode = "HTML"
+
 -----------------------------------------------------------------------------
 -- Local variables
 -----------------------------------------------------------------------------
@@ -412,6 +417,7 @@ htmlFilename Thing       := key -> htmlFilename makeDocumentTag key
 htmlFilename DocumentTag := tag -> (
     fkey := format tag;
     pkgname := tag.Package;
+    if documentMode == "Markdown" then return "#" | pkgname | "::" | fkey;
     basefilename := if fkey === pkgname then topFileName else toFilename fkey | ".html";
     (prefix, tail) := getInstallPrefix(pkgname, "packagehtml");
     (prefix, tail | basefilename)) -- this pair will be processed by toURL(String,String)

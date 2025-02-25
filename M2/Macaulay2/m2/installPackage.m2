@@ -492,6 +492,42 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
     )
 
 -----------------------------------------------------------------------------
+-- install JSON documentation for package
+-----------------------------------------------------------------------------
+
+installJSON := (pkg, installPrefix, installLayout, verboseLog, tableOfContents, opts) -> (
+    JSON := getpkg "JSON";
+    -- TODO: why doesn't importFrom work here?
+    toJSON := value JSON#"private dictionary"#"toJSON";
+    Indent := value JSON#"private dictionary"#"Indent";
+
+    topDocumentTag := makeDocumentTag(pkg#"pkgname", Package => pkg);
+    nodes := select(packageTagList(pkg, topDocumentTag), tag -> not isUndocumented tag);
+
+    htmlDirectory = replace("PKG", pkg#"pkgname", installLayout#"packagehtml");
+    jsonFilename := installPrefix | htmlDirectory | pkg#"pkgname" | ".json";
+    verboseLog("making JSON entry in ", minimizeFilename jsonFilename);
+    makeDirectory(installPrefix | htmlDirectory);
+
+    if fileExists jsonFilename
+    and fileLength jsonFilename > 0
+    and not opts.RemakeAllDocumentation then return verboseLog("JSON entry already exists");
+
+    documentMode = "Markdown";
+    --nodes = select(nodes, tag -> UP#?tag);
+    data := hashTable {
+	"toc"   => tableOfContents,
+	"index" => hashTable apply(nodes, tag -> format tag => getPrimaryTag tag),
+	"nodes" => hashTable nonnull apply(nodes, tag ->
+	    if not isSecondaryTag tag then format tag =>
+	    getData(tag.Key, tag, fetchRawDocumentation(pkg, format tag))),
+    };
+    -- TODO: break this into smaller pieces
+    jsonFilename << toJSON(data, Indent => 2, Sort => true) << endl << close;
+    documentMode = "HTML";
+    )
+
+-----------------------------------------------------------------------------
 -- install Markdown documentation for package
 -----------------------------------------------------------------------------
 -- TODO: Style files, table of contents, alphabetized index
@@ -706,6 +742,7 @@ installPackage = method(
 	MakeHTML               => true,
 	MakeInfo               => true,
 	MakeMarkdown           => false,
+	MakeJSON               => false,
 	MakePDF                => false,
 	-- until we get better dependency graphs between documentation
 	-- nodes, "false" here will confuse users
@@ -855,7 +892,9 @@ installPackage Package := opts -> pkg -> (
 	    if      isUndocumented tag              then verboseLog("undocumented ", toString tag)
 	    else if isSecondaryTag tag              then verboseLog("is secondary ", toString tag)
 	    else if not opts.RemakeAllDocumentation
-	    and     not opts.MakeInfo -- when making the info file, we need to process all the documentation
+	    -- when making the info or JSON files, we need to process all the documentation
+	    and     not opts.MakeInfo
+	    and     not opts.MakeJSON
 	    and rawDocumentationCache#?(format tag) then verboseLog("skipping     ", toString tag)
 	    else storeProcessedDocumentation(pkg, tag, opts, verboseLog));
 
@@ -896,6 +935,10 @@ installPackage Package := opts -> pkg -> (
 	-- make markdown documentation
 	if opts.MakeMarkdown then installMarkdown(pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts)
 	else verboseLog("not making documentation in Markdown format");
+
+	-- make markdown documentation
+	if opts.MakeJSON then installJSON(pkg, installPrefix, installLayout, verboseLog, tableOfContents, opts)
+	else verboseLog("not making documentation in JSON format");
 
 	-- make pdf documentation
 	if opts.MakePDF then installPDF(pkg, installPrefix, installLayout, verboseLog)

@@ -435,6 +435,7 @@ Node
     [installPackage, MakeDocumentation]
     [installPackage, MakeHTML]
     [installPackage, MakeInfo]
+    [installPackage, MakeJSON]
     [installPackage, MakePDF]
     [installPackage, RemakeAllDocumentation]
     [installPackage, RerunExamples]
@@ -476,6 +477,8 @@ Node
     MakeInfo=>Boolean
       whether to make the info pages. This is a form of the documentation that can be viewed using the
       Unix command @TT "info"@ or using @TT "emacs"@
+    MakeJSON=>Boolean
+      whether to make JSON documentation
     MakePDF=>Boolean
       whether to make PDF documentation
     MakeMarkdown=>Boolean

@@ -55,7 +55,7 @@ if notify then stderr << "--loading configuration for package \"PKG\" from file 
 -- Local utilities
 -----------------------------------------------------------------------------
 
-warn0 := (sym, front, behind, syns) -> (
+warn0 := (sym, front, behind, syns) -> (return;
     -- just for debugging:
     -- error("symbol ", format sym, " in ", toString behind, " is shadowed by a symbol in ", toString front);
     printerr("warning: symbol ", format toString sym, " in ", toString behind,

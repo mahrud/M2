@@ -11,7 +11,7 @@
 undocumented {(map, RingFamily, Thing, Thing),(map, Thing, RingFamily, Thing)}
 
 document {
-     Key => { map, "morphisms" },
+     Key => map,
      Headline => "make a map",
      Usage => "map(Y,X,d) or map(Y,X)",
      Inputs => {

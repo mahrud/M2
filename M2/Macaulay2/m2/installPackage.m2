@@ -473,7 +473,7 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
 	    fkey := format tag;
 	    fn := concatenate htmlFilename tag;
 	    if isSecondaryTag tag
-	    or fileExists fn and fileLength fn > 0 and not opts.RemakeAllDocumentation and rawDocumentationCache#?fkey then return;
+	    or fileExists fn and fileLength fn > 0 and rawDocumentationCache#?fkey then return;
 	    verboseLog("making html page for ", toString tag);
 	    fn << html validate HTML {
 		defaultHEAD {fkey, commentize headline fkey},
@@ -831,6 +831,10 @@ installPackage Package := opts -> pkg -> (
 
 	pkg#"package prefix" = installPrefix;
 
+	-- when making the info or JSON files, the entire documentation is stored
+	-- in a single file, therefore we need to remake all the documentation.
+	remake := opts.RemakeAllDocumentation or opts.MakeInfo or opts.MakeJSON;
+
 	-- copy package doc subdirectory if we loaded the package from a distribution
 	-- ... to be implemented, but we seem to be copying the examples already, but only partially
 
@@ -846,22 +850,19 @@ installPackage Package := opts -> pkg -> (
 	    copyFile(rawdbname, rawdbnametmp);
 	    close tmp);
 	rawdocDatabase := openDatabaseOut rawdbnametmp;
-	rawDoc := pkg#"raw documentation";
+	rawdoc := pkg#"raw documentation";
 	-- remove any keys from the processed database no longer used
-	scan(keys rawdocDatabase - set keys rawDoc, key -> remove(rawdocDatabase, key));
+	scan(keys rawdocDatabase - set keys rawdoc, key -> remove(rawdocDatabase, key));
 	scan(nodes, tag -> (
 		fkey := format tag;
-		if rawDoc#?fkey then (
-		    v := evaluateWithPackage(getpkg "Text", rawDoc#fkey, toExternalString);
-		    if rawdocDatabase#?fkey
-		    then if rawdocDatabase#fkey === v then rawDocumentationCache#fkey = true else rawdocDatabase#fkey = v
-		    else (
-			rawdocDatabase#fkey = v;
-			verboseLog("new raw documentation, not already in database, for ", fkey)))
-		else if rawdocDatabase#?fkey
-		then warning("installPackage: raw documentation for " | fkey | ", in database, is no longer present")
-		else rawDocumentationCache#fkey = true;
-		));
+		if not rawdoc#?fkey then return;
+		rawdocstr := evaluateWithPackage(getpkg "Text", rawdoc#fkey, toExternalString);
+		if not rawdocDatabase#?fkey               then verboseLog("adding rawdoc string to db:	", fkey)
+		else if rawdocDatabase#fkey =!= rawdocstr then verboseLog("updating raw docstring:	", fkey)
+		-- if the rawdocstr matches the one already in the database
+		else if not remake then rawDocumentationCache#fkey = true;
+		rawdocDatabase#fkey = rawdocstr)
+	    );
 	close rawdocDatabase;
 	verboseLog "closed the database";
 
@@ -889,13 +890,9 @@ installPackage Package := opts -> pkg -> (
 	verboseLog "processing documentation nodes...";
 	-- ~50s -> ~100s for Macaulay2Doc
 	scan(nodes, tag ->
-	    if      isUndocumented tag              then verboseLog("undocumented ", toString tag)
-	    else if isSecondaryTag tag              then verboseLog("is secondary ", toString tag)
-	    else if not opts.RemakeAllDocumentation
-	    -- when making the info or JSON files, we need to process all the documentation
-	    and     not opts.MakeInfo
-	    and     not opts.MakeJSON
-	    and rawDocumentationCache#?(format tag) then verboseLog("skipping     ", toString tag)
+	    if      isUndocumented tag                  then verboseLog("undocumented ", toString tag)
+	    else if isSecondaryTag tag                  then verboseLog("is secondary ", toString tag)
+	    else if rawDocumentationCache#?(format tag) then verboseLog("is cached    ", toString tag)
 	    else storeProcessedDocumentation(pkg, tag, opts, verboseLog));
 
 	if chkdoc then checkForErrors pkg;

@@ -153,11 +153,12 @@ makeTree := (parent, graph, visits, node) -> (
 -- pre-compute the list of orphan nodes in a graph, with parent
 -- node (typically topDocumentTag) appearing in the beginning
 orphanNodes := (parent, graph) -> (
+    parent = getPrimaryTag parent;
     nonLeaves := set keys graph - set flatten values graph;
     nonLeafKeys := sort(keys nonLeaves - set { parent });
     -- forcing Macaulay2Doc to a higher standard
     action := if currentPackage#"pkgname" == "Macaulay2Doc" then error else warning;
-    if not nonLeaves#?parent then error("installPackage: top node ", parent, " cannot be a subnode");
+    if not nonLeaves#?parent then error("installPackage: top node ", format parent, " cannot be a subnode");
     if #nonLeaves > 1 then action("installPackage: found ", #nonLeafKeys,
 	" documentation node(s) not listed as a subnode: ", newline,
 	toString wrap_printWidth demark_", " apply(nonLeafKeys, format));
@@ -859,7 +860,8 @@ installPackage Package := opts -> pkg -> (
 		rawdocstr := evaluateWithPackage(getpkg "Text", rawdoc#fkey, toExternalString);
 		if not rawdocDatabase#?fkey               then verboseLog("adding rawdoc string to db:	", fkey)
 		else if rawdocDatabase#fkey =!= rawdocstr then verboseLog("updating raw docstring:	", fkey)
-		-- if the rawdocstr matches the one already in the database
+		-- if the rawdocstr matches the one already in the database,
+		-- odds are the node hasn't changed, so we can skip it later.
 		else if not remake then rawDocumentationCache#fkey = true;
 		rawdocDatabase#fkey = rawdocstr)
 	    );
@@ -941,6 +943,7 @@ installPackage Package := opts -> pkg -> (
 	if opts.MakePDF then installPDF(pkg, installPrefix, installLayout, verboseLog)
 	else verboseLog("not making documentation in PDF format");
 
+	currentDocumentTag = null;
 	); -- end of opts.MakeDocumentation
 
     -- touch .installed if no errors occurred

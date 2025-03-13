@@ -409,8 +409,9 @@ storeProcessedDocumentation = (pkg, tag, opts, verboseLog) -> (
 	first (help tag, processExamplesStrict = true )))
 
 fetchProcessedDocumentation = (pkg, fkey) -> (
-    if pkg#"processed documentation"#?fkey then pkg#"processed documentation"#fkey
-    else error("internal error: documentation node not processed yet: ", fkey));
+    if pkg#"processed documentation"#?fkey then pkg#"processed documentation"#fkey else (
+	printerr("warning: encountered unprocessed documentation node: ", fkey);
+	help makeDocumentTag(fkey, Package => pkg)))
 
 -----------------------------------------------------------------------------
 -- inquiring the status of a key or DocumentTag

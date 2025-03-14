@@ -260,8 +260,8 @@ backwardButton := tag -> ( b := BACKWARD tag; if b =!= null then HREF { htmlFile
 upButton       := tag -> if   UP#?tag then HREF { htmlFilename   UP#tag, "up" } else "up"
 topButton      := tag -> if tag =!= topDocumentTag then topNodeButton(htmlDirectory, topFileName) else "top"
 
-upAncestors := tag -> reverse(
-    n := 0; prepend(tag, while UP#?tag and n < 20 list (n = n+1; tag = UP#tag)))
+upAncestors := tag -> unique prepend(topDocumentTag,
+    fold(1..5, {tag}, (i, prev) -> prepend(UP#(prev#0) ?? break prev, prev)))
 
 -- TODO: revamp this using Bootstrap
 buttonBar := tag -> DIV {

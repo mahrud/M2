@@ -1035,6 +1035,11 @@ tensor(Complex, RingMap) := Complex => {} >> opts -> (C, phi) -> tensor(phi, C)
 RingMap ** Complex := Complex => (phi, C) -> tensor(phi, C)
 Complex ** RingMap := Complex => (C, phi) -> tensor(phi, C)
 
+-- See [Gelfand, Kapranov, Zelevinsky, pp. 489]
+determinant Module := Module => o -> M -> exteriorPower(rank M, M, o)
+determinant Complex := Module => o -> C -> tensor apply(C.module,
+    (i, M) -> (if odd i then dual else identity) determinant(M, o))
+
 --------------------------------------------------------------------
 -- resolutions -----------------------------------------------------
 --------------------------------------------------------------------

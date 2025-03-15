@@ -28,6 +28,19 @@ m = matrix(ZZ/32003[x]/(x), {
 (t, d) = toSequence elapsedTiming det m;
 assert(t < 0.01 and d == 0)
 
+--
+K = ZZ/32003
+assert all(4, i -> det K^i == K^1)
+
+R = K[x,y]
+assert(det R^0 == R^1)
+assert(det R^1 == R^1)
+assert(det R^{3:2} == R^{6})
+assert(det R^{3,2} == R^{5})
+
+C = koszul vars R
+assert same(det C, det HH C, R^1)
+
 end
 
 restart

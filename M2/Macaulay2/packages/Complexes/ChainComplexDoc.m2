@@ -2778,6 +2778,22 @@ doc ///
 ///
 
 doc ///
+Node
+  Key
+    (determinant, Module)
+    (determinant, Complex)
+  Headline
+    determinant of a graded module or complex
+  Usage
+    det M
+  Description
+    Text
+      Hmm
+  References
+    [Gelfand, Kapranov, Zelevinsky, Discriminants, Resultants, and Multidimensional Determinants, pp. 489]
+///
+
+doc ///
     Key
         (part, List, Complex)
         (part, ZZ, Complex)

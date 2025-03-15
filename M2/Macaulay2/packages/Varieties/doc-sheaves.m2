@@ -1,9 +1,63 @@
+-- warning: missing node: isLocallyFree cited by MethodFunction
+-- warning: missing node: canonicalBundle cited by MethodFunctionWithOptions
+-- warning: missing node: canonicalBundle(...,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: canonicalBundle(...,Strategy=>...) cited by Strategy
+
+-- warning: missing node: CoherentSheaf == CoherentSheaf cited by Boolean
+-- warning: missing node: CoherentSheaf == Module cited by Boolean
+-- warning: missing node: CoherentSheaf == ZZ cited by Boolean
+-- warning: missing node: CoherentSheaf ? CoherentSheaf cited by ?
+-- warning: missing node: CoherentSheaf Sequence cited by Sequence
+-- warning: missing node: CoherentSheaf ^ Array cited by ^
+-- warning: missing node: CoherentSheaf ^ List cited by ^
+-- warning: missing node: CoherentSheaf _ Array cited by _
+-- warning: missing node: Ideal * CoherentSheaf cited by *
+-- warning: missing node: Module == CoherentSheaf cited by Boolean
+-- warning: missing node: ZZ == CoherentSheaf cited by Boolean
+-- warning: missing node: ambient(CoherentSheaf) cited by ambient
+-- warning: missing node: betti(CoherentSheaf) cited by betti
+-- warning: missing node: codim(CoherentSheaf,Generic=>...) cited by Generic
+-- warning: missing node: components(CoherentSheaf) cited by components
+-- warning: missing node: cover(CoherentSheaf) cited by cover
+-- warning: missing node: degrees(CoherentSheaf) cited by degrees
+-- warning: missing node: determinant(CoherentSheaf) cited by determinant
+-- warning: missing node: directSum(CoherentSheaf) cited by directSum
+-- warning: missing node: id _ CoherentSheaf cited by id
+-- warning: missing node: inducedMap(CoherentSheaf,CoherentSheaf) cited by inducedMap
+-- warning: missing node: isIsomorphic(CoherentSheaf,CoherentSheaf) cited by Sequence
+-- warning: missing node: isWellDefined(CoherentSheaf) cited by isWellDefined
+-- warning: missing node: map(CoherentSheaf,CoherentSheaf,Matrix) cited by Matrix
+-- warning: missing node: map(CoherentSheaf,CoherentSheaf,Matrix,InfiniteNumber) cited by Matrix
+-- warning: missing node: map(CoherentSheaf,CoherentSheaf,Matrix,ZZ) cited by Matrix
+-- warning: missing node: map(CoherentSheaf,CoherentSheaf,ZZ) cited by ZZ
+-- warning: missing node: map(CoherentSheaf,Module,ZZ) cited by ZZ
+-- warning: missing node: map(CoherentSheaf,Nothing,Matrix) cited by Matrix
+-- warning: missing node: map(Module,CoherentSheaf,ZZ) cited by ZZ
+-- warning: missing node: map(Nothing,CoherentSheaf,Matrix) cited by Matrix
+-- warning: missing node: minimalPresentation(CoherentSheaf) cited by minimalPresentation
+-- warning: missing node: prune(CoherentSheaf) cited by prune
+-- warning: missing node: random(CoherentSheaf,CoherentSheaf) cited by random
+-- warning: missing node: rank(CoherentSheaf) cited by rank
+-- warning: missing node: sheafExt(ZZ,CoherentSheaf,CoherentSheaf,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: sheafExt(ZZ,CoherentSheaf,SheafOfRings,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: sheafExt(ZZ,SheafOfRings,CoherentSheaf,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: super(CoherentSheaf) cited by super
+-- warning: missing node: symmetricPower(ZZ,CoherentSheaf) cited by symmetricPower
+-- warning: missing node: tensor(CoherentSheaf,CoherentSheaf) cited by tensor
+
+-- warning: missing node: SheafOfRings Sequence cited by Sequence
+-- warning: missing node: isCommutative(SheafOfRings) cited by isCommutative
+-- warning: missing node: isWellDefined(SheafOfRings) cited by isWellDefined
+-- warning: missing node: minimalPresentation(SheafOfRings) cited by minimalPresentation
+-- warning: missing node: prune(SheafOfRings) cited by prune
+-- warning: missing node: sheafExt(ZZ,SheafOfRings,SheafOfRings,MinimalGenerators=>...) cited by MinimalGenerators
+
 -- TODO: hilbertSeries and hilbertFunction used to have this in the documentation:
 --"For a projective varieties and coherent sheaves, the functionality is not yet implemented."
 -- TODO: what would this mean?
 
 undocumented {
-    SheafExpression,
+    SheafExpression, (net, SheafExpression), (texMath, SheafExpression),
     -- TODO: document some of these
     (symbol ^,  CoherentSheaf, Array),
     (symbol _,  CoherentSheaf, Array),

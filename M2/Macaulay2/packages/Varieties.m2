@@ -233,9 +233,6 @@ texMath          Variety :=  texMath @@ expression
 toString         Variety := toString @@ expression
 toExternalString Variety := toString @@ describe
 
--- used to be in m2/mathml.m2
-mathML Variety := lookup(mathML, Thing)
-
 describe     AffineVariety := X -> Describe (expression Spec) (expression X.ring)
 describe ProjectiveVariety := X -> Describe (expression Proj) (expression X.ring)
 

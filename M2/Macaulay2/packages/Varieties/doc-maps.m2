@@ -1,3 +1,76 @@
+-- (sheaf, Variety, Matrix)
+-- (sheaf, Variety, Matrix, ZZ)
+-- warning: missing node: sheaf(Matrix) cited by Matrix
+-- warning: missing node: sheaf(Matrix,ZZ) cited by Matrix
+
+-- warning: missing node: - SheafMap cited by -
+-- warning: missing node: CoherentSheaf ** SheafMap cited by **
+-- warning: missing node: Ext^ZZ(CoherentSheaf,SheafMap) cited by Matrix
+-- warning: missing node: HH^ZZ SheafMap cited by Matrix
+-- warning: missing node: RingElement * SheafMap cited by *
+-- warning: missing node: SheafMap * RingElement cited by *
+-- warning: missing node: SheafMap * SheafMap cited by *
+-- warning: missing node: SheafMap * ZZ cited by *
+-- warning: missing node: SheafMap ** CoherentSheaf cited by **
+-- warning: missing node: SheafMap ** SheafMap cited by **
+-- warning: missing node: SheafMap ** SheafOfRings cited by **
+-- warning: missing node: SheafMap + SheafMap cited by +
+-- warning: missing node: SheafMap ++ SheafMap cited by ++
+-- warning: missing node: SheafMap - SheafMap cited by -
+-- warning: missing node: SheafMap // SheafMap cited by //
+-- warning: missing node: SheafMap == SheafMap cited by Boolean
+-- warning: missing node: SheafMap == ZZ cited by Boolean
+-- warning: missing node: SheafMap ZZ cited by ZZ
+-- warning: missing node: SheafMap \\ SheafMap cited by \\
+-- warning: missing node: SheafMap ^ ZZ cited by ^
+-- warning: missing node: SheafMap ^** ZZ cited by ZZ
+-- warning: missing node: SheafMap cited by Type
+-- warning: missing node: SheafMap | SheafMap cited by |
+-- warning: missing node: SheafMap || SheafMap cited by ||
+-- warning: missing node: SheafOfRings ** SheafMap cited by **
+-- warning: missing node: ZZ * SheafMap cited by *
+-- warning: missing node: ZZ == SheafMap cited by Boolean
+-- warning: missing node: ambient(SheafMap) cited by ambient
+-- warning: missing node: coimage(SheafMap) cited by coimage
+-- warning: missing node: cokernel(SheafMap) cited by cokernel
+-- warning: missing node: components(SheafMap) cited by components
+-- warning: missing node: cover(SheafMap) cited by cover
+-- warning: missing node: degree(SheafMap) cited by ZZ
+-- warning: missing node: directSum(SheafMap) cited by directSum
+-- warning: missing node: dual(SheafMap) cited by dual
+-- warning: missing node: dual(SheafMap,DegreeLimit=>...) cited by resolution(...,DegreeLimit=>...)
+-- warning: missing node: dual(SheafMap,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: dual(SheafMap,Strategy=>...) cited by Strategy
+-- warning: missing node: exteriorPower(ZZ,SheafMap) cited by ZZ
+-- warning: missing node: homology(SheafMap,SheafMap) cited by HH
+-- warning: missing node: homomorphism'(SheafMap) cited by homomorphism'
+-- warning: missing node: image(SheafMap) cited by image
+-- warning: missing node: inducedMap(CoherentSheaf,CoherentSheaf,SheafMap) cited by inducedMap
+-- warning: missing node: inverse(SheafMap) cited by inverse
+-- warning: missing node: isIsomorphic(SheafMap,SheafMap) cited by Sequence
+-- warning: missing node: isIsomorphism(SheafMap) cited by Boolean
+-- warning: missing node: isIsomorphism(SheafMap) cited by isIsomorphism
+-- warning: missing node: isSurjective(SheafMap) cited by Boolean
+-- warning: missing node: isWellDefined(SheafMap) cited by isWellDefined
+-- warning: missing node: kernel(SheafMap) cited by kernel
+-- warning: missing node: lift(SheafMap) cited by lift
+-- warning: missing node: map(CoherentSheaf,CoherentSheaf,SheafMap) cited by map
+-- warning: missing node: matrix(SheafMap) cited by Matrix
+-- warning: missing node: minimalPresentation(SheafMap) cited by minimalPresentation
+-- warning: missing node: promote(SheafMap,type of Nothing) cited by promote
+-- warning: missing node: promote(SheafMap,type of RingElement) cited by promote
+-- warning: missing node: prune(SheafMap) cited by prune
+-- warning: missing node: pullback(SheafMap,SheafMap) cited by pullback
+-- warning: missing node: pushout(SheafMap,SheafMap) cited by pushout
+-- warning: missing node: quotient'(SheafMap,SheafMap) cited by quotient'
+-- warning: missing node: quotient(SheafMap,SheafMap) cited by quotient
+-- warning: missing node: ring(SheafMap) cited by ring
+-- warning: missing node: source(SheafMap) cited by source
+-- warning: missing node: super(SheafMap) cited by super
+-- warning: missing node: symmetricPower(ZZ,SheafMap) cited by symmetricPower
+-- warning: missing node: target(SheafMap) cited by target
+-- warning: missing node: tensor(SheafMap,SheafMap) cited by tensor
+
 undocumented {
     sheafMap, -- deprecated
     -- TODO: document some of these

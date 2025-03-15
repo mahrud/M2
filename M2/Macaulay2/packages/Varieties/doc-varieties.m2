@@ -1,3 +1,37 @@
+-- AffineVariety ** AffineVariety
+-- HH^ZZ(AffineVariety,CoherentSheaf)
+-- HH^ZZ(ProjectiveVariety,SheafMap)
+-- HH^ZZ(ProjectiveVariety,SumOfTwists)
+-- HH^ZZ(Variety,SheafOfRings)
+
+-- (ambient, AffineVariety)
+-- (ambient, ProjectiveVariety)
+
+-- warning: missing node: isProjective cited by MethodFunction
+-- (isSmooth, Variety)
+-- (isWellDefined, Variety)
+
+-- (singularLocus, AffineVariety)
+-- (singularLocus, ProjectiveVariety)
+
+-- warning: missing node: cotangentSheaf(...,Strategy=>...) cited by Strategy
+-- warning: missing node: idealSheaf cited by MethodFunctionWithOptions
+-- warning: missing node: idealSheaf(...,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: idealSheaf(...,Strategy=>...) cited by Strategy
+-- warning: missing node: net(SheafExpression) cited by net
+-- warning: missing node: sheafHom(...,DegreeLimit=>...) cited by resolution(...,DegreeLimit=>...)
+-- warning: missing node: sheafHom(...,MinimalGenerators=>...) cited by MinimalGenerators
+-- warning: missing node: sheafHom(...,Strategy=>...) cited by Strategy
+-- warning: missing node: sheafMap cited by FunctionClosure
+-- warning: missing node: tangentSheaf(...,Strategy=>...) cited by Strategy
+-- warning: missing node: texMath(SheafExpression) cited by texMath
+
+undocumented apply({expression, net, texMath, toExternalString, toString}, f -> (f, Variety))
+undocumented apply({expression, net, texMath, -*toExternalString,*- toString}, f -> (f, CoherentSheaf))
+undocumented apply({expression, net, texMath, -*toExternalString,*- toString}, f -> (f, SheafOfRings))
+undocumented apply({expression, net, texMath, -*toExternalString,*- toString}, f -> (f, SumOfTwists))
+undocumented apply({expression, net, texMath, toExternalString, toString}, f -> (f, SheafMap))
+
 undocumented {
     (describe, ProjectiveVariety),
     (describe, AffineVariety),
@@ -168,9 +202,8 @@ Node
 --    Example
 ///
 
--- TODO: [(codim, Variety), Generic]
 document {
-    Key => (codim, Variety),
+    Key => {(codim, Variety), [(codim, Variety), Generic]},
     Headline => "codimension of a variety",
     Usage => "codim V",
     Inputs => {"V"},

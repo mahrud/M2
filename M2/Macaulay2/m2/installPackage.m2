@@ -146,6 +146,7 @@ makeTree := (parent, graph, visits, node) -> (
     tree := if graph#?node then (
 	if #visits#"parents"#node == 1 then new ForestNode from apply(graph#node, child -> makeTree(node, graph, visits, child))
 	else if not visits#"repeated"#?node and signalDocumentationError node then visits#"repeated"#node = true)
+    else if package node =!= package parent then null -- there's a subnode belonging to another package
     else if not visits#"missing"#?node and signalDocumentationError node then visits#"missing"#node = true;
     if tree === null then tree = new ForestNode;
     new TreeNode from {node, tree})
@@ -210,8 +211,7 @@ assembleTree := (pkg, nodes) -> (
 		e -> try e#0 === ("class" => "subnode") else false);
 	    subnodes := rawdoc.Subnodes ?? ();
 	    subnodes  = deepSelect(join(sublinks, subnodes), DocumentTag);
-	    subnodes  = select(fixup \ subnodes, node -> package node === pkg);
-	    tag => getPrimaryTag \ subnodes));
+	    tag => getPrimaryTag \ fixup \ subnodes));
     -- build the forest
     tableOfContents := makeForest(graph, visits);
     -- forcing Macaulay2Doc to a higher standard
@@ -393,7 +393,8 @@ installInfo := (pkg, installPrefix, installLayout, verboseLog) -> (
     traverse(unbag pkg#"table of contents", tag -> (
 	    currentDocumentTag = tag; -- for debugging purposes
 	    fkey := format tag;
-	    chkInfoTag tag;
+	    -- TODO: can we allow cross-references in the toc?
+	    --chkInfoTag tag;
 	    chkInfoKey fkey;
 	    byteOffsets# #byteOffsets = concatenate("Node: ", infoTagConvert' fkey, "\177", toString fileLength infofile);
 	    infofile << "\037" << endl << "File: " << infobasename << ", Node: " << infoTagConvert' fkey;

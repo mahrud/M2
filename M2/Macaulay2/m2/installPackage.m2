@@ -155,17 +155,12 @@ makeTree := (parent, graph, visits, node) -> (
 orphanNodes := (parent, graph) -> (
     parent = getPrimaryTag parent;
     nonLeaves := set keys graph - set flatten values graph;
-    nonLeafKeys := sort(keys nonLeaves - set { parent });
-    -- forcing Macaulay2Doc to a higher standard
-    action := if currentPackage#"pkgname" == "Macaulay2Doc" then error else warning;
     if not nonLeaves#?parent then error("installPackage: top node ", format parent, " cannot be a subnode");
-    if #nonLeaves > 1 then action("installPackage: found ", #nonLeafKeys,
-	" documentation node(s) not listed as a subnode: ", newline,
-	toString wrap_printWidth demark_", " apply(nonLeafKeys, format));
     unique prepend(parent, sort keys nonLeaves))
 
 makeForest := (graph, visits) -> (
-    new ForestNode from apply(orphanNodes(topDocumentTag, graph),
+    new ForestNode from apply(
+	visits#"roots" = orphanNodes(topDocumentTag, graph),
 	node -> makeTree(topDocumentTag, graph, visits, node)))
 
 -----------------------------------------------------------------------------
@@ -199,7 +194,7 @@ buildLinks ForestNode := x -> (
 assembleTree := (pkg, nodes) -> (
     resetCounters();
     -- keep track of various possible issues with the nodes
-    visits := new HashTable from {
+    visits := new MutableHashTable from {
 	"parents"  => new MutableHashTable,
 	"missing"  => new MutableHashTable,
 	"repeated" => new MutableHashTable,
@@ -219,6 +214,10 @@ assembleTree := (pkg, nodes) -> (
 	    tag => getPrimaryTag \ subnodes));
     -- build the forest
     tableOfContents := makeForest(graph, visits);
+    -- forcing Macaulay2Doc to a higher standard
+    nonLeafKeys := visits#"roots" - set { topDocumentTag };
+    if #nonLeafKeys > 1 then if pkg#"pkgname" == "Macaulay2Doc"
+    then numDocumentationErrors += 1 else numDocumentationWarnings += 1;
     -- signal errors
     if chkdoc and 0 < numDocumentationErrors then (
 	scan(keys visits#"missing",
@@ -229,6 +228,10 @@ assembleTree := (pkg, nodes) -> (
 	    node -> (
 		printerr("error: repeated references to subnode documentation: ", format node);
 		printerr("\t", net TABLE apply(unique visits#"parents"#node, tag -> { locate tag, format tag }))));
+	-- for now this is only an error for Macaulay2Doc
+	if pkg#"pkgname" == "Macaulay2Doc" then
+	printerr("error: ", #nonLeafKeys, " documentation node(s) not listed as a subnode: ", newline,
+	    toString wrap_printWidth demark_", " apply(nonLeafKeys, format));
 	error("installPackage: error in assembling the documentation tree"));
     -- build the navigation links
     buildLinks tableOfContents;

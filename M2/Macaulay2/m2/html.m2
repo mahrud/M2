@@ -98,6 +98,10 @@ html Hypertext := x -> (
 		if val =!= null
 		then attr = " " | key | "=" | format toString val | attr));
 	sequence ct) else x;
+    return (
+	if instance(x, HypertextVoid)
+	then concatenate("<", qname, attr, ">")
+	else concatenate("<", qname, attr, ">", apply(cont, html1), "</", qname, ">"));
     pushIndentLevel 1;
     (head, prefix, suffix, tail) := (
 	if instance(x, HypertextVoid) and class x =!= BR

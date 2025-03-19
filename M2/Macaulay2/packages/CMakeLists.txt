@@ -67,7 +67,11 @@ set(M2_INSTALL_TEMPLATE [[installPackage("@package@",
   InstallPrefix          => "${M2_DIST_PREFIX}/",
   UserMode               => false,
   SeparateExec           => true,
-  DebuggingMode          => true)]])
+  DebuggingMode          => true,
+  MakeHTML               => false,
+  MakeInfo               => false,
+  MakeJSON               => true,
+  MakePDF                => false)]])
 set(M2_NEED_TEMPLATE    [[needsPackage("@package@", LoadDocumentation=>true, DebuggingMode=>true)]])
 set(M2_TEST_TEMPLATE    [[debug Core \; argumentMode = @ArgumentMode@ \; check(@_i@, "@package@")]])
 set(M2_INFO_TEMPLATE    [["info-"|"@package@" << #@package@#"test inputs" << close]]) # ignore the color
@@ -180,7 +184,7 @@ foreach(package IN LISTS PACKAGES)
   add_custom_target(install-${package}
     COMMENT "Installing package ${package}"
     COMMAND ${M2} ${M2_ARGS} -e ${M2_INSTALL_STRING} -e ${M2_INFO_STRING} -e "exit 0"
-    COMMAND gzip -nf9 ${M2_DIST_PREFIX}/${M2_INSTALL_INFODIR}/${package}.info
+    # COMMAND gzip -nf9 ${M2_DIST_PREFIX}/${M2_INSTALL_INFODIR}/${package}.info
     VERBATIM
     ${USES_TERMINAL}
     DEPENDS M2-core ${${package}_dependencies}

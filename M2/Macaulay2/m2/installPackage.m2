@@ -508,7 +508,7 @@ installJSON := (pkg, installPrefix, installLayout, verboseLog, tableOfContents, 
     topDocumentTag := makeDocumentTag(pkg#"pkgname", Package => pkg);
     nodes := select(packageTagList(pkg, topDocumentTag), tag -> not isUndocumented tag);
 
-    htmlDirectory = replace("PKG", pkg#"pkgname", installLayout#"packagehtml");
+    htmlDirectory = installLayout#"docdir";
     jsonFilename := installPrefix | htmlDirectory | pkg#"pkgname" | ".json";
     verboseLog("making JSON entry in ", minimizeFilename jsonFilename);
     makeDirectory(installPrefix | htmlDirectory);

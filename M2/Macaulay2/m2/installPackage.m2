@@ -505,6 +505,9 @@ installJSON := (pkg, installPrefix, installLayout, verboseLog, tableOfContents, 
     -- TODO: why doesn't importFrom work here?
     toJSON := value JSON#"private dictionary"#"toJSON";
     Indent := value JSON#"private dictionary"#"Indent";
+    toJSON DocumentTag := o -> t -> replace(" :: ", "::", format toString t);
+    toJSON ForestNode := o -> x -> ( s := toJSON(toList x, o); concatenate("{", s_(1,#s-2), "}") );
+    toJSON   TreeNode := o -> x -> concatenate(toJSON(format x#0, o), ":", toJSON(x#1, o));
 
     topDocumentTag := makeDocumentTag(pkg#"pkgname", Package => pkg);
     nodes := select(packageTagList(pkg, topDocumentTag), tag -> not isUndocumented tag);
@@ -516,7 +519,7 @@ installJSON := (pkg, installPrefix, installLayout, verboseLog, tableOfContents, 
 
     if fileExists jsonFilename
     and fileLength jsonFilename > 0
-    and not opts.RemakeAllDocumentation then return verboseLog("JSON entry already exists");
+    and not opts.RemakeAllDocumentation then return verboseLog("JSON file already exists");
 
     documentMode = "Markdown";
     --nodes = select(nodes, tag -> UP#?tag);

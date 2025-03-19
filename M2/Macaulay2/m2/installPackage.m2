@@ -255,7 +255,8 @@ homeButton     := HREF {"https://macaulay2.com/", "Macaulay2"};
 searchBox      := LITERAL ///<form method="get" action="https://www.google.com/search">
   <input placeholder="Search" type="text" name="q" value="">
   <input type="hidden" name="q" value="site:macaulay2.com/doc">
-</form>///
+</form>
+///
 
 nextButton     := tag -> if NEXT#?tag then HREF { htmlFilename NEXT#tag, "next" }     else "next"
 prevButton     := tag -> if PREV#?tag then HREF { htmlFilename PREV#tag, "previous" } else "previous"

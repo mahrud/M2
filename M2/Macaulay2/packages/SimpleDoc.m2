@@ -165,10 +165,7 @@ render = (text, keylinenum) -> (
     if instance(parsed, List) and #parsed == 1 then first parsed else parsed)
 
 markup = (textlines, keylinenum) -> (
-    if textlines === {} then (
-	printerr("warning: encountered an empty subsection at ",
-	    currentFileName, ":", keylinenum, ":0");
-	return {});
+    if textlines === {} then return {};
     -- if the first line is just "Tree", interpret the rest of the section as a structured tree list.
     if "Tree" === textlines#0#0 then return submenu(drop(textlines, 1), keylinenum + 1);
     textline := makeTextline("", if #textlines == 0 then "unknown" else getLinenum textlines#0 - 1);

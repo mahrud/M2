@@ -57,5 +57,6 @@ document {
     efficiency reasons.",
     Subnodes => {
 	TO "parallelism in engine computations",
+	TO "EngineTests::EngineTests",
     },
 }

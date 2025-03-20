@@ -222,9 +222,6 @@ Node
   Key
      about
     [about, Body]
-    (help, ZZ)
-    (viewHelp, ZZ)
-    (infoHelp, ZZ)
     (about, Function)
     (about, String)
     (about, Symbol)
@@ -263,7 +260,6 @@ Node
     Since @TT "s"@ is taken as a regular expression, parentheses serve
     for grouping subexpressions, rather than matching themselves.
   SeeAlso
-    (help, ZZ)
     (symbol?, Symbol)
     apropos
     headlines
@@ -310,6 +306,10 @@ Node
   Key
     headlines
    (headlines, List)
+   -- TODO: move to separate node
+   (help,     ZZ)
+   (viewHelp, ZZ)
+   (infoHelp, ZZ)
   Headline
     display a table of documentation headlines
   Usage
@@ -329,13 +329,13 @@ Node
       This is also true for a list of symbols generated using the function @TO apropos@.
     Example
       headlines apropos "hilbert"
-      help 0
+--      help 0
     Text
       If the input was a list of method keys generated using @TO methods@, then in addition
       the method @TO (code, ZZ)@ can be used to view the source code for the selected entry.
     Example
       headlines methods syz
-      help 1
+--      help 1
       code 1
   SeeAlso
     help

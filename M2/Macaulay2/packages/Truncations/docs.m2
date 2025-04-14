@@ -3,8 +3,6 @@ undocumented {
      (truncate, InfiniteNumber, Ideal),
      (truncate, InfiniteNumber, Module),
      (truncate, InfiniteNumber, Matrix),
-     (truncate, InfiniteNumber, Thing),
-    [(truncate, InfiniteNumber, Thing), MinimalGenerators],
      (truncate, InfiniteNumber, InfiniteNumber, Matrix),
     [(truncate, InfiniteNumber, InfiniteNumber, Matrix), MinimalGenerators],
      (truncate, Nothing, InfiniteNumber, Matrix),

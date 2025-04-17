@@ -260,6 +260,12 @@ quotient'(SheafMap, SheafMap) := SheafMap => opts -> (f, g) -> (
 promote(SheafMap, Nothing)     := SheafMap => (f, O) -> if O === ring f         then f else error "base change of maps of sheaves is not yet implemented"
 promote(SheafMap, RingElement) := SheafMap => (f, R) -> if R === ring variety f then f else error "base change of maps of sheaves is not yet implemented"
 
+-- FIXME: another kludge to get RingElement * Complex to work
+-- FIXME: this breaks S = CC[x,y]; trim coker matrix {{x,y},{-y,x}}
+-- also see the tests in tests/normal/isPromotable.m2
+promote(Number,      Nothing) :=
+promote(RingElement, Nothing) := RingElement => (r, O) -> try promote(r, O.ring) else r
+
 -- printing
 -- TODO: use abbreviations for source and target
 expression SheafMap := Expression => f -> (

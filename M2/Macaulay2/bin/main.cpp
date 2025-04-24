@@ -45,6 +45,8 @@ extern int have_arg_no_int;
 
 extern int tokens_stopIfError_id;
 
+extern pthread_cond_t *currentTask;
+
 bool tokens_stopIfError;
 bool interrupts_interruptPending;
 bool interrupts_interruptShield;
@@ -314,6 +316,7 @@ void interrupt_handler(int sig) {
 	  _Exit(interruptExit);
 	}
 	interrupts_setInterruptFlag();
+	pthread_cond_broadcast(currentTask);
 	if (interrupt_jmp.is_set) LONGJUMP(interrupt_jmp.addr);
       }
 

@@ -24,6 +24,9 @@ static atomic_int currentAllowedThreads(5);
 // The thread that the interpreter runs in.
 pthread_t interpThread;
 
+// The condition variable for the current task
+pthread_cond_t *currentTask;
+
 extern "C" {
 
   // TODO: replace with STL linked list traversal
@@ -220,8 +223,16 @@ ThreadTask::~ThreadTask() {}
 void* ThreadTask::waitOn()
 {
   lock_guard<pthreadMutex> lock(m_Mutex);
+  currentTask = &m_FinishCondition;
   while(!m_Done && m_KeepRunning)
     {
+      if (test_Field(THREADLOCAL(interrupts_interruptedFlag, struct atomic_field)))
+	{
+	  // we can't call taskInterrupt because m_Mutex is locked
+	  atomic_store(&m_CurrentThread->m_Interrupt->field, 1);
+	  atomic_store(&m_CurrentThread->m_Exception->field, 1);
+	  m_KeepRunning = false;
+	}
       pthread_cond_wait(&m_FinishCondition,&m_Mutex.m_Mutex);
     }
   return m_Result;

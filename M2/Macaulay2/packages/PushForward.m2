@@ -94,12 +94,11 @@ isModuleFinite RingMap := Boolean => f -> (
 -- pushFwd
 -----------------------------------------------------------------------------
 
+-- TODO: should this be an internal helper routine?
+pushFwd = method(Options => { MinimalGenerators => true })
 pushFwd Ring := Sequence => o -> B -> pushFwd(map(B,      coefficientRing B),         o)
 pushFwd Module := Module => o -> M -> pushFwd(map(ring M, coefficientRing ring M), M, o)
 pushFwd Matrix := Matrix => o -> d -> pushFwd(map(ring d, coefficientRing ring d), d, o)
-
--- TODO: should this be an internal helper routine?
-pushFwd = method(Options => { MinimalGenerators => true })
 pushFwd RingMap := Sequence => o -> f -> (
     -- Given ring map f: A --> B
     -- Returns:
@@ -109,7 +108,7 @@ pushFwd RingMap := Sequence => o -> f -> (
     (B, A) := (target f, source f);
     (matB, mapfAux) := pushAuxHgs f;
     pushB := makeModule(B^1, f, matB);
-    mapf := (b) -> map(pfB, , gens pfB) * mapfAux b;
+    mapf := (b) -> map(pushB, , gens pushB) * mapfAux b;
     (pushB, matB, mapf))
 
 pushFwd(RingMap, Module) := Module => o -> (f, N) -> (

@@ -259,7 +259,7 @@ TEST///
   assert((M1,B1) == (M,B))
   assert(pushFwd matrix{{y}} == pushFwd(map(R,A),matrix{{y}}))
   assert(isFreeModule M and rank M == 7)
-  assert(B == basis(L, Variables => R_*))
+  assert(B == basis(R, Variables => R_*))
   assert( pf(y+x)- matrix {{x}, {1}, {0}, {0}, {0}, {0}, {0}} == 0)
   R' = integralClosure R
   (M,B,pf) = pushFwd map(R',R)

@@ -5,6 +5,7 @@
 -- - Created Dec 2009 by Claudiu Raicu
 -- - Updated Oct 2015 by Karl Schwede
 -- - Updated May 2021 by Mike Stillman and David Eisenbud
+-- - Updated May 2025 by Devlin Mallory and Mahrud Sayrafi
 --
 -- TODO:
 --  finish doc
@@ -14,11 +15,13 @@
 ---------------------------------------------------------------------------
 newPackage(
     "PushForward",
-    Version => "0.6",
-    Date => "May 14, 2021",
+    Version => "0.7",
+    Date => "May 1, 2025",
     Authors => {
 	{ Name => "Claudiu Raicu",  Email => "craicu@nd.edu",          HomePage => "https://www3.nd.edu/~craicu" },
 	{ Name => "David Eisenbud", Email => "de@berkeley.edu",        HomePage => "https://math.berkeley.edu/~de" },
+	{ Name => "Devlin Mallory", Email => "malloryd@math.utah.edu", HomePage => "https://math.utah.edu/~malloryd/"},
+	{ Name => "Mahrud Sayrafi", Email => "mahrud@umn.edu",         HomePage => "https://math.umn.edu/~mahrud/" },
 	{ Name => "Mike Stillman",  Email => "mike@math.cornell.edu",  HomePage => "https://pi.math.cornell.edu/~mike" }
 	},
     Headline => "push forwards of ring maps",

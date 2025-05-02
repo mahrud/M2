@@ -3,24 +3,79 @@ newPackage(
     Version => "0.1",
     Date => "7 March 2025",
     Headline => "consolidating legacy chain complex code",
-    Authors => {{ Name => "", Email => "", HomePage => ""}},
+    Authors => { -* { Name => "", Email => "", HomePage => ""}*- },
+    Keywords => {"Homological Algebra"},
     AuxiliaryFiles => true,
     DebuggingMode => false
-    )
+)
 
-export {}
+export {
+    "ChainComplex",
+    "ChainComplexMap",
+    "GradedModule",
+    "GradedModuleMap",
+    "Resolution",
+    "chainComplex",
+    "eagonNorthcott",
+    "gradedModule",
+    "gradedModuleMap",
+    "minimalBetti",
+    "poincareN",
+    "resolution", "res" => "resolution",
+    "syzygyScheme",
+}
 
+importFrom_Core {
+    "raw",
+    "storefuns",
+    "leftarrow",
+    "mtable",
+}
 
+-----------------------------------------------------------------------------
+
+needs "./OldChainComplexes/gradedmodules.m2"
+needs "./OldChainComplexes/chaincomplexes.m2"
+needs "./OldChainComplexes/res.m2"
+needs "./OldChainComplexes/betti.m2"
+needs "./OldChainComplexes/Ext.m2"
+needs "./OldChainComplexes/Tor.m2"
+
+-----------------------------------------------------------------------------
+
+-- used to be in hilbert.m2
+pdim Module := M -> length resolution minimalPresentation M
+
+-----------------------------------------------------------------------------
+
+-- used to be in mathml.m2
+mathML ChainComplex := C -> (
+    complete C;
+    s := sort spots C;
+    if #s === 0 then mathML "0"
+    else mtable transpose between({leftarrow,"",""}, toList apply(s#0 .. s#-1,i -> {mathML C_i,"",mathML i})))
+mathML GradedModule    :=
+mathML ChainComplexMap :=
+mathML GradedModuleMap := lookup(mathML, Thing)
+
+-----------------------------------------------------------------------------
 -* Documentation section *-
 beginDocumentation()
 
-load "./OldChainComplexes/ov_chaincomplexes.m2"
-load "./OldChainComplexes/doc9.m2"
-load "./OldChainComplexes/from-kernel-doc.m2"
-load "./OldChainComplexes/from-symbol-underscore-doc.m2" -- TODO: tease out modules vs complexes?
-load "./OldChainComplexes/from-caret.m2"
-load "./OldChainComplexes/from-map-doc.m2"
-load "./OldChainComplexes/resolution-doc.m2"
+load "./OldChainComplexes/docs/chainComplex-doc.m2"
+load "./OldChainComplexes/docs/eagonNorthcott-doc.m2"
+load "./OldChainComplexes/docs/Ext-doc.m2"
+load "./OldChainComplexes/docs/minimalBetti-doc.m2"
+load "./OldChainComplexes/docs/pdim-doc.m2"
+load "./OldChainComplexes/docs/regularity-doc.m2"
+load "./OldChainComplexes/docs/Tor-doc.m2"
+load "./OldChainComplexes/docs/ov_chaincomplexes.m2"
+load "./OldChainComplexes/docs/doc9.m2"
+load "./OldChainComplexes/docs/from-kernel-doc.m2"
+load "./OldChainComplexes/docs/from-symbol-underscore-doc.m2" -- TODO: tease out modules vs complexes?
+load "./OldChainComplexes/docs/from-caret.m2"
+load "./OldChainComplexes/docs/from-map-doc.m2"
+load "./OldChainComplexes/docs/resolution-doc.m2"
   -- TODO: setting C_3 = ... no longer allowed!
 
 doc ///
@@ -56,7 +111,9 @@ Caveat
 SeeAlso
 ///
 
+-----------------------------------------------------------------------------
 -* Test section *-
+
 TEST /// -* [insert short title for this test] *-
 -- test code and assertions here
 -- may have as many TEST sections as needed
@@ -64,7 +121,9 @@ TEST /// -* [insert short title for this test] *-
 
 end--
 
+-----------------------------------------------------------------------------
 -* Development section *-
+
 restart
 debug needsPackage "OldChainComplexes"
 check "OldChainComplexes"

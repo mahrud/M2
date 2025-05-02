@@ -49,12 +49,12 @@ Node
     Example
       4*5;
     Text
-      The output from the previous line can be obtained with @TO oo@, even if a semicolon prevented it
+      The output from the previous line can be obtained with @TO "oo"@, even if a semicolon prevented it
       from being printed.
     Example
       oo
     Text
-      Lines before that can be obtained with @TO ooo@ and @TO oooo@. Alternatively, the symbol labeling an
+      Lines before that can be obtained with @TO "ooo"@ and @TO "oooo"@. Alternatively, the symbol labeling an
       output line can be used to retrieve the value, as in the following example.
     Example
       o5 + 1
@@ -213,7 +213,7 @@ Node
     Example
       prune N
     Text
-      We can use @TO resolution@ to compute a projective resolution of the cokernel of @TT "f"@.
+      We can use @TO "OldChainComplexes :: resolution"@ to compute a projective resolution of the cokernel of @TT "f"@.
     Example
       C = resolution cokernel f
     Text
@@ -243,8 +243,8 @@ Node
     Example
       M = cokernel g
     Text
-      We may use @TO resolution@ to produce a projective resolution of it, and @TO "time"@ to report the
-      time required.
+      We may use @TO "OldChainComplexes :: resolution"@ to produce a projective resolution of it,
+      and @TO "time"@ to report the time required.
     Example
       time C = resolution M
     Text

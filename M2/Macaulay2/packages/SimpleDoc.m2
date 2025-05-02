@@ -16,6 +16,10 @@ newPackage(
     AuxiliaryFiles => true
     )
 
+-- TODO: a typo under SubNodes produces an error with unhelpful location:
+-- Macaulay2Doc.m2:30:10:(3):[8]: error: global symbols inadvertently defined by package Macaulay2Doc: 'blah'
+-- currentString:1:0-1:10: here is the first use of 'blah'
+
 export {"doc", "multidoc", "packageTemplate", -- functions
     "arXiv", "stacksProject", "wikipedia", -- helper functions
     "docTemplate", "docExample", "testExample", "simpleDocFrob" -- templates and examples

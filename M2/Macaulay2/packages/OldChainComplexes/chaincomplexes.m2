@@ -2,10 +2,21 @@
 -- TODO:
 -- 1. support QQ in rawResolutionGetMatrix, then enable FastNonminimal for QQ
 
-needs "gradedmodules.m2"
-needs "hilbert.m2"
-needs "modules2.m2"
-needs "Hom.m2"
+-- needs "gradedmodules.m2"
+-- needs "hilbert.m2"
+-- needs "modules2.m2"
+-- needs "Hom.m2"
+
+importFrom_Core {
+    "short",
+    "rawTensor",
+    "concatBlocks",
+    "moduleAbbrv",
+    "rawResolutionGetMatrix",
+    "RawComputation",
+    "RawMatrix",
+    "rawResolutionGetFree",
+}
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -13,17 +24,6 @@ needs "Hom.m2"
 
 union := (x,y) -> keys(set x + set y)
 intersection := (x,y) -> keys(set x * set y)
-
------------------------------------------------------------------------------
--- Categories for which complexes are currently implemented in Macaulay2
------------------------------------------------------------------------------
--- SheafMap and CoherentSheaf are added later in Varieties
-
-isMorphism Thing    := x -> false
-isMorphism Matrix   := f -> true
-
-isAbelianCategory Thing         := x -> false
-isAbelianCategory Module        := M -> true
 
 -----------------------------------------------------------------------------
 -- ChainComplex, ChainComplexMap, and Resolution type declarations and basic constructors
@@ -405,8 +405,6 @@ ChainComplexMap * ChainComplexMap := ChainComplexMap => (g,f) -> (
 	  i -> h#i = g_(i+f.degree) * f_i);
      h)
 
-extend = method(Options => {Verify => true})
-
 extend(ChainComplex,ChainComplex,Matrix) := ChainComplexMap => opts -> (D,C,fi)-> (
      i := 0;
      j := 0;
@@ -745,8 +743,6 @@ ChainComplex ** ChainComplexMap := ChainComplexMap => (C,f) -> id_C ** f
 -- min ChainComplex := C -> min spots C
 -- max ChainComplex := C -> max spots C
 
-tensorAssociativity(Module,Module,Module) := Matrix => (A,B,C) -> map((A**B)**C,A**(B**C),1)
-
 tensorAssociativity(ChainComplex,ChainComplex,ChainComplex) := ChainComplexMap => (A,B,C) -> (
      R := ring A;
      map(
@@ -920,9 +916,6 @@ eagonNorthcott Matrix := f -> (
       chainComplex d);
 
 ------ koszul
-
-koszul(ZZ, Matrix) := Matrix => (i,m) -> map(ring m, rawKoszul(i, raw m))
-
 koszul Matrix := ChainComplex => f ->(
      n := rank source f;
      chainComplex toList apply(1 .. n, i -> koszul(i,f)))

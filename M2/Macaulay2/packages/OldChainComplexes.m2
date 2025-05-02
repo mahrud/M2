@@ -62,6 +62,7 @@ mathML GradedModuleMap := lookup(mathML, Thing)
 -* Documentation section *-
 beginDocumentation()
 
+load "./OldChainComplexes/docs/docs.m2"
 load "./OldChainComplexes/docs/chainComplex-doc.m2"
 load "./OldChainComplexes/docs/eagonNorthcott-doc.m2"
 load "./OldChainComplexes/docs/Ext-doc.m2"

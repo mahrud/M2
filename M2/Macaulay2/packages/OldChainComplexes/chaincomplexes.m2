@@ -29,8 +29,10 @@ intersection := (x,y) -> keys(set x * set y)
 -- ChainComplex, ChainComplexMap, and Resolution type declarations and basic constructors
 -----------------------------------------------------------------------------
 
-Resolution = new Type of MutableHashTable
-Resolution.synonym = "resolution"
+-- Resolution = new Type of MutableHashTable
+-- Resolution.synonym = "resolution"
+-- moved back to Core because Complexes needs it, too
+exportFrom_Core "Resolution"
 
 toString Resolution := C -> toString raw C
 
@@ -493,9 +495,6 @@ poincare ChainComplex := C -> (
      scan(keys C, i -> if class i === ZZ then scanPairs(tally degrees C_i, (d,m) -> f = f + m * (-1)^i * product(# d, j -> S_j^(d_j))));
      f)
 
--- TODO: make poincareN return in variables of (degreesRing R)[S],
--- so that sub(poincareN C, S => -1) == poincare C holds
-poincareN = method(TypicalValue => RingElement)
 poincareN ChainComplex := (C) -> (
      s := getSymbol "S";
      t := getSymbol "T";
@@ -885,7 +884,6 @@ minimalPresentation ChainComplexMap := prune ChainComplexMap := ChainComplexMap 
      )
 ----------------------------------------
 
-eagonNorthcott = method(TypicalValue => ChainComplex)
 eagonNorthcott Matrix := f -> (
      -- code is by GREG SMITH, but is experimental, and 
      -- should be replaced by engine code

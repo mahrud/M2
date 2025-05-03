@@ -20,6 +20,9 @@ newPackage(
 -- Macaulay2Doc.m2:30:10:(3):[8]: error: global symbols inadvertently defined by package Macaulay2Doc: 'blah'
 -- currentString:1:0-1:10: here is the first use of 'blah'
 
+-- similarly a broken link like @TO blah@ produces the following:
+-- error: documentation key for "resolution(Complex)" encountered at currentString:2:0 but no method installed
+
 export {"doc", "multidoc", "packageTemplate", -- functions
     "arXiv", "stacksProject", "wikipedia", -- helper functions
     "docTemplate", "docExample", "testExample", "simpleDocFrob" -- templates and examples

@@ -33,10 +33,7 @@ indefinite        = s -> concatenate(indefiniteArticle s, s)
 
 enlist := x -> if instance(x, List) then nonnull x else {x}
 
-errorLocation := () -> toString(
-    pos := currentPosition();
-    new FilePosition from {
-	minimizeFilename pos#0, pos#1, pos#2 })
+errorLocation := () -> minimizeFilename toString currentPosition()
 
 -----------------------------------------------------------------------------
 -- verifying the document Key

@@ -24,7 +24,7 @@ newPackage(
 	{Name => "Mahrud Sayrafi", Email => "mahrud@umn.edu",        HomePage => "https://math.umn.edu/~mahrud"}},
     Keywords => {"Commutative Algebra"},
     PackageExports => { "Saturation", "MinimalPrimes" },
-    PackageImports => { "Elimination" },
+    PackageImports => { "OldChainComplexes", "Elimination" },
     AuxiliaryFiles => true,
     DebuggingMode => false
     )
@@ -292,7 +292,7 @@ algorithms#(associatedPrimes, Module) = new MutableHashTable from {
 	    else (
 		if c < i then (
 		    -- computes ann Ext^i(M, S)
-		    if C === null then C = freeResolution(M, LengthLimit => k + 1);
+		    if C === null then C = res(M, LengthLimit => k + 1);
 		    if length C < i then ( comp.CodimensionLimit = d; break );
 		    A = trim ann minPres(ker transpose C.dd_(i+1) / image transpose C.dd_i));
 		if codim A <= i then minimalPrimes(A, CodimensionLimit => i) else {});

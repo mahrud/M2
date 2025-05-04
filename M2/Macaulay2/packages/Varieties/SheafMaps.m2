@@ -505,8 +505,8 @@ Ext(ZZ, CoherentSheaf, SheafMap) := Matrix => opts -> (m, F, f) -> (
     l := max(
 	l1 := min(dim N1, m),
 	l2 := min(dim N2, m));
-    P1 := freeResolution flattenModule N1;
-    P2 := freeResolution flattenModule N2;
+    P1 := resolution flattenModule N1;
+    P2 := resolution flattenModule N2;
     p := max(
 	p1 := length P1,
 	p2 := length P2);

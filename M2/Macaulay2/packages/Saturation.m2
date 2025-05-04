@@ -23,7 +23,7 @@ newPackage(
 	{Name => "Mahrud Sayrafi", Email => "mahrud@umn.edu",        HomePage => "https://math.umn.edu/~mahrud"},
 	{Name => "Mike Stillman",  Email => "mike@math.cornell.edu", HomePage => "http://www.math.cornell.edu/~mike"}},
     Keywords => {"Commutative Algebra"},
-    PackageExports => { "Elimination", "Complexes" },
+    PackageExports => { "OldChainComplexes", "Elimination" },
     AuxiliaryFiles => true,
     DebuggingMode => false
     )
@@ -643,9 +643,9 @@ isSupportedInZeroLocus(Ideal, Module) := (B, M) -> (
 	G := groebnerBasis(sub(presentation M, R), Strategy => "F4"); -- TODO: try "MGB"
 	-- TODO: is "ann coker" necessary?
 	0 != ann coker selectInSubring(1, leadTerm G))))
--- check if a graded module (e.g. prune HH C) sheafifies to zero
-isSupportedInZeroLocus(Ideal, Complex) := (B, G) -> (
-    all(keys G.module, deg -> isSupportedInZeroLocus(B, G.module#deg)))
+-- check if a graded module sheafifies to zero
+isSupportedInZeroLocus(Ideal, GradedModule) := (B, G) -> (
+    all(min G .. max G, deg -> isSupportedInZeroLocus(B, G_deg)))
 
 --------------------------------------------------------------------
 -- Annihilators

@@ -36,14 +36,12 @@ newPackage(
 	    HomePage => "https://johndcobb.github.io"}
 	},
     PackageExports => {
---	"Complexes",
+	"Complexes",
 	"Saturation",
 	"Truncations",
 	},
     PackageImports => {
-	"OldChainComplexes",
 	"Isomorphism",
---	"Complexes",
 	},
     AuxiliaryFiles => true
     )
@@ -752,7 +750,7 @@ Ext(ZZ, CoherentSheaf, SumOfTwists) := Module => opts -> (m,F,G') -> (
     r := -infinity;
     E := if dim M === 0 or m < 0 then R^0 else (
           l := min(dim N, m);
-	  P := resolution flattenModule N;
+	  P := freeResolution flattenModule N;
 	  p := length P;
 	  n := dim ring P - 1;
 	  -- global Ext is composition of sheaf Ext and cohomology

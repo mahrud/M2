@@ -20,7 +20,7 @@ ass1 Ideal := List => o -> (I) -> (
      d := dim polyRing;
      if o.CodimensionLimit >= 0 then d = min(d, o.CodimensionLimit);
      local currentext;
-     C := resolution(cokernel generators I, LengthLimit => d+1);
+     C := freeResolution(cokernel generators I, LengthLimit => d+1);
      --here we look at the associated primes of the i-th
      --ext and pick out the height i components ala EisenbudHunekeVasconcelos
      while i <= d do ( 

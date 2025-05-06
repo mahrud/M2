@@ -86,7 +86,7 @@ Node
     To wait for the result and then retrieve it, use @ TO taskResult @.
   Example
        taskResult t
-       assert instance(oo,ChainComplex)
+       assert instance(oo, Complex)
   Text
     It is possible to make a task without starting it running, using @ TO createTask @.
   Example

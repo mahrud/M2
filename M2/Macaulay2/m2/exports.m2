@@ -806,6 +806,7 @@ export {
 	"isDirectSum",
 	"isDirectory",
     "isEmpty",
+    "isExact",
 	"isField",
 	"isFinite",
 	"isFinitePrimeField",

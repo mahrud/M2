@@ -81,6 +81,7 @@ Node
     pushout
     extend
     "OldChainComplexes :: nullhomotopy"
+    isExact
     isInjective
     isSurjective
     isIsomorphism

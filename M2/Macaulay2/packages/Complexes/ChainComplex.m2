@@ -1103,7 +1103,6 @@ minimize Complex := C -> (
 --------------------------------------------------------------------
 -- Yoneda ext ------------------------------------------------------
 --------------------------------------------------------------------
--- TODO: missing Ext(ZZ, Module, Matrix) and Ext(ZZ, Matrix, Module)
 
 Ext(ZZ, Module, Module) := Module => opts -> (i,M,N) -> (
     H := null; -- result

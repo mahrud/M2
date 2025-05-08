@@ -33,15 +33,17 @@ sheaf Variety        := SheafOfRings =>  X     -> sheaf(X, ring X)
 
 sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     if ring X =!= R then error "sheaf: expected ring of the variety";
-    -- TODO: simplify when https://github.com/Macaulay2/M2/issues/3351 is fixed
-    X.sheaf ??= (
+    X.cache.sheaf ??= (
 	O := new SheafOfRings from { symbol variety => X, symbol ring => R };
 	O.cache = new MutableHashTable;
 	O.cache.sheaf = sheaf(O.variety, (ring variety O)^1); -- That is, O.cache.sheaf is the CoherentSheaf O^1.
 	-- We cache this so that constructing O^1 at different times will yield the _same_ CoherentSheaf,
 	-- which itself may have cached information over time.
-	O)
-    )
+	O);
+    -- this is here to get RingElement * Complex to work, but there may be a better way
+    -- e.g. should we define Section as the parent of SheafOfRings?
+    promote(Thing, X.cache.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
+    X.cache.sheaf)
 
 
 -- TODO: should the module of a sheaf be fixed, or should it be allowed to change?

@@ -47,6 +47,7 @@ reduceCoefficient = m -> if zero m then m else (
 
 -- also see degreeZeroSurjection from EagonResolution
 -- and isDegreeZeroSurjection and the (deprecated) isIsomorphic in TateOnProducts
+-- TODO: use Hom with DegreeLimit function instead, similar to DirectSummands
 randomMinimalDegreeHomomorphism=method()
 randomMinimalDegreeHomomorphism(Matrix, Matrix, ZZ) := Matrix => (n,m,d) -> (
     --m,n homogeneous, minimal over a ring with degree length 1 (this restridd
@@ -879,3 +880,9 @@ restart
 check "Isomorphism"
 installPackage "Isomorphism"
 viewHelp "Isomorphism"
+
+
+S = ZZ/11[a,b]
+M = coker random(S^{-2,0,1,2}, S^{3:-3})
+N = coker (random(cover M, cover M)*presentation M)
+tally apply(100, j->isIsomorphic(M,N))

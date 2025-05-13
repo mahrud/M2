@@ -640,6 +640,7 @@ cohomology(ZZ, ProjectiveVariety, SumOfTwists) := Module => opts -> (p, X, S) ->
     -- TODO: when p>0, HH^p(F(*)) gives a "not implemented yet" error
     F.cache.HH#(p, b) ??= if p == 0
     then twistedGlobalSectionsModule(F, b)
+    -- uses local cohomology from m2/local.m2
     else HH^(p+1)(module F, Degree => b))
 
 -- HH_(>=b)^p(X, F)
@@ -668,8 +669,14 @@ cohomology(ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (p, X, F) 
 	-- singularities, Cohen–Macaulay schemes, not just smooth schemes.
 	-- TODO: check that X is proper (or at least finite type)
 	Ext^(n-p)(M, w));
+    -- TODO: use part?
     k := coefficientRing ring X;
-    F.cache.HH#p = k^(rank source basis(0, G)))
+    H := k^(rank source basis(0, G));
+    -- TODO: to get koszul working
+    --H.cache.koszul = h -> psi * sheaf(phi.variety, homomorphism(g * h)) * phi;
+    --H.cache.formation = FunctionApplication { HH, (p, X, F) };
+    H.cache.HH = (p, F);
+    F.cache.HH#p = H)
 
 -----------------------------------------------------------------------------
 -- Module of twisted global sections Γ_*(F)
@@ -834,6 +841,7 @@ Ext(ZZ, SheafOfRings, CoherentSheaf) :=
 Ext(ZZ, CoherentSheaf, SheafOfRings)  :=
 Ext(ZZ, CoherentSheaf, CoherentSheaf) := Module => opts -> (n,F,G) -> (
     E := Ext^n(F, G(>=0), opts ++ { MinimalGenerators => false });
+    -- TODO: use part?
     k := coefficientRing ring E;
     V := k^(rank source basis(0, E));
     V.cache.formation = FunctionApplication { Ext, (n, F, G) };

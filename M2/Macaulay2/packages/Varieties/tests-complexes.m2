@@ -165,3 +165,15 @@ loadPackage("Complexes",   FileName => currentDirectory() | "Complexes.m2",   Re
 debug loadPackage("Varieties",   FileName => currentDirectory() | "Varieties.m2",   Reload => true)
 
 check Varieties
+
+errorDepth=1
+R = RR[x];
+commonRing {1,2p100,matrix{{3p200}},0_R}
+
+e = 1e-11;
+M = random(RR^4,RR^4)
+M * (M + 1) + 1 - M^2 - M
+clean_e oo
+CC[x];
+f = product(5,j -> x - exp(2*pi*j*ii/5))
+clean_e f

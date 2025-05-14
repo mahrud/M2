@@ -236,6 +236,7 @@ isIsomorphic(Module, Module) := Boolean => o -> (N, M) -> (
     return isIsomorphismFree(N, M, o);
     --
     tries := o.Tries ?? defaultNumTries char S;
+    -- TODO: make this loop parallel
     if tries > 1 then return any(tries,
 	i -> isIsomorphic(N, M, o, Tries => 1));
     --

@@ -261,10 +261,10 @@ isIsomorphic(Module, Module) := Boolean => o -> (N, M) -> (
 
     --
     tries := o.Tries ?? defaultNumTries char S;
+    -- TODO: make this loop parallel
     if tries > 1 then return any(tries,
 	i -> isIsomorphic(N, M, o, Tries => 1));
     --
-
 
     --compute an appropriate random map g
     g := if o.Homogeneous and degreeLength S == 1

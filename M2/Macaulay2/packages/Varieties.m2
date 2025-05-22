@@ -452,6 +452,8 @@ symmetricPower(ZZ, CoherentSheaf) := CoherentSheaf =>      (i, F) -> sheaf(F.var
 
 annihilator CoherentSheaf := Ideal => o -> F -> annihilator(module F, o)
 
+-- TODO: support OO_X ** HH^0 F
+
 -- printing
 expression SheafOfRings := O -> Subscript { OO, expression O.variety }
 net        SheafOfRings :=      net @@ expression

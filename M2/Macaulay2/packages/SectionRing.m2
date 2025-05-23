@@ -79,34 +79,23 @@ globallyGenerated(Module) := (M) -> (
 );
 
 -----------------------------------------------------------------------
+-- Castelnuovo-Mumford's m-regularity with respect to an ample bundle B
+-----------------------------------------------------------------------
 
 isMRegular = method();
-
-isMRegular(CoherentSheaf,CoherentSheaf,ZZ) := (F,G,m) ->(
---Outputs whether a sheaf F is m-regular in the sense of Castelnuovo relative to G
-	V := variety(F);
-	dV := dim(V);
-	j:=1;
-	bool := true;
-	while(j<(dV+1)) do (
-		if (bool == true) then(
-			if(m!=j) then(
-				bool = (HH^j((F**(G^**(m-j)))) == 0);
-			)
-			else if (m==j) then (
-				bool = (HH^j(F) == 0);
-			);
-		);
-		j = j+1;
-	);
-	bool
-);
-
 isMRegular(CoherentSheaf, ZZ) := (F, m) -> (
     -- whether a sheaf F on X is m-regular relative to OO_X(1)
     -- TODO: use Tate resolutions
     all(1 .. dim variety F, i -> HH^i(F(m-i)) == 0)
-);
+)
+isMRegular(CoherentSheaf, CoherentSheaf, ZZ) := (F, B, m) -> (
+    -- whether a coherent sheaf F on a projective variety X is m-regular
+    -- with respect to a globally generated ample line bundle B
+    -- see Definition 1.8.4 in Positivity in Algebraic Geometry I
+    n := dim variety F;
+    G := F ** B ^** (m - n - 1);
+    all(n, j -> HH^(n-j)(G **= B) == 0)
+)
 
 -----------------------------------------------------------------------
 

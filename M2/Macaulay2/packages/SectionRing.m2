@@ -165,11 +165,13 @@ mRegularity(CoherentSheaf, CoherentSheaf) := (F, G) -> (
 )
 
 -----------------------------------------------------------------------
+-- Ring of sections of an ample line bundle on a projective variety
+-----------------------------------------------------------------------
 
-sectionRing = method();
-
-sectionRing(Ideal) := (I) -> (
---Computes the section ring of a semi-ample divisor associated to I
+sectionRing = method()
+sectionRing WeilDivisor := D -> sectionRing ideal D
+sectionRing Ideal := I -> (
+    -- compute the ring of sections of a semi-ample divisor associated to I
 
 	local L;
 	local Rel;
@@ -334,13 +336,7 @@ sectionRing(Ideal) := (I) -> (
 	BetterMap := map(BetterS,S,toList(A_1..A_numVars));	
 	BetterRelIdeal := BetterMap(sub(RelIdeal,S));
 	minimalPresentation(BetterS/BetterRelIdeal)
-);
-
------------------------------------------------------------------------
-
-sectionRing(WeilDivisor) := D -> (
-	sectionRing(ideal(D))
-);
+)
 
 -----------------------------------------------------------------------
 

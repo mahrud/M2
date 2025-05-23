@@ -102,13 +102,10 @@ isMRegular(CoherentSheaf,CoherentSheaf,ZZ) := (F,G,m) ->(
 	bool
 );
 
-isMRegular(CoherentSheaf,ZZ) := (F,m) ->(
---Outputs whether F is m-regular (rel O_X(1))
-	local V;
-	local G;
-	V = variety(F);
-	G = OO_V(1);
-	isMRegular(F,G,m)
+isMRegular(CoherentSheaf, ZZ) := (F, m) -> (
+    -- whether a sheaf F on X is m-regular relative to OO_X(1)
+    -- TODO: use Tate resolutions
+    all(1 .. dim variety F, i -> HH^i(F(m-i)) == 0)
 );
 
 -----------------------------------------------------------------------
@@ -502,6 +499,8 @@ TEST ///
 X = Proj(QQ[x,y,z,w,f]);
 F = OO_X(4);
 G = OO_X(-2);
+assert(not isMRegular(F, -5) and isMRegular(F, -4))
+assert(not isMRegular(F, OO_X(1), -5) and isMRegular(F, OO_X(1), -4))
 assert( (mRegular(F) == -4) and (mRegular(G) == 2))
 ///
 

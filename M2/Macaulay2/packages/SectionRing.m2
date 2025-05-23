@@ -15,7 +15,8 @@ newPackage( "SectionRing",
 export{
 	"globallyGenerated",
 	"isMRegular",
-	"mRegular",
+	"mRegularity",
+	"mRegular" => "mRegularity",
 	"sectionRing",
 	"isVectScalar",
 	"convertScalarVect"
@@ -91,7 +92,7 @@ isMRegular(CoherentSheaf, CoherentSheaf, ZZ) := (F, B, m) -> (
 
 -----------------------------------------------------------------------
 
-mRegular = method();
+mRegularity = method()
 
 mRegular(CoherentSheaf,CoherentSheaf) := (F,G) -> (
 --Computes the regularity of the sheaf F relative to G, in the sense of Castelnuovo-Mumford, using a binary search
@@ -194,7 +195,7 @@ sectionRing(Ideal) := (I) -> (
 	
 	j=1;
 	while(j<(l+1)) do (	
-		bound = max(bound,l*(mRegular(sheaf(J#j),sheaf(J#l)))+j);
+		bound = max(bound,l*(mRegularity(sheaf(J#j),sheaf(J#l)))+j);
 		j = j+1;
 	);
 	bound = bound + 1;
@@ -435,12 +436,12 @@ Node
 
 doc ///
    	Key
-   	 mRegular
+	  mRegularity
    	Headline
-   	 mRegular(F,G) computes the regularity of F with respect to G (globally generated), in the sense of Castelnuovo-Mumford.  Omitting G assumes G=O_X(1).
+	  mRegularity(F,G) computes the regularity of F with respect to G (globally generated), in the sense of Castelnuovo-Mumford.  Omitting G assumes G=O_X(1).
    	Usage
-	 mRegular(F,G)
-	 mRegular(F)
+	  mRegularity(F,G)
+	  mRegularity(F)
    	Inputs
 	 F:CoherentSheaf
 	 G:CoherentSheaf
@@ -448,7 +449,7 @@ doc ///
    	 :ZZ
         Description
 	 Text
-	  mRegular(F,G) utilizes a binary search to compute the smallest m such that F is m-regular with respect to G, utilizing the function isMRegular.  mRegular(I) computes the regularity of O_X(D), where D is the associated divisor to I.
+	   mRegularity(F,G) utilizes a binary search to compute the smallest m such that F is m-regular with respect to G, utilizing the function isMRegular.  mRegularity(I) computes the regularity of O_X(D), where D is the associated divisor to I.
 	  
 ///
 
@@ -496,7 +497,7 @@ F = OO_X(4);
 G = OO_X(-2);
 assert(not isMRegular(F, -5) and isMRegular(F, -4))
 assert(not isMRegular(F, OO_X(1), -5) and isMRegular(F, OO_X(1), -4))
-assert( (mRegular(F) == -4) and (mRegular(G) == 2))
+assert(mRegularity F == -4 and mRegularity G == 2)
 ///
 
 TEST ///

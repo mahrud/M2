@@ -101,9 +101,19 @@ isMRegular(CoherentSheaf, CoherentSheaf, ZZ) := (F, B, m) -> (
 -----------------------------------------------------------------------
 
 mRegularity = method()
-
-mRegular(CoherentSheaf,CoherentSheaf) := (F,G) -> (
---Computes the regularity of the sheaf F relative to G, in the sense of Castelnuovo-Mumford, using a binary search
+mRegularity Ideal := I -> (
+    -- compute m for which OO_X(D) is m-regular relative to OO_X(1),
+    -- where D is the divisor corresponding to a codim 1 ideal I.
+    mRegularity dual sheaf I
+)
+mRegularity CoherentSheaf := F -> (
+    -- compute m for which a sheaf F in m-regular relative OO_X(1)
+    V := variety F;
+    mRegularity(F, OO_V(1))
+)
+mRegularity(CoherentSheaf, CoherentSheaf) := (F, G) -> (
+    -- computes m for which a sheaf F is m-regular relative to G,
+    -- in the sense of Castelnuovo-Mumford, using a binary search
 	bool0 := isMRegular(F,G,0);
 	m:=0;
 	lowerbound:=0;
@@ -152,20 +162,7 @@ mRegular(CoherentSheaf,CoherentSheaf) := (F,G) -> (
 		);
 	);
 	upperbound
-);
-
-mRegular(CoherentSheaf) := (F) -> ( 
---Computes the regularity of a sheaf F (relative OO_V(1))
-	V := variety(F);					
-	mRegular(F,(OO_V(1)))
-);
-
-mRegular(Ideal) := (I) -> (
---Returns the number m for which O_X(D) is m-regular, where  I is an ideal, and D is the corresponding divisor to I.
-	R := ring(I);						
-	F := sheaf(Hom(module(I),R));
-	mRegular(F)
-);
+)
 
 -----------------------------------------------------------------------
 

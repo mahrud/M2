@@ -64,6 +64,7 @@ binarySearch(ZZ, ZZ, Function) := (low, high, test) -> (
 
 globallyGenerated = method()
 globallyGenerated Ideal := I -> globallyGenerated divisor I
+-- TODO: add globally generated for arbitrary module
 globallyGenerated WeilDivisor := D -> (
     -- compute the smallest positive number (using a binary search)
     -- such that OO_X(mD) is globally generated for an ample OO_X(D).

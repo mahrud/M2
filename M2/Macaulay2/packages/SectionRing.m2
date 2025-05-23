@@ -339,17 +339,24 @@ sectionRing Ideal := I -> (
 beginDocumentation();
 
 doc ///
+Node
   Key
     SectionRing
   Headline
     computing the section ring of a Weil Divisor
   Description
     Text
-      This package provides a method for computing the section ring of a Weil
-      divisor.
-///    
+      This package provides algorithms for computing the ring of sections a semi-ample Weil divisor.
+    Tree
+      :Main algorithm
+       > sectionRing
+      :Positivity Computations
+       > globallyGenerated
+       > mRegularity
+       > isMRegular
+  SeeAlso
+    "WeilDivisors :: WeilDivisors"
 
-doc ///
 Node
   Key
     globallyGenerated
@@ -368,9 +375,7 @@ Node
       This method uses a binary search to find the smallest integer $m$ with the property
       that $|mD|$ is a basepoint-free linear series. In this case, the corresponding line
       bundle is globally generated.
-///
 
-doc ///
 Node
   Key
     isMRegular
@@ -402,9 +407,7 @@ Node
   Caveat
     In the case $B = \mathcal{O}_X(1)$, it may be faster to use @TO "BGG::BGG"@
     or @TO "TateOnProducts::TateOnProducts"@ to compute many cohomologies at once.
-///
 
-doc ///
 Node
   Key
     mRegularity
@@ -430,9 +433,7 @@ Node
       This method utilizes a binary search to compute the smallest $m$ such that $\mathcal F$
       is $m$-regular with respect to $B$, utilizing the function @TO "isMRegular"@.
       computes the regularity of O_X(D), where D is the associated divisor to I.
-///
 
-doc ///
 Node
   Key
     sectionRing

@@ -26,6 +26,39 @@ export{
 }
 
 -----------------------------------------------------------------------
+-- Binary search algorithm
+-----------------------------------------------------------------------
+
+-- TODO: move to Core, c.f. https://github.com/Macaulay2/M2/issues/3844
+-- assume 'test' is a monotonic function, i.e. false for all i < n then true for i >= n
+binarySearch = method()
+-- return the first index of an element in L such that test(L#i) is true
+binarySearch(List,        Function) := (L,          test) -> binarySearch(0, #L-1, i -> test(L#i))
+-- shorthand for search in [0, n)
+binarySearch(         ZZ, Function) := (      high, test) -> binarySearch(0, high-1, test)
+-- shorthand for when a lower bound isn't known
+binarySearch(Nothing, ZZ, Function) := (null, high, test) -> (
+    dist := 1;
+    while true do if test(high - dist)
+    then (high, dist) = (high - dist, dist * 2)
+    else break binarySearch(high - dist + 1, high, test));
+-- shorthand for when an upper bound isn't known
+binarySearch(ZZ, Nothing, Function) := (low, null, test) -> (
+    dist := 1;
+    while true do if test(low + dist)
+    then break binarySearch(low, low + dist, test)
+    else (low, dist) = (low + dist + 1, dist * 2))
+-- standard binary search
+binarySearch(ZZ, ZZ, Function) := (low, high, test) -> (
+    -- TODO: are the first two lines standard?
+    if     test(low)  then return low;
+    --if not test(high) then return high + 1;
+    while high - low > 1 do (
+	mid := (high + low) // 2;
+	if test(mid) then high = mid else low = mid);
+    high)
+
+-----------------------------------------------------------------------
 -- Find m such that OO_X(mD) is a globally generated line bundle
 -----------------------------------------------------------------------
 
@@ -34,27 +67,7 @@ globallyGenerated Ideal := I -> globallyGenerated divisor I
 globallyGenerated WeilDivisor := D -> (
     -- compute the smallest positive number (using a binary search)
     -- such that OO_X(mD) is globally generated for an ample OO_X(D).
-	a:=1;
-
-	while ((1%(baseLocus(a*D)) == 0) != true) do (
-		a =2*a;
-	);
-
-	upperbound := a;
-	lowerbound := ceiling(a/2);
-
-	while (lowerbound < upperbound-1) do (
-		a = ceiling((lowerbound + upperbound)/2);
-		if ((1%(baseLocus(a*D)) == 0) != true) then (
-			lowerbound = a;
-		)
-		else if ((1%(baseLocus(a*D)) == 0) == true) then (
-			upperbound = a;
-		);
-
-	);
-	upperbound
-)
+    binarySearch(0, , a -> 1 % baseLocus(a*D) == 0))
 
 -----------------------------------------------------------------------
 -- Castelnuovo-Mumford's m-regularity with respect to an ample bundle B
@@ -88,57 +101,14 @@ mRegularity CoherentSheaf := F -> (
     V := variety F;
     mRegularity(F, OO_V(1))
 )
-mRegularity(CoherentSheaf, CoherentSheaf) := (F, G) -> (
-    -- computes m for which a sheaf F is m-regular relative to G,
+mRegularity(CoherentSheaf, CoherentSheaf) := (F, B) -> (
+    -- computes m for which a sheaf F is m-regular relative to B,
     -- in the sense of Castelnuovo-Mumford, using a binary search
-	bool0 := isMRegular(F,G,0);
-	m:=0;
-	lowerbound:=0;
-	upperbound:=0;
-	a:=0;
-
-	if (bool0 == true) then (
---Tests for a negative-regularity in the case that F is 0-regular relative to G
-		m=-1;
-		while (isMRegular(F,G,m)) do (
-			m=2*m;
-		);
-
-		lowerbound = m;
-		upperbound = ceiling(m/2);
-
-		while (lowerbound < upperbound-1) do (
-			a = ceiling((lowerbound + upperbound)/2);
-			if (isMRegular(F,G,a) != true) then (
-				lowerbound = a;
-			)
-			else if (isMRegular(F,G,a) == true) then (
-				upperbound = a;
-			);
-		);
-	)
-
-	else if (bool0==false) then (
---Tests for positive-regularity in the case that F is NOT 0-regular relative to G
-		m=1;
-		while (isMRegular(F,G,m) != true) do (
-			m=2*m;
-		);
-
-		upperbound = m;
-		lowerbound = ceiling(m/2);
-
-		while (lowerbound < upperbound-1) do (
-			a = ceiling((lowerbound + upperbound)/2);
-			if (isMRegular(F,G,a) != true) then (
-				lowerbound = a;
-			)
-			else if (isMRegular(F,G,a) == true) then (
-				upperbound = a;
-			);
-		);
-	);
-	upperbound
+    if isMRegular(F, B, 0)
+    -- tests for a negative-regularity in the case that F is 0-regular relative to B
+    then binarySearch(, 0, a -> isMRegular(F, B, a))
+    -- tests for positive-regularity in the case that F is NOT 0-regular relative to B
+    else binarySearch(1, , a -> isMRegular(F, B, a))
 )
 
 -----------------------------------------------------------------------
@@ -466,6 +436,7 @@ Node
 TEST ///
 R = QQ[x,y,z]/ideal(x^3+y^3-z^3);
 I = ideal(x,y-z);
+assert( globallyGenerated ideal R == 0)
 assert( globallyGenerated(I) == 2)
 ///
 
@@ -473,12 +444,14 @@ assert( globallyGenerated(I) == 2)
 TEST ///
 R = QQ[x,y,z]/ideal(x^4+y^4-z^4);
 I = ideal(x,y-z);
+assert( globallyGenerated ideal R == 0)
 assert( globallyGenerated(I) == 3)
 ///
 
 TEST ///
 R = QQ[x,y,z]/ideal(x^5+y^5-z^5);
 I = ideal(x,y-z);
+assert( globallyGenerated ideal R == 0)
 assert( globallyGenerated(I) == 4)
 ///
 

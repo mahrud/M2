@@ -292,6 +292,14 @@ sectionRing Ideal := o -> I -> (
     minimalPresentation(BetterS/BetterRelIdeal)
 )
 
+-- TODO:
+-- sectionRing CoherentSheaf := L -> (
+--     if not instance(variety L, ProjectiveVariety)
+--     or rank L != 1 or not isLocallyFree L
+--     then error "expected a line bundle on a projective variety";
+--     ...
+-- )
+
 -----------------------------------------------------------------------
 
 beginDocumentation();

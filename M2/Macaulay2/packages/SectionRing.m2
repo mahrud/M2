@@ -18,8 +18,6 @@ export{
 	"mRegularity",
 	"mRegular" => "mRegularity",
 	"sectionRing",
-	"isVectScalar",
-	"convertScalarVect"
 }
 
 -----------------------------------------------------------------------
@@ -159,6 +157,11 @@ mRegularity(CoherentSheaf, CoherentSheaf) := (F, G) -> (
 -----------------------------------------------------------------------
 -- Ring of sections of an ample line bundle on a projective variety
 -----------------------------------------------------------------------
+
+-- two small utilities for working with vectors of scalars
+-- TODO: there must be a better way to implement these
+substituteScalarVector = (R, L) -> apply(L, z -> sub(z, R))
+isScalarVector = L -> (R := ring(L#0); all(L, z -> z == 0 or degree z == degree 1_R))
 
 sectionRing = method()
 sectionRing WeilDivisor := D -> sectionRing ideal D
@@ -310,8 +313,8 @@ sectionRing Ideal := I -> (
 			
 		while (e < NumCols) do (
 			L = flatten entries KerT_{e};
-			if ((isVectScalar L) == true) then (
-				L = convertScalarVect(S,L);
+			if isScalarVector L then (
+				L = substituteScalarVector(S,L);
 				Rel = sub((entries (matrix{L}*VectTot))#0#0,S);
 				RelIdeal = trim(RelIdeal + ideal(Rel));
 				Spar = S/RelIdeal;
@@ -329,15 +332,6 @@ sectionRing Ideal := I -> (
 	BetterRelIdeal := BetterMap(sub(RelIdeal,S));
 	minimalPresentation(BetterS/BetterRelIdeal)
 )
-
------------------------------------------------------------------------
-
-isVectScalar = L -> (
-	Ramb := ring (L#0); 
-	all(L, z -> (degree(z) <= degree (sub(1, Ramb))) ) 
-);
-
-convertScalarVect = (newS, L) -> (apply(L, z->sub(z, newS)));
 
 -----------------------------------------------------------------------
 

@@ -338,24 +338,24 @@ doc ///
 ///    
 
 doc ///
-   	Key
-   	 globallyGenerated
-   	Headline
-   	 globallyGenerated(D) produces a smallest integer a such that O_X(aD) is globally generated.
-   	Usage
-	  globallyGenerated(D)
-   	  globallyGenerated(I)
-	  globallyGenerated(M)
-   	Inputs
-	 D:WeilDivisor
-	 I:Ideal
-	 M:Module
-   	Outputs
-   	 :Number
-        Description
-	 Text
-	  Takes a divisor as input.  It then uses a binary search to check for the smallest integer a with the property that |aD| is a basepoint-free linear series.  In this case, the corresponding line bundle is globally generated.
-	  
+Node
+  Key
+    globallyGenerated
+   (globallyGenerated, WeilDivisor)
+   (globallyGenerated, Ideal)
+  Headline
+    find smallest integer a such that OO_X(mD) is globally generated
+  Usage
+    globallyGenerated(D)
+  Inputs
+    D:{WeilDivisor,Ideal}
+  Outputs
+    :Number
+  Description
+    Text
+      This method uses a binary search to find the smallest integer $m$ with the property
+      that $|mD|$ is a basepoint-free linear series. In this case, the corresponding line
+      bundle is globally generated.
 ///
 
 doc ///

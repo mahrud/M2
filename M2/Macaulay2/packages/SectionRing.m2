@@ -393,22 +393,31 @@ Node
 ///
 
 doc ///
-   	Key
-	  mRegularity
-   	Headline
-	  mRegularity(F,G) computes the regularity of F with respect to G (globally generated), in the sense of Castelnuovo-Mumford.  Omitting G assumes G=O_X(1).
-   	Usage
-	  mRegularity(F,G)
-	  mRegularity(F)
-   	Inputs
-	 F:CoherentSheaf
-	 G:CoherentSheaf
-   	Outputs
-   	 :ZZ
-        Description
-	 Text
-	   mRegularity(F,G) utilizes a binary search to compute the smallest m such that F is m-regular with respect to G, utilizing the function isMRegular.  mRegularity(I) computes the regularity of O_X(D), where D is the associated divisor to I.
-	  
+Node
+  Key
+    mRegularity
+   (mRegularity, Ideal)
+   (mRegularity, CoherentSheaf)
+   (mRegularity, CoherentSheaf, CoherentSheaf)
+  Headline
+    compute the Castelnuovo-Mumford regularity of F with respect to G
+  Usage
+    mRegularity(F)
+    mRegularity(F,G)
+  Inputs
+    F:{CoherentSheaf,Ideal}
+      over a projective variety $X$;
+      given an ideal, assumes $OO_X(D)$ where $D$ is divisor associated to $I$.
+    B:CoherentSheaf
+      which is a globally generated ample line bundle on $X$;
+      if omitted, assumes $B = \mathcal{O}_X(1)$.
+  Outputs
+    :ZZ
+  Description
+    Text
+      This method utilizes a binary search to compute the smallest $m$ such that $\mathcal F$
+      is $m$-regular with respect to $B$, utilizing the function @TO "isMRegular"@.
+      computes the regularity of O_X(D), where D is the associated divisor to I.
 ///
 
 doc ///

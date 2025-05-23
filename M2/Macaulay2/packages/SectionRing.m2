@@ -400,23 +400,37 @@ doc ///
 ///
 
 doc ///
-   	Key
-   	 isMRegular
-   	Headline
-   	 isMRegular(F,G,m) tests where F is m-regular with respect to G (globally generated) in the sense of Castelnuovo-Mumford.  Omitting G assumes G=O_X(1).
-   	Usage
-	 isMRegular(F,G,m)
-	 isMRegular(F,m)
-   	Inputs
-	 F:CoherentSheaf
-	 G:CoherentSheaf
-	 m:ZZ
-   	Outputs
-   	 :Boolean
-        Description
-	 Text
-	  isMRegular(F,G,m) tests definition 1.8.4 of Lazarsfeld's Positivity in Algebraic Geometry I, which is to say whether H^i(F \otimes G^(m-i)) = 0 for every i>0.  It tests (in this order) H^1, H^2, \ldots, H^dim(X), and stops as soon as a non-zero cohomology is found.  If none is found, F is m-G-regular, and it outputs true.
-	  
+Node
+  Key
+    isMRegular
+   (isMRegular, CoherentSheaf, ZZ)
+   (isMRegular, CoherentSheaf, CoherentSheaf, ZZ)
+  Headline
+    whether F is m-regular in the sense of Castelnuovo-Mumford
+  Usage
+    isMRegular(F,m)
+    isMRegular(F,B,m)
+  Inputs
+    F:CoherentSheaf
+      over a projective variety $X$.
+    B:CoherentSheaf
+      which is a globally generated ample line bundle on $X$;
+      if omitted, assumes $B = \mathcal{O}_X(1)$.
+    m:ZZ
+  Outputs
+    :Boolean
+      whether $\mathcal F$ is $m$-regular with respect to $B$ in the sense of Castelnuovo-Mumford
+  Description
+    Text
+      This method tests whether
+      $$ H^i(\mathcal F \otimes B^{\otimes(m-i)}) = 0 \quad \text{for every} \quad i > 0.$$
+      As soon as a non-zero cohomology is found, the algorithm stops and returns false.
+      If none is found, $\mathcal F$ is $m$-$B$-regular, and it returns true.
+  References
+    See Definition 1.8.4 of Lazarsfeld's Positivity in Algebraic Geometry I.
+  Caveat
+    In the case $B = \mathcal{O}_X(1)$, it may be faster to use @TO "BGG::BGG"@
+    or @TO "TateOnProducts::TateOnProducts"@ to compute many cohomologies at once.
 ///
 
 doc ///
@@ -502,3 +516,10 @@ assert((#L==1) and ((degree(L#0))#0 == 6))
 ///
 
 end
+
+restart
+needsPackage "SectionRing"
+check "SectionRing"
+
+installPackage "SectionRing"
+viewHelp oo

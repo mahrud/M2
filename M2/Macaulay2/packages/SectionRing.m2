@@ -433,23 +433,41 @@ Node
 ///
 
 doc ///
-   	Key
-   	 sectionRing
-   	Headline
-   	 sectionRing(I) produces the section ring of an ample divisor.  If I is an ideal, one can input I to get the section ring of the corresponding divisor.
-   	Usage
-	 sectionRing(I)
-	 sectionRing(D)
-   	Inputs
-	 I:Ideal
-	 D:WeilDivisor
-   	Outputs
-   	 :Ring
-        Description
-	 Text
-	  sectionRing(I) begins by computing the regularity m of O_X, O_X(D), O_X(2D), ..., O_X((l-1)D) with respect to O_X(lD), where l is the output of globallyGenerated(D).  By Mumford's Thm (1.8.5 in Positivity) yields that each of the maps O_X(iD)\otimes O_X(lD)^\otimes m -> O_X((i+ml)D) is surjective.  Thus, all generators for the section ring can be assumed in lower degree than bound.  Thus it forms a polynomial ring S over the base field with h^0(iD)-many generators in degree i, for i=1,2,...,bound-1.  Next, relations in degree d are computing by considering the total maps \oplus_{partitions P of d} \otimes_{i\in P} O_X(i D) -> O_X(dD).  Each of these relations is then quotiented, until the point that a domain of the correct dimension is produced.  Some steps are then performed to make the output more readable and standard.
-	  
+Node
+  Key
+    sectionRing
+   (sectionRing, WeilDivisor)
+   (sectionRing, Ideal)
+  Headline
+    compute the section ring of an ample divisor
+  Usage
+    sectionRing(D)
+  Inputs
+    D:{WeilDivisor,Ideal}
+      an ample divisor on a projective variety $X$;
+      given an ideal, the corresponding divisor is used.
+  Outputs
+    :Ring
+  Description
+    Text
+      This algorithm begins by computing the regularity $m$ of
+      $\mathcal O_X, \mathcal O_X(D), \mathcal O_X(2D), \dots, \mathcal O_X((l-1)D)$
+      with respect to $\mathcal O_X(lD)$, where $l$ is the output of @TT "globallyGenerated(D)"@.
+      Mumford's Theorem (1.8.5 in Positivity in Algebraic Geometry I) implies that each of the maps
+      $\mathcal O_X(iD)\otimes \mathcal O_X(lD)^\otimes m \to \mathcal O_X((i+ml)D)$ is surjective.
+      Thus, all generators for the section ring can be assumed in lower degree than bound.
+      Thus it forms a polynomial ring $S$ over the base field with $h^0(iD)$-many generators in degree $i$,
+      for $i = 1,2,\dots,\mathrm{bound}-1$.
+
+      Next, relations in degree $d$ are computed by considering the total maps
+      $\oplus_{\mathrm{partitions } P \mathrm{ of } d} \otimes_{i\in P} \mathcal O_X(i D) \to \mathcal O_X(dD)$.
+      Each of these relations is then quotiented, until the point that a domain of the correct dimension is produced.
+      Some steps are then performed to make the output more readable and standard.
+  SeeAlso
+    globallyGenerated
 ///
+
+-----------------------------------------------------------------------
 
 TEST ///
 R = QQ[x,y,z]/ideal(x^3+y^3-z^3);

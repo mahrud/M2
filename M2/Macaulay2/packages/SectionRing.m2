@@ -1,16 +1,21 @@
 --this file is in the public domain
 
-newPackage( "SectionRing",
-     Version => "0.2", Date => "September 21 2016", Authors => {
-     	  {Name=> "Andrew Bydlon",
-     	       Email=> "thelongdivider@gmail.com",
-     	       HomePage => "http://www.math.utah.edu/~bydlon/"
-     	       }
-	  },
-     PackageExports => {"WeilDivisors", "Varieties"},
-     Keywords => {"Commutative Algebra"},
-     Headline => "the section ring of a Weil Divisor"
-     )
+newPackage(
+    "SectionRing",
+    Date => "May 22, 2025",
+    Version => "0.3",
+    Headline => "the section ring of a Weil Divisor",
+    Authors => {
+	{ Name => "Andrew Bydlon",  Email => "thelongdivider@gmail.com", HomePage => "http://www.math.utah.edu/~bydlon/" },
+	{ Name => "Mahrud Sayrafi", Email => "mahrud@umn.edu",           HomePage => "https://math.umn.edu/~mahrud" }
+    },
+    PackageExports => {
+	"Varieties",
+	"WeilDivisors",
+    },
+    Keywords => { "Commutative Algebra", "Projective Algebraic Geometry" },
+    DebuggingMode => true,
+)
 
 export{
 	"globallyGenerated",

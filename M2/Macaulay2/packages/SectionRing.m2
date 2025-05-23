@@ -22,17 +22,6 @@ export{
 
 -----------------------------------------------------------------------
 
-dualToIdeal = method();
-
-dualToIdeal(Ideal) := (I) -> (
---Produces an ideal module isomorphic to the dual of the given ideal I.
-	R := ring(I);
-	M := module(I);
-	embedAsIdeal(Hom(M,R),IsGraded=>true,ReturnMap=>true)
-);
-
------------------------------------------------------------------------
-
 globallyGenerated = method();
 
 globallyGenerated(WeilDivisor) := (D) -> (				
@@ -170,6 +159,13 @@ mRegularity(CoherentSheaf, CoherentSheaf) := (F, G) -> (
 -- TODO: there must be a better way to implement these
 substituteScalarVector = (R, L) -> apply(L, z -> sub(z, R))
 isScalarVector = L -> (R := ring(L#0); all(L, z -> z == 0 or degree z == degree 1_R))
+
+-- Given an ideal $I$ as input, dualizes the ideal, and maps it back into the ring,
+-- producing $\operatorname{Hom}_R(I,R) \cong J \subset R$.
+-- This method is used to produce the global sections $H^0(mD)$,
+-- where $D$ is an integral divisor defined by $I$.
+dualToIdeal = method()
+dualToIdeal Ideal := I -> embedAsIdeal(dual module I, IsGraded => true)
 
 sectionRing = method()
 sectionRing WeilDivisor := D -> sectionRing ideal D
@@ -355,24 +351,6 @@ doc ///
       This package provides a method for computing the section ring of a Weil
       divisor.
 ///    
-
-doc ///
-   	Key
-   	 dualToIdeal
-   	Headline
-   	  dual ideal
-   	Usage
-   	 dualToIdeal(I)
-   	Inputs
-	 I:Ideal
-   	Outputs
-   	 :Ideal
-	   the dual of I
-        Description
-	 Text
-	  Takes an ideal I as input, dualizes the ideal, and maps it back into the ring, producing Hom_R(I,R) ~ J < R.  Used to produce the global sections H^0(mD), where D is an integral divisor defined by I.
-	  
-///
 
 doc ///
    	Key

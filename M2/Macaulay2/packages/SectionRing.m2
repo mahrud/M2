@@ -143,83 +143,60 @@ sectionRing = method()
 sectionRing WeilDivisor := D -> sectionRing ideal D
 sectionRing Ideal := I -> (
     -- compute the ring of sections of a semi-ample divisor associated to I
+    R := ring I;
+    K := coefficientRing R;
+    -- To apply the regularity theorem of Mumford, the ample OO_X(D) needs to be globally generated.
+    -- Thus if OO_X(D) is not globally generated, we consider F = OO_X(2D), ... , OO_X((l-1)D)
+    -- (which correspond to J#1, J#2,...) and F being relatively G-m-regular,
+    -- where G = OO_X(lD) is globally generated.
+    -- This produces a bound, where all generators are found in lower degrees than bound.
 
-	local L;
-	local Rel;
-	local KerT;
-	local Part;
-	local LengP;
-	local LengPa;
-	local numDegs;
-	local AdmPart;
-	local NumCols;
-	local b;
-	local e;
+    l := globallyGenerated I;
+    J := {0} | apply(toList(1 .. l), j -> sheaf Hom(I^[j], R));
+    bound := max apply(toList(1 .. l), j -> j + l * mRegularity(J#j, J#l));
+    bound  = max(l, bound) + 1;
 
-	R := ring(I);
-					
---To Apply the Regularity Theorem of Mumford, the sheaf needs to be Globally Generated Sheaf. Thus in the case O_X(D) is not globally generated, we consider F=O_X(D),O_X(2D), ... , O_X((l-1)D) (which correspond to J#1, J#2,...) and F being relatively G-m-regular, where G = O_X(lD) is globally generated.  This produces bound, where all generators are found in lower degrees than bound.
+    -- The next block of code produces a polynomial ring S with generators in degrees 1,2,3,...,bound
+    -- which will then be quotiented to produce the section ring.
 
-	l := globallyGenerated(I);
-	bound := l;
-	G := first entries gens I;
-	J :={0};
+    -- this is Hom(I, R) represented as another ideal J in R
+    Z := dualToIdeal I;
+    Shift := Z#1;
+    -- TODO: make the lists 0-based
+    J = {0, reflexify((Z#0))};
+    FF := { 0, basis(Shift, J#1) };
+    -- n_i is the rank of HH^0(OO_X(iD))
+    n := { 0, numColumns FF#1 };
+    -- Map_i is the map HH^0(OO_X(iD)) -> J^i
+    Map := { 0, gens image FF#1 };
 
-	j:=1;
-	while(j<l+1) do (						
-		J = J|{Hom(ideal(apply(G, z->z^j)),R)};
-		j=j+1;
-	);
-	
-	j=1;
-	while(j<(l+1)) do (	
-		bound = max(bound,l*(mRegularity(sheaf(J#j),sheaf(J#l)))+j);
-		j = j+1;
-	);
-	bound = bound + 1;
+    Y := local Y;
+    Vars := { toList(Y_{1,1}..Y_{1,n#1}) };
+    DegreeList := toList(n#1 : {1});
 
---The next block of code produces a polynomial ring S with generators in degrees 1,2,3,...,bound which will then be quotiented to produce the section ring.  Here Map_i Represents the map H^0(O_X(iD)) -> J^(i) and n_i is the rank of H^0(O_X(iD)).
+    i := 2;
+    while (i < bound) do(
+	-- TODO: is this assuming R is a normal domain?
+	J = J | { reflexivePower(i, J#1) };
+	FF = FF | { basis(i * Shift, J#i) };
+	n = n | { numColumns FF#i };
+	Map = Map | { gens image FF#i };
+	Vars = Vars | { toList(Y_{i,1}..Y_{i,n#i}) };
+	DegreeList = DegreeList | toList(n#i : {i});
+	i = i+1;
+    );
 
-	KK:= coefficientRing(R);
-	Z := dualToIdeal(I);
-	Shift := (Z#1)#0;
-	J = {0,reflexify((Z#0))};
-	FF := {0,basis(Shift,J#1)};
-	n := {0,numColumns(FF#1)};
-	F := {0,map(R^(numRows(FF#1)),R^(n#1),FF#1)};
-	Map := {0,(gens J#1)*(F#1)};
-	Y := local Y;
-	myVars := {toList(Y_{1,1}..Y_{1,n#1})};						
-	DegreeList :={};
-	l=0;
-	while(l<n#1) do(
-		DegreeList = DegreeList | toList({1});
-		l = l+1;
-	);					
-	i:=2;
-	while (i < bound) do(
-		J = J | {reflexivePower(i,J#1)};
-		FF = FF | {basis((Shift*i),J#i)};
-		n = n | {numColumns((FF#i))};			
-		F = F | {map(R^(numRows((FF#i))),R^(n#i),FF#i)};
-		Map = Map | {(gens J#i)*(F#i)};
-		myVars = myVars | {toList(Y_{i,1}..Y_{i,n#i})};  
-		l=0;
-		while(l<n#i) do(
-			DegreeList = DegreeList | toList({i});
-			l = l+1;
-		);
-		i=i+1;
-	);
+    S := K[flatten Vars, Degrees => DegreeList];
+    numVars := numgens S;
+    myVars := apply(Vars, z -> apply(z, x -> value(x)));
 
-	Vars := flatten myVars;
-	numVars:= #Vars;
-
-	S := KK [Vars,Degrees=>DegreeList];
-	myVars = apply(myVars, z->apply(z,x->value(x)));
-	numDegs = #myVars;
-
---The following block of code is used to compute the relations on S which define the section ring SR.  It does so by going degree by degree (starting at degree 2), and considering the morphisms \oplus_{i=0,\ldots,[j/2]} H^0((j-i)D) \otimes H^0(iD) --> H^0(jD), computing its kernel, and multiplying the matrix representing the kernel with the corresponding vector of variables of S, Vect_{j-i} \otimes Vect_i.  This gives relations, then inserted into RelIdeal.
+    -- compute the relations on S which define the section ring SR.
+    -- we do so by going degree by degree (starting at degree 2),
+    -- and computing the kernels of the morphisms
+    -- \oplus_{i=0,...,[j/2]} HH^0((j-i)D) \otimes HH^0(iD) --> H^0(jD),
+    -- and multiplying the matrix representing the kernel with
+    -- the corresponding vector of variables of S, Vect_{j-i} \otimes Vect_i.
+    -- This gives relations, then inserted into RelIdeal.
 
 	RelIdeal := ideal(0);
 	Spar := S;
@@ -231,30 +208,41 @@ sectionRing Ideal := I -> (
 		c=c+1;
 	);
 
-	j=2;
-	while ( (dim(Spar) >  dim(R)) or (isDomain(Spar) != true)) do (	
+	j:=2;
+	while ( (dim(Spar) >  dim(R)) or (isDomain(Spar) != true)) do (
 
---Relations are achieved by finding the kernels of the direct sums of tensor products of global sections.  However, some efficiency improvements can be achieve by considering a minimal number of such sums/tensors.  To do this, I consider partitions of the given degree of interest and throw out any partitions which are either above the bound in which our generators are considered, or can be factored through another partition.  For example, O_V(D)^{\otimes 3} -> O_V(2D)\otimes O_V(D) -> O_V(3D), so if bound>1, then the partition (1,1,1) of 3 is excluded.  Throughout, a is an index for which partition is chosen, and b is an index for an element of a given partition.  Additionally, MapTot is the total map of lower degree tensors into the degree in which relations are being considered, VectTot the corresponding vector of variables.
+	-- Relations are achieved by finding the kernels of the direct sums
+	-- of tensor products of global sections.  However, some efficiency
+	-- improvements can be achieve by considering a minimal number of such sums/tensors.
+	-- To do this, I consider partitions of the given degree of interest and throw out
+	-- any partitions which are either above the bound in which our generators are
+	-- considered, or can be factored through another partition.
+	-- For example, O_V(D)^{\otimes 3} -> O_V(2D)\otimes O_V(D) -> O_V(3D),
+	-- so if bound>1, then the partition (1,1,1) of 3 is excluded.
+	-- Throughout, a is an index for which partition is chosen,
+	-- and b is an index for an element of a given partition.
+	-- Additionally, MapTot is the total map of lower degree tensors into the degree
+	-- in which relations are being considered, VectTot the corresponding vector of variables.
 
-		Part = partitions(j);
-		LengP = #(Part);
+		Part := partitions(j);
+		LengP := #(Part);
 		a:=0;
-		AdmPart = {};
+		AdmPart := {};
 		while (a<LengP) do(
 			if((Part#a#0 < bound) and ((Part#a)#(#(Part#a)-1) + (Part#a)#(#(Part#a)-2) > min(bound,j)-1)) then (
-				AdmPart = AdmPart | {(Part)#a}; 
+				AdmPart = AdmPart | {(Part)#a};
 			);
 			a=a+1;
 		);
-	
+
 		LengP = #(AdmPart);
 
 		a=0;
 
 		TotMapTemp := Map#(AdmPart#a#0);
 		TotVectTemp := Vect#(AdmPart#a#0);
-		b=1;
-		LengPa = #((AdmPart)#a);
+		b := 1;
+		LengPa := #((AdmPart)#a);
 		while (b<LengPa) do (
 			TotMapTemp = TotMapTemp ** Map#(AdmPart#a#b);
 			TotVectTemp = TotVectTemp ** Vect#(AdmPart#a#b);
@@ -265,7 +253,7 @@ sectionRing Ideal := I -> (
 		VectTot := TotVectTemp;
 
 		a=1;
-		while(a<LengP) do ( 
+		while(a<LengP) do (
 			TotMapTemp = Map#(AdmPart#a#0);
 			TotVectTemp = Vect#(AdmPart#a#0);
 
@@ -282,31 +270,32 @@ sectionRing Ideal := I -> (
 			a = a+1;
 		);
 
-		KerT = generators ker(MapTot);		
+		KerT := generators ker(MapTot);
 
-		NumCols = numColumns(KerT);
-		e = 0;
-			
+		NumCols := numColumns(KerT);
+		e := 0;
+
 		while (e < NumCols) do (
-			L = flatten entries KerT_{e};
+			L := flatten entries KerT_{e};
 			if isScalarVector L then (
 				L = substituteScalarVector(S,L);
-				Rel = sub((entries (matrix{L}*VectTot))#0#0,S);
+				Rel := sub((entries (matrix{L}*VectTot))#0#0,S);
 				RelIdeal = trim(RelIdeal + ideal(Rel));
 				Spar = S/RelIdeal;
 			);
 			e=e+1;
-		); 
+		);
 		j=j+1;
 	);
 
---Some code to improve the presentation of the ring, both in terms of having a more standard list of generators A_1...A_N, and eliminating redundant generators
-
-	A := local A;
-	BetterS := KK[A_1..A_numVars,Degrees=>DegreeList];
-	BetterMap := map(BetterS,S,toList(A_1..A_numVars));	
-	BetterRelIdeal := BetterMap(sub(RelIdeal,S));
-	minimalPresentation(BetterS/BetterRelIdeal)
+    -- improve the presentation of the ring, both in terms of
+    -- having a more standard list of generators A_1...A_N,
+    -- and eliminating linear relations and redundant generators
+    A := local A;
+    BetterS := K[A_1..A_(numgens S), Degrees => DegreeList];
+    BetterMap := map(BetterS, S, vars BetterS);
+    BetterRelIdeal := BetterMap(sub(RelIdeal,S));
+    minimalPresentation(BetterS/BetterRelIdeal)
 )
 
 -----------------------------------------------------------------------
@@ -428,9 +417,11 @@ Node
     Text
       This algorithm begins by computing the regularity $m$ of
       $\mathcal O_X, \mathcal O_X(D), \mathcal O_X(2D), \dots, \mathcal O_X((l-1)D)$
-      with respect to $\mathcal O_X(lD)$, where $l$ is the output of @TT "globallyGenerated(D)"@.
+      with respect to $\mathcal O_X(lD)$, where $l$ is the smallest integer for
+      which $\mathcal O_X(lD)$ is globally generated.
+
       Mumford's Theorem (1.8.5 in Positivity in Algebraic Geometry I) implies that each of the maps
-      $\mathcal O_X(iD)\otimes \mathcal O_X(lD)^\otimes m \to \mathcal O_X((i+ml)D)$ is surjective.
+      $\mathcal O_X(iD) \otimes \mathcal O_X(lD)^{\otimes m} \to \mathcal O_X((i+ml)D)$ is surjective.
       Thus, all generators for the section ring can be assumed in lower degree than bound.
       Thus it forms a polynomial ring $S$ over the base field with $h^0(iD)$-many generators in degree $i$,
       for $i = 1,2,\dots,\mathrm{bound}-1$.
@@ -486,10 +477,12 @@ assert( (#(vars S)) == dim S)
 TEST ///
 R = QQ[x,y,z]/(x^3+y^3-z^3)
 I = ideal(x,y-z);
-S = sectionRing I;
-J = ideal(S);
-L = first entries gens J;
-assert((#L==1) and ((degree(L#0))#0 == 6))
+elapsedTime S = sectionRing I;
+J = ideal S;
+assert isHomogeneous S
+assert(degrees S == {{1}, {2}, {3}})
+assert(degrees J == {{6}})
+assert(toString J == "ideal(A_1^6-A_2^3-3*A_1^3*A_6+3*A_6^2)")
 ///
 
 -----------------------------------------------------------------------

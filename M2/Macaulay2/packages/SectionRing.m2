@@ -21,11 +21,14 @@ export{
 }
 
 -----------------------------------------------------------------------
+-- Find m such that OO_X(mD) is a globally generated line bundle
+-----------------------------------------------------------------------
 
-globallyGenerated = method();
-
-globallyGenerated(WeilDivisor) := (D) -> (				
---Finds the smallest positive number (using a binary search) such that O_X(a*D) is globally generated, D ample.
+globallyGenerated = method()
+globallyGenerated Ideal := I -> globallyGenerated divisor I
+globallyGenerated WeilDivisor := D -> (
+    -- compute the smallest positive number (using a binary search)
+    -- such that OO_X(mD) is globally generated for an ample OO_X(D).
 	a:=1;
 
 	while ((1%(baseLocus(a*D)) == 0) != true) do (
@@ -46,12 +49,6 @@ globallyGenerated(WeilDivisor) := (D) -> (
 
 	);
 	upperbound
-);
-
-
-globallyGenerated(Ideal) := (I) -> (
---Finds when I^* is globally generated.
-	globallyGenerated(divisor(I))
 );
 
 -- FIXME: globallyGenerated(Module) can hang in an infinite loop.  It calls

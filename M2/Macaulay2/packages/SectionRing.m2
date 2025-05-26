@@ -313,6 +313,47 @@ sectionRing Ideal := o -> I -> (
 --     ...
 -- )
 
+--
+degreesRing' = memoize(degs -> ZZ( monoid [ Variables => #degs, Degrees => degs ] ))
+exponents Matrix := m -> apply(numcols m, c -> first exponents m_(0,c))
+
+sectionRing(CoherentSheaf, ZZ) := o -> (L, p) -> (
+    sectionRing(embedAsIdeal module dual L, p, o))
+sectionRing(Ideal, ZZ) := o -> (I, p) -> (
+    R := ring I;
+    K := coefficientRing R;
+    if p <= 0 then error "expected a positive exponent";
+
+    -- about 70% of the computation is finding the bound
+    bound := o.DegreeLimit ?? sectionRingBound I;
+    if debugLevel > 0 then printerr("computing sections up to degree ", bound);
+
+    a := ideal I_0;
+    L := map(R^1, R^0, 0);
+    deg := p;
+    degs := {};
+    while deg <= bound do (
+	-- we want remainder _as subalgebras_
+	if debugLevel > 0 then printerr("computing sections in degree ", toString deg);
+	B := basis(deg, degreesRing' degs); -- 10% of the remainder
+	N := gens image basis(deg, a^deg : I^deg); -- ~75% of the remainder
+	M := trim image(N % sub(B, L)); -- ~10% of the remainder
+	deg += p;
+	if M != 0 then (
+	    printerr net gens M;
+	    degs |= degrees M;
+	    L |= gens M);
+	);
+    if degreeLength R == 1 then degs = flatten degs;
+    if debugLevel > 0 then printerr("found ", numcols L, " sections in degrees ", degs);
+
+    s := symbol s;
+    T := K(monoid[ apply(degs, d -> s_d), Degrees => degs ]);
+    T / ker map(R, T, L) -- 10%
+)
+
+sectionRing Ideal := o -> I -> sectionRing(I, 1, o)
+
 -----------------------------------------------------------------------
 
 beginDocumentation();
@@ -497,7 +538,62 @@ J = ideal S;
 assert isHomogeneous S
 assert(degrees S == {{1}, {2}, {3}})
 assert(degrees J == {{6}})
-assert(toString J == "ideal(A_1^6-A_2^3-3*A_1^3*A_6+3*A_6^2)")
+assert(toString J == "ideal(s_1^6-s_2^3-3*s_1^3*s_3+3*s_3^2)")
+///
+
+TEST ///
+  needsPackage "SpaceCurves"
+  needsPackage "SectionRing"
+
+  C = curve(5, 1)
+  R = quotient ideal C;
+  while euler(I = first decompose ideal random(1, R)) != 1 do ()
+  elapsedTime assert(degrees sectionRing(I, 1, DegreeLimit => 6) == {{1}, {2}, {3}})
+  elapsedTime assert(degrees sectionRing(I, 2, DegreeLimit => 6) == {{2}, {2}, {4}})
+  elapsedTime assert(degrees sectionRing(I, 3, DegreeLimit => 6) == {{3}, {3}, {3}})
+  L = dual sheaf I;
+  elapsedTime assert(degrees sectionRing(L, 1, DegreeLimit => 6) == {{1}, {2}, {3}})
+  elapsedTime assert(degrees sectionRing(L, 2, DegreeLimit => 6) == {{2}, {2}, {4}})
+  elapsedTime assert(degrees sectionRing(L, 3, DegreeLimit => 6) == {{3}, {3}, {3}})
+  elapsedTime assert(degrees sectionRing(L, 4, DegreeLimit => 6) == {{4}, {4}, {4}, {4}})
+
+  -- TODO: is this fixable?
+  -- I2 = embedAsIdeal module dual L^**2
+  -- isIsomorphic(L^**2, dual sheaf I2)
+  -- degrees sectionRing(I2, 1, DegreeLimit => 6)
+  -- degrees sectionRing(I2, 2, DegreeLimit => 6)
+
+  C = curve(5, 2)
+  R = quotient ideal C;
+  while euler(I = first decompose ideal random(1, R)) != 1 do ()
+  elapsedTime assert(degrees sectionRing(I, 1, DegreeLimit => 8) == {{1}, {3}, {4}, {5}})
+  elapsedTime assert(degrees sectionRing(I, 2, DegreeLimit => 8) == {{2}, {4}, {4}, {6}, {6}})
+  elapsedTime assert(degrees sectionRing(I, 3, DegreeLimit => 8) == {{3}, {3}, {6}, {6}})
+  elapsedTime assert(degrees sectionRing(I, 4, DegreeLimit => 8) == {{4}, {4}, {4}, {8}})
+  elapsedTime assert(degrees sectionRing(I, 5, DegreeLimit => 8) == {{5}, {5}, {5}, {5}})
+  elapsedTime assert(degrees sectionRing(I, 6, DegreeLimit => 8) == {{6}, {6}, {6}, {6}, {6}})
+
+  C = curve(6, 3)
+  R = quotient ideal C;
+  while euler(I = first decompose ideal random(1, R)) != 1 do ()
+  elapsedTime assert(degrees sectionRing(I, 1, DegreeLimit => 10) == {{1}, {4}, {5}, {6}, {7}})
+  elapsedTime assert(degrees sectionRing(I, 2, DegreeLimit => 10) == {{2}, {4}, {6}, {6}, {8}})
+  elapsedTime assert(degrees sectionRing(I, 3, DegreeLimit => 10) == {{3}, {6}, {6}, {6}, {9}, {9}, {9}})
+  elapsedTime assert(degrees sectionRing(I, 4, DegreeLimit => 10) == {{4}, {4}, {8}, {8}, {8}})
+  elapsedTime assert(degrees sectionRing(I, 5, DegreeLimit => 10) == {{5}, {5}, {5}, {10}, {10}})
+  elapsedTime assert(degrees sectionRing(I, 6, DegreeLimit => 10) == {{6}, {6}, {6}, {6}})
+  elapsedTime assert(degrees sectionRing(I, 7, DegreeLimit => 10) == {{7}, {7}, {7}, {7}, {7}})
+///
+
+///
+  needsPackage "BundlesOnCurves"
+  needsPackage "SectionRing"
+  C = ellipticCurve 5
+  I = preimage(C.cache.WeightedRingMap, C.cache.WeightedPoints#0)
+  elapsedTime SectionRing$sectionRing(I, 1, DegreeLimit => 6)
+  elapsedTime SectionRing$sectionRing(I, 2, DegreeLimit => 6)
+  elapsedTime SectionRing$sectionRing(I, 3, DegreeLimit => 6)
+  elapsedTime BundlesOnCurves$sectionRing(ring I, I)
 ///
 
 -----------------------------------------------------------------------

@@ -127,22 +127,28 @@ isScalarVector = L -> (R := ring(L#0); all(L, z -> z == 0 or degree z == degree 
 dualToIdeal = method()
 dualToIdeal Ideal := I -> embedAsIdeal(dual module I, IsGraded => true)
 
+sectionRingBound = I -> (
+    -- gives a bound for the top degree where new sections may be found
+    -- in examples about 75% of the computation is finding this bound
+    R := ring I;
+    -- To apply the regularity theorem of Mumford, the ample OO_X(D) needs to be globally generated.
+    -- Thus if OO_X(D) is not globally generated, we consider F = OO_X(2D), ... , OO_X((l-1)D)
+    -- (which correspond to J#1, J#2,...) and F being relatively G-m-regular,
+    -- where G = OO_X(lD) is globally generated.
+    l := globallyGenerated I; -- ~45% of the computation is here alone
+    J := apply(l, j -> sheaf Hom(I^[j+1], R));
+    bound := max apply(l, j -> 1 + j + l * mRegularity(J#j, J#(l-1)));
+    bound = max(l, bound) + 1)
+
 sectionRing = method()
 sectionRing WeilDivisor := D -> sectionRing ideal D
 sectionRing Ideal := I -> (
     -- compute the ring of sections of a semi-ample divisor associated to I
     R := ring I;
     K := coefficientRing R;
-    -- To apply the regularity theorem of Mumford, the ample OO_X(D) needs to be globally generated.
-    -- Thus if OO_X(D) is not globally generated, we consider F = OO_X(2D), ... , OO_X((l-1)D)
-    -- (which correspond to J#1, J#2,...) and F being relatively G-m-regular,
-    -- where G = OO_X(lD) is globally generated.
-    -- This produces a bound, where all generators are found in lower degrees than bound.
 
-    l := globallyGenerated I;
-    J := {0} | apply(toList(1 .. l), j -> sheaf Hom(I^[j], R));
-    bound := max apply(toList(1 .. l), j -> j + l * mRegularity(J#j, J#l));
-    bound  = max(l, bound) + 1;
+    -- This produces a bound, where all generators are found in lower degrees than bound.
+    bound := sectionRingBound I;
 
     -- The next block of code produces a polynomial ring S with generators in degrees 1,2,3,...,bound
     -- which will then be quotiented to produce the section ring.
@@ -151,7 +157,7 @@ sectionRing Ideal := I -> (
     Z := dualToIdeal I;
     Shift := Z#1;
     -- TODO: make the lists 0-based
-    J = {0, reflexify((Z#0))};
+    J := {0, reflexify((Z#0))};
     FF := { 0, basis(Shift, J#1) };
     -- n_i is the rank of HH^0(OO_X(iD))
     n := { 0, numColumns FF#1 };

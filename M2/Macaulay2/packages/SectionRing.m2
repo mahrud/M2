@@ -140,15 +140,15 @@ sectionRingBound = I -> (
     bound := max apply(l, j -> 1 + j + l * mRegularity(J#j, J#(l-1)));
     bound = max(l, bound) + 1)
 
-sectionRing = method()
-sectionRing WeilDivisor := D -> sectionRing ideal D
-sectionRing Ideal := I -> (
+sectionRing = method(Options => { DegreeLimit => null })
+sectionRing WeilDivisor := o -> D -> sectionRing ideal D
+sectionRing Ideal := o -> I -> (
     -- compute the ring of sections of a semi-ample divisor associated to I
     R := ring I;
     K := coefficientRing R;
 
     -- This produces a bound, where all generators are found in lower degrees than bound.
-    bound := sectionRingBound I;
+    bound := o.DegreeLimit ?? sectionRingBound I;
 
     -- The next block of code produces a polynomial ring S with generators in degrees 1,2,3,...,bound
     -- which will then be quotiented to produce the section ring.

@@ -316,6 +316,7 @@ sectionRing Ideal := o -> I -> (
 --
 degreesRing' = memoize(degs -> ZZ( monoid [ Variables => #degs, Degrees => degs ] ))
 exponents Matrix := m -> apply(numcols m, c -> first exponents m_(0,c))
+sections = (deg, I) -> I.cache.sections#deg ??= basis(deg, ideal I_0^deg : I^deg)
 
 sectionRing(CoherentSheaf, ZZ) := o -> (L, p) -> (
     sectionRing(embedAsIdeal module dual L, p, o))
@@ -323,12 +324,12 @@ sectionRing(Ideal, ZZ) := o -> (I, p) -> (
     R := ring I;
     K := coefficientRing R;
     if p <= 0 then error "expected a positive exponent";
+    I.cache.sections ??= new MutableHashTable;
 
     -- about 70% of the computation is finding the bound
     bound := o.DegreeLimit ?? sectionRingBound I;
     if debugLevel > 0 then printerr("computing sections up to degree ", bound);
 
-    a := ideal I_0;
     L := map(R^1, R^0, 0);
     deg := p;
     degs := {};
@@ -336,7 +337,7 @@ sectionRing(Ideal, ZZ) := o -> (I, p) -> (
 	-- we want remainder _as subalgebras_
 	if debugLevel > 0 then printerr("computing sections in degree ", toString deg);
 	B := basis(deg, degreesRing' degs); -- 10% of the remainder
-	N := gens image basis(deg, a^deg : I^deg); -- ~75% of the remainder
+	N := gens image sections(deg, I); -- ~75% of the remainder
 	M := trim image(N % sub(B, L)); -- ~10% of the remainder
 	deg += p;
 	if M != 0 then (
@@ -583,6 +584,16 @@ TEST ///
   elapsedTime assert(degrees sectionRing(I, 5, DegreeLimit => 10) == {{5}, {5}, {5}, {10}, {10}})
   elapsedTime assert(degrees sectionRing(I, 6, DegreeLimit => 10) == {{6}, {6}, {6}, {6}})
   elapsedTime assert(degrees sectionRing(I, 7, DegreeLimit => 10) == {{7}, {7}, {7}, {7}, {7}})
+///
+
+///
+  restart
+  needsPackage "SpaceCurves"
+  needsPackage "SectionRing"
+  C = curve(7, 5)
+  R = quotient ideal C;
+  while euler(I = first decompose ideal random(1, R)) != 1 do ()
+  scan(1 .. 9, l -> print degrees sectionRing(I, l, DegreeLimit => 16))
 ///
 
 ///

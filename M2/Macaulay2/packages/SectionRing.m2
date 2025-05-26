@@ -305,21 +305,20 @@ sectionRing Ideal := o -> I -> (
     minimalPresentation(BetterS/BetterRelIdeal)
 )
 
--- TODO:
--- sectionRing CoherentSheaf := L -> (
---     if not instance(variety L, ProjectiveVariety)
---     or rank L != 1 or not isLocallyFree L
---     then error "expected a line bundle on a projective variety";
---     ...
--- )
-
 --
 degreesRing' = memoize(degs -> ZZ( monoid [ Variables => #degs, Degrees => degs ] ))
 exponents Matrix := m -> apply(numcols m, c -> first exponents m_(0,c))
 sections = (deg, I) -> I.cache.sections#deg ??= basis(deg, ideal I_0^deg : I^deg)
 
+sectionRing CoherentSheaf      := o ->  L -> sectionRing(L, 1, o)
 sectionRing(CoherentSheaf, ZZ) := o -> (L, p) -> (
+    -- TODO: also check ampleness?
+    if not instance(variety L, ProjectiveVariety)
+    or rank L != 1 or not isLocallyFree L
+    then error "expected an ample line bundle on a projective variety";
     sectionRing(embedAsIdeal module dual L, p, o))
+
+sectionRing Ideal      := o ->  I -> sectionRing(I, 1, o)
 sectionRing(Ideal, ZZ) := o -> (I, p) -> (
     R := ring I;
     K := coefficientRing R;
@@ -353,7 +352,6 @@ sectionRing(Ideal, ZZ) := o -> (I, p) -> (
     T / ker map(R, T, L) -- 10%
 )
 
-sectionRing Ideal := o -> I -> sectionRing(I, 1, o)
 
 -----------------------------------------------------------------------
 

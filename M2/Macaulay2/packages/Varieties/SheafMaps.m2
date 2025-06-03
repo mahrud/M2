@@ -128,7 +128,7 @@ isWellDefined SheafMap := f -> (
 source  SheafMap := CoherentSheaf => f -> f.source
 target  SheafMap := CoherentSheaf => f -> f.target
 variety SheafMap := Variety       => f -> f.variety
-ring    SheafMap := SheafOfRings  => f -> f.variety.sheaf
+ring    SheafMap := SheafOfRings  => f -> sheaf f.variety
 matrix  SheafMap := Matrix   => o -> f -> f.map
 -- TODO: does this make sense, or should all sheaf maps be degree zero?
 degree  SheafMap := ZZ            => f -> degree f.map

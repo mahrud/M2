@@ -31,6 +31,56 @@ TEST /// -- twisted cubic curve
   assert isIsomorphic(M, N, Strict => true)
 ///
 
+TEST ///
+restart
+  R = ZZ/101[x,y,z,w]/(x^3+y^3+z^3+w^3)
+  F = res(coker vars R, LengthLimit => 4)
+  E = sheaf image F.dd_4
+  elapsedTime assert isLocallyFree E -- ~0.2s
+  elapsedTime prune E -- ~0.03s
+  remove(E.cache, symbol isLocallyFree);
+  remove(E.cache, symbol minimalPresentation => options prune);
+  elapsedTime prune E -- ~0.08s
+///
+
+///
+  -- needsPackage "SchurFunctors"
+  -- schurModule({2*b+2,3}, R^2)
+  needsPackage "PieriMaps"
+  R = QQ[x,y,z,w]
+  X = Proj R
+  b = 2
+
+  I = monomialCurveIdeal(R, {1,2,3})
+  I = minors_2 matrix {{3*x,y,z}, {y, z, 3*w}}
+
+  T = QQ[s,t]
+  p = pieri({2*b+2,3}, {2,2,2}, T)
+
+  f = sum apply(first entries basis(3, T), gens R,
+      (m, g) -> lift(p // m, QQ) * g)
+  f = map(target f, , f)
+
+  E = coker f
+  F = (module I^(b+1)) ** R^{2*b+2}
+  H = Hom(E, F);
+  basis_0 H
+
+  Hom(E, OO_X(2*b+2))
+
+  E = sheaf E
+  F = sheaf F
+  H = Hom(sheaf E, sheaf F)
+
+
+  K = prune ker homomorphism H_0
+  matrix table(toList(0..3), toList(0..10), (i,j) -> rank HH^i K(j))
+  
+  needsPackage "BGG"
+
+///
+
+
 TEST /// -- sheaves on affine and projective varieties
   debug Varieties
   R = QQ[x,y,z]
@@ -109,7 +159,7 @@ prune dual canonicalBundle X === OO_X(3)
 
 -- TODO: ^++ for direct sums
 -- TODO: maps of sheaves?
--- TODO: isLocallyFree, isSmooth
+-- TODO: isSmooth
 
 -- TODO: document creating a ruled surface as Proj(E) with E a
 -- vector bundle on a curve, e.g. to create Hirzebruch surfaces

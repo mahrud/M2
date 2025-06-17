@@ -52,6 +52,8 @@ export {
     "symbolicDefect",
     "symbolicPower",
     "symbolicPowerJoin", 
+    "symbolicReesAlgebra",
+    "symbolicReesIdeal",
     "symbPowerPrimePosChar",
     "symbolicPolyhedron", 
     "waldschmidt"
@@ -251,6 +253,59 @@ symbolicPower(Ideal,ZZ) := Ideal => opts -> (I,n) -> (I.cache.SymbolicPowers ??=
 	    )
 	)
     )
+
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+-- Symbolic Rees algebra function
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+degreesRing' = memoize((rk, degs) -> ZZ( monoid [ Variables => #degs, DegreeRank => rk, Degrees => degs ] ))
+
+-- compare with sectionRing in SectionRings
+symbolicReesIdeal = method(Options => options symbolicPower ++ { DegreeLimit => null })
+symbolicReesIdeal(Ideal, Symbol)      := o -> (I, t) -> I.cache#(symbol symbolicReesIdeal, o) ??= (
+    Rt := (ring I)(monoid[t, Join => false]);
+    symbolicReesIdeal(sub(I, Rt), Rt_0, o))
+symbolicReesIdeal(Ideal, RingElement) := o -> (I, t) -> I.cache#(symbol symbolicReesIdeal, t, o) ??= (
+    R := ring I;
+    r := degreeLength R;
+    K := coefficientRing R;
+
+    bound := o.DegreeLimit ?? 10; -- symbolicReesIdealBound I;
+    if debugLevel > 0 then printerr("computing symbolic powers up to I^(", bound, ")");
+    o = selectKeys(o, key -> key =!= DegreeLimit);
+
+    G := partition_degree flatten for p from 1 to bound list (
+	-- ~15% of the computation occurs here
+	t^p * first entries gens symbolicPower(I, p, o));
+
+    L := map(R^1, R^0, 0);
+    degs := {};
+    for deg in sort keys G do (
+	-- we want remainder _as subalgebras_, so reduce degree by degree
+	B := basis(deg, degreesRing'_r degs); -- 20% of the remainder
+	M := image(matrix { G#deg } % sub(B, L)); -- ~50% of the remainder
+	if M != 0 then (
+	    M = trim M;
+	    if debugLevel > 0 then printerr("generators in degree ", toString deg, ": ", net gens M);
+	    degs |= degrees M;
+	    L |= gens M);
+	);
+    if debugLevel > 0 then printerr("found ", numcols L, " sections in degrees ", degs);
+    ideal L)
+
+
+symbolicReesAlgebra = method(Options => options symbolicReesIdeal)
+symbolicReesAlgebra(Ideal ,RingElement) := o -> (I, t) -> I.cache#(symbol symbolicReesAlgebra, o) ??= (
+    L := symbolicReesIdeal(I, t, o);
+    degs := degrees L;
+    s := symbol s;
+    R := ring I;
+    K := coefficientRing R;
+    T := K(monoid[ s_0 .. s_(#degs - 1), Degrees => degs // gcd flatten degs ]);
+    T / ker map(R, T, gens L))
 
 
 -----------------------------------------------------------

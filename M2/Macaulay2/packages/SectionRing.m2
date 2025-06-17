@@ -144,6 +144,11 @@ sectionRingBound = I -> (
     -- gives a bound for the top degree where new sections may be found
     -- in examples about 75% of the computation is finding this bound
     R := ring I;
+    X := variety R;
+    -- shortcut for curves: use arithmetic genus
+    -- this assumes R is generically Gorenstein
+    -- and I is ample Cartier divisor
+    if dim X == 1 then return 2 * genus X + 1;
     -- To apply the regularity theorem of Mumford, the ample OO_X(D) needs to be globally generated.
     -- Thus if OO_X(D) is not globally generated, we consider F = OO_X(2D), ... , OO_X((l-1)D)
     -- (which correspond to J#1, J#2,...) and F being relatively G-m-regular,
@@ -157,6 +162,7 @@ sectionRing = method(Options => { DegreeLimit => null })
 sectionRing WeilDivisor := o -> D -> sectionRing ideal D
 sectionRing Ideal := o -> I -> (
     -- compute the ring of sections of a semi-ample divisor associated to I
+    -- TODO: be clear that R needs to be a domain
     R := ring I;
     K := coefficientRing R;
 

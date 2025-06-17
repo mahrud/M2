@@ -213,7 +213,7 @@ symbPowerSlow(Ideal,ZZ) := Ideal => (I,n) -> (
 
 
 symbolicPower = method(TypicalValue => Ideal, Options => {UseMinimalPrimes => false,CIPrimes => false})
-symbolicPower(Ideal,ZZ) := Ideal => opts -> (I,n) -> (
+symbolicPower(Ideal,ZZ) := Ideal => opts -> (I,n) -> (I.cache.SymbolicPowers ??= new MutableHashTable)#n ??= (
     R := ring I;
         
     if opts.UseMinimalPrimes then return (minimalPart fastPower(I,n));

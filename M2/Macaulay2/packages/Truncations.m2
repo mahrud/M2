@@ -341,22 +341,19 @@ basisMonomials(List, Module) := opts -> (degs, F) -> (
     -- assume makeDegreeList has already been called on degs
     -- TODO: either figure out a way to use cached results or do this in parallel
     R := ring F; directSum apply(degrees F, a -> concatCols apply(degs, d -> basisMonomials(d - a, R, opts))))
-basisMonomials(List, Ring) := opts -> (d, R) -> (
+basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
     -- inputs: a single multidegree, a graded ring
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
     partialdegs := opts#"partial degrees";
-    if  R#?(symbol basis', d) and partialdegs === null
-    then R#(symbol basis', d)
     -- TODO: we should accept _any_ cached truncation as a hint
-    else if R#?(symbol truncate, d, null) and partialdegs === null
-    then R#(symbol basis', d) = (
+    if R#?(symbol truncate, d, null) and partialdegs === null then (
         -- opportunistically use cached truncation results
         -- TODO: is this always correct? with negative degrees?
         truncgens := R#(symbol truncate, d, null);
 	psrc := selectByDegrees(source truncgens, d, d);
         submatrix(truncgens, , psrc))
-    else R#(symbol basis', d) = (
+    else (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;

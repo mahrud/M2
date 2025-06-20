@@ -369,6 +369,7 @@ basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
         P := basisPolyhedron(A^F, b,
             Exterior => (options R1).SkewCommutative);
         if isCompact P and volume P === 0 then return map(R^1, R^0, 0);
+	-- TODO: somehow pass Limit to ask for a single monomial only?
         H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~40% of computation
         J := leadTerm ideal R1;
         ambR := ring J;

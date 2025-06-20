@@ -335,7 +335,7 @@ truncate(InfiniteNumber,                 Matrix) := lookup(truncate, List,      
 -- add partial multidegree support
 -- ensure the output is a module over the degree 0 of R
 
-basisMonomials = method(Options => {"partial degrees" => null})
+basisMonomials = method(Options => options basis ++ { "partial degrees" => null })
 basisMonomials(List, Module) := opts -> (degs, F) -> (
     -- inputs: a list of multidegrees, a free module
     -- assume makeDegreeList has already been called on degs
@@ -384,15 +384,15 @@ basisMonomials(List, Ring) := opts -> (d, R) -> (
 	psrc = selectByDegrees(source result, d, d);
         submatrix(result, , psrc)))
 
-basis' = method(Options => options basis ++ {"partial degrees" => null})
+basis' = method(Options => options basisMonomials)
 basis'(List, Module) := Matrix => opts -> (degs, M) -> (
     if M == 0 then return map(M, 0, 0);
     if not truncateImplemented(R := ring M) then error "cannot use basis' with this ring type";
     degs = makeDegreeList(degreeLength R, degs, degrees M);
     B := if isFreeModule M then (
-	map(M, , basisMonomials(degs, M, "partial degrees" => opts#"partial degrees")))
+	map(M, , basisMonomials(degs, M, opts)))
     else if not M.?relations then (
-	map(M, , basisMonomials(degs, cover M, "partial degrees" => opts#"partial degrees")))
+	map(M, , basisMonomials(degs, cover M, opts)))
     else inducedMap(M, ,
 	-- TODO: "mingens image" seems silly ...
 	mingens image map(ambient M, ,

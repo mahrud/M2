@@ -15,7 +15,7 @@ newPackage(
             HomePage=>"https://sites.google.com/uw.edu/zengrf/"},
         {Name=>"David Chan",
             Email=>"chandav2@msu.edu",
-            HomePage=>"https://sites.google.com/view/davidchanmath"}
+            HomePage=>"https://sites.google.com/view/davidchanmath"},
         {Name=>"Chenglu Wang",
             Email=>"cwang@math.harvard.edu",
             HomePage=>"https://sites.google.com/uw.edu/zengrf/"},

@@ -19,7 +19,7 @@ newPackage(
         {Name=>"Chenglu Wang",
             Email=>"cwang@math.harvard.edu",
             HomePage=>"https://sites.google.com/uw.edu/zengrf/"},
-	{Name=>"Sasha Zotine",
+        {Name=>"Sasha Zotine",
 	    Email=>"sashahbc@gmail.com",
 	    HomePage=>"https://sites.google.com/view/szotine/home"},
         {Name=>"Add Yourself",

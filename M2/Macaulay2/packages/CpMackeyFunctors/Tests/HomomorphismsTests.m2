@@ -50,3 +50,13 @@ assert( isWellDefined(directSum({f,id_U,f})))
 -- Checking arithmetic of homomorphisms
 h = id_B;
 assert(h + h + h == 3 * h)
+
+-- test isTrivialMackeyFunctor
+assert not (isTrivialMackeyFunctor(makeBurnsideMackeyFunctor(7)));
+assert isTrivialMackeyFunctor(makeZeroMackeyFunctor(3));
+
+-- test isIsomorphism
+assert not (isIsomorphism(realLinearizationMap(7)));
+assert not (isIsomorphism(realLinearizationMap(11)));
+assert isIsomorphism(realLinearizationMap(2));
+assert isIsomorphism(realLinearizationMap(3));

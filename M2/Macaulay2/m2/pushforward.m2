@@ -140,10 +140,25 @@ pushNonLinear := (opts, f, M) -> (
 	-- cache poincare
 	poincare cokernel m1 = hf);
 
+    -- -- this degree map makes symmetricPower homogeneous,
+    -- -- but it may not always be the best option.
+    -- mapbackdeg := d -> take(d, -deglen);
+    -- -- let's at least check it splits f's degree map:
+    -- if any(degrees S, d -> mapbackdeg f.cache.DegreeMap d =!= d)
+    -- then error "pushForward: unexpected degree map of ring map";
+
+    -- error 0;
+    -- newdegs := apply(degrees S, f.cache.DegreeMap);
+    -- -- the result may only be homogeneous over a ring whose degrees are scaled
+    -- if newdegs =!= degrees S then S = newRing(S, Degrees => newdegs);
+    -- -- we should really be *lifting* the result to S along the natural map S ---> G
+    -- mapback := map(S, G, map(S^1, S^n1, 0) | vars S, DegreeMap => mapbackdeg );
+
     mapbackdeg := d -> take(d, -deglen);
     -- that choice of degree map was chosen to make the symmetricPower functor homogeneous, but it doesn't have much
     -- else to recommend it.
     -- we should really be *lifting* the result to S along the natural map S ---> G
+    if errorDepth==1 then error 0;
     S' := newRing(S, Degrees => take(degrees G, n1 - numgens G));
     mapback := map(S', G, map(S'^1, S'^n1, 0) | vars S', DegreeMap => mapbackdeg );
 

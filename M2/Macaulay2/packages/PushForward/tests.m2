@@ -360,6 +360,19 @@ TEST ///
   assert(M1 == M2)
 ///
 
+TEST ///
+-- from Macaulay2Doc/test/symmetricPowers.m2
+restart
+  S = ZZ/101[a,b]
+  errorDepth = 1
+  M = symmetricPower(2,image vars S)
+  assert( M == cokernel map(S^{3:-2},S^{2:-3},{{-b, 0}, {a, -b}, {0, a}}) )
+  assert( isHomogeneous M )
+  M = symmetricPower(3,image vars S)
+  assert( M == cokernel map(S^{{-3},{-3},{-3},{-3}},S^{{-4},{-4},{-4}},{{-b, 0, 0}, {a, -b, 0}, {0, a, -b}, {0, 0, a}}) )
+  assert( isHomogeneous M )
+///
+
 end--
 
 restart

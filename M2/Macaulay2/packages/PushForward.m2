@@ -297,9 +297,10 @@ end--
 
 restart
 uninstallPackage "PushForward"
+
 restart
+check needsPackage "PushForward"
 installPackage "PushForward"
-check PushForward
 viewHelp PushForward
 
 restart

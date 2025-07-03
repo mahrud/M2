@@ -79,3 +79,5 @@ assert( isWellDefined(directSum({f,id_U,f})))
 -- Checking arithmetic of homomorphisms
 h = id_B;
 assert(h + h + h == 3 * h)
+assert(-h == (-1)*h)
+assert(h-h == 0*h)

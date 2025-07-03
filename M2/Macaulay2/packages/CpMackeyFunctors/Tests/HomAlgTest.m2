@@ -12,3 +12,5 @@ d = getResolution(cursedMF,3);
 for i to (length d) - 2 do (
     assert(isTrivialMackeyFunctor(computeHomology(d_i,d_(i+1))))
 )
+
+A = makeBurnsideMackeyFunctor 2

@@ -18,10 +18,10 @@ ker MackeyFunctorHomomorphism := CpMackeyFunctor => options -> F -> (
     T := ker F.FixedMap;
     B := ker F.UnderlyingMap;
 
-    C' := inducedMap(B,B,source(F).Conj);
-    T' := inducedMap(T,B,source(F).Trans);
-    R' := inducedMap(B,T,source(F).Res);
-    p' := source(F).PrimeOrder;
+    C' := inducedMap(B,B,(source F).Conj);
+    T' := inducedMap(T,B,(source F).Trans);
+    R' := inducedMap(B,T,(source F).Res);
+    p' := (source F).PrimeOrder;
 
     makeCpMackeyFunctor(p',R',T',C')
 )
@@ -31,10 +31,10 @@ coker MackeyFunctorHomomorphism := CpMackeyFunctor => F -> (
     T := coker F.FixedMap;
     B := coker F.UnderlyingMap;
 
-    C' := inducedMap(B,B,target(F).Conj);
-    T' := inducedMap(T,B,target(F).Trans);
-    R' := inducedMap(B,T,target(F).Res);
-    p' := target(F).PrimeOrder;
+    C' := inducedMap(B,B,(target F).Conj);
+    T' := inducedMap(T,B,(target F).Trans);
+    R' := inducedMap(B,T,(target F).Res);
+    p' := (target F).PrimeOrder;
 
     makeCpMackeyFunctor(p',R',T',C')
 )

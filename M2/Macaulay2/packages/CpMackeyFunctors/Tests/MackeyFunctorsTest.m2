@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 -- Test if the Zero Mackey functor can be constructed and is well-defined
 R:=matrix({});
@@ -41,3 +41,5 @@ assert(M.Conj == C);
 assert(not isCohomological makeBurnsideMackeyFunctor 7);
 assert(isCohomological makeFixedPointMackeyFunctor(2,id_(ZZ^1)));
 assert(isCohomological makeUnderlyingFreeMackeyFunctor 5);
+
+///

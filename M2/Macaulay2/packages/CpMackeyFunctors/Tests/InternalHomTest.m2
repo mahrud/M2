@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 p := 5;
 A := makeBurnsideMackeyFunctor p;
@@ -10,3 +10,5 @@ assert(rank (InternalHom(A,B)).Fixed == rank Hom(A, B))
 
 assert(rank (InternalHom(B,RO)).Underlying == rank (B ** RO).Underlying)
 assert(rank (InternalHom(B,RO)).Fixed == rank (B ** RO).Fixed)
+
+///

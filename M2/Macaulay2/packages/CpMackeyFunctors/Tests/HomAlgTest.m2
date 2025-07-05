@@ -1,7 +1,6 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 p = 2;
-
 F = (cokernel matrix {{84}}) ++ (cokernel matrix {{28}})
 U = (cokernel matrix {{2}}) ++ module ZZ
 r = map(U,F, matrix {{1,1}, {0,0}})
@@ -29,3 +28,5 @@ M = makeRandomCpMackeyFunctor p;
 assert(prune Ext^0(A,A) == prune InternalHom(A,A))
 assert(prune Ext^0(A,cursedMF) == prune InternalHom(A,cursedMF))
 assert(prune Ext^0(M,cursedMF) == prune InternalHom(M,cursedMF))
+
+///

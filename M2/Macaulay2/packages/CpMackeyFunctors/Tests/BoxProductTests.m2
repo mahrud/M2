@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 needsPackage "Isomorphism"
 
 -- Verify that the dimensions match up when box product with Burnside
@@ -35,3 +35,5 @@ for i to 5 do (
     assert (M**timesn == map(M**A,M**A,n));
     assert (timesn**M == map(A**M,A**M,n));
 );
+
+///

@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 -- Make sure we can make a random Cp Mackey functor with the numbers of generators and relations specified
 assert (class(makeRandomCpMackeyFunctor(5,{4,3,2,6})) === CpMackeyFunctor)
@@ -27,3 +27,5 @@ g = makeRandomMackeyFunctorHomomorphism(N,P);
 assert (class(g*f) === MackeyFunctorHomomorphism)
 assert (source(g*f) == M)
 assert (target(g*f) == P)
+
+///

@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 F = (cokernel matrix {{4}})
 U = (cokernel matrix {{2}})
@@ -14,3 +14,5 @@ for i to (length d) - 2 do (
     comp = d#i * d#(i+1);
     assert(comp.UnderlyingMap == 0 and comp.FixedMap == 0)
 )
+
+///

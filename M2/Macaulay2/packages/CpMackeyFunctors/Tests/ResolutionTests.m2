@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 F = (cokernel matrix {{84}}) ++ (cokernel matrix {{28}})
 U = (cokernel matrix {{2}}) ++ module ZZ
@@ -14,4 +14,4 @@ for i to (length d) - 2 do (
     assert(comp.UnderlyingMap == 0 and comp.FixedMap == 0)
 )
 
-
+///

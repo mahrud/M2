@@ -1,3 +1,4 @@
+TEST ///
 needsPackage "CpMackeyFunctors"
 
 -- Check that the identity has trivial kernel and cokernel.
@@ -21,3 +22,4 @@ assert( presentation C.Underlying == matrix {{2},{2}} )
 -- Checking that direct sums are well-defined.
 assert( class(B ++ U)  === CpMackeyFunctor)
 assert( class(directSum {B,B,B,B}) === CpMackeyFunctor )
+///

@@ -162,6 +162,17 @@ load "./CpMackeyFunctors/Documentation/ResolutionsDoc.m2"
 ----------------------------
 ----------------------------
 
--- load "./tests/HelpersTest.m2"
--- load "./tests/MackeyFunctorsTest.m2"
---load "./tests/CohomologicalTest.m2"
+load "./CpMackeyFunctors/Tests/AbelianCategoryTest.m2"
+
+load "./CpMackeyFunctors/Tests/BoxProductTests.m2"
+load "./CpMackeyFunctors/Tests/CohomologicalTest.m2"
+load "./CpMackeyFunctors/Tests/ConstructorsTest.m2"
+load "./CpMackeyFunctors/Tests/HomAlgTest.m2"
+load "./CpMackeyFunctors/Tests/HomGroupTest.m2"
+load "./CpMackeyFunctors/Tests/HomomorphismsTests.m2"
+load "./CpMackeyFunctors/Tests/InternalHomTest.m2"
+load "./CpMackeyFunctors/Tests/MackeyFunctorsTest.m2"
+load "./CpMackeyFunctors/Tests/RandomCpMackeyFunctorTests.m2"
+load "./CpMackeyFunctors/Tests/ResolutionTests.m2"
+
+end

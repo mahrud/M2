@@ -1,4 +1,4 @@
-needsPackage "CpMackeyFunctors"
+TEST ///
 
 -- verify the zero map to the zero Mackey functor is well-defined
 
@@ -23,6 +23,7 @@ assert (id_(A) * id_(A) === id_(A))
 
 assert (class ( complexLinearizationMap(11) * id_(A)) === MackeyFunctorHomomorphism);
 
+
 -- test isTrivialMackeyFunctor
 assert not (isTrivialMackeyFunctor(makeBurnsideMackeyFunctor(7)));
 assert isTrivialMackeyFunctor(makeZeroMackeyFunctor(3));
@@ -44,3 +45,5 @@ h = id_A;
 assert(h + h + h == 3 * h)
 assert(-h == (-1)*h)
 assert(h-h == 0*h)
+
+///

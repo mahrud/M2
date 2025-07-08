@@ -29,12 +29,10 @@ newPackage(
             Email=>"sashahbc@gmail.com",
             HomePage=>"https://sites.google.com/view/szotine/home"}
     },
-    Headline=>"for working with Mackey functors for cyclic groups of prime order",
-    Keywords=>{"Homotopy Theory", "Homological Algebra", "Group Theory", "Equivariant Cohomology"},
-    PackageImports=>{"OldChainComplexes"},
-    -- OldChainComplexes needed to overload `res`
-    -- One day: export Complexes and use that framework for computing derived functors
-    PackageExports=>{},
+    Headline => "homological algebra with Mackey functors for cyclic groups of prime order",
+    Keywords=>{"Homotopy Theory", "Equivariant Cohomology"},
+    PackageImports=>{"Complexes"},
+    -- Complexes needed to overload `res` (alias for `freeResolution`)
     AuxiliaryFiles => true,
 )
 

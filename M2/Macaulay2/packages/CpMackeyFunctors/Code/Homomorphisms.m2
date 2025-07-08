@@ -50,12 +50,7 @@ map(CpMackeyFunctor, CpMackeyFunctor, Matrix, Matrix) := MackeyFunctorHomomorphi
         symbol FixedMap =>  map(N.Fixed,M.Fixed,f),
         symbol cache => new CacheTable
         };
-    if isWellDefined F then (
-        return F
-    )
-    else (
-        error "Mackey Functor homomorphism is not well-defined";
-	)
+    if isWellDefined F then F else error "Mackey Functor homomorphism is not well-defined";
 )
 
 -- Allows you construct the zero map, and also k*id

@@ -29,8 +29,6 @@ newPackage(
             Email=>"sashahbc@gmail.com",
             HomePage=>"https://sites.google.com/view/szotine/home"}
     },
-    HomePage=>"",   -- this is needed to avoid the following error:
-                    -- Warning: The "CpMackeyFunctors" package provides insufficient citation data: howpublished.
     Headline=>"for working with Mackey functors for cyclic groups of prime order",
     Keywords=>{"Homotopy Theory", "Homological Algebra", "Group Theory", "Equivariant Cohomology"},
     PackageImports=>{"OldChainComplexes"},

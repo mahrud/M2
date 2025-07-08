@@ -1870,7 +1870,12 @@ document { Key => "loadedFiles",
      PARA { "After each source file is successfully loaded, the full path to the file is stored in the hash table ", TO "loadedFiles", ".  It is stored as the
 	  value, with the corresponding key being a small integer, consecutively assigned, starting at 0."
 	  },
-     EXAMPLE "peek loadedFiles"}
+     EXAMPLE lines ///
+	loadedFiles#0
+        #loadedFiles
+     ///,
+     --SeeAlso => { "filesLoaded" },
+     }
 
 document { Key => "homeDirectory",
      Headline => "the home directory of the user",

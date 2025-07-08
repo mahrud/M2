@@ -43,7 +43,7 @@ doc ///
                 (TO2("==","equality"), " of two Mackey functors, via ", TT"M==N"),
                 ("the ", TO2(boxProduct,"box product"), " of two Mackey functors, via  ", TT "M**N"),
                 ("the ", TO2(directSum,"direct sum")," of two Mackey functors, as ", TT"M++N"),
-                ("the ", TO2(InternalHom,"internal hom"), " of two Mackey functors")
+                ("the ", TO2(internalHom,"internal hom"), " of two Mackey functors")
             }@
     SeeAlso
         "background on Mackey functors"

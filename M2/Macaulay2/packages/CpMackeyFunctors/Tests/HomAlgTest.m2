@@ -23,10 +23,9 @@ for i from 1 to 5 do (
 )
 
 -- testing Ext
--- check that Ext^0 is InternalHom
+-- check that Ext^0 is internalHom
 M = makeRandomCpMackeyFunctor p;
-assert(prune Ext^0(A,A) == prune InternalHom(A,A))
-assert(prune Ext^0(A,cursedMF) == prune InternalHom(A,cursedMF))
-assert(prune Ext^0(M,cursedMF) == prune InternalHom(M,cursedMF))
-
+assert(prune Ext^0(A,A) == prune internalHom(A,A))
+assert(prune Ext^0(A,cursedMF) == prune internalHom(A,cursedMF))
+assert(prune Ext^0(M,cursedMF) == prune internalHom(M,cursedMF))
 ///

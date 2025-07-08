@@ -93,7 +93,7 @@ load "./CpMackeyFunctors/Code/AbelianCategory.m2"
 load "./CpMackeyFunctors/Code/HomGroup.m2"
 load "./CpMackeyFunctors/Code/InternalHom.m2"
 export {
-    "InternalHom"
+    "internalHom"
 }
 
 load "./CpMackeyFunctors/Code/BoxProduct.m2"

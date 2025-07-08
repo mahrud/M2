@@ -12,7 +12,7 @@ doc ///
             @UL{
                 ("free ", TO2((resolution,CpMackeyFunctor,ZZ),"resolutions"), " of ", TEX"$C_p$","-Mackey functors"),
                 (TO2((Ext,ZZ,CpMackeyFunctor,CpMackeyFunctor),"Ext"), " and ", TO2((Tor,ZZ,CpMackeyFunctor,CpMackeyFunctor),"Tor"), " computations for (cohomological) Mackey functors"),
-                ("the ", TO2(boxProduct,"box product"), " and ", TO2(InternalHom,"internal hom")),
+                ("the ", TO2(boxProduct,"box product"), " and ", TO2(internalHom,"internal hom")),
                 (TO2("constructing examples of Mackey functors", "constructions")," of various common examples of Mackey functors"),
                 ("the ability to generate ", TO2(makeRandomCpMackeyFunctor,"random Mackey functors")," over ", TEX"$C_p$"),
                 (TO2("explicit applications of the CpMackeyFunctors package","explicit examples")," from the equivariant algebra literature")

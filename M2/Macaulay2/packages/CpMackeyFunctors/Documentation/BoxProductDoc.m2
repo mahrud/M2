@@ -28,14 +28,14 @@ doc ///
                 (BOLD "conjugation:"," defined by ", TEX"$c\\otimes c$", ".")
             }@
 
-            The box product makes $\text{Mack}_{C_p}$ into a symmetric monoidal category, which is {\em closed symmetric monoidal} due to the @TO2((InternalHom, CpMackeyFunctor, CpMackeyFunctor),"internal hom")@.
+            The box product makes $\text{Mack}_{C_p}$ into a symmetric monoidal category, which is {\em closed symmetric monoidal} due to the @TO2((internalHom, CpMackeyFunctor, CpMackeyFunctor),"internal hom")@.
 
         Example
             M= makeUnderlyingFreeMackeyFunctor(2);
             M**M
     SeeAlso
         "the abelian category of Mackey functors"
-        (InternalHom, CpMackeyFunctor, CpMackeyFunctor)
+        (internalHom, CpMackeyFunctor, CpMackeyFunctor)
 ///
 
 doc ///

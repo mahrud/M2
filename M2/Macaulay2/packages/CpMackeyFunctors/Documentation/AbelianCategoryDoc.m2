@@ -40,7 +40,7 @@ doc ///
 
             When a resolution is computed, this is @TO2(cache,"cached")@ in the Mackey functor itself, and can be accessed as @TT("M.ProjRes")@. This makes computations less costly, and moreover the cache helps us expand resolutions. For instance if we have already computed @TT("res(M,10)")@ and want to compute @TT("res(M,20)")@, it will access the cached 10-term resolution to shorten the computation for the 20-term resolution.
 
-            {\bf The monoidal structure:} The category $\text{Mack}_G$ furthermore has a {\em symmetric monoidal structure}, given by the @TO2(boxProduct,"box product")@ of two Mackey functors. Taking the box product admits a right adjoint, in other words there is an @TO2(InternalHom,"internal hom")@, which is a functor
+            {\bf The monoidal structure:} The category $\text{Mack}_G$ furthermore has a {\em symmetric monoidal structure}, given by the @TO2(boxProduct,"box product")@ of two Mackey functors. Taking the box product admits a right adjoint, in other words there is an @TO2(internalHom,"internal hom")@, which is a functor
 
             \[\underline{\text{Hom}} \colon \text{Mack}_G^{\text{op}} \times \text{Mack}_G \to \text{Mack}_G,\]
 

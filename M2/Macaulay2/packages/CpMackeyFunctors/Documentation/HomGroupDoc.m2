@@ -27,7 +27,7 @@ Node
         MackeyFunctorHomomorphism
         (Hom, CpMackeyFunctor, MackeyFunctorHomomorphism)
         (Hom, MackeyFunctorHomomorphism, CpMackeyFunctor)
-        InternalHom
+        internalHom
 Node
     Key
         (Hom, CpMackeyFunctor, MackeyFunctorHomomorphism)
@@ -56,5 +56,5 @@ Node
         "the abelian category of Mackey functors"
         MackeyFunctorHomomorphism
         (Hom, CpMackeyFunctor, CpMackeyFunctor)
-        InternalHom
+        internalHom
 ///

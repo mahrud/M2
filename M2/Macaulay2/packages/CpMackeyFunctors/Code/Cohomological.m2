@@ -84,8 +84,8 @@ ExtCoh(ZZ,CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (i,M,N) -> (
     d := resolutionCohomological(M,i+1);
     if i == 0 then (
         -- it's a cochain complex, so ker instead of coker
-        ker InternalHom(d_1, N)
+        ker internalHom(d_1, N)
     ) else (
-        computeHomology(InternalHom(d_(i+1), N),InternalHom(d_i, N))
+        computeHomology(internalHom(d_(i+1), N),internalHom(d_i, N))
     )
 )

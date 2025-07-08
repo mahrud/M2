@@ -1,7 +1,7 @@
-InternalHom = method()
+internalHom = method()
 
-InternalHom (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) -> (
-    if not M.PrimeOrder === N.PrimeOrder then error "InternalHom: CpMackeyFunctors must have the same prime";
+internalHom (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) -> (
+    if not M.PrimeOrder === N.PrimeOrder then error "internalHom: CpMackeyFunctors must have the same prime";
     p := M.PrimeOrder;
     A := makeBurnsideMackeyFunctor p;
     B := makeUnderlyingFreeMackeyFunctor p;
@@ -21,26 +21,25 @@ InternalHom (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) -> (
     )
 )
 
-InternalHom (CpMackeyFunctor, MackeyFunctorHomomorphism) := MackeyFunctorHomomorphism => (M,f) -> (
-    if not M.PrimeOrder === (source f).PrimeOrder then error "InternalHom: Mackey functors are over different primes";
+internalHom (CpMackeyFunctor, MackeyFunctorHomomorphism) := MackeyFunctorHomomorphism => (M,f) -> (
+    if not M.PrimeOrder === (source f).PrimeOrder then error "internalHom: Mackey functors are over different primes";
     p := M.PrimeOrder;
     A := makeBurnsideMackeyFunctor p;
     B := makeUnderlyingFreeMackeyFunctor p;
-    src := InternalHom(M, source f);
-    tgt := InternalHom(M, target f);
+    src := internalHom(M, source f);
+    tgt := internalHom(M, target f);
     underlyingMap := Hom(B ** M, f);
     fixedMap := Hom(A ** M, f);
     map(tgt, src, underlyingMap, fixedMap)
 )
 
--- InternalHom (MackeyFunctorHomomorphism, CpMackeyFunctor) := MackeyFunctorHomomorphism => (f,N) -> (
-InternalHom (MackeyFunctorHomomorphism, CpMackeyFunctor) := (f,N) -> (
-    if not N.PrimeOrder === (source f).PrimeOrder then error "InternalHom: Mackey functors are over different primes";
+internalHom (MackeyFunctorHomomorphism, CpMackeyFunctor) := (f,N) -> (
+    if not N.PrimeOrder === (source f).PrimeOrder then error "internalHom: Mackey functors are over different primes";
     p := N.PrimeOrder;
     A := makeBurnsideMackeyFunctor p;
     B := makeUnderlyingFreeMackeyFunctor p;
-    src := InternalHom(target f, N);
-    tgt := InternalHom(source f, N);
+    src := internalHom(target f, N);
+    tgt := internalHom(source f, N);
     underlyingMap := Hom(B ** f, N);
     fixedMap := Hom(A ** f, N);
     map(tgt, src, underlyingMap, fixedMap)

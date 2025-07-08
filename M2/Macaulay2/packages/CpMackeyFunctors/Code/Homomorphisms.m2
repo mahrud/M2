@@ -126,13 +126,8 @@ inducedMap(CpMackeyFunctor, CpMackeyFunctor, Matrix, Matrix) := MackeyFunctorHom
     map(N,M,inducedMap(N.Underlying, M.Underlying, u), inducedMap(N.Fixed, M.Fixed, f))
 )
 
-source(MackeyFunctorHomomorphism) := CpMackeyFunctor => F -> (
-    return F.Domain
-)
-
-target(MackeyFunctorHomomorphism) := CpMackeyFunctor => F -> (
-    return F.Codomain
-)
+source MackeyFunctorHomomorphism := CpMackeyFunctor => F -> F.Domain
+target MackeyFunctorHomomorphism := CpMackeyFunctor => F -> F.Codomain
 
 CpMackeyFunctor#id = X -> map(X, X, id_(X.Underlying), id_(X.Fixed))
 

@@ -7,7 +7,7 @@
 -- Create the fixed module of the box product *before* modding out by the equivalence relation
 genFixedModuleBoxProduct = method()
 genFixedModuleBoxProduct (CpMackeyFunctor,CpMackeyFunctor) := Module => (M,N) ->(
-    return (M.Fixed ** N.Fixed) ++ (M.Underlying ** N.Underlying)
+    (M.Fixed ** N.Fixed) ++ (M.Underlying ** N.Underlying)
 )
 
 -- Create the syzygy module

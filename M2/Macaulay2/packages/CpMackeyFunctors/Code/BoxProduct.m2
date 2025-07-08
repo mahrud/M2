@@ -6,23 +6,18 @@
 
 -- Create the fixed module of the box product *before* modding out by the equivalence relation
 genFixedModuleBoxProduct = method()
-genFixedModuleBoxProduct (CpMackeyFunctor,CpMackeyFunctor) := Module => (M,N) ->(
-    (M.Fixed ** N.Fixed) ++ (M.Underlying ** N.Underlying)
-)
+genFixedModuleBoxProduct (CpMackeyFunctor,CpMackeyFunctor) := Module => (M,N) -> (M.Fixed ** N.Fixed) ++ (M.Underlying ** N.Underlying)
 
 -- Create the syzygy module
 syzFixedModuleBoxProduct = method()
-syzFixedModuleBoxProduct (CpMackeyFunctor,CpMackeyFunctor) := Module => (M,N) ->(
-    return (M.Underlying ** N.Fixed) ++ (M.Fixed ** N.Underlying) ++ (M.Underlying ** N.Underlying)
-)
+syzFixedModuleBoxProduct (CpMackeyFunctor,CpMackeyFunctor) := Module => (M,N) -> (M.Underlying ** N.Fixed) ++ (M.Fixed ** N.Underlying) ++ (M.Underlying ** N.Underlying)
 
 -- Create the map from the first summand of the syzygy module
 boxProductRelationOne = method()
 boxProductRelationOne (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
     outputMapOne := M.Trans ** id_(N.Fixed);
     outputMapTwo := id_(M.Underlying) ** N.Res;
-    return matrix({{outputMapOne},{-outputMapTwo}})
-
+    matrix({{outputMapOne},{-outputMapTwo}})
 )
 
 -- Create the map from the second summand of the syzygy module
@@ -30,8 +25,7 @@ boxProductRelationTwo = method()
 boxProductRelationTwo (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
     outputMapOne := id_(M.Fixed) ** N.Trans;
     outputMapTwo := M.Res ** id_(N.Underlying);
-    return matrix({{outputMapOne},{-outputMapTwo}})
-
+    matrix({{outputMapOne},{-outputMapTwo}})
 )
 
 -- Create the map from the third summand of the syzygy module
@@ -44,60 +38,47 @@ boxProductRelationThree (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
     outputMapOne := map(targetOfZero, sourceOfZero,0);
 
     outputMapTwo := M.Conj ** N.Conj - id_(M.Underlying) ** id_(N.Underlying);
-    return matrix({{outputMapOne},{-outputMapTwo}})
+    matrix({{outputMapOne},{-outputMapTwo}})
 )
 
 -- Create the map from the entire syzygy module generating the relation
 totalBoxProductRelation = method()
-totalBoxProductRelation (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
-    return boxProductRelationOne(M,N) | boxProductRelationTwo(M,N) | boxProductRelationThree(M,N)
-)
+totalBoxProductRelation (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) -> boxProductRelationOne(M,N) | boxProductRelationTwo(M,N) | boxProductRelationThree(M,N)
 
 -- Obtain the fixed module for the box product
 boxProductFixedModule = method()
-boxProductFixedModule (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
-    coker(totalBoxProductRelation(M,N))
-)
+boxProductFixedModule (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) -> coker(totalBoxProductRelation(M,N))
 
 -- Obtain the underlying module for the box product
 boxProductUnderlyingModule = method()
-boxProductUnderlyingModule (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
-    M.Underlying ** N.Underlying
-)
+boxProductUnderlyingModule (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) -> M.Underlying ** N.Underlying
 
 -- Define the transfer map for box products
 boxProductTransfer = method()
-boxProductTransfer (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
+boxProductTransfer (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) -> (
     -- Look at the transfer valued in the generators module before modding out by relations
     mapBeforeInducing := map(M.Fixed ** N.Fixed, M.Underlying ** N.Underlying,0) || id_(M.Underlying)** id_(N.Underlying);
-
-    return inducedMap(boxProductFixedModule(M,N),boxProductUnderlyingModule(M,N), mapBeforeInducing)
+    inducedMap(boxProductFixedModule(M,N),boxProductUnderlyingModule(M,N), mapBeforeInducing)
 )
 
 -- Define the restriction map for box products
 boxProductRestriction = method()
 boxProductRestriction (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
-
     mapOne:= M.Res ** N.Res;
-
     p := M.PrimeOrder;
-
     mapTwo:= sum for j from 0 to p-1 list(
         ((M.Conj)^j) ** ((N.Conj)^j)
     );
-
-    return inducedMap(boxProductUnderlyingModule(M,N),boxProductFixedModule(M,N),mapOne | mapTwo)
+    inducedMap(boxProductUnderlyingModule(M,N),boxProductFixedModule(M,N),mapOne | mapTwo)
 )
 
 -- Define the conjugation map for box products
 boxProductConjugation = method()
-boxProductConjugation (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) ->(
-    M.Conj ** N.Conj
-)
+boxProductConjugation (CpMackeyFunctor,CpMackeyFunctor) := Matrix => (M,N) -> M.Conj ** N.Conj
 
 -- Define the box product!
 boxProduct = method()
-boxProduct (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) ->(
+boxProduct (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) -> (
     if M.PrimeOrder != N.PrimeOrder then error("-- Primes not the same (incompatible)");
     result := makeCpMackeyFunctor(M.PrimeOrder,boxProductRestriction(M,N), boxProductTransfer(M,N),boxProductConjugation(M,N));
     result.cache.formation = FunctionApplication{boxProduct, (M, N)};
@@ -107,22 +88,18 @@ boxProduct (CpMackeyFunctor,CpMackeyFunctor) := CpMackeyFunctor => (M,N) ->(
 -- Get induced maps on box products
 boxProduct (CpMackeyFunctor, MackeyFunctorHomomorphism) := MackeyFunctorHomomorphism => (M,f) -> (
     underlyingReturn := M.Underlying ** f.UnderlyingMap;
-
     fixedSource := coker(totalBoxProductRelation(M, source f));
     fixedTarget := coker(totalBoxProductRelation(M, target f));
     fixedReturn := inducedMap(fixedTarget, fixedSource, M.Fixed ** f.FixedMap ++ M.Underlying ** f.UnderlyingMap);
-
-    return map(boxProduct(M, f.Codomain),boxProduct(M, f.Domain), underlyingReturn, fixedReturn);
+    map(boxProduct(M, f.Codomain),boxProduct(M, f.Domain), underlyingReturn, fixedReturn)
 )
 
 boxProduct (MackeyFunctorHomomorphism, CpMackeyFunctor) := MackeyFunctorHomomorphism => (f,M) -> (
     underlyingReturn := f.UnderlyingMap ** M.Underlying;
-
     fixedSource := coker(totalBoxProductRelation(source f, M));
     fixedTarget := coker(totalBoxProductRelation(target f, M));
     fixedReturn := inducedMap(fixedTarget, fixedSource, f.FixedMap ** M.Fixed ++ f.UnderlyingMap ** M.Underlying);
-
-    return map(boxProduct(f.Codomain, M),boxProduct(f.Domain, M), underlyingReturn, fixedReturn);
+    map(boxProduct(f.Codomain, M),boxProduct(f.Domain, M), underlyingReturn, fixedReturn)
 )
 
 -- Alternative notations for box product

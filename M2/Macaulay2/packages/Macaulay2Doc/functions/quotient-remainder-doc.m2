@@ -152,8 +152,8 @@ Node
       reduction of @TT "f"@ modulo a Gröbner basis for the image of @TT "dual g"@.
       See @TO quotient@ for the dual notion.
 
-      If the remainder @TT "f - h*g"@ is zero, then the quotient @TT "g\\f"@
-      satisfies the equation @TT "f === (g\\f) * g"@. Otherwise, the equation
+      If the remainder @TT "f - h*g"@ is zero, then the quotient @TT "g\\\\f"@
+      satisfies the equation @TT "f === (g\\\\f) * g"@. Otherwise, the equation
       @TT "h * g + r === f"@ will hold, where @TT "r"@ is the map provided by
       @TO remainder'@.
     Example

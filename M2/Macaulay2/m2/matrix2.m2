@@ -396,6 +396,7 @@ Matrix \\ Matrix := Matrix => (g, f) -> quotient'(f, g)
 quotient(Matrix, Matrix) := Matrix => opts -> (f, g) -> (
     -- given f: A-->C and g: B-->C, then find (f//g): A-->B such that g o (f//g) + r = f
     if target f != target g then error "quotient: expected maps with the same target";
+    if f == 0 then return map(source g, source f, 0);
     c := runHooks((quotient, Matrix, Matrix), (opts, f, g), Strategy => opts.Strategy);
     if c =!= null then c else error "quotient: no method implemented for this type of input")
 
@@ -408,11 +409,19 @@ addHook((quotient, Matrix, Matrix), Strategy => Default,
 	    MinimalGenerators => opts.MinimalGenerators };
 	map(source g, source f, homomorphism(homomorphism'(f, opts) // Hom(source f, g, opts)))))
 
--- FIXME: this is still causing unreasonable slow downs, e.g. for (large m) // (scalar)
-addHook((quotient, Matrix, Matrix), Strategy => "Reflexive", (opts, f, g) -> if f == 0 or isFreeModule source f then (
-     L := source f;	     -- result may not be well-defined if L is not free
+addHook((quotient, Matrix, Matrix), Strategy => "Reflexive", (opts, f, g) -> (
+     L := source f;
      M := target f;
      N := source g;
+     -- TODO: should this be a separate strategy?
+     if not isFreeModule L then return (
+	 -- result may not be well-defined if L is not free,
+	 -- unless the composition h * syz p is zero
+	 p := coverMap L;
+	 h := quotient(f * p, g, Strategy => "Reflexive");
+	 -- TODO: does h * gens ker p != 0 suffice?
+	 if h * inducedMap(source p, kernel p) == 0 then map(N, L, h));
+     --
      if M.?generators then (
 	  M = cokernel presentation M;	    -- this doesn't change the cover
 	  );

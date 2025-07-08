@@ -1,22 +1,22 @@
 doc ///
 Node
     Key
-        resolution
-        (resolution,CpMackeyFunctor, ZZ)
-        [resolution,DegreeLimit]
-        [resolution,FastNonminimal]
-        [resolution,HardDegreeLimit]
-        [resolution,LengthLimit]
-        [resolution,PairLimit]
-        [resolution,ParallelizeByDegree]
-        [resolution,SortStrategy]
-        [resolution,StopBeforeComputation]
-        [resolution,Strategy]
-        [resolution,SyzygyLimit]
+        (res,CpMackeyFunctor,ZZ)
+        (resolution,CpMackeyFunctor,ZZ)
+        (freeResolution,CpMackeyFunctor, ZZ)
+        [freeResolution,LengthLimit]
+        [freeResolution,DegreeLimit]
+        [freeResolution,HardDegreeLimit]
+        [freeResolution,PairLimit]
+        [freeResolution,SortStrategy]
+        [freeResolution,StopBeforeComputation]
+        [freeResolution,Strategy]
+        [freeResolution,SyzygyLimit]
+        [freeResolution,ParallelizeByDegree]
     Headline
         constructs a free Mackey functor resolution of specified length
     Usage
-        resolution(M,n)
+        res(M,n)
     Inputs
         M : CpMackeyFunctor
             a Mackey functor to be resolved
@@ -30,7 +30,7 @@ Node
             This method returns a free resolution of the Mackey functor $M$ up to the $n$th term.  The resolution is implemented as a list of Mackey functor homomorphisms.
         Example
             M = makeZeroOnUnderlyingMackeyFunctor(3,ZZ^1);
-            resolution(M,3)
+            res(M,3)
     Caveat
         The optional inputs listed on this page are coming from overloading the @TO("OldChainComplexes :: resolution")@ method, and don't have any effect on computing resolutions for Mackey functors.
     SeeAlso

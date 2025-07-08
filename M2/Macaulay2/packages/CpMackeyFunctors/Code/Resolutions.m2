@@ -9,7 +9,7 @@ makeFreeModuleSurjection(CpMackeyFunctor) := MackeyFunctorHomomorphism => (M) ->
 )
 
 -- get resolution up to F_(n-1) <-- F_n
-resolution(CpMackeyFunctor,ZZ) := List => opts -> (M,n) -> (
+freeResolution(CpMackeyFunctor,ZZ) := List => opts -> (M,n) -> (
     if n < 0 then return {};
 
     -- check whether existing resolution exists

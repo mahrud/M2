@@ -9,7 +9,6 @@ makeUniversalMapFixedCohomological(CpMackeyFunctor,Matrix) := MackeyFunctorHomom
     if n == 0 then return map(M, makeZeroMackeyFunctor(M.PrimeOrder), 0);
     L := {for i to n-1 list (
         X := inducedMap(M.Fixed, , matrix x_i);
-        -- TODO: should we error check element containment which is seemingly not implemented?
         p := M.PrimeOrder;
         Z := makeFixedPointMackeyFunctor(p,id_(ZZ^1));
         U := M.Res * X;

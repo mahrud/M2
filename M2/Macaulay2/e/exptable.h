@@ -3,6 +3,8 @@
 /* Implementation of a hashtable [exponent vectors, of fixed length] --> unsigned long int. */
 /* The implementation uses table.{h,c}, which was written by David R. Hanson */
 
+// TODO: replace with std::unordered_map
+
 typedef int * exponent;
 typedef struct exponent_table exponent_table;
 

@@ -4,6 +4,7 @@
 
 #include "newdelete.hpp"
 
+// TODO: replace with a templated tagged varpower struct
 class int_bag : public our_new_delete
 {
   union

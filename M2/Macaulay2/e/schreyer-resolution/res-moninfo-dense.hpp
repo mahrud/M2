@@ -397,18 +397,22 @@ class ResMonoidDense
   int (ResMonoidDense::*compare)(res_const_packed_monomial m, res_const_packed_monomial n) const;
 #endif
 
+  // TODO: remove this
   void variable_as_vp(int v, res_varpower_monomial result) const
   {
-    result[0] = 1;
+    result[0] = 1; // ATTN
     result[1] = v;
     result[2] = 1;
   }
 
+  // TODO: remove this
   int degree_of_vp(res_const_varpower_monomial a) const
   {
     return static_cast<int>(res_varpower_monomials::weight(a, mVarDegrees));
   }
 
+  // TODO: should this be merged elsewhere?
+  // TODO: return the consumed size
   void quotient_as_vp(res_const_packed_monomial a,
                       res_const_packed_monomial b,
                       res_varpower_monomial result) const

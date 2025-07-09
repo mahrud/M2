@@ -46,6 +46,10 @@ add_subdirectory(m2) # rename to Core?
 add_subdirectory(packages)
 add_subdirectory(editors)
 
+# uncomment when developing
+#set_target_properties(M2-engine PROPERTIES C_INCLUDE_WHAT_YOU_USE   "${IWYU};--transitive_includes_only")
+#set_target_properties(M2-engine PROPERTIES CXX_INCLUDE_WHAT_YOU_USE "${IWYU};--transitive_includes_only")
+
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()

@@ -382,7 +382,9 @@ degreesMonoid List := memoize lookup(degreesMonoid, List)
 -- findHeft
 -----------------------------------------------------------------------------
 
+-- TODO: this should check something stronger now that the grading group is arbitrary
 checkHeft = (degs, heftvec) -> all(degs, d -> sum(d, heftvec, times) > 0)
+
 -- vector that zeros the torsion part of the degrees
 -- TODO: what should happen when there are zero-divisors that are not torsion?
 -- compare with freeComponents and torsionComponents in basis.m2
@@ -583,6 +585,7 @@ newMonomialOrder = (ordering, monsize, inverses, weights, heftdegs, nvars) -> (
     if not isListOfIntegers heftdegs then error "expected a list of integers";
     if not instance(ordering, List)  then ordering = {ordering};
     if instance(monsize, ZZ)         then ordering = prepend(MonomialSize => monsize, ordering);
+    -- combine these two
     weights = processWeights(nvars, weights);
     ordering = join(weights / (v -> Weights => v), ordering);
     opts := new MutableHashTable from {
@@ -743,6 +746,8 @@ newMonoid = opts -> (
 	M.degreesRing = if opts.Heft =!= null then degreesRing heftvec else degreesRing degrk; -* shouldn't really be needed *-
 	M.degreesMonoid = monoid M.degreesRing;
 	rawMonoid(
+	    -- TODO: fix the order
+	    -- TODO: also pass heftdegrees
 	    M.RawMonomialOrdering,
 	    raw M.degreesRing,
 	    toSequence M.generators / toString,

@@ -150,6 +150,7 @@ class ExponentList
   static void mult(ConstExponents a, ConstExponents b, Vector& result);
   // compute the quotient a:b
   static void quotient(ConstExponents a, ConstExponents b, Vector& result);
+  static void quotient(ConstExponents a, ConstExponents b, Exponents result);
   static void power(ConstExponents a, Exponent n, Vector& result);
 
   static void monsyz(ConstExponents a,

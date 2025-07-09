@@ -118,13 +118,7 @@ drawVerticalCpMackeyFunctor(CpMackeyFunctor) := Net => M -> (
 
 -- Equality
 CpMackeyFunctor == CpMackeyFunctor := Boolean => (M,N) -> (
-    if M.PrimeOrder != N.PrimeOrder then return false;
-    if M.Underlying != N.Underlying then return false;
-    if M.Fixed != N.Fixed then return false;
-    if M.Res != N.Res then return false;
-    if M.Trans != N.Trans then return false;
-    if M.Conj != N.Conj then return false;
-    true
+    M.PrimeOrder == N.PrimeOrder and M.Underlying == N.Underlying and M.Fixed == N.Fixed and M.Res == N.Res and M.Trans == N.Trans and M.Conj == N.Conj
 )
 
 -- Pruning

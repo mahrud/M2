@@ -106,7 +106,7 @@ doc ///
             the morphism of Mackey functors which is F at the fixed point level and U at the underlying level.
     Description
         Text
-            A morphisms of $C_p$-Mackey functors consists of a group homomorphism on the fixed and underlying levels which commutes with the transfer, restriction, and conjugation morphisms.  This method will throw an error if the morphism is not well defined.
+            A morphisms of $C_p$-Mackey functors consists of a group homomorphism on the fixed and underlying levels which commutes with the transfer, restriction, and conjugation morphisms. If @TO("assertLevel")@ is greater than 0, this method will check if the input data yields a well-defined homomorphism (and will throw an error if not).
         Example
             map(makeComplexRepresentationMackeyFunctor 3, makeBurnsideMackeyFunctor 3, matrix {{1}}, matrix {{1,1},{0,1},{0,1}})
     SeeAlso

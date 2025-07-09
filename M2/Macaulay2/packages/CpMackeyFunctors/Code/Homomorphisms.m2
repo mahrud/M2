@@ -50,7 +50,8 @@ map(CpMackeyFunctor, CpMackeyFunctor, Matrix, Matrix) := MackeyFunctorHomomorphi
         symbol FixedMap =>  map(N.Fixed,M.Fixed,f),
         symbol cache => new CacheTable
         };
-    if isWellDefined F then F else error "Mackey Functor homomorphism is not well-defined"
+    if assertLevel > 0 and not isWellDefined F then error "Mackey Functor homomorphism is not well-defined";
+    F
 )
 
 -- Allows you construct the zero map, and also k*id
@@ -148,7 +149,6 @@ makeUniversalMapFixed(CpMackeyFunctor,Matrix) := MackeyFunctorHomomorphism => (M
     if n == 0 then return map(M, makeZeroMackeyFunctor(M.PrimeOrder), 0);
     L := {for i to n-1 list (
         X := inducedMap(M.Fixed, , matrix x_i);
-        -- TODO: should we error check element containment which is seemingly not implemented?
         p := M.PrimeOrder;
         A := makeBurnsideMackeyFunctor(p);
         U := M.Res * X;
@@ -167,8 +167,6 @@ makeUniversalMapUnderlying(CpMackeyFunctor,Matrix) := MackeyFunctorHomomorphism 
     if n == 0 then return map(M, makeZeroMackeyFunctor(M.PrimeOrder), 0);
     L := {for i to n-1 list (
         X := inducedMap(M.Underlying, , matrix x_i);
-        -- TODO: should we error check element containment which is seemingly not
-        -- implemented?
         p := M.PrimeOrder;
         B := makeUnderlyingFreeMackeyFunctor(p);
         U := matrix {for i to p-1 list ((M.Conj)^i) * X};
@@ -209,8 +207,6 @@ MackeyFunctorHomomorphism - MackeyFunctorHomomorphism := MackeyFunctorHomomorphi
 
 -- Function composition
 MackeyFunctorHomomorphism * MackeyFunctorHomomorphism := MackeyFunctorHomomorphism => (G,F) ->(
-    -- todo: uncomment after Sasha pushes == method
-    -- if not (F.Codomain == G.Domain) then error "Mackey functor maps are not composable";
     map(G.Codomain, F.Domain, G.UnderlyingMap * F.UnderlyingMap, G.FixedMap * F.FixedMap)
 )
 

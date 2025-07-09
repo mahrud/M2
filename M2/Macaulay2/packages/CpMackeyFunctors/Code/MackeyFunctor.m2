@@ -68,12 +68,8 @@ makeCpMackeyFunctor(ZZ,Matrix,Matrix,Matrix) := CpMackeyFunctor => (p,R,T,C) ->(
         symbol Conj => C,
         symbol cache => new CacheTable
         };
-    if isWellDefined M then (
-        return M
-    )
-    else (
-        error "Mackey Functor is not well-defined";
-	)
+    if assertLevel > 0 and not isWellDefined M then error "Mackey Functor is not well-defined";
+    M
 )
 
 -- printing behavior

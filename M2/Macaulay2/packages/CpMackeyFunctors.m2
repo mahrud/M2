@@ -119,6 +119,9 @@ export{
     "ExtCoh"
 }
 
+--- Global variables
+assertLevel = 1;
+
 beginDocumentation()
 undocumented{
     (isWellDefined,CpMackeyFunctor),
@@ -151,6 +154,7 @@ load "./CpMackeyFunctors/Documentation/RandomMackeyFunctorDoc.m2"
 load "./CpMackeyFunctors/Documentation/InternalHomDoc.m2"
 load "./CpMackeyFunctors/Documentation/HomAlgDoc.m2"
 load "./CpMackeyFunctors/Documentation/ResolutionsDoc.m2"
+load "./CpMackeyFunctors/Documentation/AssertLevelDoc.m2"
 
 ----------------------------
 ----------------------------

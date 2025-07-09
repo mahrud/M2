@@ -45,8 +45,11 @@ doc ///
                 ("the ", TO2(directSum,"direct sum")," of two Mackey functors, as ", TT"M++N"),
                 ("the ", TO2(internalHom,"internal hom"), " of two Mackey functors")
             }@
+
+            {\bf Well-definedness:} The global variable @TO("assertLevel")@ controls whether the methods that construct Mackey functors will check whether the input data is well-defined. If @TO("assertLevel")@ is set to 0 or lower, then no checks are made, and the methods will return a Mackey functor (which may be malformed) regardless of the input data. If @TO("assertLevel")@ is set to 1 or higher, then the methods will check whether the input data yields a well-defined Mackey functor, and if not, they will throw an error.
     SeeAlso
         "background on Mackey functors"
+        "list of common Mackey functors"
         MackeyFunctorHomomorphism
 ///
 
@@ -71,7 +74,7 @@ doc ///
         : CpMackeyFunctor
     Description
         Text
-            Builds an instance of the @TO("CpMackeyFunctor")@ type from the data of a prime number and three matrices, encoding restriction, transfer, and conjugation, respectively. The method will verify whether the input data yields a valid Mackey functor.
+            Builds an instance of the @TO("CpMackeyFunctor")@ type from the data of a prime number and three matrices, encoding restriction, transfer, and conjugation, respectively. If @TO("assertLevel")@ is greater than 0, the method will verify whether the input data yields a valid Mackey functor.
     SeeAlso
         "background on Mackey functors"
         CpMackeyFunctor

@@ -3,7 +3,7 @@ isAbelianCategory CpMackeyFunctor := M -> true
 
 -- Direct sums
 CpMackeyFunctor.directSum = args -> (
-    if not same apply(args,M -> M.PrimeOrder) then error "-- Prime not compatible";
+    if not same apply(args,M -> M.PrimeOrder) then error "-- Primes not compatible";
     T := directSum apply(args, M -> M.Trans);
     R := directSum apply(args, M -> M.Res);
     C := directSum apply(args, M -> M.Conj);

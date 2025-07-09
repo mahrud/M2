@@ -10,13 +10,13 @@ fixedLevelMap:=map(Z.Fixed,A.Fixed,0);
 underlyingLevelMap:=map(Z.Underlying,A.Underlying,0);
 F := map(Z,A,underlyingLevelMap,fixedLevelMap);
 assert (isWellDefined F);
-assert not isWellDefined map(Z,A,fixedLevelMap,underlyingLevelMap);
 
 -- verify that the linearization maps are well-defined
 assert( isWellDefined complexLinearizationMap(5))
 assert( isWellDefined realLinearizationMap(5))
 
-
+-- This homomorphism is not well-defined!
+assert not isWellDefined map(A,A,matrix {{2}},matrix {{3,0},{0,3}});
 
 -- verify composition does what we want it to do ?
 A :=makeBurnsideMackeyFunctor(11);

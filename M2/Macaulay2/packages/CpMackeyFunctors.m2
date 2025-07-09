@@ -121,7 +121,11 @@ export{
 
 --- Global variables
 assertLevel = 1;
+exportMutable {
+    "assertLevel"
+}
 
+-- Documentation
 beginDocumentation()
 undocumented{
     (isWellDefined,CpMackeyFunctor),

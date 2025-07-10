@@ -1433,6 +1433,7 @@ augmentedAssignmentFun(x:augmentedAssignmentCode):Expr := (
         rexpr := dummyExpr;
 	if s.word.name === "??" -- x ??= y is treated like x ?? (x = y)
 	then (
+	    -- TODO: need to lock lhs here
 	    e := nullify(x.lhs);
 	    when e
 	    is Nothing do nothing

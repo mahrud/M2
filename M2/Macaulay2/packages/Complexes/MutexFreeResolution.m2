@@ -43,9 +43,7 @@ importFrom_Core {
     "Computation"
     }
 
---importFrom_Core "Resolution"
-
------------------------------------------------------------------------------
+importFrom_Core "Resolution"
 
 ResolutionObject = new Type of MutableHashTable
 ResolutionObject.synonym = "resolution object"
@@ -54,97 +52,29 @@ raw ResolutionObject := X -> X.RawComputation
 
 inf := t -> if t === infinity then -1 else t
 
------------------------------------------------------------------------------
+GlobalMutex = new Mutex
 
-importFrom_Core {
-    "resolutionLengthLimit",
-    "resolutionDegreeLimit",
-    "Context",
-    "Computation",
-    "cacheComputation",
-    "fetchComputation",
-    "isComputationDone",
-    "adjustComputation",
-    "updateComputation",
-}
-
--- keys: none so far
--- TODO: perhaps keys for different types of resolutions?
--- e.g. injective, Cech, or virtual resolution?
-ResolutionContext = new SelfInitializingType of Context
-ResolutionContext.synonym = "resolution context"
-
-new ResolutionContext from Module := (C, M) -> new C from {}
-
--- keys: LengthLimit
--- TODO: what else?
--- SyzygyLimit, HardDegreeLimit, StopBeforeComputation,
--- DegreeLimit, Nonminimal, SortStrategy, PairLimit
-ResolutionComputation = new Type of Computation
-ResolutionComputation.synonym = "resolution computation"
-
-new ResolutionComputation from HashTable := (C, H) -> merge(H, new HashTable from { Result => null }, last)
-
--- this function determines whether we can use the cached result, or if a computation is necessary
-isComputationDone ResolutionComputation := Boolean => options freeResolution >> opts -> container -> (
-    instance(container.Result, Complex)
-    and(opts.Nonminimal or not container.Nonminimal)
-    and opts.DegreeLimit  <=   container.DegreeLimit
-    and opts.LengthLimit  <=   container.LengthLimit)
-
--- if a resolution is cached, this function truncates and returns it based on opts
-adjustComputation ResolutionComputation := Complex => options freeResolution >> opts -> container -> (
-    naiveTruncation(container.Result, 0, opts.LengthLimit))
-
--- this function updates the cache with a new complex
-updateComputation(ResolutionComputation, Complex) := Complex => options freeResolution >> opts -> (container, result) -> (
-    container.Nonminimal  = opts.Nonminimal;
-    container.DegreeLimit = opts.DegreeLimit;
-    container.LengthLimit = opts.LengthLimit;
-    container.Result      = result)
-
------------------------------------------------------------------------------
--- freeResolution
------------------------------------------------------------------------------
-
--- the method is declared in ChainComplex.m2
 freeResolution Module := Complex => opts -> M -> (
     -- This handles caching, hooks for different methods of computing 
     -- resolutions or over different rings which require different algorithms.
     --
-    -- Nonminimal: true if the computation is constructed using the Nonminimal or NonminimalWithGB strategies
+    -- Nonminimal: true if the computation is constructed using the Nonminimal strategy.
     -- LengthLimit prescribes the length of the computed complex.
     -- DegreeLimit is a lower limit on what will be computed degree-wise, but more might be computed.
     R := ring M;
-    strategy := opts.Strategy;
     local C;
-
-    if M === R^0 or opts.LengthLimit < 0 then (
+    if M === R^0 or opts.LengthLimit < 0
+    then (
         C = complex R^0;
-        M.cache.Resolution ??= C;
-        return C);
-
-    -- -- this logic runs the strategies in order, or the specified strategy
-    -- computation := (opts, container) -> (
-    -- 	if isField R then return map(minimalPresentation M, R^0, 0);
-    -- 	runHooks((resolution, Module), (opts, M), Strategy => strategy));
-
-    -- -- this is the logic for caching partial resolution computations. M.cache contains an option:
-    -- --   ResolutionContext{} => ResolutionComputation{ Result, LengthLimit, ... }
-    -- container := fetchComputation(ResolutionComputation, M, new HashTable from opts, new ResolutionContext from M);
-
-    -- -- the actual computation of the resolution occurs here
-    -- C := (cacheComputation(opts, container)) computation;
-
-    -- if C =!= null then C else if strategy === null
-    -- then error("no applicable strategy for resolving over ", toString R)
-    -- else error("assumptions for resolution strategy ", toString strategy, " are not met"))
-
+        if not M.cache.?Resolution then 
+            M.cache.Resolution = C;
+        return C;
+        );
     if M.cache.?Resolution then (
         C = M.cache.Resolution;
         if not C.cache.?LengthLimit or not C.cache.?DegreeLimit then
             error "internal error: Resolution should have both a LengthLimit and DegreeLimit";
-        if C.cache.Nonminimal === (opts.Strategy === Nonminimal or opts.Strategy === NonminimalWithGB) and
+        if C.cache.Nonminimal === (opts.Strategy === Nonminimal) and
            C.cache.LengthLimit >= opts.LengthLimit and 
            C.cache.DegreeLimit >= opts.DegreeLimit then (
                C' := naiveTruncation(C, -infinity, opts.LengthLimit);
@@ -153,24 +83,29 @@ freeResolution Module := Complex => opts -> M -> (
                C'.cache.Module = C.cache.Module;
                return C';
                );
-        remove(M.cache, symbol Resolution); -- will be replaced below
+        --remove(M.cache, symbol Resolution); -- will be replaced below
         );
+
+    lock GlobalMutex;
+    lock(M.cache#"ResolutionMutex" ??= new Mutex);
+    unlock GlobalMutex;
 
     -- this block handles interrupted resolutions
     if M.cache.?ResolutionObject then (
         RO := M.cache.ResolutionObject;
-        if (opts.Strategy === null and (RO.Strategy =!= 4 and RO.Strategy =!= 5)) or --4 is the magic number for Nonminimal.  5 for NonminimalGB. In these cases, we need to recompute the resolution.
+        if (opts.Strategy === null and RO.Strategy =!= 4) or --4 is the magic number for Nonminimal.  In this case, we need to recompute the resolution.
             opts.Strategy === RO.Strategy
         then (
             if RO.isComputable(opts.LengthLimit, opts.DegreeLimit) -- this is informational: does not change RO.
             then (
                 RO.compute(opts.LengthLimit, opts.DegreeLimit); -- it is possible to interrupt this and then the following lines do not happen.
                 C = RO.complex(opts.LengthLimit);
-                C.cache.Nonminimal = (RO.Strategy === 4 or  RO.Strategy === 5); -- magic number: this means Nonminimal, or NonminimalWithGB to the engine...
+                C.cache.Nonminimal = (RO.Strategy === 4); -- magic number: this means Nonminimal to the engine...
                 C.cache.LengthLimit = if max C < opts.LengthLimit then infinity else opts.LengthLimit;
                 C.cache.DegreeLimit = opts.DegreeLimit;
                 C.cache.Module = M;
                 M.cache.Resolution = C;
+                unlock M.cache#"ResolutionMutex";
                 return C;
                 )
             );
@@ -191,22 +126,37 @@ freeResolution Module := Complex => opts -> M -> (
     
     if C =!= null then (
         assert(instance(C, Complex));
-        C.cache.Nonminimal = (RO.Strategy === 4 or RO.Strategy === 5); -- magic number: this means Nonminimal, NonminimalWithGB to the engine...
+        C.cache.Nonminimal = (RO.Strategy === 4); -- magic number: this means Nonminimal to the engine...
         C.cache.LengthLimit = if max C < opts.LengthLimit then infinity else opts.LengthLimit;
         C.cache.DegreeLimit = opts.DegreeLimit;
         C.cache.Module = M;
         M.cache.Resolution = C;
+        unlock M.cache#"ResolutionMutex";
         return C;
         );    
     
+    unlock M.cache#"ResolutionMutex";
     remove(M.cache, symbol ResolutionObject);
     if opts.Strategy === null then     
         error("no method implemented to handle this ring and module");
     error "provided Strategy does not handle this ring and module";        
     );
 
------------------------------------------------------------------------------
--- freeResolution strategies
+///
+restart
+  R = QQ[x_0..x_20]
+  M = coker vars R
+  unique \\ taskResult \ apply(5, i -> schedule(() -> freeResolution(M, LengthLimit => 4)))
+
+  freeResolution(M, LengthLimit => 1)
+  freeResolution(M, LengthLimit => 20)
+  freeResolution(M, LengthLimit => 3)
+  freeResolution(M, LengthLimit => 10)
+  freeResolution(M, LengthLimit => 30)
+  freeResolution(M, LengthLimit => 4)
+  freeResolution(M, LengthLimit => 4)
+  freeResolution(M, LengthLimit => 4)
+///
 
 defaultLengthLimit' = (M, limit) -> if instance(limit, ZZ) then limit else (
     R := ring M;
@@ -430,35 +380,6 @@ resolutionInEngine4 = (opts, M) -> (
     resolutionObjectInEngine(opts, M, gbM)
     )
 
-resolutionInEngine5 = (opts, M) -> (
-    -- opts are the options from resolution.  Includes Strategy, LengthLimit, DegreeLimit.
-    -- M is a Module.
-    
-    -- first determine if this method applies.  
-    -- Return null if not, as quickly as possible
-    R := ring M;
-    if not (
-        R.?Engine and
-        heft R =!= null and
-        (isSkewCommutative R or isCommutative R) and (
-            A := ultimate(coefficientRing, R);
-            A =!= R and isField A
-        ))
-    then return null;
-
-    if gbTrace > 0 then
-      << "[Doing freeResolution Strategy => NonminimalGB]" << endl;
-    RO := M.cache.ResolutionObject;  -- this exists already
-    if RO.Strategy === null then RO.Strategy = 5
-    else if RO.Strategy === NonminimalWithGB then RO.Strategy = 5
-    else error "our internal logic is flawed";
-
-    gbM := presentation M;
-    -- TODO: check that gbM is monic and otherwise give an error
-    resolutionObjectInEngine(opts, M, gbM)
-    )
-
-
 resolutionInEngine = (opts, M) -> (
     R := ring M;
     if isQuotientRing R or isSkewCommutative R 
@@ -585,7 +506,6 @@ protect HomogenizedModule
 protect DehomogenizationMap
 protect HomogenizedModuleResolution
 protect Nonminimal
-protect NonminimalWithGB
 
 resolutionByHomogenization = (opts, M) -> (
     R := ring M;
@@ -638,7 +558,6 @@ resolutionByHomogenization = (opts, M) -> (
     RO.complex(opts.LengthLimit)
     )
 
-addHook((freeResolution, Module), resolutionInEngine5, Strategy => NonminimalWithGB)
 addHook((freeResolution, Module), resolutionInEngine4, Strategy => Nonminimal)
 addHook((freeResolution, Module), resolutionBySyzygies, Strategy => Syzygies)
 addHook((freeResolution, Module), resolutionByHomogenization, Strategy => Homogenization)
@@ -655,9 +574,6 @@ addHook((freeResolution, Module), resolutionOverField, Strategy => OverField)
 -- addHook((freeResolution, Module), Strategy => symbol LLL,
 --     (o, M) -> if ring M === ZZ then complex compress LLL presentation M)
 
------------------------------------------------------------------------------
--- cechComplex
------------------------------------------------------------------------------
 
 cechComplex = method()
 cechComplex MonomialIdeal := Complex => B -> (
@@ -711,8 +627,6 @@ cechComplex MonomialIdeal := Complex => B -> (
   prune HH C
 ///
 
------------------------------------------------------------------------------
-
 -- This local function comes from m2/betti.m2.
 heftvec := (wt1, wt2) -> if wt1 =!= null then wt1 else if wt2 =!= null then wt2 else {}
 
@@ -765,7 +679,7 @@ minimalBetti Module := BettiTally => opts -> M -> (
     if not useFastNonminimal then 
         return betti resolution(M, DegreeLimit => degreelimit, LengthLimit => lengthlimit);
     -- At this point, we think we are good to use the faster algorithm.        
-    -- First, we need to compute the non-minimal resolution to one further step.
+    -- First, we need to comppute the non-minimal resolution to one further step.
     if instance(opts.LengthLimit, ZZ) then lengthlimit = lengthlimit + 1;
     C = resolution(M,
 	StopBeforeComputation => true, FastNonminimal => true, ParallelizeByDegree => opts.ParallelizeByDegree,
@@ -802,40 +716,29 @@ minimalBetti Module := BettiTally => opts -> M -> (
         then (
             return truncate(betti(C, Weights => opts.Weights), degreelimit, lengthlimit);
             );
-        if C.cache.Nonminimal then (
-            -- as of May 2026, nonminimal resolutions computed earlier do not allow for correct minimal betti diagram.
-            remove(M.cache, symbol ResolutionObject);
-            remove(M.cache, symbol Resolution);
-            );
         );
     A := ultimate(coefficientRing, R);
-    if (
-        not R.?Engine or
-        not (isCommutative R or isSkewCommutative R) or
-        heft R === null or
-        not isField A or
-        A =!= ZZ/(char A) or
-        A === R
-        )
-    then return betti freeResolution(M, DegreeLimit => degreelimit, LengthLimit => lengthlimit);
+    if not (
+        R.?Engine and
+        heft R =!= null and
+        (isSkewCommutative R or isCommutative R) and (
+            A =!= R and isField A
+        ))
+    then betti freeResolution(M, DegreeLimit => degreelimit, LengthLimit => lengthlimit);
 
     if lengthlimit === infinity then (
         -- reset lengthlimit
 	nvars := # generators(R, CoefficientRing => A);
-	lengthlimit = nvars + (if A === ZZ then 1 else 0);
+	lengthlimit = nvars + if A === ZZ then 1 else 0;
         );
-    
     C = freeResolution(M, DegreeLimit => degreelimit, LengthLimit => lengthlimit + 1,
         Strategy => Nonminimal, StopBeforeComputation => true);
     rC := M.cache.ResolutionObject.RawComputation;
     B := unpackEngineBetti rawMinimalBetti(rC,
         if opts.DegreeLimit === infinity then {} else
 	if opts.DegreeLimit =!= null     then {opts.DegreeLimit} else {},
-	if opts.LengthLimit =!= infinity then {lengthlimit} else {});
-    remove(M.cache, symbol ResolutionObject);
-    remove(M.cache, symbol Resolution);
-    ans := betti(B, Weights => heftvec(opts.Weights, heft R));
-    ans
+	if opts.LengthLimit =!= infinity then {opts.LengthLimit} else {});
+    betti(B, Weights => heftvec(opts.Weights, heft R))
     )
 
 minimalBetti Ideal := BettiTally => opts -> I -> minimalBetti(comodule I, opts)

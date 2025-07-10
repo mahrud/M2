@@ -463,7 +463,7 @@ isEffective ToricDivisor := Boolean => D -> all (entries D, i -> i >= 0)
 
 isCartier = method ()
 isCartier ToricDivisor := Boolean => D -> 
-    matrix vector D % fromCDivToWDiv variety D == 0
+    matrix vector D % promote(fromCDivToWDiv variety D, ring vector D) == 0
 
 isQQCartier = method ()
 isQQCartier ToricDivisor := Boolean => D -> (
@@ -483,11 +483,14 @@ isQQCartier ToricDivisor := Boolean => D -> (
 cartierCoefficients = method ()
 cartierCoefficients ToricDivisor := List => D -> (
     X := variety D;
+    -- if D is QQ-Cartier, this should tensor with QQ
     coeffs := transpose matrix {entries D};
     rayMatrix := (matrix rays X) ** ring coeffs;
+    --assert all(max X, sigma -> remainder(coeffs^sigma, rayMatrix^sigma) == 0);
     apply (max X, sigma -> coeffs^sigma // rayMatrix^sigma)
     );
 
+-- TODO: combine the code here with isAmple
 isNef = method ()
 isNef ToricDivisor := Boolean => D -> (
     X := variety D;
@@ -497,6 +500,7 @@ isNef ToricDivisor := Boolean => D -> (
     if dim X === 1 then return sum entries D >= 0;
     -- a torus-invariant divisor is nef if and only if the intersection with
     -- every torus-invariant curve is nonnegative
+    -- TODO: this fails if D is Weil but not Cartier
     m := cartierCoefficients D;
     coneList := max X;
     rayMatrix := matrix rays X;

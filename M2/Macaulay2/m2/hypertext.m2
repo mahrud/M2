@@ -180,8 +180,8 @@ PRE        = new MarkUpType of HypertextParagraph
 
 -- Tables
 TABLE      = new MarkUpType of HypertextContainer
-TR         = new MarkUpType of HypertextContainer
-TD         = new MarkUpType of HypertextContainer
+TR         = new MarkUpType of HypertextParagraph
+TD         = new MarkUpType of Hypertext
 TH         = new MarkUpType of TD
 
 -- Misc

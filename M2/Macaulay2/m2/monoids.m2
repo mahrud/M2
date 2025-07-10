@@ -695,9 +695,10 @@ tensor(Monoid, Monoid) := Monoid => monoidTensorDefaults >> opts0 -> (M, N) -> (
 	  if opts.Join === null or opts.Join === true then (
 	       opts.DegreeRank = Mopts.DegreeRank + Nopts.DegreeRank;
 	       opts.Degrees = join( apply(Mopts.Degrees, d -> join(d,N0)), apply(Nopts.Degrees, e -> join(M0,e)) );
-	       if opts.Heft === null and Nopts.Heft =!= null and Mopts.Heft =!= null then opts.Heft = join(Mopts.Heft,Nopts.Heft);
 	       opts.DegreeMap = d -> join(M0,d);
 	       opts.DegreeLift = d -> if all(#M0, i -> zero d#i) then drop(d,#M0) else degreeNoLift();
+	       if opts.Heft === null and Nopts.Heft =!= null and Mopts.Heft =!= null then opts.Heft = join(Mopts.Heft,Nopts.Heft);
+	       if opts.Heft === null and Mopts.Heft =!= null then opts.Heft = Mopts.Heft -* a hint *-;
 	       )
 	  -- FIXME: https://github.com/Macaulay2/M2/issues/2905
 	  else if opts.Join === false then (

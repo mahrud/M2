@@ -234,7 +234,7 @@ kernel RingMap := Ideal => opts -> f -> f.cache#(symbol kernel => opts) ??= ((
     (F, R) := (target f, source f);
     if 0_F == 1_F then return ideal 1_R;
     -- the actual computation occurs here
-    I := runHooks((kernel, RingMap), (opts, f), Strategy => opts.Strategy);
+    I := runHooks((kernel, RingMap), (opts, f) -*, Strategy => opts.Strategy*-);
     if I =!= null then I else error "kernel: no method implemented for this type of ring map"))
 
 -- This is a map from method keys to strategy hash tables

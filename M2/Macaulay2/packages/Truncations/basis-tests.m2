@@ -87,8 +87,12 @@ TEST ///
 ///
 
 TEST ///
+restart
   needsPackage "NormalToricVarieties"
   X = hirzebruchSurface 2
+  X = X ^** 2
   M = cotangentSheaf X
+  errorDepth=2
+  elapsedTime HH^1(X, M)
   assert(HH^1(X, M) == QQ^2)
 ///

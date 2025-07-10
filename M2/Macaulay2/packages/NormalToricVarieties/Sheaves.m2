@@ -133,7 +133,7 @@ cotangentSheaf(List, NormalToricVariety) := CoherentSheaf => opts -> (a, X) -> (
 importFrom_Core "raw"
 importFrom_Truncations "basis'"
 addHook((basis, List, List, Module), Strategy => Toric,
-    (opts, lo, hi, M) -> if degreeLength ring M > 1 and lo === hi
+    (opts, lo, hi, M) -> if degreeLength ring M > 1 and lo === hi and #lo != 0
     and instance(variety ring M, NormalToricVariety) then raw basis'(lo, M, opts))
 
 -- THIS FUNCTION IS NOT EXPORTED.  Given a normal toric variety, this function

@@ -340,6 +340,7 @@ basisMonomials(List, Module) := opts -> (degs, F) -> (
     -- inputs: a list of multidegrees, a free module
     -- assume makeDegreeList has already been called on degs
     -- TODO: either figure out a way to use cached results or do this in parallel
+--    if #degs == 0 then return basis(0 * F);
     R := ring F; directSum apply(degrees F, a -> concatCols apply(degs, d -> basisMonomials(d - a, R, opts))))
 basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
     -- inputs: a single multidegree, a graded ring
@@ -368,6 +369,7 @@ basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
 	    );
         P := basisPolyhedron(A^F, b,
             Exterior => (options R1).SkewCommutative);
+	-- FIXME: the volume computation is slow, but prevents a crash
         if isCompact P and volume P === 0 then return map(R^1, R^0, 0);
 	-- TODO: somehow pass Limit to ask for a single monomial only?
         H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~40% of computation
@@ -379,6 +381,8 @@ basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
         result := mingens ideal(mongens % J); -- ~40% of computation
         if R1 =!= ambR then result = result ** R1;
         if R =!= R1 then result = phi1^-1 result;
+	-- remove the monomials with incorrect degree in torsion component
+	-- FIXME: make sure this part is compatible with partial degrees
 	psrc = selectByDegrees(source result, d, d);
         submatrix(result, , psrc)))
 

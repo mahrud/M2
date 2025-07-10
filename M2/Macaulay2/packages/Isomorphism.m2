@@ -71,8 +71,8 @@ randomMinimalDegreeHomomorphism(Matrix, Matrix, ZZ) := Matrix => (n,m,d) -> (
        (degreeLength S == 1 and 
 	isHomogeneous m and 
 	isHomogeneous n and
-	m**resField == 0 and
-	n**resField == 0) then 
+	prune(m ** resField) == 0 and
+	prune(n ** resField) == 0) then
 	error"Unsuitable ring, modules or presentations.";
 	
     M0:= target m;

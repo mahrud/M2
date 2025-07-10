@@ -131,28 +131,29 @@ freeResolution Module := Complex => opts -> M -> (
     error "provided Strategy does not handle this ring and module";        
     );
 
+defaultLengthLimit' = (M, limit) -> if instance(limit, ZZ) then limit else (
+    R := ring M;
+    if isSkewCommutative R then (
+	-- we remove the ResolutionObject from M.cache since
+	-- otherwise it is in an incomplete and unrecoverable state
+	remove(M.cache, symbol ResolutionObject);
+	error "need to provide LengthLimit for free resolutions over skew-commutative rings";
+	);
+    flatR := first flattenRing R;
+    if ideal flatR != 0 then (
+	-- we remove the ResolutionObject from M.cache since
+	-- otherwise it is in an incomplete and unrecoverable state
+	remove(M.cache, symbol ResolutionObject);
+	error "need to provide LengthLimit for free resolutions over quotients of polynomial rings";
+	);
+    numgens flatR)
+
 resolutionObjectInEngine = (opts, M, matM) -> (
     RO := M.cache.ResolutionObject;
     R := ring M;
     if RO.?RawComputation then error "internal error: our logic is wrong";
 
-    lengthlimit := if opts.LengthLimit === infinity 
-        then (
-            if isSkewCommutative R then (
-                -- we remove the ResolutionObject from M.cache since 
-                -- otherwise it is in an incomplete and unrecoverable state
-                remove(M.cache, symbol ResolutionObject);
-                error "need to provide LengthLimit for free resolutions over skew-commutative rings";
-                );
-            flatR := first flattenRing R;
-            if ideal flatR != 0 then (
-                -- we remove the ResolutionObject from M.cache since 
-                -- otherwise it is in an incomplete and unrecoverable state
-                remove(M.cache, symbol ResolutionObject);
-                error "need to provide LengthLimit for free resolutions over quotients of polynomial rings";
-                );
-            numgens flatR)
-        else opts.LengthLimit;
+    lengthlimit := defaultLengthLimit'(M, opts.LengthLimit);
 
     RO.RawComputation = rawResolution(
         raw matM,         -- the matrix
@@ -167,6 +168,7 @@ resolutionObjectInEngine = (opts, M, matM) -> (
     RO.returnCode = rawStatus1 RO.RawComputation; -- do we need this?
 
     RO.compute = (lengthlimit, degreelimit) -> (
+	lenlimit := defaultLengthLimit'(M, lengthlimit);
         deglimit := if degreelimit === infinity then {} else degreeToHeft(R, degreelimit);
         rawGBSetStop(
             RO.RawComputation,
@@ -178,11 +180,12 @@ resolutionObjectInEngine = (opts, M, matM) -> (
             0,                                          -- codim_limit (not relevant for resolutions)
             0,                                          -- subring_limit (not relevant for resolutions)
             false,                                      -- just_min_gens
-            {}                                          -- length_limit
+            {lenlimit}                                  -- length_limit
             );
         rawStartComputation RO.RawComputation;
         RO.returnCode = rawStatus1 RO.RawComputation;
         RO.DegreeLimit = degreelimit;
+        RO.LengthLimit = lengthlimit;
         );
 
     RO.isComputable = (lengthlimit, degreelimit) -> ( -- this does not mutate RO.

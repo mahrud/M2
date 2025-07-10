@@ -152,15 +152,30 @@ pushNonLinear := (opts, f0, M) -> (
 	-- cache poincare
 	poincare cokernel m1 = hf);
 
+    -- -- this degree map makes symmetricPower homogeneous,
+    -- -- but it may not always be the best option.
+    -- mapbackdeg := d -> take(d, -deglenS);
+    -- -- let's at least check it splits f's degree map:
+    -- if any(degrees S, d -> mapbackdeg f.cache.DegreeMap d =!= d)
+    -- then error "pushForward: unexpected degree map of ring map";
+
+    -- error 0;
+    -- newdegs := apply(degrees S, f.cache.DegreeMap);
+    -- -- the result may only be homogeneous over a ring whose degrees are scaled
+    -- if newdegs =!= degrees S then S = newRing(S, Degrees => newdegs);
+    -- -- we should really be *lifting* the result to S along the natural map S ---> G
+    -- mapback := map(S, G, map(S^1, S^numgensR, 0) | vars S, DegreeMap => mapbackdeg );
+
     mapbackdeg := d -> take(d, -deglenS);
     -- that choice of degree map was chosen to make the symmetricPower functor homogeneous, but it doesn't have much
     -- else to recommend it.
     -- we should really be *lifting* the result to S along the natural map S ---> G
-    mapback := map(S, G, map(S^1, S^numgensR, 0) | vars S, DegreeMap => mapbackdeg );
+    S' := newRing(S, Degrees => take(degrees G, numgensR - numgens G));
+    mapback := map(S', G, map(S'^1, S'^numgensR, 0) | vars S', DegreeMap => mapbackdeg );
 
     -- let's at least check it splits f's degree map:
-    for i from 0 to deglenS-1 do (
-	e := for j from 0 to deglenS-1 list if i === j then 1 else 0;
+    for i from 0 to numgens S - 1 do (
+	e := degree S'_i;
 	if mapbackdeg f.cache.DegreeMap e =!= e
 	then error "not implemented yet: unexpected degree map of ring map");
 
@@ -246,6 +261,7 @@ addHook((kernel, Matrix), Strategy => "PushForward",
 	f := m.RingMap;
 	M := coimage map(target m, f ** source m, raw m);
 	image pushNonLinear(options pushForward, f, M)))
+kernel RingElement := Module => o -> m -> kernel(matrix {{m}}, o)
 
 -----------------------------------------------------------------------------
 

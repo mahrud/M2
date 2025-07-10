@@ -1,9 +1,18 @@
+---------------------------------------------------------------------------
+-- PURPOSE: to compute push forwards of modules and coherent sheaves
+--
+-- UPDATE HISTORY:
+-- - Created Dec 2009 by Claudiu Raicu
+-- - Updated Oct 2015 by Karl Schwede added NoPrune
+-- - Updated May 2021 by Mike Stillman and David Eisenbud
+-- - Updated Jun 2026 by Joel Dodge refactored and added new functionality
+--
 -- TODO:
 --  finish doc
 --  how to interact with pushForward?
 --   issues: pushForward seems somewhat faster, in the homogeneous case...
 --           also, are these stashed in that case?  (They are not here, yet).
-
+---------------------------------------------------------------------------
 newPackage(
     "PushForward",
     Version => "0.6",
@@ -23,12 +32,6 @@ newPackage(
     Keywords => {"Commutative Algebra"},
     AuxiliaryFiles => true
 )
-
--- Note, this version has a slight change added by Karl Schwede.  It has an option to turn off the prune calls.
--- Recently, David Eisenbud and Mike Stillman have extended it, fixing some bugs too.
--- Joel Dodge made a significant refactor of this package and extended its functionality to cover
--- more ring maps and to implement the natural bijections between a module and it's
--- pushforward.
 
 export {
     "pushFwd",
@@ -366,11 +369,19 @@ end
 -------------------
 
 restart
+<<<<<<< HEAD
 uninstallPackage"PushForward"
 restart
 installPackage"PushForward"
 x = symbol x;y= symbol y;
 check PushForward
+=======
+uninstallPackage "PushForward"
+
+restart
+check needsPackage "PushForward"
+installPackage "PushForward"
+>>>>>>> cea21c8a15 (wip)
 viewHelp PushForward
 
 

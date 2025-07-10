@@ -358,7 +358,7 @@ checkProjective = X -> if not isProjective X then error "expected a coherent she
     -- TODO: is this good enough, or do we actually need to check that it is a ProjectiveVariety?
     -- My hope is that this will also work for toricProjectiveSpace, for instance.
     -- TODO: eventually generalize algorithms to multigraded rings and change this error.
-    if degreeLength ring X > 1 then error "existing algorithms are intended for varieties embedded in the projective space or weighted projective stacks")
+    if degreeLength ring X > 1 then printerr "existing algorithms are intended for varieties embedded in the projective space or weighted projective stacks")
 
 -----------------------------------------------------------------------------
 -- singularLocus

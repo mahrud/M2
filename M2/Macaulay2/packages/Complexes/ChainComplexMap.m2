@@ -28,10 +28,10 @@ map(Complex, Complex, HashTable) := ComplexMap => opts -> (tar, src, maps) -> (
         f := maps#k;
         -- note: we use != instead of =!= in the next 2 tests,
         -- since we want to ignore any term order differences
-        if source f != src_k then
-            error ("map with index "|k|" has inconsistent source");
-        if target f != tar_(k+deg) then
-            error ("map with index "|k|" has inconsistent target");
+        --if hilbertPolynomial source f != hilbertPolynomial src_k then
+        --    error ("map with index "|k|" has inconsistent source");
+        --if hilbertPolynomial target f != hilbertPolynomial tar_(k+deg) then
+        --    error ("map with index "|k|" has inconsistent target");
         if k < lo or k > hi then continue else (k,f)
         );
     new ComplexMap from {

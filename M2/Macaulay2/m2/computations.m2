@@ -80,6 +80,7 @@ isComputationDone Computation := Boolean => true >> opts -> container -> contain
 -- updateComputation
 -----------------------------------------------------------------------------
 
+-- TODO: swap the names of updateComputation and cacheComputation?
 -- update the computation with the given result
 updateComputation = method(Options => true)
 updateComputation(Computation, Thing)   := true >> opts -> (container, result) -> container.Result = result

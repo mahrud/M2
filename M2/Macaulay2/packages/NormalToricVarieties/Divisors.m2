@@ -59,8 +59,8 @@ classGroup NormalToricVariety := Module => (
 	-- TODO: is simplicial or complete/semiprojective sufficient?
 	-- FIXME: we can't call isProjective, because it calls classGroup!
 	-- so for now we at least call isComplete, but is that enough?
-	else if isSmooth X and isComplete X then matrix apply(
-	    primitiveCollections X, PC -> primitiveRelation(X, PC))
+	--else if isSmooth X and isComplete X then matrix apply(
+	--    primitiveCollections X, PC -> primitiveRelation(X, PC))
 	else matrix inverse clX.cache.pruningMap;
     	X.cache.fromWDivToCl = map(clX, wDiv, A);	  
     	clX 
@@ -132,15 +132,14 @@ cartierDivisorGroup NormalToricVariety := Module => (
 	-- inclusionMap * matrix apply(# max X, i -> {id_(charLat)}) == matrix rays X
     	inclusionMap := matrix for i from 0 to n-1 list (
     	    seen := false;    	    
-    	    for sigma in coneList list (
-	    	if member (i,sigma) then (
-	    	    coeff := if seen then 0 else (
+	    for sigma in coneList list map(ZZ^1, charLat / perpTab#sigma,
+		if not member(i, sigma) then 0 else (
+		    coeff := if seen then 0 else (
 		    	seen = true;
 		    	1
 			);
-	    	    coeff * map (ZZ^1, charLat / perpTab#sigma, transpose raysMat_{i})
+		    coeff * transpose raysMat_{i}
 		    )
-	    	else map (ZZ^1, charLat / perpTab#sigma, 0)
 		)
 	    );
     	X.cache.fromCDivToWDiv = map (weilDivisorGroup X, cDiv,
@@ -199,6 +198,7 @@ effGenerators NormalToricVariety := fromWDivToCl
 nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) (X -> (
     if isDegenerate X then 
 	error "-- not implemented for degenerate varieties";
+    -- c.f. CLS Lemma 6.3.19
     clX := classGroup X;
     if clX == 0 then return matrix {{}};
     if not isFreeModule clX then (
@@ -209,7 +209,9 @@ nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) 
 	)
     else torsionlessCoord = toList (0.. rank clX - 1);
     galeDualMatrix := matrix (fromWDivToCl X)^torsionlessCoord;
-    innerNormals := matrix {for sigma in max X list (
+    -- TODO: why does this give the outer normals for hirzebruch?
+    innerNormals := matrix {
+	for sigma in max X list (
 	    sigma' := select(# rays X, i -> not member(i, sigma));
 	    dualCone := fourierMotzkin galeDualMatrix_sigma';
 	    dualCone#0 | dualCone#1 | -dualCone#1 
@@ -217,6 +219,7 @@ nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) 
 	};
     coneGens := fourierMotzkin innerNormals;
     coneGens = coneGens#0 | coneGens#1 | - coneGens#1;
+    -- TODO: the code above is duplicated in isProjective. What name can we give it?
     if not isFreeModule clX then (
     	rowCounter := 0;
 	coneGens = matrix for i to rank target smithMatrix - 1 list (
@@ -228,7 +231,7 @@ nefGenerators NormalToricVariety := Matrix => (cacheValue symbol nefGenerators) 
 	    )
 	);
     fromPic := matrix fromPicToCl X;
-    indexOfPic := lcm (minors( rank source fromPic, fromPic^torsionlessCoord))_*;
+    indexOfPic := abs lcm (minors( rank source fromPic, fromPic^torsionlessCoord))_*;
     (indexOfPic * coneGens) // fromPic 
     ))
 
@@ -544,6 +547,7 @@ isVeryAmple ToricDivisor := {} >> o -> D -> (
     if not isAmple D then return false;
     if isSmooth variety D then return true;    
     V := vertices D;
+    if V === null then return false;
     n := numColumns V;
     d := numRows V;
     L := latticePoints D;

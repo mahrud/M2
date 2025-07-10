@@ -27,6 +27,8 @@ irrelevantIdeal NormalToricVariety :=
 ideal NormalToricVariety := Ideal => (
     cacheValue symbol ideal) (
     X -> (
+	-- TODO: in non-simplicial case, it's still
+	-- useful to have ideal X to compute the dual
     	S := ring X;
     	ideal apply (max X, L -> product (numgens S, 
 		i -> if member (i,L) then 1_S else S_i) 

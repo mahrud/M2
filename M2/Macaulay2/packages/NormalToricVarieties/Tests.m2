@@ -721,4 +721,10 @@ TEST ///
   assert(1 == nefGenerators weightedProjectiveSpace {1,1,2})
   assert(1 == nefGenerators weightedProjectiveSpace {1,2,1})
   assert(1 == nefGenerators weightedProjectiveSpace {2,1,1})
+
+  X = normalToricVariety(
+      {{0, 1, 0}, {1, 0, 0}, {-1, -2, 0}, {0, -1, -1}, {0, 0, 1}},
+      {{0, 1, 3}, {0, 1, 4}, {0, 2, 3}, {0, 2, 4}, {1, 2, 3}, {1, 2, 4}})
+  effGenerators X
+  nefGenerators X -- FIXME: this is not even a chamber
 ///

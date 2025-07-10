@@ -491,6 +491,8 @@ isComplete NormalToricVariety := Boolean => (
 isProjective NormalToricVariety := Boolean => (
     cacheValue symbol isProjective) (
     X -> (
+	-- TODO: use CLS Prop. 6.3.24: a complete and simplicial toric variety X
+	-- is projective if and only if Nef(X) has full dimension in Pic(X) \otimes \RR.
     	if not isComplete X then return false;
     	-- projectivity is checked using Gale duality; see Theorem~V.4.8 in
     	-- Ewald's "Combinatorial convexity and algebraic geometry"
@@ -512,12 +514,14 @@ isProjective NormalToricVariety := Boolean => (
 	    };
 	coneGens := fourierMotzkin outerNormals;
 	coneGens = (coneGens#0 | coneGens#1);
+	-- TODO: the code above is duplicated in nefGenerators. What name can we give it?
 	if coneGens == 0 then return false;
 	0 == (fromPicToCl X)^torsionlessCoord % coneGens 
 	)
     );
 
-
+isSemiprojective = method()
+isSemiprojective NormalToricVariety := Boolean => X -> ()
 
 -- THIS METHOD IS NOT EXPORTED
 facesOfCone = method ()

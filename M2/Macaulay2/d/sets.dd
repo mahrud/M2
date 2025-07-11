@@ -37,7 +37,7 @@ makeSet(e:Expr):Expr := (
      else WrongArg("a visible list or a hash table")
      is h:HashTable do makeSet(h)
      else WrongArg("a visible list or a hash table"));
-setupfun("set",makeSet);
+setupfun("set",makeSet).Protected = false; -- will be overloaded in m2/set.m2
 
 -- object is beingInitialized:
 modify(object:HashTable,key:Expr,f:function(Expr):Expr,v:Expr):void := (

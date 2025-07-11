@@ -1,9 +1,11 @@
 undocumented {
-    (NewFromMethod, Set, List),
+    (NewFromMethod, Set, Set),
+    (NewFromMethod, Set, HashTable),
+    (NewFromMethod, Set, VisibleList),
 }
 
 document {
-     Key => {set, (set,VisibleList), (set,HashTable)},
+     Key => {set, (set,VisibleList), (set,HashTable), (set, Set)},
      Headline => "make a set",
      Usage => "set v\nset(v1,v2,...)",
      Inputs => {"v", ofClass { VisibleList, HashTable } },

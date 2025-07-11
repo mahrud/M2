@@ -698,15 +698,10 @@ yonedaSheafExtension Matrix := Complex => f -> (
     return E.cache#(symbol yonedaSheafExtension, f);
     (d, F, G) := if (try first formation E) === Ext then last formation E
     else error "expected target of map to be an Ext^d(F,G) module";
-    X := variety F;
-    z := degree 1_(ring X);
-    -- Note: TruncateDegree is set by Ext^ZZ(CoherentSheaf, SumOfTwists)
-    r := E.cache.TruncateDegree;
-    M := truncate(r, module F, MinimalGenerators => false);
-    B := basis(z, Ext^d(M, module G, -* DegreeLimit => z, *- MinimalGenerators => false));
-    C := yonedaExtension(B * f);
-    E.cache#(symbol yonedaSheafExtension, f) =
-    complex apply(d + 1, i -> sheaf_X C.dd_(i+1)))
+    r := E.cache.TruncateDegree; -- set by Ext^ZZ(CoherentSheaf, SumOfTwists)
+    B := E.cache.ExtensionBasis; -- set by Ext^ZZ(CoherentSheaf, CoherentSheaf)
+    -- TODO: change first and last terms to be F and G?
+    E.cache#(symbol yonedaSheafExtension, f) = sheaf yonedaExtension(B * f))
 
 --yonedaSheafExtension' = method(Options => options Ext.argument)
 --yonedaSheafExtension' Complex := Matrix => opts -> C -> ()

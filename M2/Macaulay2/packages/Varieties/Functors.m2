@@ -1046,21 +1046,24 @@ degreeBound = (m, D, b) -> (
     if e === -infinity then b1 := -infinity else b1 = b - (maxdeg - maxdeg1) + min(e,0);
     (b + min(e,0), b1, maxdeg + 1 - sumOfWeights - b))
 
-
+protect ExtensionBasis
 protect TruncateDegree
 
 Ext(ZZ, SheafOfRings, SumOfTwists) := Module => opts -> (m, O, S) -> Ext^m(O^1, S)
 
+-- TODO: cache in a way that Ext^m(F,G(a)) can also be retrieved
 Ext(ZZ, SheafOfRings, SheafOfRings)  :=
 Ext(ZZ, SheafOfRings, CoherentSheaf) :=
 Ext(ZZ, CoherentSheaf, SheafOfRings)  :=
 Ext(ZZ, CoherentSheaf, CoherentSheaf) := Module => opts -> (n, F, G) -> (
     E := (Ext^n(F, G(>=0), opts ++ { MinimalGenerators => NonPrint }))#2;
     -- With the NonPrint option, Ext returns a sequence (b0,b1,M0), and we just want the module M0.
-    H := part(degree 1_(ring X), G);
-    V := k^(hilbertFunction(0, E));
+    B := basis(degree 1_(ring E), E);
+    K := coefficientRing ring E;
+    V := K^(numcols B);
     V.cache.formation = FunctionApplication { Ext, (n, F, G) };
     V.cache.TruncateDegree = E.cache.TruncateDegree;
+    V.cache.ExtensionBasis = B; -- used by yonedaSheafExtension
     V)
 
 -- Ext^m(F, G(>=b)), for coherent sheaves F and G over a projective scheme

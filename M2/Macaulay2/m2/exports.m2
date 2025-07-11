@@ -119,6 +119,7 @@ export {
 	"Complement",
 	"CompleteIntersection",
 	"ComplexField",
+	"Concentration",
 	"Configuration",
 	"Consequences",
 	"Constant",

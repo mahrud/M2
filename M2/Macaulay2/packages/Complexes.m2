@@ -73,7 +73,6 @@ export {
     "Homogenization",
     "Nonminimal",
     "NonminimalWithGB",
-    "Concentration",
     "Cycle",
     "Boundary",
     "InternalDegree",

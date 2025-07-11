@@ -7,6 +7,7 @@ needs "modules.m2"
 needs "matrix1.m2"
 
 Hom = method(Options => {
+	Concentration     => null,
 	DegreeLimit       => null,
 	MinimalGenerators => true,
 	Strategy          => null,

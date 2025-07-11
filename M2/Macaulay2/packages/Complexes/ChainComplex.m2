@@ -871,21 +871,22 @@ Hom(Complex, Complex) := Complex => opts -> (C,D) -> (
     -- signs here are based from Christensen and Foxby
     -- which agrees with Conrad (Grothendieck duality book)
     Y := youngest(C,D);
-    if Y.cache#?(Hom,C,D) then return Y.cache#(Hom,C,D);
+    key := (Hom,C,D,opts);
+    if Y.cache#?key then return Y.cache#key;
     R := ring C;
     if ring D =!= R then error "expected complexes over the same ring";
     (loC,hiC) := C.concentration;
     (loD,hiD) := D.concentration;
-    modules := hashTable for i from loD-hiC to hiD-loC list i => (
+    (lo, hi) := if instance(opts.Concentration, Sequence) then opts.Concentration else (loD-hiC, hiD-loC);
+    modules := hashTable for i from lo to hi list i => (
         directSum for j from loC to hiC list {j,j+i} => Hom(C_j, D_(j+i), opts)
         );
-    if loC === hiC and loD === hiD then (
-        result := complex(modules#(loD-hiC), Base => loD-loC);
+    if lo === hi then (
+        result := complex(modules#lo, Base => lo);
         result.cache.homomorphism = (C,D); -- source first, then target        
-        Y.cache#(Hom,C,D) = result;
-        return result;
+	return Y.cache#key = result
         );
-    maps := hashTable for i from loD-hiC+1 to hiD-loC list i => (
+    maps := hashTable for i from lo+1 to hi list i => (
         map(modules#(i-1),
             modules#i,
             matrix table(
@@ -901,9 +902,9 @@ Hom(Complex, Complex) := Complex => opts -> (C,D) -> (
                     ))));
     result = complex maps;
     result.cache.homomorphism = (C,D); -- source first, then target
-    Y.cache#(Hom,C,D) = result;
-    result
+    Y.cache#key = result
     )
+
 Hom(Module, Complex) := Complex => opts -> (M,C) -> Hom(complex M, C, opts)
 Hom(Complex, Module) := Complex => opts -> (C,M) -> Hom(C, complex M, opts)
 Hom(Complex, Ring) := Complex => opts -> (C,R) -> Hom(C, complex R, opts)

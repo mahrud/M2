@@ -175,6 +175,8 @@ basisPolyhedron(Matrix, Matrix) := Polyhedron => opts -> (A, b) -> (
 -- Algorithms for truncations of a polynomial ring
 --------------------------------------------------------------------
 
+TruncationsMutex = new Mutex
+
 truncationMonomials = method(Options => { Exterior => {}, Cone => null })
 truncationMonomials(List, Module) := opts -> (degs, F) -> (
     -- inputs: a list of multidegrees, a free module F = sum_i R(-a_i)
@@ -199,6 +201,14 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
     C := if opts#Cone =!= null then opts#Cone.cache.inputRays else id_(degreeGroup R);
+    lock TruncationsMutex;
+    mutex := (R#("TruncateMutex", d) ??= new Mutex);
+    unlock TruncationsMutex;
+    lock mutex;
+    if R#?(symbol truncate, d, C) then (
+	B := R#(symbol truncate, d, C);
+	unlock mutex; return B);
+    --
     R#(symbol truncate, d, C) ??= (
 	(R1, phi1) := flattenRing R;
         -- generates the effective cone
@@ -219,7 +229,9 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
 	-- but the torsion component was not feasible.
 	psrc := positions(degrees source result, deg -> isSubset(
 		image map(target C, , transpose{deg}), image C));
-	submatrix(result, , psrc)))
+	submatrix(result, , psrc));
+    unlock mutex;
+    R#(symbol truncate, d, C))
 
 truncation0 = (deg, M) -> (
     -- WARNING: valid for a polynomial ring with degree length = 1.
@@ -342,19 +354,28 @@ basisMonomials(List, Module) := opts -> (degs, F) -> (
     -- TODO: either figure out a way to use cached results or do this in parallel
 --    if #degs == 0 then return basis(0 * F);
     R := ring F; directSum apply(degrees F, a -> concatCols apply(degs, d -> basisMonomials(d - a, R, opts))))
-basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
+basisMonomials(List, Ring) := opts -> (d, R) -> (
     -- inputs: a single multidegree, a graded ring
     -- valid for total coordinate ring of any simplicial toric variety
     -- or any polynomial ring, quotient ring, or exterior algebra.
+    lock TruncationsMutex;
+    mutex := (R#("BasisMutex", d) ??= new Mutex);
+    unlock TruncationsMutex;
+    lock mutex;
+    if R#?(symbol basis', d, opts) then (
+	B := R#(symbol basis', d, opts);
+	unlock mutex; return B);
+    --
     partialdegs := opts#"partial degrees";
     -- TODO: we should accept _any_ cached truncation as a hint
-    if R#?(symbol truncate, d, null) and partialdegs === null then (
-        -- opportunistically use cached truncation results
-        -- TODO: is this always correct? with negative degrees?
-        truncgens := R#(symbol truncate, d, null);
-	psrc := selectByDegrees(source truncgens, d, d);
-        submatrix(truncgens, , psrc))
-    else (
+    -- B := if R#?(symbol truncate, d, null) and partialdegs === null then (
+    --     -- opportunistically use cached truncation results
+    --     -- TODO: is this always correct? with negative degrees?
+    --     truncgens := R#(symbol truncate, d, null);
+    -- 	psrc := selectByDegrees(source truncgens, d, d);
+    --     submatrix(truncgens, , psrc))
+    -- else
+    B = (
         (R1, phi1) := flattenRing R;
         -- generates the effective cone
         A := effGenerators R1;
@@ -370,7 +391,9 @@ basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
         P := basisPolyhedron(A^F, b,
             Exterior => (options R1).SkewCommutative);
 	-- FIXME: the volume computation is slow, but prevents a crash
-        if isCompact P and volume P === 0 then return map(R^1, R^0, 0);
+        if isCompact P and volume P === 0 then (
+	    B = R#(symbol basis', d, opts) = map(R^1, R^0, 0);
+	    unlock mutex; return B);
 	-- TODO: somehow pass Limit to ask for a single monomial only?
         H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~40% of computation
         J := leadTerm ideal R1;
@@ -383,8 +406,11 @@ basisMonomials(List, Ring) := opts -> (d, R) -> R#(symbol basis', d, opts) ??= (
         if R =!= R1 then result = phi1^-1 result;
 	-- remove the monomials with incorrect degree in torsion component
 	-- FIXME: make sure this part is compatible with partial degrees
-	psrc = selectByDegrees(source result, d, d);
-        submatrix(result, , psrc)))
+	psrc := selectByDegrees(source result, d, d);
+        submatrix(result, , psrc));
+    R#(symbol basis', d, opts) = B;
+    unlock mutex;
+    B)
 
 basis' = method(Options => options basisMonomials)
 basis'(List, Module) := Matrix => opts -> (degs, M) -> (

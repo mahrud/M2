@@ -457,12 +457,7 @@ dictionary Thing := x -> if hasAttribute(x,ReverseDictionary) then dictionary ge
 -----------------------------------------------------------------------------
 value = method()
 value Symbol := value Pseudocode := value'		    -- compiled code
-ValueMutex = new Mutex
-value String := x -> (
-    lock ValueMutex;
-    v := value' x;
-    unlock ValueMutex;
-    v)
+value String := x -> value' x
 value Nothing := x -> null
 -----------------------------------------------------------------------------
 

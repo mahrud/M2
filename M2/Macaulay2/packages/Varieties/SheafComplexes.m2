@@ -56,10 +56,12 @@ sheaf          Complex  := Complex =>     C  -> sheaf(variety ring C, C)
 sheaf(Variety, Complex) := Complex => (X, C) -> C.cache.sheaf ??= (
     if isSheafComplex C then return C;
     (lo, hi) := C.concentration;
-    if lo === hi then return complex(sheaf_X C_lo, Base => lo);
-    D := complex applyValues(C.dd.map, sheaf_X);
-    D.cache.module = C;
-    D)
+    if lo === hi
+    then complex(sheaf_X C_lo, Base => lo)
+    else (
+	D := complex applyValues(C.dd.map, sheaf_X);
+	D.cache.module = C;
+	D))
 
 sheaf          ComplexMap  := ComplexMap =>     phi  -> sheaf(variety ring phi, phi)
 sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
@@ -73,11 +75,13 @@ sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
 module Complex := Complex => D -> D.cache.module ??= (
     if not isSheafComplex D then return D;
     (lo, hi) := D.concentration;
-    if lo === hi then return complex(module D_lo, Base => lo);
-    maxTruncDeg := max apply(values D.dd.map, f -> f.degree);
-    C := complex applyValues(D.dd.map, f -> truncate(maxTruncDeg, f.map));
-    C.cache.sheaf = D;
-    C)
+    if lo === hi
+    then complex(module D_lo, Base => lo)
+    else (
+	maxTruncDeg := max apply(values D.dd.map, f -> f.degree);
+	C := complex applyValues(D.dd.map, f -> truncate(maxTruncDeg, f.map));
+	C.cache.sheaf = D;
+	C))
 
 module ComplexMap := ComplexMap => phi -> phi.cache.module ??= (
     S := source phi;

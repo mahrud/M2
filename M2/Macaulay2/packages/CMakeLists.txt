@@ -133,9 +133,7 @@ set(EngineTests_dependencies ${_default_dependencies})
 
 foreach(package IN LISTS PACKAGES)
   ## Make a list of package sources to detect changes
-  #FIXME: this is too slow to generate on NFS-backed file systems
-  #file(GLOB_RECURSE ${package}_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${package}.m2 ${package}/*)
-  set(${package}_sources ${package}.m2)
+  file(GLOB_RECURSE ${package}_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${package}.m2 ${package}/*)
 
   ## Copy package and auxiliary folder to usr-dist
   file(COPY ${package}.m2 DESTINATION ${M2_DIST_PREFIX}/${M2_INSTALL_DATADIR})

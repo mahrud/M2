@@ -136,7 +136,10 @@ doc ///
                 TO (min, Complex),
                 TO (length, Complex),
                 TO (regularity, Complex),
+                TO (hilbertPolynomial, Complex),
                 TO (betti, Complex),
+                TO (rank, Complex),
+                TO (euler, Complex),
                 TO (poincare, Complex),
                 TO (poincareN, Complex),
                 TO (components, Complex)
@@ -4414,6 +4417,50 @@ doc ///
         regularity
         betti
         freeResolution
+///
+
+doc ///
+    Key
+        (rank, Complex)
+--     Headline
+--     Usage
+--     Inputs
+--     Outputs
+--     Description
+--         Text
+-- 	Example
+    SeeAlso
+        (rank, Module)
+///
+
+doc ///
+    Key
+        (hilbertPolynomial, Complex)
+--     Headline
+--     Usage
+--     Inputs
+--     Outputs
+--     Description
+--         Text
+-- 	Example
+    SeeAlso
+        (hilbertPolynomial, Module)
+	(euler, Complex)
+///
+
+doc ///
+    Key
+        (euler, Complex)
+--     Headline
+--     Usage
+--     Inputs
+--     Outputs
+--     Description
+--         Text
+-- 	Example
+    SeeAlso
+	(euler, Module)
+        (hilbertPolynomial, Complex)
 ///
 
 doc ///

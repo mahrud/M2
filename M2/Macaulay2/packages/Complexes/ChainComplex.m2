@@ -428,17 +428,13 @@ Complex ^ Array := ComplexMap => (C,v) -> (
     )
 ------------------
 
-Complex Array := (C, L) -> (
-    if #L != 1 or not instance(L#0,ZZ) then error "expected an integer shift";
-    (lo,hi) := C.concentration;
-    if L#0 === 0 then C
-    else if lo === hi then (
-        complex(C_lo, Base => lo - L#0)
-        )
-    else (
-        newmaps := hashTable for i from lo+1 to hi list (i - L#0) => if odd L#0 then -dd^C_i else dd^C_i;
-        complex newmaps
-        )
+Complex Array := (C, L) -> C.cache#L ??= (
+    i := if #L == 1 or instance(L#0, ZZ) then L#0 else error "expected an integer shift";
+    if  i == 0  then return C;
+    (lo, hi) := C.concentration;
+    if lo == hi then complex(C_lo, Base => lo - i)
+    else complex applyPairs(C.dd.map,
+	(j, f) -> j - i => if odd i then -f else f)
     )
 
 

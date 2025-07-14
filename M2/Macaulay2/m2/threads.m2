@@ -28,12 +28,12 @@ net Mutex := x -> toString (
     else x)
 
 lock = method()
-lock Mutex := lock0
+lock Mutex := M -> ( lock0 M; M )
 lock(Mutex, Function) := lockFunction -- defined in pthread.d
 lock Function := f -> lockFunction(new Mutex, f)
 
 tryLock = method()
-tryLock Mutex := tryLock0
+tryLock Mutex := M -> ( tryLock0 M; M )
 
 unlock = method()
 unlock Mutex := unlock0

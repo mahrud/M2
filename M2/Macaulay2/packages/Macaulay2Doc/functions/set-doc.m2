@@ -8,7 +8,7 @@ document {
      Key => {set, (set,VisibleList), (set,HashTable), (set, Set)},
      Headline => "make a set",
      Usage => "set v\nset(v1,v2,...)",
-     Inputs => {"v", ofClass { VisibleList, HashTable } },
+     Inputs => { "v" => ofClass { VisibleList, HashTable } },
      Outputs => {Set => " the set whose elements are the members of the list v or keys of the hash table v"},
      EXAMPLE {
 	  "v = {1,2,3,2,1}",

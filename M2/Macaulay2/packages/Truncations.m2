@@ -292,9 +292,11 @@ truncate(List, Module) := Module => truncateModuleOpts >> opts -> (degs, M) -> (
     doTrim if degreeLength R === 1 and any(degrees R, d -> d =!= {0})
     then truncation1(min degs, M)
     else if isFreeModule M then return ( -- NOTE: skip trimming
-        image map(M, , truncationMonomials(degs, M, Cone => opts#Cone)))
+	f := truncationMonomials(degs, M, Cone => opts#Cone);
+	if source f === target f and f == 1 then M else image map(M, , f))
     else if not M.?relations then (
-        image map(M, , truncationMonomials(degs, cover M, Cone => opts#Cone)))
+	f = truncationMonomials(degs, cover M, Cone => opts#Cone);
+	if source f === target f and f == 1 then M else image map(M, , f))
     else subquotient(
         gens truncate(degs, image generators M, opts ++ { MinimalGenerators => false }),
 	-- TODO: add an option for skipping truncation of the relations

@@ -924,14 +924,15 @@ homomorphism(ZZ, Matrix, Complex) := ComplexMap => (i, f, E) -> (
     --     but is missing the direct sum component information.
     -- (2) If f is a map to the kernel of the differential then we use 'super'
     --     to make the target exactly (this) E_i (with component info).
+    -- TODO: should be able to use inducedMap in both cases with minimal overhead
     f = if E_i == target f then
             map(E_i, source f, f)
         else
-            map(E_i, source f, super f);
+            inducedMap(E_i, source f, f);
     (C,D) := E.cache.homomorphism;
     (lo,hi) := concentration C;
     H := hashTable for j from lo to hi list j => 
-      homomorphism fixme f^[{j,j+i}];
+      map(D_(j+i), C_j, homomorphism fixme f^[{j,j+i}]);
     map(D,C,H, Degree=>i)
     )
 

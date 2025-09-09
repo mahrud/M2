@@ -64,10 +64,9 @@ sheaf(Variety, Complex) := Complex => (X, C) -> C.cache.sheaf ??= (
 
 sheaf          ComplexMap  := ComplexMap =>     phi  -> sheaf(variety ring phi, phi)
 sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
-    S := source phi;
-    T := target phi;
-    if isSheafComplex S and isSheafComplex T then return phi;
-    sphi := map(sheaf_X T, sheaf_X S, applyValues(phi.map, sheaf_X));
+    if isSheafComplex(src := source phi)
+    or isSheafComplex(tar := target phi) then return phi;
+    sphi := map(sheaf_X tar, sheaf_X src, applyValues(phi.map, sheaf_X));
     sphi.cache.module = phi;
     sphi)
 
@@ -88,11 +87,15 @@ module Complex := Complex => D -> D.cache.module ??= (
     C)
 
 module ComplexMap := ComplexMap => phi -> phi.cache.module ??= (
-    S := source phi;
-    T := target phi;
-    if not isSheafComplex S or not isSheafComplex T then return phi;
-    maxTruncDeg := max ( apply(values S.dd.map, f -> f.degree) | apply(values T.dd.map, f -> f.degree) );
-    sphi := map(truncate(maxTruncDeg,module T), truncate(maxTruncDeg,module S), applyValues(phi.map, i -> truncate(maxTruncDeg, matrix i)));
+    if not isSheafComplex(src := source phi)
+    or not isSheafComplex(tar := target phi) then return phi;
+    -- TODO: in multigraded case, need to be more careful
+    deg := max(maxTruncationDegree src, maxTruncationDegree tar);
+    sphi := map(
+	truncate(deg, module tar, MinimalGenerators => false),
+	truncate(deg, module src, MinimalGenerators => false),
+	applyValues(phi.map, f ->
+	    truncate(deg, matrix f, MinimalGenerators => false)));
     sphi.cache.sheaf = phi;
     sphi)
 

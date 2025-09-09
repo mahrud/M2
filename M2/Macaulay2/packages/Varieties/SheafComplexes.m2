@@ -136,19 +136,16 @@ sheafHom(Complex, Complex) := Complex => opts -> (C,D) -> (
                         else if k-j === { -1,0 } then sheafHom(dd^C_(j#0), D_(k#1), opts)
                         else 0);
 		    m))));
-    -- TODO: switch to complex applyValues
     result = complex maps;
     result.cache.homomorphism = (C,D); -- source first, then target
     Y.cache#(sheafHom,C,D) = result;
     result
     )
 
-
-
-sheafHom(CoherentSheaf, Complex) := Complex => opts -> (M,C) -> sheafHom(complex M, C, opts)
-sheafHom(Complex, CoherentSheaf) := Complex => opts -> (C,M) -> sheafHom(C, complex M, opts)
-sheafHom(Complex, SheafOfRings) := Complex => opts -> (C,R) -> sheafHom(C, complex R, opts)
-sheafHom(SheafOfRings, Complex) := Complex => opts -> (R,C) -> sheafHom(complex R, C, opts)
+sheafHom(CoherentSheaf, Complex) := Complex => opts -> (M, C) -> sheafHom(complex M, C, opts)
+sheafHom(Complex, CoherentSheaf) := Complex => opts -> (C, M) -> sheafHom(C, complex M, opts)
+sheafHom(Complex,  SheafOfRings) := Complex => opts -> (C, R) -> sheafHom(C, complex R, opts)
+sheafHom(SheafOfRings,  Complex) := Complex => opts -> (R, C) -> sheafHom(complex R, C, opts)
 
 sheafDual = method()
 sheafDual Complex := Complex => C -> sheafHom(C, ring C)

@@ -36,8 +36,8 @@ complex CoherentSheaf := Complex => lookup(complex, Module)
 tensor(CoherentSheaf, Complex) := Complex => {} >> opts -> (F, C) -> (
     if not isSheafComplex C then error "expected to tensor with a complex of sheaves";
     (lo, hi) := concentration C;
-    if lo === hi
-    then complex(tensor(F, C_lo, opts), Base => lo)
+    if C.dd == 0
+    then complex(for i from lo to hi list tensor(F, C_i, opts), Base => lo)
     else complex applyValues(C.dd.map, f -> tensor(id_F, f, opts)))
 
 tensor(Complex, CoherentSheaf) := Complex => {} >> opts -> (C, F) -> tensor(F, C, opts)
@@ -56,12 +56,11 @@ sheaf          Complex  := Complex =>     C  -> sheaf(variety ring C, C)
 sheaf(Variety, Complex) := Complex => (X, C) -> C.cache.sheaf ??= (
     if isSheafComplex C then return C;
     (lo, hi) := C.concentration;
-    if lo === hi
-    then complex(sheaf_X C_lo, Base => lo)
-    else (
-	D := complex applyValues(C.dd.map, sheaf_X);
-	D.cache.module = C;
-	D))
+    D := if C.dd == 0
+    then complex(for i from lo to hi list sheaf_X C_i, Base => lo)
+    else complex applyValues(C.dd.map, sheaf_X);
+    D.cache.module = C;
+    D)
 
 sheaf          ComplexMap  := ComplexMap =>     phi  -> sheaf(variety ring phi, phi)
 sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
@@ -72,16 +71,21 @@ sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
     sphi.cache.module = phi;
     sphi)
 
+maxTruncationDegree = D -> (
+    max values applyValues(D.dd.map,
+	f -> if zero f then -infinity else f.degree))
+
 module Complex := Complex => D -> D.cache.module ??= (
     if not isSheafComplex D then return D;
     (lo, hi) := D.concentration;
-    if lo === hi
-    then complex(module D_lo, Base => lo)
-    else (
-	maxTruncDeg := max apply(values D.dd.map, f -> f.degree);
-	C := complex applyValues(D.dd.map, f -> truncate(maxTruncDeg, f.map));
-	C.cache.sheaf = D;
-	C))
+    -- TODO: in multigraded case, need to be more careful
+    deg := maxTruncationDegree D;
+    C := if D.dd == 0
+    then complex(for i from lo to hi list module D_i, Base => lo)
+    else complex applyValues(D.dd.map,
+	f -> truncate(deg, f.map, MinimalGenerators => false));
+    C.cache.sheaf = D;
+    C)
 
 module ComplexMap := ComplexMap => phi -> phi.cache.module ??= (
     S := source phi;
@@ -92,7 +96,11 @@ module ComplexMap := ComplexMap => phi -> phi.cache.module ??= (
     sphi.cache.sheaf = phi;
     sphi)
 
-Complex(ZZ) := Complex(Sequence) := Complex => (C, a) -> complex applyValues(C.dd.map, f -> f(a))
+Complex(ZZ) := Complex(Sequence) := Complex => (C, a) -> (
+    (lo, hi) := C.concentration;
+    if C.dd == 0
+    then complex(for i from lo to hi list C_i(a), Base => lo)
+    else complex applyValues(C.dd.map, f -> f(a)))
 
 sheafHom(Complex, Complex) := Complex => opts -> (C,D) -> (
     -- signs here are based from Christensen and Foxby

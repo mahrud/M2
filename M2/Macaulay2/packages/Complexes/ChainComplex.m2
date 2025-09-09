@@ -429,12 +429,13 @@ Complex ^ Array := ComplexMap => (C,v) -> (
 ------------------
 
 Complex Array := (C, L) -> C.cache#L ??= (
-    i := if #L == 1 or instance(L#0, ZZ) then L#0 else error "expected an integer shift";
-    if  i == 0  then return C;
-    (lo, hi) := C.concentration;
-    if lo == hi then complex(C_lo, Base => lo - i)
+    if #L != 1 or not instance(L#0,ZZ) then error "expected an integer shift";
+    (lo,hi) := C.concentration;
+    if  L#0 == 0 then C else
+    if C.dd == 0
+    then complex(for j from lo to hi list C_j, Base => lo - L#0)
     else complex applyPairs(C.dd.map,
-	(j, f) -> j - i => if odd i then -f else f)
+	(j, f) -> j - L#0 => if odd L#0 then -f else f)
     )
 
 
@@ -830,8 +831,8 @@ importFrom_Core "residueMap" -- gives a map back to the coefficient ring
 cover' = method()
 cover' Complex := Complex => C -> (
     (lo, hi) := concentration C;
-    if lo == hi
-    then complex(cover C_lo, Base => lo)
+    if C.dd == 0
+    then complex(for i from lo to hi list C_i, Base => lo)
     else complex applyValues(C.dd.map, cover))
 cover' ComplexMap := ComplexMap => f -> (
     map(cover' target f, cover' source f, i -> cover f_i, Degree => degree f))

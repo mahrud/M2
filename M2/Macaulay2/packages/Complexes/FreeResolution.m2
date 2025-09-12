@@ -195,7 +195,7 @@ resolutionObjectInEngine = (opts, M, matM) -> (
     RO.returnCode = rawStatus1 RO.RawComputation; -- do we need this?
 
     RO.compute = (lengthlimit, degreelimit) -> (
-	lenlimit := defaultLengthLimit'(M, lengthlimit);
+	lenlimit := if instance(ring M, QuotientRing) then {} else { defaultLengthLimit'(M, lengthlimit) };
         deglimit := if degreelimit === infinity then {} else degreeToHeft(R, degreelimit);
         rawGBSetStop(
             RO.RawComputation,
@@ -207,7 +207,7 @@ resolutionObjectInEngine = (opts, M, matM) -> (
             0,                                          -- codim_limit (not relevant for resolutions)
             0,                                          -- subring_limit (not relevant for resolutions)
             false,                                      -- just_min_gens
-            {lenlimit}                                  -- length_limit
+            lenlimit                                    -- length_limit
             );
         rawStartComputation RO.RawComputation;
         RO.returnCode = rawStatus1 RO.RawComputation;

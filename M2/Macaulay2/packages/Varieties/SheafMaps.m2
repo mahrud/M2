@@ -43,7 +43,7 @@ map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> 
     if varietyWarn and not instance(variety F, ProjectiveVariety) then (
 	varietyWarn = false; printerr "maps of sheaves are experimental over the given variety");
     -- FIXME: not correct in multigraded case if source phi is generated in multiple degrees
-    deg := if opts.Degree =!= null then opts.Degree else max degrees target phi;
+    deg := if opts.Degree =!= null then opts.Degree else min degrees source phi;
     phi  = if module G =!= target phi then inducedMap(module G, target phi) * phi else phi;
     new SheafMap from {
 	symbol variety => variety F,
@@ -70,7 +70,7 @@ map(CoherentSheaf, CoherentSheaf, ZZ)                     := SheafMap => opts ->
     if F === G then n * id_G else
     if n === 0 then map(G, F, map(module G, module F, 0)) else
     error "expected 0 or source and target equal")
-map(CoherentSheaf, CoherentSheaf, SheafMap)               := SheafMap => opts -> (G,F,phi)      -> map(G,F,matrix phi)
+map(CoherentSheaf, CoherentSheaf, SheafMap)               := SheafMap => opts -> (G,F,phi)      -> sheaf map(G,F,matrix phi)
 
 map(CoherentSheaf, Module, ZZ) := SheafMap => opts -> (F, M, n) -> (
     if n === 0 then sheaf map(module F, M, 0) else
@@ -107,7 +107,7 @@ isWellDefined SheafMap := f -> (
 	instance(f.target, CoherentSheaf) and
 	instance(f.cache, CacheTable) and
 	instance(f.map, Matrix) and
-	(instance(f.degree, List) or f.degree == -infinity),
+	(instance(f.degree, List) or f.degree == infinity),
 	"the hash table does not have the expected values")
     -- mathematical checks
     and assert'(ring matrix f === ring X,
@@ -120,10 +120,9 @@ isWellDefined SheafMap := f -> (
 	"target of the sheaf map does not match the target of the underlying matrix")
     and assert'(F  == sheaf(X, source matrix f),
 	"source of the sheaf map does not match the source of the underlying matrix")
---    and assert'(d >= max degrees G,
---	"expected the degree of the sheaf map to be at least as high as the degrees of the target")
-    and assert'(try ( isWellDefined map(module G,
-	 F' := truncate(d, module F, MinimalGenerators => false),
+--    and assert'(d >= min degrees F, -- maybe not strictly necessary
+--	"expected the degree of the sheaf map to be at least as high as the degrees of the source")
+    and assert'(try ( isWellDefined map(module G, F' := truncate(d, module F, MinimalGenerators => false),
 	 -- TODO: should we use F' here or truncation of source matrix f?
          matrix f * inducedMap(source matrix f, F') ) ) else false,
 	"expected the matrix to induce a map between a truncation of the underlying modules")
@@ -323,6 +322,7 @@ lift'(Matrix, Matrix) := Matrix => (phi, eta) -> (
 --WARNING: this method does not actually verify if the lift is possible
 lift'(SheafMap, ZZ)   :=
 lift'(SheafMap, List) := SheafMap => (shphi, e) -> (
+    d := shphi.degree;
     phi := matrix shphi;
     M := module source shphi;
     eta := inducedMap(truncate(e, M, MinimalGenerators => false), source phi);
@@ -332,7 +332,6 @@ lift'(SheafMap, List) := SheafMap => (shphi, e) -> (
 --phi : M(\geq d) --> N to a map M(\geq e) --> N that represents
 --the same morphism of sheaves, for the smallest possible value of e
 --WARNING: this method does not actually verify if the lift is possible
--- TODO: implement lift(Complex) and lift(ComplexMap)
 lift SheafMap := SheafMap => o -> shphi -> (
     -- TODO: what should happen when shphi is zero?
     if shphi == 0 then return shphi;

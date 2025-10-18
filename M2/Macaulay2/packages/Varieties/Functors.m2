@@ -13,8 +13,8 @@ checkVariety = (X, F) -> (
 flattenComplex = C -> C.cache#"flattenComplex" ??= (
     if instance(ring C, PolynomialRing) then return C;
     (lo, hi) := C.concentration;
-    if lo === hi
-    then complex(flattenModule C_lo, Base => lo)
+    if C.dd == 0
+    then complex(for i from lo to hi list flattenModule C_i, Base => lo)
     else complex applyValues(C.dd.map, flattenMorphism))
 
 -- For F a coherent sheaf on a scheme X, with X a closed subscheme of Y (writing i: X -> Y for the inclusion),

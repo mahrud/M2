@@ -4,13 +4,13 @@ export {
     -- Methods
     "sheafMap",
 --  "isLiftable",
-    "yonedaSheafExtension",
+--  "yonedaSheafExtension",
 --  "yonedaSheafExtension'",
-    "cotangentSurjection",
-    "eulerSequence",
-    "idealSheafSequence",
-    "embeddedToAbstract",
-    "ExtLongExactSequence",
+--  "cotangentSurjection",
+--  "eulerSequence",
+--  "idealSheafSequence",
+--  "embeddedToAbstract",
+--  "ExtLongExactSequence",
     }
 
 -----------------------------------------------------------------------------

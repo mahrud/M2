@@ -390,7 +390,7 @@ schreyerOrder RawMatrix := RawMatrix => (m) -> rawMatrixRemake2(rawTarget m, raw
 
 possiblyLift := x -> if denominator x === 1 then numerator x else x -- x is in QQ
 
-rank Module := M -> M.cache.rank ??= ((
+rank Module := M0 -> sum(components M0, M -> M.cache.rank ??= (
 	  R := ring M;
 	  if isFreeModule M then numgens M 
 	  else if isField R or R === ZZ then (

@@ -98,7 +98,7 @@ callTopcom(String, List) := (command, inputs) -> (
     retval := runProgram(topcomProgram, command, " < " | infile,
 	KeepFiles => true, RaiseError => false);
 
-    if debugLevel >= 1 then (
+    if debugLevel >= 2 then (
         << "-- calling topcom" << endl;
         << "-- " << command << ": using temporary file prefix " << filename << endl;
         );

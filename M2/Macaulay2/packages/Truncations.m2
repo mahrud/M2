@@ -329,6 +329,8 @@ truncate(List,    List, Matrix) := Matrix => truncateModuleOpts >> opts -> (tard
     -- TODO: assert that srcdegs >= tardegs with respect to the cone of truncation
     inducedTruncationMap(truncate(tardegs, target f, opts),  truncate(srcdegs, source f, opts), f))
 
+-- TODO: add canonicalTruncationMap, or set canonicalMap(M, truncate(d, M)) to work
+
 --------------------------------------------------------------------
 
 truncate(InfiniteNumber, Ring)   := truncateModuleOpts >> o -> (d, R) -> ideal truncate(d, module R, o)

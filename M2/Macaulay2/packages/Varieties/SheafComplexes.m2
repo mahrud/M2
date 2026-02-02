@@ -70,20 +70,32 @@ sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
     sphi.cache.module = phi;
     sphi)
 
-maxTruncationDegree = D -> (
-    max values applyValues(D.dd.map,
-	f -> if zero f then -infinity else f.degree))
+importFrom_Truncations { "inducedTruncationMap" }
+
+maxTruncationDegree = D -> commonMinimum(-effCone variety ring D,
+    nonnull values applyValues(D.dd.map, f -> if not zero f then f.degree))
 
 module Complex := Complex => D -> D.cache.module ??= (
     if not isSheafComplex D then return D;
     (lo, hi) := D.concentration;
-    -- TODO: in multigraded case, need to be more careful
-    deg := maxTruncationDegree D;
     C := if D.dd == 0
     then complex(for i from lo to hi list module D_i, Base => lo)
-    else complex applyValues(D.dd.map,
-	-- TODO: this should be subtruncate, but something in Hom fails
-	f -> truncate(deg, f.map, MinimalGenerators => false));
+    -- this is the simplest way to truncate the whole complex:
+    -- else complex applyValues(D.dd.map, f -> truncate(deg, f.map))
+    else (
+	if debugLevel > 0 then printerr("truncating complex with ", toString(hi - lo + 1), " terms");
+	-- this construction requires ~half as many truncations
+	-- and in some cases calling inducedMap is necessary anyway
+	-- TODO: should this be subtruncate? something in Hom failed before
+	g := lift dd^D_lo;
+	f := truncate(, g.degree, matrix g, MinimalGenerators => false);
+	complex hashTable for i from lo+1 to hi list i => (
+	    g = lift dd^D_i;
+	    f = inducedTruncationMap(source f,
+		truncate(g.degree, source matrix g,
+		    MinimalGenerators => false), matrix g))
+	);
+    assert isWellDefined C;
     C.cache.sheaf = D;
     C)
 

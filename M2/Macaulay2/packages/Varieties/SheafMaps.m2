@@ -563,19 +563,18 @@ homology(SheafMap, SheafMap) := CoherentSheaf => opts -> (g, f) -> (
     if f == 0 then return kernel g;
     if source matrix g === target matrix f then
     return sheaf(X, homology(matrix g, matrix f, opts));
-    g = lift g;
-    d := g.degree;
-    M := source matrix f;
-    N := target matrix f;
     -- Note: we use =!= to avoid pruning the sheaves
     -- we also don't verify g * f == 0 for the same reason
-    --if module source g =!= N then error "expected sheaf maps to be composable";
+    if module source g =!= module target f
+    then error "expected sheaf maps to be composable";
     -- truncate matrix f to match the degree of the source of g
+    g = lift g;
+    d := g.degree;
     g' := matrix g;
-    -- TODO: is effCone correct here?
-    d' := commonMinimum(effCone X, unique degrees source g');
-    N' := truncate(d', N, MinimalGenerators => false);
-    f' := inducedMap(N', M, matrix f);
+    -- TODO: is effCone correct here? what about the truncation?
+    -- d' := commonMinimum(-effCone X, degrees source g');
+    -- f' := truncate(d, d', matrix f, MinimalGenerators => false);
+    f' := truncate(d, matrix f, MinimalGenerators => false);
     sheaf(X, homology(g', f', opts)))
 
 -----------------------------------------------------------------------------

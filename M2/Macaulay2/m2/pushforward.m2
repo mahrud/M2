@@ -261,6 +261,8 @@ liftModule   = M -> (
 liftMorphism = f -> f.cache#"liftMorphism" ??= (
     if instance(ring f, PolynomialRing) then return f;
     g := presentation ring f;
+    -- FIXME: if ring f is a quotient of another quotient ring Q,
+    -- "ambient ring f" would give Q, not a polynomial ring as we want.
     S := ring g;
     -- TODO: sometimes lifting to ring g is enough, how can we detect this?
     -- TODO: why doesn't lift(f, ring g) do this automatically?

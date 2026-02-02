@@ -27,7 +27,9 @@ clearHom = (M, N) -> (
 importFrom_Complexes { "isMorphism", "isAbelianCategory" }
 isMorphism SheafMap := isAbelianCategory CoherentSheaf := x -> true
 
-complex CoherentSheaf := Complex => lookup(complex, Module)
+-- TODO: simplify this, and also cache complex(SheafOfRings)
+complex CoherentSheaf := Complex => { Base => 0 } >> opts -> F -> (
+    F.cache.Complex ??= (lookup(complex, Module))(F, opts))
 
 -----------------------------------------------------------------------------
 -- Basic operations between sheaves, complexes, etc.
@@ -52,7 +54,7 @@ Complex ** CoherentSheaf := Complex => {} >> opts -> (C, F) -> tensor(C, F, opts
 isSheafComplex = C -> instance(C_(C.concentration#0), CoherentSheaf)
 variety Complex := C -> variety C_(C.concentration#0)
 
-sheaf          Complex  := Complex =>     C  -> sheaf(variety ring C, C)
+sheaf Complex := Complex^~ := Complex =>  C  -> sheaf(variety ring C, C)
 sheaf(Variety, Complex) := Complex => (X, C) -> C.cache.sheaf ??= (
     if isSheafComplex C then return C;
     (lo, hi) := C.concentration;
@@ -62,7 +64,7 @@ sheaf(Variety, Complex) := Complex => (X, C) -> C.cache.sheaf ??= (
     D.cache.module = C;
     D)
 
-sheaf          ComplexMap  := ComplexMap =>     phi  -> sheaf(variety ring phi, phi)
+sheaf ComplexMap := ComplexMap^~ := ComplexMap => phi -> sheaf(variety ring phi, phi)
 sheaf(Variety, ComplexMap) := ComplexMap => (X, phi) -> phi.cache.sheaf ??= (
     if isSheafComplex(src := source phi)
     or isSheafComplex(tar := target phi) then return phi;

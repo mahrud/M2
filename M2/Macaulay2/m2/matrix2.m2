@@ -317,7 +317,8 @@ addHook((syz, Matrix), Strategy => Default, (opts, f) -> (
      then error "expected map between free modules";
      if ring f === ZZ or not isHomogeneous f
      then syz gb (f, opts, Syzygies=>true)
-     else mingens image syz gb (f, opts, Syzygies=>true)
+     -- why was this necessary?
+     else -*mingens image*- syz gb(f, opts, Syzygies => true)
      ))
 
 modulo = method(

@@ -52,8 +52,6 @@ raw ResolutionObject := X -> X.RawComputation
 
 inf := t -> if t === infinity then -1 else t
 
-GlobalMutex = new Mutex
-
 freeResolution Module := Complex => opts -> M -> (
     -- This handles caching, hooks for different methods of computing 
     -- resolutions or over different rings which require different algorithms.
@@ -86,9 +84,7 @@ freeResolution Module := Complex => opts -> M -> (
         --remove(M.cache, symbol Resolution); -- will be replaced below
         );
 
-    lock GlobalMutex;
     lock(M.cache#"ResolutionMutex" ??= new Mutex);
-    unlock GlobalMutex;
 
     -- this block handles interrupted resolutions
     if M.cache.?ResolutionObject then (
@@ -735,6 +731,7 @@ minimalBetti Ideal := BettiTally => opts -> I -> minimalBetti(
 
 minimalBetti Module := BettiTally => opts -> M -> (
     R := ring M;
+    if char R == 0 then error "expected positive characteristic base field";
     degreelimit := opts.DegreeLimit;
     if degreelimit === null then degreelimit = infinity;
     lengthlimit := opts.LengthLimit;

@@ -216,12 +216,13 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
         F := freeComponents target A;
         b := transpose matrix{d_F};
         P := truncationPolyhedron(A^F, b, opts);
-        H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~50% of computation
+	-- FIXME: this is a kludge, but alas entries is slow: https://github.com/Macaulay2/M2/issues/4016
+	H := transpose entries transpose map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~50% of computation
         J := leadTerm ideal R1;
         ambR := ring J;
         -- generates the Nef cone
         --nefgens := matrix(ambR, { for h in H list if h#0 === 0 then ambR_(drop(h, 1)) else continue });
-        mongens := matrix(ambR, { for h in H list if h#0 === 1 then ambR_(drop(h, 1)) else continue });
+	mongens := matrix(ambR, { for h in H list if h#0 === 1 then ambR_(drop(h, 1)) else continue });
         result := mingens ideal(mongens % J);
         if R1 =!= ambR then result = result ** R1;
         if R =!= R1 then result = phi1^-1 result;

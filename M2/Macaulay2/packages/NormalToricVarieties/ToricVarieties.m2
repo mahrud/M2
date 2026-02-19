@@ -691,7 +691,9 @@ toricBlowup(List, NormalToricVariety, List) := NormalToricVariety => opts -> (s,
     rayMatrix := transpose matrix rays X;
     d := dim X;
     clStar := {};
-    for t in star do (
+    if member(sort s, coneList)
+    then clStar = subsets(sort s, d-1)
+    else for t in star do (
     	c := 1 + d - rank rayMatrix_t;
     	clStar = clStar | select (orbits(X,c), r -> all (r, j -> member(j,t)))
 	);

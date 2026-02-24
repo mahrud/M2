@@ -698,6 +698,11 @@ restart
   assert(homomorphism(0, B_{0} + B_{5} + B_{6} + B_{7}, E) == mors_0 + mors_5 + mors_6 + mors_7)
   
   prune HH_0(E)
+
+  S = QQ[x,y]
+  H = Hom(complex S^{1}, complex S^0)
+  assert(0 == homomorphism( 0, map(H_0,  S^1, 0), H))
+  assert(0 == homomorphism(-1, map(H_-1, S^1, 0), H))
 ///
 
 TEST ///

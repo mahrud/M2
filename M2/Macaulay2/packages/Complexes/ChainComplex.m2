@@ -932,7 +932,7 @@ homomorphism(ZZ, Matrix, Complex) := ComplexMap => (i, f, E) -> (
     (C,D) := E.cache.homomorphism;
     (lo,hi) := concentration C;
     H := hashTable for j from lo to hi list j => 
-      map(D_(j+i), C_j, homomorphism fixme f^[{j,j+i}]);
+      map(D_(j+i), C_j, if f == 0 then 0 else homomorphism fixme f^[{j,j+i}]);
     map(D,C,H, Degree=>i)
     )
 

@@ -318,8 +318,8 @@ Matrix.directSum = args -> (
 	  symbol cache => new CacheTable from { symbol components => toList args }
 	  })
 
-isDirectSum = method()
-isDirectSum Module := (M) -> M.cache.?components
+isDirectSum = method(TypicalValue => Boolean)
+isDirectSum Module := M -> M.cache.?components and 0 < #M.cache.components
 
 components Module := M -> if M.cache.?components then M.cache.components else {M}
 components Matrix := f -> if f.cache.?components then f.cache.components else {f}

@@ -275,6 +275,7 @@ Ideal * CoherentSheaf          := CoherentSheaf => (I, F) -> sheaf(F.variety, I 
 directSum CoherentSheaf        := CoherentSheaf =>  F     -> CoherentSheaf.directSum(1 : F)
 
 components CoherentSheaf := List => F -> F.cache.components ??= apply(components module F, N -> sheaf(F.variety, N))
+isDirectSum CoherentSheaf := F -> F.cache.?components and 1 < #F.cache.components
 
 component(CoherentSheaf, Thing) := (F, k) -> (
     if not F.cache.?indexComponents then error "expected Sheaf to be a direct sum with indexed components";

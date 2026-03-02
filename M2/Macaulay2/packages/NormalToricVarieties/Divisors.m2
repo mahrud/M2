@@ -7,8 +7,8 @@ intersect' = L -> if #L == 1 then L#0 else intersect L
 
 -- lists primitive collections of a toric variety
 -- see CLS Definition 5.1.5
-primitiveCollections = method()
-primitiveCollections NormalToricVariety := X -> (
+primitiveCollections' = method()
+primitiveCollections' NormalToricVariety := X -> (
     -- we need the Alexander dual of the irrelevant ideal,
     -- but ring X can't be defined before Cl X is computed.
     -- this is just indices \ (dual monomialIdeal X)_*
@@ -21,8 +21,8 @@ primitiveCollections NormalToricVariety := X -> (
 -- returns the primitive relation associated to a collection
 -- we will use this to compute rows of the map WDiv X -> Cl X
 -- see CLS Definition 6.4.10
-primitiveRelation = method()
-primitiveRelation(NormalToricVariety, List) := (X, L) -> (
+primitiveRelation' = method()
+primitiveRelation'(NormalToricVariety, List) := (X, L) -> (
     X.cache.PrimitiveRelations ??= new MutableHashTable;
     X.cache.PrimitiveRelations#L ??= (
 	WDiv := weilDivisorGroup X;
@@ -60,7 +60,7 @@ classGroup NormalToricVariety := Module => (
 	-- FIXME: we can't call isProjective, because it calls classGroup!
 	-- so for now we at least call isComplete, but is that enough?
 	--else if isSmooth X and isComplete X then matrix apply(
-	--    primitiveCollections X, PC -> primitiveRelation(X, PC))
+	--    primitiveCollections' X, PC -> primitiveRelation'(X, PC))
 	else matrix inverse clX.cache.pruningMap;
     	X.cache.fromWDivToCl = map(clX, wDiv, A);	  
     	clX 

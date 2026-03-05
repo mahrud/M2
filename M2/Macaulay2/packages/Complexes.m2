@@ -104,7 +104,6 @@ importFrom_Core {
     "rawPruningMorphism",
     }
 
-
 -- keys into the type `Complex`
 protect modules
 

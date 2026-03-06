@@ -9,10 +9,13 @@ TEST ///
   X = Proj S;
   I = monomialCurveIdeal(S,{1,3,4})
   N = S^1/I;
-  assert(Ext^1(OO_X,N^~(>=-1)) == prune truncate(-1,Ext^1(truncate(1,S^1),N)))
-  assert(Ext^1(OO_X,N^~(>= 0)) == prune truncate(0,Ext^1(truncate(2,S^1),N)))
-  assert(Ext^1(OO_X,N^~(>= 0)) != prune truncate(0,Ext^1(truncate(1,S^1),N)))
+  -- Ext^i(F,G(>=b)) should return a graded module that is correct in degrees at least b. 
+  assert(prune truncate(-1,Ext^1(OO_X,N^~(>=-1))) == prune truncate(-1,Ext^1(truncate(3,S^1),N)))
+  assert(prune truncate(0,Ext^1(OO_X,N^~(>= 0))) == prune truncate(0,Ext^1(truncate(2,S^1),N)))
+  assert(prune truncate(0,Ext^1(OO_X,N^~(>= 0))) != prune truncate(0,Ext^1(truncate(1,S^1),N)))
+///
 
+TEST ///
   -- Example 4.2: locally free sheaves and global Ext.
   S = ZZ/32003[u,v,w,x,y,z];
   I = minors(2,genericSymmetricMatrix(S,u,3));
@@ -20,8 +23,10 @@ TEST ///
   R = ring X;
   Omega = cotangentSheaf X;
   OmegaDual = dual Omega;
-  assert(Ext^1(OmegaDual, OO_X^1(>= 0)) == Ext^1(OO_X^1, Omega(>= 0)))
+  assert(prune truncate(0,Ext^1(OmegaDual, OO_X^1(>= 0))) == prune truncate (0,Ext^1(OO_X^1, Omega(>= 0))))
+///
 
+TEST ///
   -- Example 4.3: Serre-Grothendieck duality.
   S = QQ[v,w,x,y,z];
   X = variety ideal(w*x+y*z,w*y+x*z);
@@ -108,3 +113,65 @@ TEST /// -- The (topological) Euler characteristic of projective varieties,
   assert(hh^1(S3,-3,3) == 4*T^(-3)+10*T^(-2)+16*T^(-1)+20*T^0+16*T^1+10*T^2+4*T^3)
   assert(hh^2(S3,-3,3) == 20*T^(-3)+6*T^(-2));
 ///
+
+end --
+
+
+
+-- Tests for cohomology of projective varieties.
+R0=QQ;
+R3=R0[x0,x1,x2,x3,x4];
+f3=x0^6+x1^6+x2^6+x3^6+x4^6; R4=R3/(ideal f3);
+X3=Proj R3; X4=Proj R4;
+S4=cotangentSheaf X4;
+S5=OO_X4^1;
+hh^2(S4(*))
+hilbertSeries(HH^2(S4(>=-10)),Order=>20)
+euler X4
+hilbertPolynomial X4
+
+-- Tests for cohomology of weighted projective varieties.
+R5=ZZ/31991;
+R6=R5[x,y,z,w,Degrees=>{1,1,2,3}];
+X6=Proj R6;
+degree X6
+f6=w^2+z^3+x^5*y+x^4*z;
+R7=R7/(ideal f1);
+X7=Proj R7;
+S7=OO_X7^1;
+S8=reflexiveDifferentials X2;
+hh^1(S8(*))
+euler(S8,-10,10)
+hilbertSeries(Ext^1(S7,S8(>=0)),Order=>10)
+Ext^1(S7,S8)
+euler X2
+
+-- same, but one dimension higher?
+
+-- Tests for cohomology of projective varieties.
+R0=QQ;
+R3=R0[x0,x1,x2,x3,x4,x5];
+f3=x0^8+x1^8+x2^8+x3^8+x4^8+x5^8; R4=R3/(ideal f3);
+X3=Proj R3; X4=Proj R4;
+S4=cotangentSheaf X4;
+S5=OO_X4^1;
+hh^3(S4(*))
+hilbertSeries(HH^3(S4(>=-10)),Order=>20)
+euler X4
+hilbertPolynomial X4
+
+-- Tests for cohomology of weighted projective varieties.
+R5=ZZ/31991;
+R6=R5[x,y,z,w,Degrees=>{1,1,2,3}];
+X6=Proj R6;
+degree X6
+f6=w^2+z^3+x^5*y+x^4*z;
+R7=R7/(ideal f1);
+X7=Proj R7;
+S7=OO_X7^1;
+S8=reflexiveDifferentials X2;
+hh^1(S8(*))
+euler(S8,-10,10)
+hilbertSeries(Ext^1(S7,S8(>=0)),Order=>10)
+Ext^1(S7,S8)
+euler X2

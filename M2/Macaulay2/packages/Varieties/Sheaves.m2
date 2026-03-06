@@ -30,9 +30,19 @@ sheaf = method()
 -- and if a variety doesn't already exist then either Proj or Spec should be defined and cached.
 sheaf Ring := Ring^~ := SheafOfRings =>     R  -> sheaf(variety R, R)
 sheaf Variety        := SheafOfRings =>  X     -> sheaf(X, ring X)
-sheaf(Variety, Ring) := SheafOfRings => (X, R) -> X.cache.sheaf ??= (
+
+sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     if ring X =!= R then error "sheaf: expected ring of the variety";
-    new SheafOfRings from { symbol variety => X, symbol ring => R } )
+    -- TODO: simplify when https://github.com/Macaulay2/M2/issues/3351 is fixed
+    X.sheaf ??= (
+	O := new SheafOfRings from { symbol variety => X, symbol ring => R };
+	O.cache = new MutableHashTable;
+	O.cache.sheaf = sheaf(O.variety, (ring variety O)^1); -- That is, O.cache.sheaf is the CoherentSheaf O^1.
+	-- We cache this so that constructing O^1 at different times will yield the _same_ CoherentSheaf,
+	-- which itself may have cached information over time.
+	O)
+    )
+
 
 -- TODO: should the module of a sheaf be fixed, or should it be allowed to change?
 -- TODO: https://github.com/Macaulay2/M2/issues/1358
@@ -90,10 +100,13 @@ variety CoherentSheaf := F -> F.variety
 ring SheafOfRings  :=
 ring CoherentSheaf := SheafOfRings => F -> sheaf variety F
 
-module SheafOfRings  := Module => F -> module F.ring
+-- This is the module associated to the fixed CoherentSheaf, O^1.
+module SheafOfRings  := Module => O -> module O.cache.sheaf
 module CoherentSheaf := Module => F -> F.module
 
-codim   CoherentSheaf := options(codim, Module) >> o -> F -> codim(F.module, o)
+codim   CoherentSheaf := options(codim, Module) >> o -> F -> (
+    -- If the support of F in its variety is empty, we say that the codimension of F is infinity.
+    if dim F <= -1 then infinity else codim(F.module, o))
 rank    CoherentSheaf := F -> rank    F.module
 numgens CoherentSheaf := F -> numgens F.module
 betti   CoherentSheaf := o -> F -> betti(F.module, o)
@@ -102,45 +115,127 @@ super   CoherentSheaf := CoherentSheaf => F -> sheaf(F.variety, super   F.module
 ambient CoherentSheaf := CoherentSheaf => F -> sheaf(F.variety, ambient F.module)
 cover   CoherentSheaf := CoherentSheaf => F -> sheaf(F.variety, cover   F.module)
 
--- TODO: do all need to be hookified? Perhaps prefixing
+
+dim SheafOfRings := O -> dim O^1
+dim CoherentSheaf := F -> (
+    if isProjective variety F then (
+	if F.cache.?twist then F = F.cache.twist#1;
+	-- Thus we reduce to the case where the sheaf F was not defined as a twist, so as to use any cached calculations.
+	-- Note that twisting does not change the dimension of F.
+	M := currentModuleBaseRing F;
+	max(-1, (dim M) - degreeLength ring M))
+    -- Thus, for a singly graded algebra R, the dimension of F = M^~ on Proj(R) is the dimension of M
+    -- as an R-module minus 1, except that we always return at least -1.
+    -- For an m-graded ring R, this definition views Proj(R)
+    -- as the quotient of an (unspecified) open subset of Spec(R) by a generically stable action
+    -- of a torus of dimension m. That is not the standard definition of Proj; but it may
+    -- be useful if developed further. For now, many commands for projective varieties
+    -- are restricted to the singly graded case.
+    else dim module F)
+
+
+-- TODO: do all the following need to be hookified? Perhaps prefixing
 -- the variety to the key, like 'euler(X, F)', would be better.
-degree  CoherentSheaf := F -> degree  module F
+
+-- The degree of a coherent sheaf on a closed subspace of a weighted projective space.
+-- (This is compatible with the function hilbertPolynomial F.)
+-- The function degree F returns an integer if all weights are equal to 1, but otherwise a rational number.
+-- For example, for the weighted projective space X = P^n(a_0,...,a_n), the sheaf O_X has degree 1/(a_0...a_n).
+--
+-- Beware that the degree of a coherent sheaf is not directly related to the notion of the degree
+-- of a line bundle on a curve. Indeed, every line bundle $L$ on a curve $X$ in projective space has degree
+-- _as a coherent sheaf_ equal to the degree of $X$. Compare degreeOnCurve.
+degree SheafOfRings := O -> degree O^1
+degree CoherentSheaf := F -> (
+    if F.cache.?twist then F = F.cache.twist#1;
+    -- Thus we reduce to the case where the sheaf F was not defined as a twist, so as to use any cached calculations.
+    -- Note that twisting does not change the degree of F.
+    M := currentModuleBaseRing F;
+    R1 := ring M; -- R1 is a graded polynomial ring, and M is a simplified R1-module that represents the sheaf F.
+    if isStandardGraded R1 then return degree module F;
+    if degreeLength R1 =!= 1 then error "expected degreeLength of ring to be 1";
+    -- Here R1 is a graded ring with some positive integer grading,
+    -- and X = Proj R1 is the corresponding weighted projective space, viewed as a stack.
+    degs := flatten degrees R1; -- This is a list of the form {1,9,15,22}.
+    (degree M)/fold(times, degs))
+-- That is, the degree of F is the degree of the graded module (in Macaulay2's sense) divided by the product of the weights.
+
+
+-- The degrees of the generators of the given module. (Not actually an invariant of a coherent sheaf;
+-- so perhaps this function should be omitted.)
 degrees CoherentSheaf := F -> degrees module F
-euler   CoherentSheaf := F -> tryHooks((euler, CoherentSheaf), F, euler @@ module)
+
+-- The degree of a vector bundle F (for example, a line bundle) on a projective curve X.
+-- Beware that this is not directly related to the degree of F as a coherent sheaf on projective space,
+-- which would just be the rank of F times the degree of X.
+--
+-- This function does not check that X is a vector bundle of constant rank;
+-- if not, the answer may be meaningless. It does check that the variety
+-- on which F is defined has dimension 1. The function works correctly for a vector bundle
+-- on a curve X (viewed as a stack) in a weighted projective space,
+-- in which case the degree of F is a rational number rather than an integer.
+-- (It is the intersection number  integral_X c_1(F).)
+degreeOnCurve = F -> (
+    if instance(F, SheafOfRings) then F = F^1; -- That makes F a CoherentSheaf.
+    X := variety F;
+    if dim X != 1 then error "must be a vector bundle on a curve";
+    ringi := hilbertFunctionRing(); -- the ring QQ[i]
+    i := ringi_0;
+    hilbF := hilbertPolynomial(F, Projective => false);
+    hilbO := hilbertPolynomial(OO_X^1, Projective => false);
+    rankF := coefficient(i, hilbF)/coefficient(i, hilbO); -- the rank of F
+    output := coefficient(i^0, hilbF) - rankF * coefficient(i^0, hilbO);
+    -- We return an integer if X lives in projective space, and a rational number for X in a more general
+    -- weighted projective space.
+    if isStandardGraded ring module F then lift(output, ZZ) else output)
+
+-- helper for hookifying methods
+-- runs the hooks, if none succeed, runs the default algorithm f
+-- tryHooks = (key, args, f) -> if (c := runHooks(key, args)) =!= null then c else f args
+--
+-- euler CoherentSheaf is defined below, for subspaces of weighted projective spaces.
 eulers  CoherentSheaf := F -> eulers  module F
-genus   CoherentSheaf := F -> genus   module F
+genus   CoherentSheaf := F -> (
+    if isStandardGraded ring module F
+    then genus module F
+    else (-1)^(dim F)*(-1 + euler F))
 genera  CoherentSheaf := F -> genera  module F
 -- TODO: this is incorrect in higher picard rank
 pdim    CoherentSheaf := F -> tryHooks((pdim,  CoherentSheaf), F, pdim  @@ module)
 
--- c.f. the toric version in NormalToricVariety/Chow.m2
--- and the original definition and hook in m2/hilbert.m2
-addHook((hilbertPolynomial, Module), Strategy => Varieties, (opts, M) ->
-    if M.ring.?variety then return try hilbertPolynomial(M.ring.variety, M, opts))
-hilbertPolynomial(Variety, Module)        := o -> (X, M) -> error "variety does not have a method for computing Hilbert polynomial"
--- TODO: should these be only for ProjectiveVariety and error for affine variety?
-hilbertPolynomial(Variety, Ring)          := o -> (X, S) -> hilbertPolynomial(X, module S, o)
-hilbertPolynomial(Variety, Ideal)         := o -> (X, I) -> hilbertPolynomial(X, comodule I, o)
-hilbertPolynomial(Variety, SheafOfRings)  := o -> (X, O) -> hilbertPolynomial(X, module O, o)
-hilbertPolynomial(Variety, CoherentSheaf) := o -> (X, F) -> hilbertPolynomial(X, module F, o)
-hilbertPolynomial          CoherentSheaf  := o ->     F  -> hilbertPolynomial(module F, o)
+-- hilbertPolynomial CoherentSheaf is defined below, for subspaces of weighted projective spaces.
 
 -- twist and powers
 -- TODO: sheaf should dehomogenize modules on Affine varieties
+-- These work correctly even for multigraded rings. E.g., you can write F(2) if the ring is singly graded, or F(2,3) if it is doubly graded.
 SheafOfRings(ZZ)   := SheafOfRings  Sequence := CoherentSheaf => (O, a) -> O^1(a)
-CoherentSheaf(ZZ)  := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> F ** (ring F)^{splice{a}}
-SheafOfRings  ^ ZZ := SheafOfRings  ^ List   := CoherentSheaf => (O, n) -> sheaf(O.variety, (ring variety O)^n)
+
+-- If a coherent sheaf is defined as a twist, say G = F(a), then we remember the original sheaf, so we can reuse cached information about it.
+-- Namely, G.cache.twist is the sequence ({a}, F) (or the analogous thing if F was itself defined as a twist). Any later calculations made
+-- about G will be cached as information about F.
+CoherentSheaf(ZZ)  := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> (
+    G := F ** (ring F)^{splice{a}};
+    if F.cache.?twist then G.cache.twist = (splice{a} + F.cache.twist#0, F.cache.twist#1)
+    else G.cache.twist = (splice{a}, F);
+    G)
+Module(ZZ) := Module Sequence := Module => (M, a) -> M ** (ring M)^{splice{a}}
+Matrix(ZZ) := Matrix Sequence := Matrix => (f, a) -> f ** (ring f)^{splice{a}}
+Ring(ZZ)   := Ring   Sequence := Module => (R, a) -> (R^1) ** R^{splice{a}}
+
+SheafOfRings  ^ ZZ := SheafOfRings  ^ List   := CoherentSheaf => (O, n) -> (
+    if instance(n, ZZ) and n == 1 then O.cache.sheaf -- Thus, O^1 always yields the _same_ coherent sheaf, which may contain cached information.
+    -- We could consider transferring that information to direct sums, but at the moment that is not done.
+    else sheaf(O.variety, (ring variety O)^n))
+
 CoherentSheaf ^ ZZ := CoherentSheaf ^ List   := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module^n)
 dual CoherentSheaf := CoherentSheaf => options(dual, Module) >> o -> F -> sheaf(F.variety, dual(F.module, o))
 
 -- There are several equivalent conditions for equality:
--- 1. Saturation of the underlying modules is the same (i.e. Gamma_* F == Gamma_* G)
+-- 1. Saturation of the underlying modules is --the same (i.e. Gamma_* F == Gamma_* G)
 -- 2. Truncation of the underlying modules is the same
 -- Here we use the first, but start with comparing Hilbert polynomials, which may be faster,
 -- TODO: benchmark different strategies
-CoherentSheaf == CoherentSheaf := Boolean => (F, G) -> F.variety === G.variety and (
-    hilbertPolynomial F === hilbertPolynomial G and module prune F == module prune G)
--- FIXME: dim module F <= 0 breaks for toric varieties
+CoherentSheaf == CoherentSheaf := Boolean => (F, G) -> hilbertPolynomial F === hilbertPolynomial G and module prune F == module prune G
 CoherentSheaf == ZZ            := Boolean => (F, z) -> if z == 0 then dim module F <= 0 else error "attempted to compare sheaf to nonzero integer"
 CoherentSheaf == Module        := Boolean => (F, M) -> F == sheaf M
 Module        == CoherentSheaf := Boolean => (M, F) -> sheaf M == F
@@ -173,12 +268,10 @@ component(CoherentSheaf, Thing) := (F, k) -> (
     (components F)#(F.cache.indexComponents#k))
 
 -- multilinear ops
--- TODO: document
 determinant        CoherentSheaf  := CoherentSheaf => o ->     F  -> exteriorPower(rank F, F, o)
 exteriorPower (ZZ, CoherentSheaf) := CoherentSheaf => o -> (i, F) -> sheaf(F.variety,  exteriorPower(i, F.module, o))
 symmetricPower(ZZ, CoherentSheaf) := CoherentSheaf =>      (i, F) -> sheaf(F.variety, symmetricPower(i, F.module))
 
-support     CoherentSheaf := Ideal =>      F -> annihilator module F
 annihilator CoherentSheaf := Ideal => o -> F -> annihilator(module F, o)
 
 -- printing
@@ -191,6 +284,8 @@ describe   CoherentSheaf := F -> Describe (Subscript { expression sheaf, express
 expression CoherentSheaf := F -> (
     (X, M) := (variety F, module F);
     if M.?relations or M.?generators or numgens M === 0 then return SheafExpression expression M;
+    if not isProjective X then return new Superscript from {expression OO_X, expression numgens M};
+    -- That is, in the affine case, we ignore the grading of M, if any.
     degs := runLengthEncoding(- degrees M); -- a list of O_X^r(d) for each summand
     sums := apply(degs, (r, d) -> (
 	    s := new Superscript from {expression OO_X, expression r};
@@ -219,6 +314,236 @@ toString'(Function, SheafExpression) := (fmt,x) -> toString'(fmt,new FunctionApp
 net SheafExpression := x -> net x#0
 texMath SheafExpression := x -> texMath x#0
 expressionValue SheafExpression := x -> sheaf expressionValue x#0
+
+-----------------------------------------------------------------------------
+-- Hilbert polynomial, Euler characteristic, etc
+-----------------------------------------------------------------------------
+
+-- Compute the Euler characteristic of O(c) on a weighted projective space P, for an integer c.
+-- Here O(c) can be viewed as a line bundle on the stack P. This agrees with the Euler characteristic of the direct image sheaf O(c)
+-- on the coarse moduli space of P, P -> Y. (But be aware that the sheaves O(c) on Y behave better
+-- when P = P^(n-1)(a_0,...,a_(n-1)) is well-formed, meaning that gcd(a_0,...,a_j omitted,...,a_(n-1)) = 1 for each j.
+-- Namely, in that case, O(c+d) is the reflexive tensor product of O(c) and O(d), meaning that O(c+d) = (O(c) tensor O(d))^**.)
+-- The input is the integer c and a positively graded polynomial ring R1, with P = Proj(R1).
+--
+eulerCharOfTwistingSheaf = (c,R1) -> (
+    degs := flatten degrees R1; -- This is a list of the form {1,9,15,22}.
+    n := #degs; -- So P = Proj R1 has dimension n-1.
+    sumOfWeights := fold(plus, degs); -- This is the sum of the weights, that is, n+sigma in Symonds's notation,
+    -- for P = P^{n-1}(a_0,...,a_(n-1)).
+    hilbshort := 0;
+    A := degreesRing R1; -- This will be a ring of the form Z[T].
+    T := A_0; -- This is the variable in the ring A.
+    if c >= 0 then (
+	hilbshort = hilbertSeries(R1, Order=>c+1); -- This is the Hilbert series of P in degrees at most c, as a polynomial.
+	coefficient(T^c, hilbshort)
+	)
+    else (
+	if c > -sumOfWeights then 0
+	else (
+	    d := -c-sumOfWeights; -- We have d >= 0.
+	    hilbshort = hilbertSeries(R1, Order=>d+1);
+	    (-1)^(n-1)*coefficient(T^d, hilbshort)
+	    )
+	)
+    )
+typicalValues#eulerCharOfTwistingSheaf = ZZ
+
+
+-- Compute the Euler characteristic of a coherent sheaf on a closed subspace of a weighted projective space.
+--
+-- The distinction between a WPS as a stack X and its associated coarse moduli space, f: X -> V, does not matter
+-- for this purpose. Indeed, a finitely generated graded module M determines a coherent sheaf M~
+-- on X, and it is a fact that H^i(X, M~) = H^i(V, f_*(M~)) for every i.
+--
+euler CoherentSheaf := ZZ => F -> (
+    -- Compute the Euler characteristic chi(X, F) for a coherent sheaf on a closed subspace X of a weighted projective space.
+    shift := 0;
+    if F.cache.?twist then
+    (shift = first F.cache.twist#0;
+	F = F.cache.twist#1);
+    -- Thus we reduce to the case where the sheaf F was not defined as a twist. We now compute chi(X, F(shift)).
+    M := currentModuleBaseRing F;
+    R1 := ring M; -- R1 is a graded polynomial ring, and M is a simplified R1-module that represents the sheaf F.
+    -- In particular, we have arranged that M has no m-torsion (where m is the maximal ideal R1_(>0)).
+    -- Note that even if R1 is standard-graded, we would need euler(M(shift)) (in general), rather than euler(M).
+    -- To use the cached information about M, we do not form M(shift) explicitly.
+    if isStandardGraded R1 and shift == 0 then return euler M; -- The earlier algorithm should be faster, in the usual projective space.
+    if degreeLength R1 =!= 1 then error "euler expected the ring to be singly graded";
+    numerator := poincare M; -- Thus the Hilbert series of M is: numerator/((1-a_0)...(1-a_(n-1)), where a_0,...,a_(n-1) are the weights.
+    -- This numerator is in ZZ[T], meaning Z[T,T^(-1)].
+    termlist := terms numerator; -- E.g, if numerator = T^(-1)-T^5, then termlist = {T^(-1),-T^5}.
+    thisterm := 0;
+    thisdeg := 0;
+    len := #termlist;
+    i := 0;
+    output := 0;
+    for i from 0 to len-1 do (
+	thisterm = termlist_i; -- This could be of the form -T^5, say.
+	thisdeg = (degree(thisterm))_0; -- Here degree (-T^5) is a list with one element, {5}, and we just want that number.
+	output = output+leadCoefficient(thisterm)*eulerCharOfTwistingSheaf(shift-thisdeg,R1));
+    output)
+
+euler SheafOfRings := ZZ => O -> euler O^1
+
+-- Compute the Euler characteristic of all twists in a range of integers [b1,b2]
+-- of a coherent sheaf F on a closed subspace of a weighted projective space.
+-- We return sum_(c=b1)^b2 chi(X, F(c))T^c in the "degree ring" of R1, which should be of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
+--
+-- The distinction between a WPS as a stack X and its associated coarse moduli space, f: X -> V, does not matter
+-- for this purpose, except that the twists should be understood to take place on the stack.
+-- Indeed, a finitely generated graded module M determines a coherent sheaf M~
+-- on X, and it is a fact that H^i(X, M~) = H^i(V, f_*(M~)) for every i. Twists are interpreted by tensoring with
+-- the line bundles O(c) on the stack, which ensures that H^i(X,M~(c)) = H^i(X,M(c)~).
+--
+euler(CoherentSheaf, ZZ, ZZ) := RingElement => (F, b1, b2) -> (
+    -- Here b1 <= b2 are integers, and F is a coherent sheaf on a closed subspace of a weighted projective space.
+    shift := 0;
+    if F.cache.?twist then
+    (shift = first F.cache.twist#0;
+	F = F.cache.twist#1;
+	b1 = b1 + shift; b2 = b2 + shift);
+    -- Thus we reduce to the case where the sheaf F was not defined as a twist. We now compute chi(X, F, b1, b2).
+    if b1 > b2 then error "the lower bound should be <= the upper bound";
+    M := currentModuleBaseRing F;
+    R1 := ring M; -- R1 is a graded polynomial ring, and M is a simplified R1-module that represents the sheaf F.
+    -- In particular, we have arranged that M has no m-torsion (where m is the maximal ideal R1_(>0)).
+    if degreeLength R1 =!= 1 then error "expected degree length 1";
+    degs := flatten degrees R1; -- This is a list of the form {1,9,15,22}.
+    n := #degs; -- So P = Proj R1 has dimension n-1.
+    sumOfWeights := fold(plus, degs); -- This is the sum of the weights, that is, n+sigma in Symonds's notation,
+    -- for P = P^{n-1}(a_0,...,a_(n-1)).
+    A := degreesRing R1; -- This is a ring of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
+    T := A_0; -- This is the variable in the ring A.
+    numerator := poincare M; -- Thus the Hilbert series of M is: numerator/((1-a_0)...(1-a_(n-1)), where a_0,...,a_(n-1) are the weights.
+    -- This numerator is in Z[T,T^(-1)].
+    termlist := terms numerator; -- E.g, if numerator = T^(-1)-T^5, then termlist = {T^(-1),-T^5}.
+    -- Let P = Proj R1 be the given WPS. We start by computing chi(P, O(c)) for a range of integers c that includes
+    -- what we need. We store this information as a Laurent polynomial, sum_c chi(P,O(c))T^c, over some finite range of integers c.
+    output := 0;
+    thisterm := 0;
+    thisdeg := 0;
+    len := #termlist;
+    if len == 0 then return 0_A; -- Otherwise, termlist is nonempty (that is, M is not 0); so the following definitions make sense.
+    r1 := (degree(termlist_0))_0;
+    r2 := (degree(termlist_(len-1)))_0; -- So numerator = (const)T^(r1)+ ... + (const) T^(r2), with r1 <= r2.
+    -- We need (at least) to compute chi(P,O(c)) for b1-r2 <= c <= b2-r1. To do that, we'll first compute chi(P,O(c)) for 0 <= c <= d,
+    -- for the following number d.
+    d := max(0, b2-r1, -(b1-r2)-sumOfWeights);
+    hilbshort1 := hilbertSeries(R1, Order => d+1); -- This is the Hilbert series of P in degrees at most d, as a polynomial in T.
+    hilbshort := hilbshort1 + (-1)^(n-1)*T^(-sumOfWeights)*substitute(hilbshort1, T => T^(-1));
+    -- Thus hilbshort is a Laurent polynomial with coefficients chi(P,O(c)), in at least the range of integers c that we need.
+    output = hilbshort * numerator;
+    part(b1,b2,output) * T^(-shift))
+
+euler(SheafOfRings, ZZ, ZZ) := RingElement => (O, b1, b2) -> euler(O^1, b1, b2)
+
+hilbertFunctionRing = memoize(() -> QQ(monoid [getSymbol "i"]))
+
+-- modified from hilbert.m2 and betti.m2
+hilbertFunctionQ = method()
+
+-- The Hilbert polynomial of a weighted projective space (not the Hilbert function, despite the name).
+-- Namely, for P = Proj R1 such that R1 is a polynomial ring with generators in degrees a_0,...,a_(n-1),
+-- chi(P, O(i)) is a quasipolynomial in i:
+--   chi(P, O(i)) = c_n(i) i^n + ... + c_0(i)
+-- with each c_j(i) a periodic function of i, of period dividing lcm(a_0,...,a_(n-1)).
+-- (Equivalently, h^0(X, O(i)) has this description for i sufficiently large.)
+-- We define the Hilbert polynomial f(i) as the polynomial in QQ[i] obtained by _averaging_ each of these coefficients.
+--
+hilbertFunctionQ Ring := RingElement => R -> (
+    R.cache ??= new MutableHashTable;
+    if R.cache.?hilbertPolynomial then return R.cache.hilbertPolynomial;
+    if not isPolynomialRing R then error "For hilbertFunctionQ, the ring must be a polynomial ring.";
+    degs := flatten degrees R; -- R should be singly graded.
+    n := #degs; -- So the weighted projective space Proj R has dimension n-1.
+    prod := lcm degs; -- The lcm of the weights.
+    -- It suffices to compute the dimension of R_(j.prod+a) for j=0,1,...,n-1 and 0 <= a <= prod-1.
+    truncatedseries := hilbertSeries(R, Order => n*prod); -- The Hilbert series is in a ring ZZ[T].
+    T := (ring truncatedseries)_0;
+    ringi := hilbertFunctionRing();
+    i := ringi_0;
+    wpoly := 0; k := 0; polylist := {}; value := 0; newcoeff := 0; evj := 0; interpolant := 0; total := 0;
+    for a from 0 to prod-1 do ( -- Compute the polynomial of degree n-1 that interpolates dim R_(j.prod+a) for j=0,...,n-1.
+	interpolant = coefficient(T^a, truncatedseries)*1_ringi;
+	-- This is the polynomial of degree 0 that interpolates at 0.prod+a. We use Newton interpolation
+	-- to construct the polynomial of degree j that interpolates at 0*prod+a,1*prod+a,...,j*prod+a, for j up to n-1.
+	for j from 1 to n-1 do (
+	    value = coefficient(T^(j*prod+a), truncatedseries);
+	    polylist = apply(j, k -> i-k*prod-a); -- This gives the list {i-a, i-1*prod-a, ..., i-(j-1)*prod-a} in QQ[i].
+	    wpoly = fold(times, polylist); -- This gives the polynomial (i-a)(i-1*prod-a)...(i-(j-1)*prod-a) in QQ[i].
+	    evj = map(QQ, ringi, {j*prod+a});
+	    newcoeff = (value - evj interpolant)/(evj wpoly);
+	    interpolant = interpolant + newcoeff*wpoly);
+	total=total+interpolant
+	);
+    -- Now average the polynomials "interpolant"; the number of them was "prod".
+    R.cache.hilbertPolynomial = total/prod)
+
+hilbertFunctionQ(Ring, ZZ) := memoize(
+    (R, d) -> (
+	if d === 0 then hilbertFunctionQ(R)
+	else (
+	    i := (hilbertFunctionRing())_0;
+	    substitute(hilbertFunctionQ(R), {i => i+d}))))
+
+-- The Hilbert polynomial of a closed subspace X of a weighted projective space, or of a coherent sheaf F on X. Namely,
+-- for X = Proj R2 such that R2 has generators in degrees a_0,...,a_(n-1), chi(X, F(i)) is a quasipolynomial in i:
+--   chi(X, F(i)) = c_m(i) i^m + ... + c_0(i)
+-- with each c_j(i) a periodic function of i, of period dividing lcm(a_0,...,a_(n-1)).
+-- (Equivalently, h^0(X, F(i)) has this description for i sufficiently large.) Note that the twist F(i) is defined
+-- by tensoring with the line bundle O(i) on X as a stack, when the weights a_j are not all 1.
+-- We define the Hilbert polynomial f(i) as the polynomial in QQ[i] obtained by _averaging_ each of the coefficients c_j(i).
+-- (If the weights a0,...,a_(n-1) are equal to 1, then the convention is Projective => true,
+-- meaning that the output is given as a ProjectiveHilbertPolynomial, that is, a Z-linear combination
+-- of the Hilbert polynomials of projective spaces of dimensions 0,...,m.)
+--
+-- For X of dimension m, the Hilbert polynomial in Q[i] has degree m, and its leading coefficient
+-- is degree(X)/m!; this agrees with the function "degree X". Note that the degree of a closed subspace
+-- in a weighted projective space is only a rational number. For example, P^n(a_0,...,a_n) has degree 1/(a_0...a_n).
+--
+hilbertPolynomial CoherentSheaf := opts -> F -> (
+    shift := 0;
+    if F.cache.?twist then
+    (shift = first F.cache.twist#0;
+	F = F.cache.twist#1);
+    -- That is, if F was defined as a twist of another sheaf, we have now changed F to that original sheaf,
+    -- and we want to compute the Hilbert polynomial of F(shift).
+    -- We first compute the Hilbert polynomial of F in Q[i] (if that has not already been done), to cache it.
+    F.cache.hilbertPolynomial ??= (
+	M := currentModuleBaseRing F;
+	R1 := ring M; -- R1 is a graded polynomial ring, and M is a simplified R1-module that represents the sheaf F.
+	-- In particular, we have arranged that M has no m-torsion (where m is the maximal ideal R1_(>0)).
+	if isStandardGraded R1 then hilbertPolynomial(M, Projective => false)
+	-- We always cache the version of the Hilbert polynomial in the ring Q[i].
+	else (
+	    p := pairs standardForm poincare M;
+	    if #p === 0 then 0_(hilbertFunctionRing())
+	    else sum(p, (d, c) -> (
+		    if #d === 0 then d = 0 else d = d#0;
+		    c * hilbertFunctionQ(R1, -d)))));
+    output := (if shift === 0 then F.cache.hilbertPolynomial
+	else (
+	    i := (hilbertFunctionRing())_0;
+	    substitute(F.cache.hilbertPolynomial, {i => i+shift}))); -- This is the Hilbert polynomial of F(shift), in Q[i].
+    if isStandardGraded ring module F and opts.Projective then projectiveHilbertPolynomial(output) else output)
+
+hilbertPolynomial SheafOfRings := opts -> O -> degree O^1
+
+-- Translate an integer-valued polynomial in Q[i] to a ProjectiveHilbertPolynomial.
+projectiveHilbertPolynomial RingElement := ProjectiveHilbertPolynomial => poly -> (
+    if poly == 0 then new ProjectiveHilbertPolynomial from {}
+    else (
+	n := first degree poly; -- Here "degree poly" would be of the form {n}.
+	i := (ring poly)_0;
+	c := coefficient(i^n, poly);
+	if n === 0 then lift(c, ZZ) * projectiveHilbertPolynomial(0, 0)
+	else
+	lift(c * n!, ZZ) * projectiveHilbertPolynomial(n, 0) + projectiveHilbertPolynomial(poly-c*fold(times, apply(n, k -> i + k + 1)))))
+-- That "fold" gives the polynomial (i+1)(i+2)...(i+n) in QQ[i], assuming that n > 0.
+
+hilbertPolynomial(ProjectiveVariety, CoherentSheaf) := RingElement => opts -> (X,F) -> hilbertPolynomial(F, opts)
+hilbertPolynomial(ProjectiveVariety, SheafOfRings) := RingElement => opts -> (X,O) -> hilbertPolynomial(O^1, opts)
 
 -----------------------------------------------------------------------------
 -- SumOfTwists type declarations and basic constructors
@@ -258,37 +583,163 @@ toString   SumOfTwists := toString @@ expression
 --      map(S^1, S^-(degrees S), {apply(generators S, flatten degrees S, times)})
 --      )
 
--- TODO: this is the slowest part of hh and euler, look into other strategies
--- TODO: simplify caching here and in minimalPresentation
-cotangentSheaf = method(TypicalValue => CoherentSheaf, Options => options exteriorPower ++ { MinimalGenerators => true })
+cotangentSheaf = method(TypicalValue => CoherentSheaf,
+    Options => options exteriorPower ++ { MinimalGenerators => true })
 cotangentSheaf ProjectiveVariety := opts -> (cacheValue (symbol cotangentSheaf => opts)) (X -> (
+	-- This function computes the cotangent sheaf of a closed subscheme of a projective scheme
+	-- over a base ring.
+	--
+	-- More generally, cotangentSheaf X works for X a closed subspace of a weighted projective space, viewed as a stack.
+	-- For example, if the coarse moduli space of X is quasi-smooth and well-formed,
+	-- then the pushforward of this sheaf to the coarse moduli space is the sheaf of reflexive differentials.
+	-- If X is normal but not quasi-smooth, use the command "reflexiveDifferentials" instead,
+	-- if you want the sheaf of reflexive differentials.
+	--
+	-- If the characteristic p is positive and p divides some of the weights, the WPS (and its substacks)
+	-- need not be Deligne-Mumford stacks. In that situation, this program returns the cohomology sheaf
+	-- in degree 0 of the cotangent complex.
+	-- In that situation, it would be more natural to consider the truncation of the cotangent complex
+	-- to cohomological degrees >= 0 (which lives in degrees 0 and 1), given by naiveCotangentComplex(X).
 	R := ring X; checkRing R;
-	S := ring(F := presentation R);
-	(d, e) := (vars S ** R, jacobian F ** R); -- assert(d * e == 0);
-	om := sheaf(X, homology(d, e));
-	if opts.MinimalGenerators
-	then minimalPresentation om else om))
-cotangentSheaf(ZZ, ProjectiveVariety) := opts -> (i, X) -> exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy)
+	-- Here R is a graded ring with some positive integer grading,
+	-- and X = Proj R is the corresponding subspace of a weighted projective space.
+	S := ring (F := presentation R);
+	-- Thus S is a graded polynomial ring, and R is the quotient of S by the ideal generated by the image of the matrix F over S.
+	-- For example, S could be something like: S = QQ[x,y,z,w,Degrees=>{1,9,15,22}].
+	degs := flatten degrees S; -- This is a list of the form {1,9,15,22}.
+	n := #degs; -- So P = Proj S has dimension n-1.
+	M0 := R^(-degs);
+	M1 := R^{0};
+	d1 := matrix {apply(gens R, i -> first degree(i)*i)};
+	-- Thus d: R^n -> R sends the basis element dx_i to a_i x_i, for 1 <= i <= n.
+	d := map(M1, M0, d1, Degree => 0); -- This is d viewed as being homogeneous.
+	e := jacobian F ** R; -- Thus e: R^r -> R^n sends the jth basis element (corresponding to the jth relation
+	-- of f_1,...,f_r) to df_j = sum_{i=1}^n df_j/dx_i dx_i. It is viewed as being homogeneous.
+	-- assert(d * e == 0);
+	assert(isHomogeneous d);
+	assert(isHomogeneous e);
+	assert(d * e == 0); -- COMMENT OUT these assertions when this program has been checked.
+	om := sheaf homology(d,e);
+	-- Here om is the cotangent sheaf of X. By default, we simplify its description, as follows.
+	if opts.MinimalGenerators then minimalPresentation om else om))
+
+cotangentSheaf AffineVariety := opts -> (cacheValue (symbol cotangentSheaf => opts)) (X -> (
+	-- This function computes the cotangent sheaf of an affine scheme over a base ring.
+	R := ring X;
+	-- So X = Spec R.
+	S := ring (F := presentation R);
+	-- Thus S is a polynomial ring, and R is the quotient of S by the ideal (f_1,...,f_r)
+	-- generated by the image of the matrix F over S.
+	n := numgens S; -- So Y = Spec S has dimension n.
+	M0 := R^n;
+	e := jacobian F ** R; -- Thus e: R^r -> R^n sends the jth basis element (corresponding to the jth relation
+	-- of f_1,...,f_r) to df_j = sum_{i=1}^n df_j/dx_i dx_i.
+	om := sheaf cokernel e;
+	-- The module om represents the cotangent sheaf of X. By default, we simplify its description, as follows,
+	-- although there is not a precise notion of minimal presentations in this ungraded situation.
+	if opts.MinimalGenerators then minimalPresentation om else om))
+
+cotangentSheaf(ZZ, ProjectiveVariety) := opts -> (i, X) -> (
+    -- Here X is a ProjectiveVariety, that is, a closed substack of a weighted projective space.
+    answer := sheaf exteriorPower(i, module cotangentSheaf(X, opts), Strategy => opts.Strategy);
+    if opts.MinimalGenerators then minimalPresentation answer else answer)
+-- Another possible definition would be: HH^0 naiveCotangentComplex(i, X, opts))
+-- These are the same if p does not divide any of the weights, hence in particular if all the weights are 1.
+
+cotangentSheaf(ZZ, AffineVariety) := opts -> (i, X) -> (
+    -- This function computes the sheaf of i-forms on an affine scheme over a base ring.
+    answer := sheaf exteriorPower(i, module cotangentSheaf(X, opts), Strategy => opts.Strategy);
+    if opts.MinimalGenerators then minimalPresentation answer else answer)
 
 tangentSheaf = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
-tangentSheaf ProjectiveVariety := opts -> X -> dual cotangentSheaf(X, opts)
+tangentSheaf ProjectiveVariety := opts -> X -> sheaf prune module dual cotangentSheaf(X, opts)
+tangentSheaf AffineVariety := opts -> X -> sheaf prune module dual cotangentSheaf(X, opts)
 
 idealSheaf = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
 idealSheaf ProjectiveVariety := opts -> X -> sheaf ideal (ring X).relations
+idealSheaf AffineVariety := opts -> X -> sheaf ideal (ring X).relations
 
--- TODO: document
 canonicalBundle = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
-canonicalBundle ProjectiveVariety := opts -> X -> dual dual determinant(cotangentSheaf(X, opts), Strategy => opts.Strategy)
+canonicalBundle ProjectiveVariety := opts -> X -> (
+    sheaf prune module dual dual determinant(cotangentSheaf(X, opts), Strategy => opts.Strategy))
+canonicalBundle AffineVariety := opts -> X -> (
+    sheaf prune module dual dual determinant(cotangentSheaf(X, opts), Strategy => opts.Strategy))
+
+-- This function computes the sheaf of reflexive differentials of a given closed substack X of a weighted projective space.
+-- At least when X is normal and well-formed (not necessarily quasi-smooth), its direct image sheaf
+-- on the coarse moduli space Y of X is the sheaf of reflexive differentials on Y.
+reflexiveDifferentials = method(TypicalValue => CoherentSheaf,
+    Options => options exteriorPower ++ { MinimalGenerators => true })
+reflexiveDifferentials ProjectiveVariety := opts -> (cacheValue (symbol reflexiveDifferentials => opts)) (X -> (
+	sheaf prune module dual dual cotangentSheaf(X, opts)))
+
+reflexiveDifferentials AffineVariety := opts -> (cacheValue (symbol reflexiveDifferentials => opts)) (X -> (
+	sheaf prune module dual dual cotangentSheaf(X, opts)))
+
+-- This function computes the sheaf of reflexive i-forms (for i>=0) on a given closed substack X of a weighted projective space.
+-- At least when X is normal and well-formed (not necessarily quasi-smooth), its direct image sheaf
+-- on the coarse moduli space Y of X is the sheaf of reflexive i-forms on Y.
+reflexiveDifferentials (ZZ, ProjectiveVariety) := opts -> (i, X) -> (
+    answer := sheaf prune module dual dual exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
+
+reflexiveDifferentials (ZZ, AffineVariety) := opts -> (i, X) -> (
+    answer := sheaf prune module dual dual exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
 
 -----------------------------------------------------------------------------
 -- isLocallyFree
 -----------------------------------------------------------------------------
 
+-- Check whether an ideal I is a factor of a ring R, meaning that R = I x J as rings for some J.
+-- Since R is noetherian, it is equivalent to check whether I = I^2.
+isFactor = I -> isSubset(I,I^2)
+
 isLocallyFree = method(TypicalValue => Boolean)
 isLocallyFree SumOfTwists   := S -> isLocallyFree S#0
 isLocallyFree SheafOfRings  := O -> true
+
+-- Check whether an module M over a ring R is locally free. Here M is finitely generated
+-- and R is noetherian; so it is equivalent to check whether M is projective, or flat.
+-- We do not require R to be a domain; so M may have different ranks on different components
+-- of Spec R.
+isLocallyFree Module := Boolean => M -> (
+    -- M is locally free if and only if all its Fitting ideals are factors of R = ring M.
+    -- Let us first check whether M is locally free of constant rank, the simplest case.
+    if isFreeModule M then return true;
+    rankM := rank M; -- This number is only guaranteed to be reasonable if R is a domain.
+    if instance(rankM, ZZ) and rankM > 0 then (
+	if isMember(1, J:=fittingIdeal(rankM, M)) and fittingIdeal(rankM - 1, M) == 0 then return true;
+	if not isFactor J then return false); -- These cover all cases if R is a domain,
+    -- which should be the most common case. Otherwise, we now check all Fitting ideals.
+    persist := true; i := 0;
+    while persist do (
+	J = fittingIdeal(i, M);
+	if isMember(1, J) then persist = false;
+	if not isFactor J then return false;
+	i = i+1);
+    true)
+
+-- Check whether a coherent sheaf F is locally free (that is, a vector bundle).
+-- The following function works if X = variety F  is affine,
+-- or if X is projective or weighted-projective over a field. We do not require X to be integral;
+-- so F may have different ranks on different components of X.
 isLocallyFree CoherentSheaf := F -> (
-    if (d := rank F) == 0 then return F == 0;
-    if isFreeModule module F then return true;
-    dim fittingIdeal(d,   module F) <= 0
-    and fittingIdeal(d-1, module F) == ideal 0_(ring variety F))
+    M := module F;
+    if not isProjective variety F then return isLocallyFree M;
+    -- Now X = variety F is projective. We assume that X = Proj R with the ring R singly graded.
+    -- Then F is locally free if and only if each of its Fitting ideals I has I equal to I^2
+    -- outside the origin of Spec R, that is, if I is contained in the saturation of I^2.
+    if isFreeModule M then return true;
+    rankM := rank M; -- This number is only guaranteed to be reasonable if X is integral.
+    if instance(rankM, ZZ) then (
+	if rankM == 0 then (if dim M <= 0 then return true)
+	else (
+	    if dim(J := fittingIdeal(rankM, M)) <= 0 and fittingIdeal(rankM - 1, M) == 0 then return true;
+	    if not isSubset(J, saturate J^2) then return false)); -- These cover all cases if R is a domain,
+    -- which should be the most common case. Otherwise, we now check all Fitting ideals.
+    persist := true; i := 0;
+    while persist do (
+	J = fittingIdeal(i, M);
+	if dim J <= 0 then persist = false;
+	if not isSubset(J, saturate J^2) then return false;
+	i = i+1);
+    true)

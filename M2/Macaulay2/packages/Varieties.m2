@@ -17,6 +17,12 @@ newPackage(
     Keywords => { "Algebraic Geometry", "Homological Algebra" },
     Headline => "routines for working with affine and projective varieties and coherent sheaves on them",
     Authors  => {
+        {   Name => "Michael K. Brown",
+            Email => "mkb0096@auburn.edu",
+            HomePage => "https://webhome.auburn.edu/~mkb0096/" },
+        {   Name => "Daniel Erman",
+            Email => "erman@math.hawaii.edu",
+            HomePage => "https://math.hawaii.edu/~erman/" },
 	{   Name => "Devlin Mallory",
 	    Email => "malloryd@math.utah.edu",
 	    HomePage => "https://devlin-mallory.github.io/" },
@@ -75,13 +81,31 @@ export {
     "idealSheaf",
     "isProjective",
     "isLocallyFree",
+    "degreeOnCurve",
+    "naiveCotangentComplex",
+    "reflexiveDifferentials",
+    "twistedGlobalSectionsModule",
+    "currentModuleMap",
+    "currentModuleBaseRing",
     -- Functors
     "hh", -- TODO: should this be defined in Core?
     "OO",
+    "directImage",
     -- Symbols
     "GlobalSectionLimit",
     "SaturationMap",
     "TorsionFree",
+    "Dualizing",
+    "Residue",
+    "TorsionFreeMap",
+    "TorsionFreeBaseRing",
+    "SaturationBaseRing",
+    "twist",
+    "NonPrint",
+    "Direct",
+    "DirectNonPrint",
+    "Hsum",
+    -- "Prune",
     -- "TruncateDegree",
     }
 
@@ -96,6 +120,9 @@ importFrom_Core {
     "isMorphism", "isAbelianCategory",
     "BinaryPowerMethod",
     }
+
+-- pushFwd is used in directImage in Functors.m2
+needsPackage "PushForward"
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -401,6 +428,8 @@ Node
   Contributors
     @HREF("https://academicweb.nd.edu/~craicu/", "Claudiu Raicu")@ contributed to the development of this package.
   SeeAlso
+    "varieties"
+    "coherent sheaves"
     "Schubert2::Schubert2"
     "GKMVarieties::GKMVarieties"
     "NormalToricVarieties::NormalToricVarieties"
@@ -445,6 +474,7 @@ debug needsPackage "Varieties"
 check "Varieties"
 
 
+-- The following commands need more complete versions of SheafMaps.m2 and SheafComplexes.m2 than we have at this writing.
 Q = QQ[x_1..x_3];
 X = Proj Q;
 K = koszulComplex vars Q;

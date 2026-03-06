@@ -248,9 +248,21 @@ char ProjectiveVariety := X -> char quotient saturate ideal X -- TODO: saturate 
 degree ProjectiveVariety := X -> degree OO_X^1
 genus  ProjectiveVariety := X -> genus  OO_X^1
 genera ProjectiveVariety := X -> genera ring X
--- euler ProjectiveVariety is defined further down
--- TODO: define degrees, eulers
-hilbertPolynomial ProjectiveVariety := opts -> X -> hilbertPolynomial(ring X, opts)
+
+hilbertPolynomial ProjectiveVariety := opts -> X -> hilbertPolynomial(OO_X^1, opts)
+
+-- The topological Euler characteristic, if the given variety X is smooth. Otherwise, this is harder to interpret.
+-- But, for example, this function also gives the topological Euler characteristic if X has quotient singularities
+-- and the characteristic is zero.
+euler ProjectiveVariety := ZZ => X -> (
+    n := dim X;
+    output := 0;
+    for i from 0 when 2*i < n do output = output + 2*(-1)^i * euler reflexiveDifferentials(i, X);
+    if even n then (
+	halfn := n//2;
+	output = output + (-1)^halfn * euler reflexiveDifferentials(halfn, X));
+    output)
+eulers ProjectiveVariety := X -> eulers ring X
 
 ambient     AffineVariety :=     AffineVariety => X -> Spec ambient ring X
 ambient ProjectiveVariety := ProjectiveVariety => X -> Proj ambient ring X

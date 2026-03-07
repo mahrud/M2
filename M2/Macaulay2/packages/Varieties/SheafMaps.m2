@@ -53,6 +53,8 @@ varietyWarn = true
 -- TODO: if over affine variety, dehomogenize the maps
 -- TODO: toExternalString doesn't capture the source/target of phi;
 -- should it be inferred from G and F when reconstructing the map?
+-- WARNING: this is not well-defined map(OO_X^{1}, OO_X^1, matrix {{x_0}})
+-- TODO: perhaps we should do some minimal checks?? or add big warning about this
 map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> (
     if variety G =!= variety F then error "expected sheaves over the same variety";
     if varietyWarn and not instance(variety F, ProjectiveVariety) then (

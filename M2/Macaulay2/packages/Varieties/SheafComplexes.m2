@@ -164,6 +164,9 @@ sheafHom(CoherentSheaf, Complex) := Complex => opts -> (M,C) -> sheafHom(complex
 sheafHom(Complex, CoherentSheaf) := Complex => opts -> (C,M) -> sheafHom(C, complex M, opts)
 sheafHom(Complex, SheafOfRings) := Complex => opts -> (C,R) -> sheafHom(C, complex R, opts)
 sheafHom(SheafOfRings, Complex) := Complex => opts -> (R,C) -> sheafHom(complex R, C, opts)
+-- TODO: need sheafHom(ComplexMap, ComplexMap) to define:
+-- sheafHom(ComplexMap, Complex) := ComplexMap => opts -> (f, D) -> sheafHom(f, id_D, opts)
+-- sheafHom(Complex, ComplexMap) := ComplexMap => opts -> (C, g) -> sheafHom(id_C, g, opts)
 
 sheafDual = method()
 sheafDual Complex := Complex => C -> sheafHom(C, ring C)

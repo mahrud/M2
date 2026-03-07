@@ -86,16 +86,18 @@ module Complex := Complex => D -> D.cache.module ??= (
     -- else complex applyValues(D.dd.map, f -> truncate(deg, f.map))
     else (
 	if debugLevel > 0 then printerr("truncating complex with ", toString(hi - lo + 1), " terms");
+	-- if two consecutive maps already compose, then we don't truncate
+	isSheafifiedMap := i -> source dd^D_i.map === target dd^D_(i+1).map;
 	-- this construction requires ~half as many truncations
 	-- and in some cases calling inducedMap is necessary anyway
+	f := if isSheafifiedMap lo then dd^D_lo.map else (
 	-- TODO: should this be subtruncate? something in Hom failed before
-	g := lift dd^D_lo;
-	f := truncate(, g.degree, matrix g, MinimalGenerators => false);
-	complex hashTable for i from lo+1 to hi list i => (
-	    g = lift dd^D_i;
-	    f = inducedTruncationMap(source f,
-		truncate(g.degree, source matrix g,
-		    MinimalGenerators => false), matrix g))
+	    g := lift dd^D_lo; truncate(, g.degree, matrix g, MinimalGenerators => false));
+	complex hashTable for i from lo+1 to hi list
+	    i => if isSheafifiedMap i then dd^D_i.map else (
+		g = lift dd^D_i; f = inducedTruncationMap(source f,
+		    truncate(g.degree, source matrix g,
+			MinimalGenerators => false), matrix g))
 	);
     assert isWellDefined C;
     C.cache.sheaf = D;

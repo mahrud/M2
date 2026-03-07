@@ -515,6 +515,7 @@ sheafHom(SheafMap, SheafMap)      := SheafMap => o -> (f, g) -> sheaf(variety f,
 
 -- TODO: does homomorphism and homomorphism' also make sense for this?
 Hom(SheafMap, CoherentSheaf) :=
+Hom(SheafMap,      SheafMap) :=
 Hom(CoherentSheaf, SheafMap) := Matrix => o -> (A, B) -> HH^0(variety A, sheafHom(A, B, o, DegreeLimit => 0))
 
 -- See [Hartshorne, Ch. III Exercise 6.1, pp. 237]

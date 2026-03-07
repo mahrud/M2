@@ -29,7 +29,7 @@ isMorphism SheafMap := isAbelianCategory CoherentSheaf := x -> true
 
 -- TODO: simplify this, and also cache complex(SheafOfRings)
 complex CoherentSheaf := Complex => { Base => 0 } >> opts -> F -> (
-    F.cache.Complex ??= (lookup(complex, Module))(F, opts))
+    F.cache.Complex ??= (lookup(complex, Module))(F))[-opts.Base]
 
 -----------------------------------------------------------------------------
 -- Basic operations between sheaves, complexes, etc.

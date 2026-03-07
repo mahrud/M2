@@ -38,7 +38,8 @@ subtruncate = { MinimalGenerators => false } >> opts -> (degs, f) -> truncate(, 
 -- truncate only the sources of the corresponding
 -- matrices until they all have the same source
 autotruncate = { MinimalGenerators => false } >> opts -> L -> (
-    deg := max apply(L, f -> f.degree);
+    degs := apply(L, f -> f.degree);
+    deg := if same degs then -infinity else max degs;
     apply(L, f -> subtruncate(deg, f.map, opts)))
 
 -----------------------------------------------------------------------------

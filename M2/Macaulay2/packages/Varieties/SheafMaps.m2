@@ -257,6 +257,10 @@ SheafMap - SheafMap := (f, g) -> f + (-g)
 SheafMap * SheafMap := SheafMap => (f, g) -> (
     (d, e) := (f.degree, g.degree);
     (m, n) := (matrix f, matrix g);
+    -- if matrices compose, the task is easy
+    if source m === target n then
+    return map(target f, source g, m * n);
+    -- otherwise, need to truncate
     if d < e then
     m = truncate(d, m, MinimalGenerators => false);
     if d < infinity then

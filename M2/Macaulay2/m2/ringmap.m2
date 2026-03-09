@@ -230,9 +230,9 @@ RingMap \ VisibleList := VisibleList => (f,v) -> apply(v,x -> f x)
 -----------------------------------------------------------------------------
 -- TODO: should work over ZZ
 
-kernel RingMap := Ideal => opts -> f -> f.cache#(symbol kernel => opts) ??= ((
+kernel RingMap := Ideal => opts -> f -> f.cache#(symbol kernel => opts) ??= (
     (F, R) := (target f, source f);
-    if 0_F == 1_F then return ideal 1_R;
+    if 0_F == 1_F then ideal 1_R else (
     -- the actual computation occurs here
     I := runHooks((kernel, RingMap), (opts, f) -*, Strategy => opts.Strategy*-);
     if I =!= null then I else error "kernel: no method implemented for this type of ring map"))

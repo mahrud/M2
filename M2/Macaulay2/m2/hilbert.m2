@@ -143,10 +143,10 @@ multidegree Ideal  := I -> multidegree comodule I
 multidegree Module := M -> M.cache.multidegree ??= tryHooks((multidegree, Module), M,
     M -> (
     A := degreesRing ring M;
-    if (c := codim M) === infinity then return 0_A;
-    onem := map(A, A, apply(generators A, t -> 1 - t));
-    part(c, numgens A:1, onem numerator poincare M))
-    )
+    if (c := codim M) === infinity then 0_A else (
+	onem := map(A, A, apply(generators A, t -> 1 - t));
+	part(c, numgens A:1, onem numerator poincare M))
+    ))
 
 length Module := ZZ => M -> M.cache.length ??= tryHooks((length, Module), M,
     M -> (

@@ -226,6 +226,7 @@ flattenRing QuotientRing := opts -> R -> R.cache#(symbol flattenRing => opts) ??
 	       opts.CoefficientRing === null and (isField k or k.?isBasic)
 	       or opts.CoefficientRing === k
 	       )
+	  -- FIXME: return escapes ??=
 	  then return flatCoerce(R, resultTemplate,triv R);
 	  J := ideal presentation R;
 	  A := ring J;
@@ -244,6 +245,7 @@ flattenRing PolynomialRing := opts -> R -> R.cache#(symbol flattenRing => opts) 
      M := monoid R;
      n2 := numgens M;
      if opts.CoefficientRing === A or opts.CoefficientRing === null and (isField A or A.?isBasic)
+     -- FIXME: return escapes ??=
      then return flatCoerce(R, resultTemplate,triv R);
      (I,p,q) := flattenRing(A, opts, Result => (Ideal,,));
      S := ring I;

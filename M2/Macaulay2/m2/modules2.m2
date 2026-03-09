@@ -136,7 +136,7 @@ minimalPresentation Module := prune Module := Module => opts -> M -> M.cache#(sy
 	  if debugLevel > 0 and homog then pushvar(symbol flagInhomogeneity,true);
 	  C := runHooks((minimalPresentation, Module), (opts, M));
 	  if debugLevel > 0 and homog then popvar symbol flagInhomogeneity;
-	  if C =!= null then return C;
+	  if C =!= null then C else
 	  error "minimalPresentation: internal error: no method for this type of module"
     )
 

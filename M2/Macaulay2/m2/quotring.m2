@@ -279,13 +279,14 @@ generators QuotientRing := opts -> (S) -> (
      else apply(generators(ambient S,opts), m -> promote(m,S)))
 char QuotientRing := S -> S.char ??= ((
      p := char ambient S;
-     if p == 1 then return 1;
-     if isPrime p or isMember(QQ,S.baseRings) then return if S == 0 then 1 else p;
+     if p == 1 then return S.char = 1;
+     if isPrime p or isMember(QQ,S.baseRings)
+     then return S.char = if S == 0 then 1 else p;
      relns := presentation S;
-     if relns == 0 then return char ring relns;
+     if relns == 0 then return S.char = char ring relns;
      if ultimate(coefficientRing, S) =!= ZZ then notImplemented();
      g := generators gb relns;
-     if g == 0 then return char ring g;
+     if g == 0 then return S.char = char ring g;
      m := g_(0,0);
      lift(m,ZZ,Verify=>false) ?? 0))
 

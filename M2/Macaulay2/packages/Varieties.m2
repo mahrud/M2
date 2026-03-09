@@ -282,17 +282,6 @@ isProjective = method(TypicalValue => Boolean)
 isProjective Variety           := X -> false
 isProjective ProjectiveVariety := X -> true
 
-isSmooth Variety := {} >> o -> X -> 1 == ideal singularLocus X
-isSmooth ProjectiveVariety := {} >> o -> X -> (
-     R := ring X;
-     f := presentation R;
-     A := ring f;
-     checkRing A; -- We check that the ring is singly graded.
-     -- The singular locus of X is empty if the corresponding locus in the affine cone has dimension at most 0.
-     -- We don't need to saturate the corresponding ideal, for this purpose.
-     -- TODO: reduce duplication with singularLocus
-     dim(minors(codim(R,Generic=>true), jacobian f) + ideal f) <= 0)
-
 -- This method returns either a Variety, an AbstractVariety (from Schubert2),
 -- a NormalToricVariety, or any other variety stashed in R.variety.
 variety = method(TypicalValue => Variety)
@@ -335,18 +324,28 @@ checkProjective = X -> if not isProjective X then error "expected a coherent she
 -- singularLocus
 -----------------------------------------------------------------------------
 
--- For a projective scheme X over a base ring k, singularlocus X is the locus where X is not smooth over k.
---
--- For a subspace X of a weighted projective space, this describes the locus
--- where X is not smooth as a stack over k. Thus, the coarse moduli space of X is "quasi-smooth" outside
--- singularLocus X, and in particular it has at most cyclic quotient singularities there.
+jacobianIdeal = R -> R.cache.jacobianIdeal ??= (
+    f := presentation R;
+    -- in characteristic zero, J already contains f,
+    -- but not necessarily in characteristic p > 0.
+    J := minors(codim(R, Generic => true), jacobian f);
+    J + ideal f)
+
 singularLocus     AffineVariety :=     AffineVariety => X -> Spec singularLocus ring X
 singularLocus ProjectiveVariety := ProjectiveVariety => X -> (
-     R := ring X;
-     f := presentation R;
-     A := ring f;
-     checkRing A; -- We check that the ring is singly graded.
-     Proj(A / saturate (minors(codim(R,Generic=>true), jacobian f) + ideal f)))
+    -- For a projective scheme X over a base ring k, singularlocus X is the locus where X is not smooth over k.
+    -- For a subspace X of a weighted projective space, this describes the locus
+    -- where X is not smooth as a stack over k. Thus, the coarse moduli space of X is "quasi-smooth" outside
+    -- singularLocus X, and in particular it has at most cyclic quotient singularities there.
+    checkRing ring presentation(R := ring X); -- We check that the ring is singly graded.
+    Proj(R / saturate jacobianIdeal R))
+
+isSmooth     AffineVariety := {} >> o -> X -> 1 == ideal singularLocus X
+isSmooth ProjectiveVariety := {} >> o -> X -> (
+     checkRing ring presentation(R := ring X); -- We check that the ring is singly graded.
+     -- The singular locus of X is empty if the corresponding locus in the affine cone has dimension at most 0.
+     -- We don't need to saturate the corresponding ideal, for this purpose.
+     dim jacobianIdeal R <= 0)
 
 -----------------------------------------------------------------------------
 -- Subpackages

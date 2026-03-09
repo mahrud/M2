@@ -701,6 +701,8 @@ prune Complex := Complex => opts -> C -> C.cache.minimalPresentation ??= (
     -- to be cached: in the input C: cache the result D
     --               in the result: cache pruningMap: D --> C
     (lo,hi) := C.concentration;
+    -- TODO: make parallel
+    -- TODO: if zero differentials, should be easier?
     nonzeros := select(lo..hi, i -> minimalPresentation C_i != 0);
     D := if #nonzeros === 0 
          then (
@@ -791,6 +793,7 @@ truncateModuleOpts := options(truncate, List, Module)
 truncate(ZZ,   Complex) := truncate(InfiniteNumber, Complex) :=
 truncate(List, Complex) := Complex => truncateModuleOpts >> opts -> (degs, C) -> (
     (lo, hi) := C.concentration;
+    -- TODO: should do dd^C == 0 instead
     if lo == hi
     then complex(truncate(degs, C_lo, opts), Base => lo)
     -- this is the simplest way to truncate the whole complex:

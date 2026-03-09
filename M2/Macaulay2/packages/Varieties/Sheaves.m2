@@ -583,6 +583,7 @@ toString   SumOfTwists := toString @@ expression
 --      map(S^1, S^-(degrees S), {apply(generators S, flatten degrees S, times)})
 --      )
 
+-- TODO: remove MinimalGenerators option and let user call prune?
 cotangentSheaf = method(TypicalValue => CoherentSheaf,
     Options => options exteriorPower ++ { MinimalGenerators => true })
 cotangentSheaf ProjectiveVariety := opts -> (cacheValue (symbol cotangentSheaf => opts)) (X -> (
@@ -639,30 +640,23 @@ cotangentSheaf AffineVariety := opts -> (cacheValue (symbol cotangentSheaf => op
 	-- although there is not a precise notion of minimal presentations in this ungraded situation.
 	if opts.MinimalGenerators then minimalPresentation om else om))
 
-cotangentSheaf(ZZ, ProjectiveVariety) := opts -> (i, X) -> (
-    -- Here X is a ProjectiveVariety, that is, a closed substack of a weighted projective space.
-    answer := sheaf exteriorPower(i, module cotangentSheaf(X, opts), Strategy => opts.Strategy);
-    if opts.MinimalGenerators then minimalPresentation answer else answer)
--- Another possible definition would be: HH^0 naiveCotangentComplex(i, X, opts))
--- These are the same if p does not divide any of the weights, hence in particular if all the weights are 1.
-
-cotangentSheaf(ZZ, AffineVariety) := opts -> (i, X) -> (
-    -- This function computes the sheaf of i-forms on an affine scheme over a base ring.
-    answer := sheaf exteriorPower(i, module cotangentSheaf(X, opts), Strategy => opts.Strategy);
-    if opts.MinimalGenerators then minimalPresentation answer else answer)
+cotangentSheaf(ZZ, Variety) := opts -> (i, X) -> (
+    -- Computes the sheaf of i-forms on a variety over a base ring.
+    -- Another possible definition would be: HH^0 naiveCotangentComplex(i, X, opts))
+    -- These are the same if p does not divide any of the weights, hence in particular if all the weights are 1.
+    prune' := if opts.MinimalGenerators then minimalPresentation else identity;
+    prune' exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
 
 tangentSheaf = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
-tangentSheaf ProjectiveVariety := opts -> X -> sheaf prune module dual cotangentSheaf(X, opts)
-tangentSheaf AffineVariety := opts -> X -> sheaf prune module dual cotangentSheaf(X, opts)
+tangentSheaf Variety := opts -> X -> dual cotangentSheaf(X, opts)
 
-idealSheaf = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
-idealSheaf ProjectiveVariety := opts -> X -> sheaf ideal (ring X).relations
-idealSheaf AffineVariety := opts -> X -> sheaf ideal (ring X).relations
+idealSheaf = method(TypicalValue => CoherentSheaf)
+idealSheaf Variety := X -> sheaf ideal (ring X).relations
 
+-- TODO: should this be canonicalSheaf?
+-- TODO: should module be pruned or sheaf?
 canonicalBundle = method(TypicalValue => CoherentSheaf, Options => options cotangentSheaf)
-canonicalBundle ProjectiveVariety := opts -> X -> (
-    sheaf prune module dual dual determinant(cotangentSheaf(X, opts), Strategy => opts.Strategy))
-canonicalBundle AffineVariety := opts -> X -> (
+canonicalBundle Variety := opts -> X -> (
     sheaf prune module dual dual determinant(cotangentSheaf(X, opts), Strategy => opts.Strategy))
 
 -- This function computes the sheaf of reflexive differentials of a given closed substack X of a weighted projective space.
@@ -670,20 +664,14 @@ canonicalBundle AffineVariety := opts -> X -> (
 -- on the coarse moduli space Y of X is the sheaf of reflexive differentials on Y.
 reflexiveDifferentials = method(TypicalValue => CoherentSheaf,
     Options => options exteriorPower ++ { MinimalGenerators => true })
-reflexiveDifferentials ProjectiveVariety := opts -> (cacheValue (symbol reflexiveDifferentials => opts)) (X -> (
-	sheaf prune module dual dual cotangentSheaf(X, opts)))
-
-reflexiveDifferentials AffineVariety := opts -> (cacheValue (symbol reflexiveDifferentials => opts)) (X -> (
+reflexiveDifferentials Variety := opts -> (cacheValue (symbol reflexiveDifferentials => opts)) (X -> (
 	sheaf prune module dual dual cotangentSheaf(X, opts)))
 
 -- This function computes the sheaf of reflexive i-forms (for i>=0) on a given closed substack X of a weighted projective space.
 -- At least when X is normal and well-formed (not necessarily quasi-smooth), its direct image sheaf
 -- on the coarse moduli space Y of X is the sheaf of reflexive i-forms on Y.
-reflexiveDifferentials (ZZ, ProjectiveVariety) := opts -> (i, X) -> (
-    answer := sheaf prune module dual dual exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
-
-reflexiveDifferentials (ZZ, AffineVariety) := opts -> (i, X) -> (
-    answer := sheaf prune module dual dual exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
+reflexiveDifferentials(ZZ, Variety) := opts -> (i, X) -> (
+    sheaf prune module dual dual exteriorPower(i, cotangentSheaf(X, opts), Strategy => opts.Strategy))
 
 -----------------------------------------------------------------------------
 -- isLocallyFree

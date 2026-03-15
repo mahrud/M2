@@ -770,10 +770,15 @@ prune SheafMap := minimalPresentation SheafMap := SheafMap => opts -> f -> f.cac
 -- pullback and pushout and concatenation
 -----------------------------------------------------------------------------
 
+-- TODO: add test from matrix {{sheaf vars S, 0}} and matrix {{dual  sheaf vars S}, {0}}
 SheafMap |  SheafMap := SheafMap => SheafMap.concatCols = maps -> map(
-    target maps#0, directSum apply(maps, source), concatCols apply(maps, matrix))
+    tar := target maps#0;
+--    maps = apply(maps, f -> if instance(f, SheafMap) then f else f * id_tar);
+    tar, directSum apply(maps, source), concatCols apply(maps, matrix))
 SheafMap || SheafMap := SheafMap => SheafMap.concatRows = maps -> map(
-    directSum apply(maps, target), source maps#0, concatRows autotruncate maps)
+    src := source maps#0;
+--    maps = apply(maps, f -> if instance(f, SheafMap) then f else f * id_src);
+    directSum apply(maps, target), src, concatRows autotruncate maps)
 
 SheafMap.concatBlocks = maps -> SheafMap.concatRows apply(maps, SheafMap.concatCols)
 -- Note: this is (symbol matrix, SheafMap), not (matrix, SheafMap)!

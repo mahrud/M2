@@ -560,6 +560,7 @@ cohomology(ZZ, ProjectiveVariety, SheafMap) := Matrix => opts -> (p, X, f) -> (
     z := degree 1_(ring X);
     if p == 0 then part(z, matrix prune f) else (
 	-- pushforward F to a projective space first
+	-- TODO: should f be pruned here?
 	g := flattenMorphism matrix f;
 	A := ring g;
 	-- TODO: both n and w need to be adjusted for the multigraded case
@@ -568,6 +569,7 @@ cohomology(ZZ, ProjectiveVariety, SheafMap) := Matrix => opts -> (p, X, f) -> (
 	-- using Serre duality for coherent sheaves on schemes with mild
 	-- singularities, Cohen–Macaulay schemes, not just smooth schemes.
 	-- TODO: check that X is proper (or at least finite type)
+	-- TODO: is this better than Ext^(p+1)(OO_X/m^[b], f)?
 	transpose part(z, Ext^(n-p)(g, w)))
     )
 

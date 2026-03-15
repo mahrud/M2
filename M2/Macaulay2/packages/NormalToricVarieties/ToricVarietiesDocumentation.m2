@@ -633,7 +633,7 @@ doc ///
 	    projectiveSpace = n -> Proj (QQ[x_0..x_n]);
 	    projectiveSpace 2
 	Example	    
-	    PP ZZ := toricProjectiveSpace;
+	    PP = toricProjectiveSpace;	    
 	    PP 2
     SeeAlso
         "making normal toric varieties"

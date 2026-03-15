@@ -122,10 +122,10 @@ doc ///
     Example
       JJ = randomElementsFromIdeal({3},SS);
       IDD=X+JJ;
-      UU=IDD:SS;
-      BB= randomElementsFromIdeal({5},UU);
+      PP=IDD:SS;
+      BB= randomElementsFromIdeal({5},PP);
       BU=BB+X;
-      BT=BU:UU;
+      BT=BU:PP;
       degree BT
     Text 
       We look for singularities of $BT$. Since the computation of singular locus is too long, we just check the rank of the jacobian matrix in one of the components of $SingSS$ and get that $BT$ is singular in that locus.

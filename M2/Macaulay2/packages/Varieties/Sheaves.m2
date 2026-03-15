@@ -33,7 +33,7 @@ sheaf Variety        := SheafOfRings =>  X     -> sheaf(X, ring X)
 
 sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     if ring X =!= R then error "sheaf: expected ring of the variety";
-    X.cache.sheaf ??= (
+    X.sheaf ??= (
 	O := new SheafOfRings from { symbol variety => X, symbol ring => R };
 	O.cache = new MutableHashTable;
 	O.cache.sheaf = sheaf(O.variety, (ring variety O)^1); -- That is, O.cache.sheaf is the CoherentSheaf O^1.
@@ -42,8 +42,8 @@ sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
 	O);
     -- this is here to get RingElement * Complex to work, but there may be a better way
     -- e.g. should we define Section as the parent of SheafOfRings?
-    promote(Thing, X.cache.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
-    X.cache.sheaf)
+    promote(Thing, X.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
+    X.sheaf)
 
 -- twists don't make sense on an affine variety, so we forcefully remove them
 dehomogenizeMatrix = f -> (R := ring f; map(R^(numRows f), R^(numColumns f), f))

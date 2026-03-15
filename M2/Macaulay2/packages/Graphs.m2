@@ -302,12 +302,16 @@ graph List := Graph => opts -> L -> (
     if mode == "e" then graph(unique flatten (toList \ L), L, Singletons => opts.Singletons, EntryMode => "edges")
     else graph(hashTable apply(L, x -> x_0 => toList(x_1)), Singletons => opts.Singletons, EntryMode => "neighbors")
     )
-graph HashTable := Graph => opts -> g -> graph(unique join(keys g, flatten (toList \ values g)), flatten apply(keys g, v -> apply(toList g#v, u -> {v, u})), Singletons => opts.Singletons, EntryMode => "edges")
+graph HashTable := Graph => opts -> g -> (
+    graph(unique join(keys g, flatten (toList \ values g)),
+	flatten apply(keys g, v -> apply(toList g#v, u -> {v, u})),
+	Singletons => opts.Singletons,
+	EntryMode  => "edges"))
 graph (List, Matrix) := Graph => opts -> (V,A) -> (
     if ( sort unique join( {0,1}, flatten entries A) != {0,1} ) then error "The given matrix is not an adjacency matrix.";
     if #V != numrows A or numrows A != numcols A then error "The given vertex set and matrix are incompatible.";
     V' := if instance(opts.Singletons, List) then opts.Singletons - set V else {};
-    A' := matrix {{A, map(ZZ^(#V), ZZ^(#V'), 0)}, {map(ZZ^(#V'), ZZ^(#V), 0), 0}};
+    A' := A ++ (0 * id_(ZZ^(#V')));
     new Graph from {
         symbol vertexSet => join(V, V'),
         symbol adjacencyMatrix => A',

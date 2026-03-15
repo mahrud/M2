@@ -1118,9 +1118,9 @@ resolutionMapPrivate(Complex, Boolean) := ComplexMap => opts -> (C, isEpi) -> (
             f = map(C, complex((ring C)^0, Base=>lo-1), 0);
             local g;
             -- how to implement length limit here.  What does length limit mean?
-            while (
+            while len <= lengthlimit and (
                 g = nextLambda(f, isEpi);
-                (len <= hi - lo or g =!= null) and len <= lengthlimit
+                len <= hi - lo or g =!= null
                 ) do (
                 if g === null then (
                     -- if g is null but the complex C has terms in position >= lo+len 

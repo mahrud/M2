@@ -16,6 +16,17 @@ export {
 -- Local utilities
 -----------------------------------------------------------------------------
 
+-- TODO: use in autotruncate and anywhere else min or max of degrees is used
+commonMinimum = (C, L) -> (
+    if #L == 0 then return -infinity;
+    R := ring linealitySpace C;
+    A := -entries facets C;
+    (B, b) := facets(C + convexHull matrix transpose L);
+    -- TODO: is the assumption here correct?
+    inds := positions(entries lift(B, R), v -> isMember(v, A));
+    P := polyhedronFromHData(B^inds, b^inds);
+    first entries transpose sub(vertices P, R))
+
 -- given a graded map, truncate only the source
 -- and return the inclusion composed with the map
 subtruncate = { MinimalGenerators => false } >> opts -> (degs, f) -> truncate(, degs, f, opts)
@@ -378,11 +389,18 @@ components SheafMap := List => phi -> if phi.cache.?components then phi.cache.co
 -----------------------------------------------------------------------------
 -- TODO: take care of the case when the rings are different
 -- FIXME: the source and target sheaves are not correct in this version
-tensor(SheafMap, SheafMap) := SheafMap => (phi, psi) -> sheaf(matrix phi ** matrix psi)
--- tensor(SheafMap, SheafMap) := SheafMap => (phi, psi) -> (
---     map(target phi ** target psi,
--- 	source phi ** source psi,
--- 	matrix phi ** matrix psi))
+-- TODO: make sure formation is set correctly in source and target
+--tensor(SheafMap, SheafMap) := SheafMap => (phi, psi) -> sheaf(matrix phi ** matrix psi)
+tensor(SheafMap, SheafMap) := SheafMap => (f, g) -> (
+    assertSameVariety(target f, target g);
+    assertSameVariety(source f, source g);
+    O := ring target f;
+    if f === id_(O^1) then return g;
+    if g === id_(O^1) then return f;
+    map(target f ** target g,
+	source f ** source g,
+	matrix f ** matrix g,
+	Degree => degree f + degree g))
 
 --possible fix for ill-definedness of tensor product
 -*tensor(SheafMap, SheafMap) := SheafMap => (phi, psi) -> (
@@ -530,25 +548,26 @@ homomorphism' SheafMap := o -> h -> map(Hom(source h, target h, o), ,
 -- homology
 -----------------------------------------------------------------------------
 homology(SheafMap, SheafMap) := CoherentSheaf => opts -> (g, f) -> (
+    if (X := variety f) =!= variety g then
+    error "expected sheaf maps on the same variety";
     -- Note: these checks prune the image of f and g only
     -- TODO: should we check matrix g == 0 to avoid pruning?
     if g == 0 then return cokernel f;
     if f == 0 then return kernel g;
-    g = lift g;
-    d := g.degree;
-    M := module source f;
-    N := module target f;
-    X := variety f;
-    if variety g =!= X then error "expected sheaf maps on the same variety";
+    if source matrix g === target matrix f then
+    return sheaf(X, homology(matrix g, matrix f, opts));
     -- Note: we use =!= to avoid pruning the sheaves
     -- we also don't verify g * f == 0 for the same reason
-    --if module source g =!= N then error "expected sheaf maps to be composable";
-    -- not sure why MinimalGenerators => false was relevant in line below, so we took it out
+    if module source g =!= module target f
+    then error "expected sheaf maps to be composable";
     -- truncate matrix f to match the degree of the source of g
-    -- FIXME: bad in multigraded case, d needs to be a list of degrees
+    g = lift g;
+    d := g.degree;
     g' := matrix g;
-    d' := prepend(d, degrees source g');
-    f' := inducedMap(truncate(d', N, MinimalGenerators => false), M, matrix f);
+    -- TODO: is effCone correct here? what about the truncation?
+    -- d' := commonMinimum(-effCone X, degrees source g');
+    -- f' := truncate(d, d', matrix f, MinimalGenerators => false);
+    f' := truncate(d, matrix f, MinimalGenerators => false);
     sheaf(X, homology(g', f', opts)))
 
 -----------------------------------------------------------------------------

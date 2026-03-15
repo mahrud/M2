@@ -340,8 +340,8 @@ lift SheafMap := SheafMap => o -> shphi -> (
     m := min degrees M;
     -- TODO: use multigraded regularity?
     for one in entries \ (degreeGroup ring M)_* do
-    while isLiftable(shphi, d-one) and d > m do d = d-one;
-    lift'(shphi, d))
+    while d > m and try isLiftable(shphi, d-one) else false do d = d-one;
+    try lift'(shphi, d) else shphi)
 
 -*lift(Matrix,Matrix) := Matrix => opts -> (phi,eta) -> (
     newPhi := homomorphism'(phi);

@@ -334,7 +334,7 @@ truncate(List,    List, Matrix) := Matrix => truncateModuleOpts >> opts -> (tard
 truncate(InfiniteNumber, Ring)   := truncateModuleOpts >> o -> (d, R) -> ideal truncate(d, module R, o)
 truncate(InfiniteNumber, Ideal)  := truncateModuleOpts >> o -> (d, I) -> ideal truncate(d, module I, o)
 truncate(InfiniteNumber, Module) := truncateModuleOpts >> o -> (d, M) -> (
-    if d === -infinity then M else (ring M)^0)
+    if d === -infinity then M else image map(M, (ring M)^0, 0))
 
 -- TODO: implement union types in M2 and simplify stuff like this
 truncate(Nothing,        InfiniteNumber, Matrix) :=

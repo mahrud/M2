@@ -171,14 +171,15 @@ commonRing List := L -> (
     ring try sum apply(rings, R -> 0_R) else error "common ring not found")
 
 matrixTable = opts -> (f) -> (
-     R := commonRing f;
+     L := select(flatten f, i -> i =!= 0);
+     R := commonRing L;
      havemat := false;
      f = applyTable(f,
 	 x -> if isMorphism x then (havemat = true; promote(x, R))
 	 else if instance(x, RingElement) or instance(x, Number) then promote(x, R)
 	 else error "expected numbers, ring elements, and matrices");
      if not havemat then return map(R^#f, , f, opts);
-     types := unique apply(flatten f, class);
+     types := unique apply(L, class);
      -- Note: we use Matrix.matrix here, which is different from Matrix#matrix
      if # types === 1 and types#0 .?matrix then return ( types#0 .matrix opts)(f);
      f = apply(f, row -> new MutableList from row);

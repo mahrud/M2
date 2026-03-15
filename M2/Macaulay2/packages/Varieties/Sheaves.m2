@@ -239,7 +239,6 @@ SheafOfRings  ^ ZZ := SheafOfRings  ^ List   := CoherentSheaf => (O, n) -> (
     -- We could consider transferring that information to direct sums, but at the moment that is not done.
     else sheaf(O.variety, (ring variety O)^n))
 
-CoherentSheaf ^ ZZ := CoherentSheaf ^ List   := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module^n)
 dual CoherentSheaf := CoherentSheaf => options(dual, Module) >> o -> F -> sheaf(F.variety, dual(F.module, o))
 
 -- There are several equivalent conditions for equality:
@@ -264,12 +263,11 @@ CoherentSheaf ? CoherentSheaf := lookup(symbol ?, Module, Module)
 CoherentSheaf.directSum = args -> (
     assertSameVariety args;
     F := sheaf(variety args#0, directSum apply(args, module));
+    F.cache.formation = FunctionApplication(directSum, args);
     F.cache.components = toList args;
     F)
+CoherentSheaf ^ ZZ             := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module^n)
 CoherentSheaf ++ CoherentSheaf := CoherentSheaf => (F, G) -> CoherentSheaf.directSum(F, G)
-CoherentSheaf ** CoherentSheaf := CoherentSheaf => (F, G) -> sheaf(F.variety, F.module ** G.module)
-CoherentSheaf^** ZZ            := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module ^** n)
-tensor(CoherentSheaf, CoherentSheaf) := CoherentSheaf => {} >> opts -> (F, G) -> sheaf(F.variety, tensor(F.module, G.module, opts))
 CoherentSheaf  / CoherentSheaf := CoherentSheaf => (F, G) -> sheaf(F.variety, F.module  / G.module)
 CoherentSheaf  / Ideal         := CoherentSheaf => (F, I) -> sheaf(F.variety, F.module  / I)
 Ideal * CoherentSheaf          := CoherentSheaf => (I, F) -> sheaf(F.variety, I * F.module)
@@ -281,6 +279,15 @@ component(CoherentSheaf, Thing) := (F, k) -> (
     if not F.cache.?indexComponents then error "expected Sheaf to be a direct sum with indexed components";
     if not F.cache.indexComponents#?k then error("expected "|toString k|" to be the index of a component");
     (components F)#(F.cache.indexComponents#k))
+
+-- tensor
+tensor(CoherentSheaf, CoherentSheaf) := CoherentSheaf => {} >> opts -> (F, G) -> (
+    assertSameVariety(F, G);
+    T := sheaf(F.variety, tensor(F.module, G.module, opts));
+    T.cache.formation = FunctionApplication(tensor, (F, G));
+    T)
+CoherentSheaf ** CoherentSheaf := CoherentSheaf => (F, G) -> sheaf(F.variety, F.module ** G.module)
+CoherentSheaf^** ZZ            := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module ^** n)
 
 -- multilinear ops
 determinant        CoherentSheaf  := CoherentSheaf => o ->     F  -> exteriorPower(rank F, F, o)

@@ -55,7 +55,8 @@ map(CoherentSheaf, CoherentSheaf, Matrix) := SheafMap => opts -> (G, F, phi) -> 
 	varietyWarn = false; printerr "maps of sheaves are experimental over the given variety");
     -- FIXME: not correct in multigraded case if source phi is generated in multiple degrees
     deg := if opts.Degree =!= null then opts.Degree else min degrees source phi;
-    phi  = if module G =!= target phi then inducedMap(module G, target phi) * phi else phi;
+    -- FIXME: what's the right thing here e.g. for sheaf id_(S^{-2})
+    phi  = if module G =!= target phi then try inducedMap(module G, target phi) * phi else phi else phi;
     new SheafMap from {
 	symbol variety => variety F,
         symbol source => F,
@@ -81,7 +82,8 @@ map(CoherentSheaf, CoherentSheaf, ZZ)                     := SheafMap => opts ->
     if F === G then n * id_G else
     if n === 0 then map(G, F, map(module G, module F, 0)) else
     error "expected 0 or source and target equal")
-map(CoherentSheaf, CoherentSheaf, SheafMap)               := SheafMap => opts -> (G,F,phi)      -> sheaf map(G,F,matrix phi)
+map(CoherentSheaf, CoherentSheaf, SheafMap)               := SheafMap => opts -> (G, F, phi)    -> (
+    sheaf map(G,F, matrix phi))
 
 map(CoherentSheaf, Module, ZZ) := SheafMap => opts -> (F, M, n) -> (
     if n === 0 then sheaf map(module F, M, 0) else
@@ -92,7 +94,8 @@ map(Module, CoherentSheaf, ZZ) := SheafMap => opts -> (M, F, n) -> (
     if M === module F then n * id_F else
     error "expected 0 or source and target equal")
 
-sheaf SheafMap             := SheafMap =>  phi        -> sheaf matrix phi
+-- TODO: assert that this doesn't erase the formation data
+sheaf SheafMap             := SheafMap =>  phi        -> phi -- sheaf matrix phi
 sheaf Matrix := Matrix^~   := SheafMap =>  phi        -> sheaf(variety ring phi, phi)
 sheaf(Matrix, ZZ)          :=
 sheaf(Matrix, List)        := SheafMap => (phi, d)    -> sheaf(variety ring phi, phi, d)

@@ -326,7 +326,8 @@ variety Ideal := I -> Proj quotient I -- TODO: should this be Spec or Proj?
 assertSameVariety = Fs -> if not same apply(Fs, variety) then error "expected objects on the same variety"
 
 -- printing
-expression       Variety := X -> if hasAttribute(X, ReverseDictionary) then expression getAttribute(X, ReverseDictionary) else (describe X)#0
+expression       Variety := X -> if hasAttribute(X, ReverseDictionary)
+    then expression getAttribute(X, ReverseDictionary) else unhold describe X
 -- TODO: are these all necessary?
 net              Variety :=      net @@ expression
 texMath          Variety :=  texMath @@ expression

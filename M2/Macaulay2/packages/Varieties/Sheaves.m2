@@ -310,6 +310,7 @@ expression CoherentSheaf := F -> (
            -- TODO: get rid of the extra spaces in OO_X^1000(1) when #d > 1
            if all(d, zero) then OX else Adjacent { OX,
                if #d === 1 then Parenthesize d else expression toSequence d }))
+   )
 net      CoherentSheaf :=      net @@ expression
 texMath  CoherentSheaf :=  texMath @@ expression
 toString CoherentSheaf := toString @@ expression

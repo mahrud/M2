@@ -905,9 +905,9 @@ cylinder ComplexMap := Complex => f -> (
     modules := hashTable for i from lo to hi list i => B_(i-1) ++ B_i ++ C_i;
     maps := hashTable for i from lo+1 to hi list i => (
         map(modules#(i-1), modules#i, matrix{
-                { - dd^B_(i-1)  , 0      , 0     }, 
-                { -id_(B_(i-1)) , dd^B_i , 0     },
-                { f_(i-1)       , 0      , dd^C_i}
+                { - dd^B_(i-1)  , map(target dd^B_(i-1), source dd^B_i, 0), map(target dd^B_(i-1), source dd^C_i, 0) }, 
+                { -id_(B_(i-1)) , dd^B_i , map(B_(i-1), source dd^C_i, 0) },
+                { f_(i-1)       , map(target f_(i-1), source dd^B_i, 0) , dd^C_i }
                 }
             )
         );

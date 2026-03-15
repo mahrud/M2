@@ -701,7 +701,7 @@ yonedaSheafExtension Matrix := Complex => f -> (
     -- Note: TruncateDegree is set by Ext^ZZ(CoherentSheaf, SumOfTwists)
     r := E.cache.TruncateDegree;
     M := truncate(r, module F, MinimalGenerators => false);
-    B := basis(z, Ext^d(M, module G, DegreeLimit => z, MinimalGenerators => false));
+    B := basis(z, Ext^d(M, module G, -* DegreeLimit => z, *- MinimalGenerators => false));
     C := yonedaExtension(B * f);
     E.cache#(symbol yonedaSheafExtension, f) =
     complex apply(d + 1, i -> sheaf_X C.dd_(i+1)))

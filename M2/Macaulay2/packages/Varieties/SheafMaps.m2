@@ -120,8 +120,8 @@ isWellDefined SheafMap := f -> (
 	"target of the sheaf map does not match the target of the underlying matrix")
     and assert'(F  == sheaf(X, source matrix f),
 	"source of the sheaf map does not match the source of the underlying matrix")
-    and assert'(d >= min degrees F, -- maybe not strictly necessary
-	"expected the degree of the sheaf map to be at least as high as the degrees of the source")
+--    and assert'(d >= min degrees F, -- maybe not strictly necessary
+--	"expected the degree of the sheaf map to be at least as high as the degrees of the source")
     and assert'(try ( isWellDefined map(module G, F' := truncate(d, module F, MinimalGenerators => false),
 	 -- TODO: should we use F' here or truncation of source matrix f?
          matrix f * inducedMap(source matrix f, F') ) ) else false,

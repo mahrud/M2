@@ -354,7 +354,11 @@ addHook((effGenerators, Ring), Strategy => Default, R -> R.effGenerators ??= if 
 addHook((effCone,       Ring), Strategy => Default, R -> R.effCone       ??= if R.?variety then effCone       R.variety)
 
 -- used for algorithms that need a non-trivial Picard group
-checkProjective = X -> if not isProjective X then error "expected a coherent sheaf over a projective variety"
+checkProjective = X -> if not isProjective X then error "expected a coherent sheaf over a projective variety" else (
+    -- TODO: is this good enough, or do we actually need to check that it is a ProjectiveVariety?
+    -- My hope is that this will also work for toricProjectiveSpace, for instance.
+    -- TODO: eventually generalize algorithms to multigraded rings and change this error.
+    if degreeLength ring X > 1 then error "existing algorithms are intended for varieties embedded in the projective space or weighted projective stacks")
 
 -----------------------------------------------------------------------------
 -- singularLocus

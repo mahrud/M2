@@ -559,7 +559,7 @@ basis(List, ComplexMap) := ComplexMap => opts -> (deg, f) -> (
 -- the source and target complexes in the given degree, but as a map
 -- over the coefficient ring instead
 part(ZZ,   ComplexMap) :=
-part(List, ComplexMap) := ComplexMap => (deg, f) -> (residueMap ring f) cover' basis(deg, f)
+part(List, ComplexMap) := ComplexMap => (deg, f) -> (residueMap ring f) ** cover' basis(deg, f)
 
 --------------------------------------------------------------------
 -- homology --------------------------------------------------------

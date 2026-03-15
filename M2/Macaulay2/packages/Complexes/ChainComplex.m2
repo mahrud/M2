@@ -840,7 +840,7 @@ cover' ComplexMap := ComplexMap => f -> (
 -- returns the graded component of the complex in the given degree
 -- but as a complex over the coefficient ring instead
 part(ZZ,   Complex) :=
-part(List, Complex) := Complex => (deg, C) -> (residueMap ring C) cover' basis(deg, C)
+part(List, Complex) := Complex => (deg, C) -> (residueMap ring C) ** cover' basis(deg, C)
 
 --------------------------------------------------------------------
 -- homology --------------------------------------------------------
@@ -1011,11 +1011,11 @@ Ring ** Complex := Complex => (R,C) -> C ** R
 
 RingMap Complex := Complex => (phi,C) -> (
     (lo,hi) := concentration C;
-    moduleHash := hashTable for i from lo to hi list i => phi C_i;
+    moduleHash := hashTable for i from lo to hi list i => phi ** C_i;
     if lo === hi then 
         return complex(moduleHash#lo, Base=>lo);
     mapHash := hashTable for i from lo+1 to hi list i => 
-        map(moduleHash#(i-1), moduleHash#i, phi dd^C_i);
+        map(moduleHash#(i-1), moduleHash#i, phi ** dd^C_i);
     complex mapHash
     )
 

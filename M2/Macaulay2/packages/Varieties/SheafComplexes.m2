@@ -82,6 +82,7 @@ module Complex := Complex => D -> D.cache.module ??= (
     C := if D.dd == 0
     then complex(for i from lo to hi list module D_i, Base => lo)
     else complex applyValues(D.dd.map,
+	-- TODO: this should be subtruncate, but something in Hom fails
 	f -> truncate(deg, f.map, MinimalGenerators => false));
     C.cache.sheaf = D;
     C)

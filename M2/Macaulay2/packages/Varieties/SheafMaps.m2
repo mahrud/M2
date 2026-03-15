@@ -12,6 +12,9 @@ export {
     "ExtLongExactSequence",
     }
 
+-- TODO:
+-- extend, horseshoeResolution, connectingExtMap
+
 -----------------------------------------------------------------------------
 -- Local utilities
 -----------------------------------------------------------------------------
@@ -249,6 +252,7 @@ SheafMap + SheafMap := (f, g) -> map(target f, source f, sum autotruncate {f, g}
 SheafMap - SheafMap := (f, g) -> f + (-g)
 
 -- composition
+-- TODO: add tests with canonicalMap(source f, ker f) * map(ker f, ...)
 SheafMap * SheafMap := SheafMap => (f, g) -> (
     (d, e) := (f.degree, g.degree);
     (m, n) := (matrix f, matrix g);

@@ -34,9 +34,6 @@ Hom(Module, Module) := Module => opts -> (M, N) -> (
     -- M.cache.cache is a MutableHashTable, hence has an age.
     Y := youngest(M.cache.cache, N.cache.cache);
     if Y#?(Hom, M, N, e) then return Y#(Hom, M, N, e);
-    -- if debugLevel > 0 then printerr("computing Hom module ", toString {rank M, rank N});
-    if not isFreeModule M and not isFreeModule N
-    then printerr("Hom", toString(rank M, rank N, e));
     H := runHooks((Hom, Module, Module), (opts, M, N), Strategy => opts.Strategy);
     if H === null then error "Hom: no strategy found for the given input";
     trim' := if opts.MinimalGenerators then trim else identity;

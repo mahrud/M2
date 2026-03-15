@@ -36,18 +36,12 @@ directImage = {Prune => true} >> opts -> (F, Y) -> (
 -- with the same polynomial ring S in both cases, such that J is contained in I; or likewise in the affine case.
 -- This function also works for subspaces of a weighted projective space.
 -- The option Prune => false avoids simplifying the output.
+pullback(SheafOfRings,  Variety) := {Prune => true} >> opts -> (F, X) -> pullback(F^1, X, opts)
 pullback(CoherentSheaf, Variety) := {Prune => true} >> opts -> (F, X) -> (
     M := module F;
     if not isWellDefined map(ring X, ring M) then error "ring map not well defined";
     output := M ** (ring X);
     if opts.Prune then sheaf minimalPresentation output else sheaf output)
-
-pullback(SheafOfRings, Variety) := {Prune => true} >> opts -> (F, X) -> (
-    M := module (F^1);
-    if not isWellDefined map(ring X, ring M) then error "ring map not well defined";
-    output := M ** (ring X);
-    if opts.Prune then sheaf minimalPresentation output else sheaf output)
-
 
 -- TODO: implement for multigraded ring
 degreeList = M -> (
@@ -184,6 +178,7 @@ twistedGlobalSectionsModule = (F, bound) -> (
 	else (p + bound, p + bound, N));
     G := minimalPresentation target(
 	-- TODO: substitute with appropriate irrelevant ideal here
+	-- TODO: separate as a helper function
 	M2gens := apply(n, i -> ((S_i)^-((-p)//degs#i)));
 	-- That is, the list M2gens consists of each variable x_i to the power roundup(p/a_i).
 	BpS := ideal M2gens; -- This is the ideal Ip of the form (x_0^(b_0),x_1^(b_1),...,x_(n-1)^(b_(n-1)))

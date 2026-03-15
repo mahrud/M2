@@ -542,11 +542,14 @@ homology(SheafMap, SheafMap) := CoherentSheaf => opts -> (g, f) -> (
     if variety g =!= X then error "expected sheaf maps on the same variety";
     -- Note: we use =!= to avoid pruning the sheaves
     -- we also don't verify g * f == 0 for the same reason
-    if module source g =!= N then error "expected sheaf maps to be composable";
+    --if module source g =!= N then error "expected sheaf maps to be composable";
     -- not sure why MinimalGenerators => false was relevant in line below, so we took it out
     -- truncate matrix f to match the degree of the source of g
-    f = inducedMap(truncate(d, N, MinimalGenerators => false), M, matrix f);
-    sheaf(X, homology(matrix g, f, opts)))
+    -- FIXME: bad in multigraded case, d needs to be a list of degrees
+    g' := matrix g;
+    d' := prepend(d, degrees source g');
+    f' := inducedMap(truncate(d', N, MinimalGenerators => false), M, matrix f);
+    sheaf(X, homology(g', f', opts)))
 
 -----------------------------------------------------------------------------
 -- Prune

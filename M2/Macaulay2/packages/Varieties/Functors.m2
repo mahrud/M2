@@ -952,7 +952,6 @@ cohomology(ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (p, X, F) 
 
 -- This is an approximation of Gamma_* F, at least with an inclusion from Gamma_>=0 F
 -- TODO: optimize caching: if HH^0(F(>=b)) is cached above, does this need to be cached?
--- TODO: use double dual for pruning vector bundles
 -- TODO: should F>=0 be hardcoded? I think this is OK, especially since the function HH^0(F(>=b))
 -- returns all of H^0(X,F(*)) if that is bounded below.
 minimalPresentation SheafOfRings  := prune SheafOfRings  := SheafOfRings  => opts -> identity
@@ -974,6 +973,10 @@ minimalPresentation CoherentSheaf := prune CoherentSheaf := CoherentSheaf => opt
 	    G := target Gmap;
 	    G.cache.pruningMap = Gmap;
 	    G)))
+
+addHook((minimalPresentation, CoherentSheaf), Strategy => "LocallyFree",
+    (opts, F) -> if F.cache.?isLocallyFree and F.cache.isLocallyFree
+    then sheaf(variety F, prune dual dual module F))
 
 -----------------------------------------------------------------------------
 -- Projective bundles

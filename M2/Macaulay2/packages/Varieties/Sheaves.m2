@@ -730,6 +730,7 @@ isLocallyFree Module := Boolean => M -> (
 -- The following function works if X = variety F  is affine,
 -- or if X is projective or weighted-projective over a field. We do not require X to be integral;
 -- so F may have different ranks on different components of X.
+-- TODO: is it faster to take double dual of F and check equality?
 isLocallyFree CoherentSheaf := F -> (
     M := module F;
     if not isProjective variety F then return isLocallyFree M;

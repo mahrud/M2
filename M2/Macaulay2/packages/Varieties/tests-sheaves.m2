@@ -98,3 +98,14 @@ TEST ///
   assert(isLocallyFree(S6++S7++S7))
   assert(not isLocallyFree(M6++M7++M7))
 ///
+
+TEST ///
+  R = ZZ/101[x,y,z,w]/(x^3+y^3+z^3+w^3)
+  F = res(coker vars R, LengthLimit => 4)
+  E = sheaf image F.dd_4
+  elapsedTime assert isLocallyFree E -- ~0.2s
+  elapsedTime prune E -- ~0.03s
+  remove(E.cache, symbol isLocallyFree);
+  remove(E.cache, symbol minimalPresentation => options prune);
+  elapsedTime prune E -- ~0.08s
+///

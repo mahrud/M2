@@ -13,7 +13,7 @@ using std::lock_guard;
 // The maximum number of concurrent threads
 const static unsigned int numCores = std::thread::hardware_concurrency();
 // We allocate between 5 and 17 threads initially, to save trouble with memory allocation.
-const static int maxNumThreads = ((numCores < 4) ? 4 : (16 < numCores ? 16 : numCores)) + 1;
+const static int maxNumThreads = numCores; // ((numCores < 4) ? 4 : (16 < numCores ? 16 : numCores)) + 1;
 
 // The number of compute-bound threads allowed at any given time should be the number of cores and pseudocores.
 // There may be I/O bound threads, such as the main interpreter thread.  So a good thing to set currentAllowedThreads to is the

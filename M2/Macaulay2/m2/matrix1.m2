@@ -273,7 +273,7 @@ matrix List := Matrix => opts -> L -> (
     if instance(L#0, Vector) then matrix { apply(L, matrix) } else
     -- construct a matrix from a table of entries or maps
     if isTable L then (matrixTable opts)(L)
-    else error "expected a rows all to be the same length")
+    else error "expected rows all to be the same length")
 
 align := g -> (
      -- generator and relation maps can just as well have a nonzero degree

@@ -106,6 +106,14 @@ TEST ///
 ///
 
 TEST ///
+  -- fails in multigraded case
+  needsPackage "NormalToricVarieties"
+  X = (toricProjectiveSpace 1) ^** 2
+  f = map(OO_X^1,OO_X^2 (-1,0) ++ OO_X^2 (0,-1), matrix vars ring X)
+  lift f
+///
+
+TEST ///
   S = QQ[x_0..x_2];
   X = Proj S
   --TODO: check if things have already been pruned

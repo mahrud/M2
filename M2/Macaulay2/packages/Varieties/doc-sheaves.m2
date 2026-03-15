@@ -1585,9 +1585,7 @@ document {
 
 -- TODO: should this move up, next to SheafOfRings ^ List?
 document {
-    Key => {
-	(symbol ^, CoherentSheaf, ZZ),
-	(symbol ^, CoherentSheaf, List)},
+    Key => (symbol ^, CoherentSheaf, ZZ),
     Headline => "direct sum",
     Usage => "F^n",
     Inputs => {"F" => {", or ", ofClass SheafOfRings}, "n"},

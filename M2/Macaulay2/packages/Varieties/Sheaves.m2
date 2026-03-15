@@ -267,6 +267,7 @@ CoherentSheaf.directSum = args -> (
     F.cache.components = toList args;
     F)
 CoherentSheaf ^ ZZ             := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module^n)
+CoherentSheaf ^ List           := CoherentSheaf => (F, L) -> sheaf(F.variety, F.module^L)
 CoherentSheaf ++ CoherentSheaf := CoherentSheaf => (F, G) -> CoherentSheaf.directSum(F, G)
 CoherentSheaf  / CoherentSheaf := CoherentSheaf => (F, G) -> sheaf(F.variety, F.module  / G.module)
 CoherentSheaf  / Ideal         := CoherentSheaf => (F, I) -> sheaf(F.variety, F.module  / I)

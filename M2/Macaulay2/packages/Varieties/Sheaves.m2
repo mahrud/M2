@@ -33,17 +33,11 @@ sheaf Variety        := SheafOfRings =>  X     -> sheaf(X, ring X)
 
 sheaf(Variety, Ring) := SheafOfRings => (X, R) -> (
     if ring X =!= R then error "sheaf: expected ring of the variety";
-    X.sheaf ??= (
-	O := new SheafOfRings from { symbol variety => X, symbol ring => R };
-	O.cache = new MutableHashTable;
-	O.cache.sheaf = sheaf(O.variety, (ring variety O)^1); -- That is, O.cache.sheaf is the CoherentSheaf O^1.
-	-- We cache this so that constructing O^1 at different times will yield the _same_ CoherentSheaf,
-	-- which itself may have cached information over time.
-	O);
+    X.cache.sheaf ??= new SheafOfRings from { symbol variety => X, symbol ring => R };
     -- this is here to get RingElement * Complex to work, but there may be a better way
     -- e.g. should we define Section as the parent of SheafOfRings?
-    promote(Thing, X.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
-    X.sheaf)
+    promote(Thing, X.cache.sheaf) := Thing => (x, O) -> promote(x, ring variety O);
+    X.cache.sheaf)
 
 -- twists don't make sense on an affine variety, so we forcefully remove them
 dehomogenizeMatrix = f -> (R := ring f; map(R^(numRows f), R^(numColumns f), f))
@@ -113,7 +107,7 @@ ring SheafOfRings  :=
 ring CoherentSheaf := SheafOfRings => F -> sheaf variety F
 
 -- This is the module associated to the fixed CoherentSheaf, O^1.
-module SheafOfRings  := Module => O -> module O.cache.sheaf
+module SheafOfRings  := Module => O -> module O.ring
 module CoherentSheaf := Module => F -> F.module
 
 codim   CoherentSheaf := options(codim, Module) >> o -> F -> (
@@ -218,7 +212,8 @@ pdim    CoherentSheaf := F -> tryHooks((pdim,  CoherentSheaf), F, pdim  @@ modul
 -- twist and powers
 -- TODO: sheaf should dehomogenize modules on Affine varieties
 -- These work correctly even for multigraded rings. E.g., you can write F(2) if the ring is singly graded, or F(2,3) if it is doubly graded.
-SheafOfRings(ZZ)   := SheafOfRings  Sequence := CoherentSheaf => (O, a) -> O^1(a)
+SheafOfRings(ZZ)  := SheafOfRings Sequence := CoherentSheaf => (O, a) -> O^1(a)
+SheafOfRings ^ ZZ := SheafOfRings ^ List   := CoherentSheaf => (O, n) -> sheaf(O.variety, (ring variety O)^n)
 
 -- If a coherent sheaf is defined as a twist, say G = F(a), then we remember the original sheaf, so we can reuse cached information about it.
 -- Namely, G.cache.twist is the sequence ({a}, F) (or the analogous thing if F was itself defined as a twist). Any later calculations made
@@ -228,14 +223,11 @@ CoherentSheaf(ZZ)  := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> (
     if F.cache.?twist then G.cache.twist = (splice{a} + F.cache.twist#0, F.cache.twist#1)
     else G.cache.twist = (splice{a}, F);
     G)
+
+-- TODO: should these be considered in the Core?
 Module(ZZ) := Module Sequence := Module => (M, a) -> M ** (ring M)^{splice{a}}
 Matrix(ZZ) := Matrix Sequence := Matrix => (f, a) -> f ** (ring f)^{splice{a}}
 Ring(ZZ)   := Ring   Sequence := Module => (R, a) -> (R^1) ** R^{splice{a}}
-
-SheafOfRings  ^ ZZ := SheafOfRings  ^ List   := CoherentSheaf => (O, n) -> (
-    if instance(n, ZZ) and n == 1 then O.cache.sheaf -- Thus, O^1 always yields the _same_ coherent sheaf, which may contain cached information.
-    -- We could consider transferring that information to direct sums, but at the moment that is not done.
-    else sheaf(O.variety, (ring variety O)^n))
 
 dual CoherentSheaf := CoherentSheaf => options(dual, Module) >> o -> F -> sheaf(F.variety, dual(F.module, o))
 

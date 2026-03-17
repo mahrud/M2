@@ -846,6 +846,7 @@ cover' ComplexMap := ComplexMap => f -> (
 
 -- returns the graded component of the complex in the given degree
 -- but as a complex over the coefficient ring instead
+-- TODO: if the maps are zero, might be faster to use hilbertFunction!
 part(ZZ,   Complex) :=
 part(List, Complex) := Complex => (deg, C) -> (residueMap ring C) ** cover' basis(deg, C)
 

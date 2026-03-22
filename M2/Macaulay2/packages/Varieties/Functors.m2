@@ -915,7 +915,7 @@ cohomology(ZZ, ProjectiveVariety, CoherentSheaf) := Module => opts -> (p, X, F) 
     F.cache.HH   ??= new MutableHashTable;
     if F.cache.HH#?p then return F.cache.HH#p;
     -- TODO: only need basis(0, G) in the end, is this too much computation?
-    G := if p == 0 then twistedGlobalSectionsModule(F, 0) -- HH^0 F(>=0)
+    G := if p == 0 then last twistedGlobalSectionsModule(F, 0) -- HH^0 F(>=0)
     else (
 	-- pushforward F to PP^n
 	M := liftModule module F;

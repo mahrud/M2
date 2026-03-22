@@ -464,13 +464,13 @@ euler(SheafOfRings, ZZ, ZZ) := RingElement => (O, b1, b2) -> euler(O^1, b1, b2)
 -- and the original definition and hook in m2/hilbert.m2
 addHook((hilbertPolynomial, Module), Strategy => Varieties, (opts, M) ->
     if M.ring.?variety then return try hilbertPolynomial(M.ring.variety, M, opts))
-hilbertPolynomial(Variety, Module)        := o -> (X, M) -> (
-    error "variety does not have a method for computing Hilbert polynomial")
+hilbertPolynomial(Variety, Module)        := o -> (X, M) -> hilbertPolynomial(X, sheaf(X, M), o)
 
 -- TODO: should these be only for ProjectiveVariety and error for affine variety?
 hilbertPolynomial(Variety, Ring)          := o -> (X, S) -> hilbertPolynomial(X, module S, o)
 hilbertPolynomial(Variety, Ideal)         := o -> (X, I) -> hilbertPolynomial(X, comodule I, o)
-hilbertPolynomial(Variety, CoherentSheaf) := o -> (X, F) -> hilbertPolynomial(X, module F, o)
+hilbertPolynomial(Variety, CoherentSheaf) := o -> (X, F) -> (
+    error "variety does not have a method for computing Hilbert polynomial")
 hilbertPolynomial          CoherentSheaf  := o ->     F  -> hilbertPolynomial(F.variety, module F, o)
 hilbertPolynomial(Variety, SheafOfRings)  := o -> (X, O) -> degree O^1
 hilbertPolynomial          SheafOfRings   := o ->     O  -> degree O^1
@@ -492,7 +492,7 @@ hilbertFunctionRing = memoize(() -> QQ(monoid [getSymbol "i"]))
 -- is degree(X)/m!; this agrees with the function "degree X". Note that the degree of a closed subspace
 -- in a weighted projective space is only a rational number. For example, P^n(a_0,...,a_n) has degree 1/(a_0...a_n).
 --
-hilbertPolynomial(ProjectiveVariety, CoherentSheaf) := opts -> F -> (
+hilbertPolynomial(ProjectiveVariety, CoherentSheaf) := opts -> (X, F) -> (
     shift := 0;
     if F.cache.?twist then
     (shift = first F.cache.twist#0;

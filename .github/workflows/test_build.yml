@@ -237,6 +237,109 @@ jobs:
             make validate-html
           fi
 
+      - name: Annotate package example failures
+        if: failure()
+        run: |
+          set +e
+          shopt -s nullglob
+
+          gha_escape_data() {
+            local value="$1"
+            value="${value//'%'/'%25'}"
+            value="${value//$'\r'/'%0D'}"
+            value="${value//$'\n'/'%0A'}"
+            printf '%s' "$value"
+          }
+
+          gha_escape_prop() {
+            local value
+            value="$(gha_escape_data "$1")"
+            value="${value//:/%3A}"
+            value="${value//,/%2C}"
+            printf '%s' "$value"
+          }
+
+          normalize_path() {
+            local path="$1"
+            path="${path#"$GITHUB_WORKSPACE"/}"
+            while [[ "$path" == ../* ]]; do
+              path="${path#../}"
+            done
+            if [[ "$path" == Macaulay2/* ]]; then
+              path="M2/$path"
+            fi
+            printf '%s' "$path"
+          }
+
+          emit_error() {
+            local title="$1"
+            local message="$2"
+            local file="$3"
+            local line="$4"
+            local props="title=$(gha_escape_prop "$title")"
+            if [[ -n "$file" ]]; then
+              props="$props,file=$(gha_escape_prop "$file")"
+            fi
+            if [[ -n "$line" ]]; then
+              props="$props,line=$line"
+            fi
+            printf '::error %s::%s\n' "$props" "$(gha_escape_data "$message")"
+          }
+
+          mapfile -t parsed < <(
+            perl -ne '
+              if (/^ -- making example results for "([^"]+)".* -- running failed$/) {
+                $current_example = $1;
+                next;
+              }
+
+              if ($current_example ne "" && /error: (.*)$/) {
+                $example_error{$current_example} //= $1;
+                next;
+              }
+
+              if (/^ -- Summary: ([0-9]+) example\(s\) failed in package ([^:]+):$/) {
+                $current_package = $2;
+                print join("\t", "package", $current_package, "", "", "", "$1 example(s) failed"), "\n";
+                next;
+              }
+
+              if ($current_package ne "" && /^ -- (.+)  ([^[:space:]]+):([0-9]+):([0-9]+)$/) {
+                $example = $1;
+                $file = $2;
+                $line = $3;
+                $message = exists $example_error{$example} ? $example_error{$example} : "example failed";
+                print join("\t", "example", $current_package, $example, $file, $line, $message), "\n";
+                next;
+              }
+            ' \
+              usr-dist/common/share/doc/Macaulay2/*/example-output/*.errors \
+              Macaulay2/tests/*/*.errors \
+              /tmp/M2-*/*.tmp 2>/dev/null
+          )
+
+          if [[ ${#parsed[@]} -eq 0 ]]; then
+            exit 0
+          fi
+
+          for record in "${parsed[@]}"; do
+            IFS=$'\t' read -r kind package example file line message <<< "$record"
+            if [[ "$kind" == "package" ]]; then
+              emit_error \
+                "Package $package examples failed" \
+                "$message in package $package." \
+                "" \
+                ""
+            elif [[ "$kind" == "example" ]]; then
+              normalized_file="$(normalize_path "$file")"
+              emit_error \
+                "$package example failed" \
+                "$example: $message" \
+                "$normalized_file" \
+                "$line"
+            fi
+          done
+
 # ----------------------
 #   Upload build artifacts
 # ----------------------

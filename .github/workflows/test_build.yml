@@ -10,6 +10,9 @@ name: Build and Test Macaulay2
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/annotate
   pull_request:
     branches:
       - stable
@@ -28,7 +31,6 @@ defaults:
 
 jobs:
   build:
-    if: github.repository == 'Macaulay2/M2' || contains(github.ref, 'global')
     name: ${{ matrix.build-system }}-${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:

@@ -48,11 +48,13 @@ doc ///
     Here we show an example.
    Example
     firstFunction 1
+    assert false
     firstFunction 0
 ///
 
 TEST ///
     assert ( firstFunction 2 == "D'oh!" )
+    assert false
 ///
 
 TEST ///

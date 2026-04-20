@@ -38,6 +38,12 @@ document { Key => isSmooth,     Headline => "whether an object is smooth", metho
 	"Varieties::isSmooth(Variety)", "SpaceCurves::isSmooth(Curve)",
 	"Polyhedra::isSmooth(Cone)", "NormalToricVarieties::isSmooth(NormalToricVariety)",
 	"SpecialFanoFourfolds::isSmooth(EmbeddedProjectiveVariety)" } }
+document { Key => isCohenMacaulay, methodstr, SeeAlso => {
+	"Depth::isCohenMacaulay(Ring)", "Depth::isCohenMacaulay(Module)",
+	"EdgeIdeals::isCohenMacaulay(HyperGraph)", "Graphs::isCohenMacaulay(Graph)",
+	"LexIdeals::isCohenMacaulay(Ideal)", "MonomialAlgebras::isCohenMacaulayMA", -- TODO: rename?
+	"Varieties::isCohenMacaulay(ProjectiveVariety)",
+	"TestIdeals::isCohenMacaulay(Ring)" } }
 document { Key => isVeryAmple,  methodstr, SeeAlso => {
 	"WeilDivisors::isVeryAmple(WeilDivisor)", "Polyhedra::isVeryAmple(Polyhedron)",
 	"PositivityToricBundles::isVeryAmple(ToricVectorBundleKlyachko)",

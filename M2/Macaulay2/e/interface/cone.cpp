@@ -474,3 +474,42 @@ MutableMatrix /* or null */ *rawConeInteriorPoint(const Matrix *A)
       return nullptr;
   }
 }
+
+M2_bool rawConeContains(const Matrix *C, const Matrix *deg)
+{
+  try
+    {
+      const size_t c = C->n_cols();
+      const size_t r = C->n_rows();
+
+      if (deg->n_rows() != 1)
+        {
+          ERROR("expected a 1 x n matrix for degree, but got %d x %d",
+                deg->n_rows(),
+                deg->n_cols());
+          return false;
+        }
+      if (deg->n_cols() != c)
+        {
+          ERROR("cone facets have length %d, but degree has length %d",
+                static_cast<int>(c),
+                deg->n_cols());
+          return false;
+        }
+
+      for (size_t i = 0; i < r; i++)
+        {
+          Integer sum = 0;
+          for (size_t j = 0; j < c; j++)
+            sum += static_cast<Integer>(C->elem(i, j).get_mpz()) *
+                   static_cast<Integer>(deg->elem(0, j).get_mpz());
+          if (sum < 0) return false;
+        }
+
+      return true;
+  } catch (const exc::engine_error &e)
+    {
+      ERROR(e.what());
+      return false;
+  }
+}

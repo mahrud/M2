@@ -290,8 +290,10 @@ void HermiteComputation::start_computation()
   // We use the following: the lead components of elements of GB_list are in
   // increasing order
 
-  for (hm_elem *p = GB_list; p != nullptr; p = p->next)
+  hm_elem *prev = nullptr;
+  for (hm_elem *p = GB_list; p != nullptr;)
     {
+      hm_elem *next = p->next;
       if (!globalZZ->is_positive(p->f->coeff))
         {
           vec f = globalZZ->negate_vec(p->f);
@@ -302,7 +304,22 @@ void HermiteComputation::start_computation()
           p->fsyz = fsyz;
         }
       gb_reduce(p->f, p->fsyz);
-      initial[p->f->comp] = p;
+      if (p->f == nullptr)
+        {
+          if (prev == nullptr)
+            GB_list = next;
+          else
+            prev->next = next;
+          if (p->fsyz != nullptr && collect_syz) syz_list.push_back(p->fsyz);
+          p->fsyz = nullptr;
+          remove_hm_elem(p);
+        }
+      else
+        {
+          initial[p->f->comp] = p;
+          prev = p;
+        }
+      p = next;
     }
 
   //  for (hm_elem *p = GB_list; p != 0; p = p->next)

@@ -99,6 +99,7 @@ selectByDegrees = (M, lo, hi) -> rawSelectByDegrees(raw (ring M)^(-degrees M), l
 
 -- Generators of effective cone
 effGenerators = method(TypicalValue => Matrix)
+-- TODO: should probably be cached, so Chambers, etc can be stored in it
 effGenerators Ring := R -> tryHooks((effGenerators, Ring), R, R -> map(degreeGroup R, , transpose matrix degrees R))
 
 -- Generators of Nef cone
@@ -107,7 +108,7 @@ nefGenerators Ring := R -> null -- will be overridden in Varieties package
 
 -- Effective cone of X as a polyhedral object
 effCone = method(TypicalValue => Cone)
-effCone Ring := R -> tryHooks((effCone, Ring), R, R -> convexHull(matrix{0_(degreeGroup R)}, effGenerators R))
+effCone Ring := R -> tryHooks((effCone, Ring), R, R -> coneFromVData(QQ ** effGenerators R))
 
 -- Nef cone of X as a polyhedral object
 nefCone = method(TypicalValue => Cone)

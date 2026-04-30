@@ -24,11 +24,11 @@ commonMinimum = (C, L) -> (
     if #L == 0 then return -infinity;
     R := ring linealitySpace C;
     A := -entries facets C;
-    (B, b) := facets(C + convexHull matrix transpose L);
+    (B, b) := facets(C + convexHull matrix transpose L); -- 16% of time
     -- TODO: is the assumption here correct?
     inds := positions(entries lift(B, R), v -> isMember(v, A));
     P := polyhedronFromHData(B^inds, b^inds);
-    first entries transpose sub(vertices P, R))
+    first entries transpose sub(vertices P, R)) -- <5% of time
 
 -- given a graded map, truncate only the source
 -- and return the inclusion composed with the map

@@ -400,8 +400,8 @@ smallAmpleToricDivisor = method (
 
 smallAmpleToricDivisor (ZZ, ZZ) := ToricDivisor => opts -> (d, i) -> (
     if i < 0 then error "-- expected nonnegative index";
-    if d < 1 then error "-- expected a positive dimension";
-    if d > 3 then error "-- expected the dimension to be at most 3";
+    if d < 2 then error "-- expected the dimension 2 <= d <= 3";
+    if d > 3 then error "-- expected the dimension 2 <= d <= 3";
     if d === 2 and i > 40 then 
 	error "-- there are currently only 41 small smooth toric surfaces";
     if d === 3 and i > 102 then 

@@ -347,6 +347,8 @@ MutableMatrix /* or null */ *rawConeInteriorPoint(const Matrix *A);
   
 M2_bool rawConeContains(const Matrix *C, const Matrix *deg);
 
+M2_bool rawConeContains(const Matrix *C, const Matrix *deg);
+
 #  if defined(__cplusplus)
 }
 #  endif

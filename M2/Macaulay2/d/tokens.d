@@ -62,13 +62,15 @@ export handleInterrupts := true;
 
 export printIfError(e:Expr):void := (
      when e is err:Error do (
-	  printErrorMessage(err.position,err.message);
+	  if Ccode(bool, "isInterpreterThread()")
+	  then printErrorMessage(err.position,err.message);
 	  err.printed = true;
 	  )
      else nothing;
      );
 export printError(err:Error):Error := (
-     if !(err.printed && err.position.filename === "stdio")
+     if Ccode(bool, "isInterpreterThread()")
+     && !(err.printed && err.position.filename === "stdio")
      then printErrorMessage(err.position, if err.printed then "--back trace--" else err.message);
      err.printed = true;
      err);

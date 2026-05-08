@@ -1054,6 +1054,43 @@ ExternalProject_Add(build-topcom
   )
 _ADD_COMPONENT_DEPENDENCY(programs topcom cddlib TOPCOM)
 
+
+# https://barvinok.sourceforge.io/
+# barvinok needs PolyLib (included), NTL, and Topcom
+ExternalProject_Add(build-barvinok
+  URL               https://github.com/mahrud/barvinok/archive/refs/heads/main.zip
+#  URL_HASH          SHA256=
+  PREFIX            libraries/barvinok
+  SOURCE_DIR        libraries/barvinok/build
+  DOWNLOAD_DIR      ${CMAKE_SOURCE_DIR}/BUILD/tarfiles
+  BUILD_IN_SOURCE   ON
+  CONFIGURE_COMMAND autoreconf -vif
+            COMMAND ${CONFIGURE} --prefix=${M2_HOST_PREFIX}
+                      --disable-shared
+		      --with-topcom=#{Formula["topcom"]}
+                      "CPPFLAGS=${CPPFLAGS} -I${GMP_INCLUDE_DIRS} -I${NTL_INCLUDE_DIRS}"
+                      "LDFLAGS=${LDFLAGS}   -L${GMP_LIBRARY_DIRS} -L${NTL_LIBRARY_DIRS}"
+                      CXXFLAGS=${CXXFLAGS}
+                      CFLAGS=${CFLAGS}
+                      CC=${CMAKE_C_COMPILER}
+                      CXX=${CMAKE_CXX_COMPILER}
+                      AR=${CMAKE_AR}
+                      OBJDUMP=${CMAKE_OBJDUMP}
+                      STRIP=${CMAKE_STRIP}
+                      RANLIB=${CMAKE_RANLIB}
+  BUILD_COMMAND     ${MAKE} -j${PARALLEL_JOBS}
+  INSTALL_COMMAND   ${MAKE} -j${PARALLEL_JOBS} install
+          COMMAND   ${CMAKE_COMMAND} -E make_directory ${M2_INSTALL_LICENSESDIR}/barvinok
+          COMMAND   ${CMAKE_COMMAND} -E copy_if_different LICENSE ${M2_INSTALL_LICENSESDIR}/barvinok
+# TODO: needs to copy some libraries as well
+#          COMMAND   ${CMAKE_COMMAND} -E copy_if_different barvinok_enumerate ${M2_INSTALL_PROGRAMSDIR}/
+  TEST_COMMAND      ${MAKE} -j${PARALLEL_JOBS} check
+  EXCLUDE_FROM_ALL  ON
+  TEST_EXCLUDE_FROM_MAIN ON
+  STEP_TARGETS      install test
+  )
+_ADD_COMPONENT_DEPENDENCY(programs barvinok "gmp;ntl;topcom" BARVINOK)
+
 ###############################################################################
 ## Experimental build scripts for other software programs.
 ## These programs are not built by default, but the build targets are provided.

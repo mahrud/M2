@@ -30,7 +30,6 @@ extern "C" {
   struct ThreadSupervisor;
   struct ThreadTask;
   extern void setInterpThread();
-  extern int isInterpreterThread();
   extern int tryGlobalInterrupt(), tryGlobalAlarm(), tryGlobalTrace();
   extern void* waitOnTask(struct ThreadTask* task);	// wait until done or canceled
   extern void addCancelTask(struct ThreadTask* task, struct ThreadTask* cancel);

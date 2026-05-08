@@ -23,7 +23,6 @@ static atomic_int currentAllowedThreads(5);
 
 // The thread that the interpreter runs in.
 pthread_t interpThread;
-bool interpThreadInitialized = false;
 
 // The condition variable for the current task
 pthread_cond_t *currentTask;
@@ -42,11 +41,6 @@ extern "C" {
   extern void setInterpThread()
   {
     interpThread=pthread_self();
-    interpThreadInitialized = true;
-  }
-  extern int isInterpreterThread()
-  {
-    return !interpThreadInitialized || pthread_equal(interpThread, pthread_self());
   }
   extern int tryGlobalInterrupt()
   {

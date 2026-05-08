@@ -30,15 +30,10 @@ startup(tb:TaskCellBody):null := (
      if notify then stderr << "--task " << tb.serialNumber << " started" << endl;
      --add thread to supervisor
 
-     oldSuppressErrors := SuppressErrors;
-     SuppressErrors = true;
      r := applyEE(f,x);
-     SuppressErrors = oldSuppressErrors;
      when r is err:Error do (
-	  if taskKeepRunning(tb.task) || err.message != interruptMessage then (
-	       printError(err);
-	       if notify then stderr << "--task " << tb.serialNumber << " ended, after an error" << endl;
-	       );
+	  printError(err);
+	  if notify then stderr << "--task " << tb.serialNumber << " ended, after an error" << endl;
 	  )
      else (
      	  tb.returnValue = r;

@@ -323,8 +323,9 @@ holonomicRank Module := M -> (
      ltM := leadTerm gens gb WtotempW presM;
      -- compute the rank
      redI := cokernel tempWtoR ltM;
-     -- Note: we don't compute dim redI, because coefficientRing W might nonzero dimension
-     B := try M.cache#"basis" = sub(cover basis(redI, Variables => gens R), matrix {W.dpairVars#1});
+     -- the standard monomials {\partial^\alpha} form a basis for differential operators modulo the system,
+     -- and their number, if finite, determines the holonomic rank by Lemma 1.4.11 and Algorithm 1.4.17 in SST
+     B := try M.cache#"standard monomials" = sub(cover basis(redI, Variables => gens R), matrix {W.dpairVars#1});
      if 0 == redI  then 0 else
      if B === null then infinity
      else numgens source B)

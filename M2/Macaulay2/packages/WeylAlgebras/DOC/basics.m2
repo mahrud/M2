@@ -422,6 +422,10 @@ doc ///
   Outputs
     :ZZ
       the rank of @EM "M"@
+  Consequences
+    Text
+      if the system has finite holonomic rank, a basis for differential operators modulo the system
+      is cached under @TT "M.cache#\"standard monomials\""@ or @TT "(comodule I).cache#\"standard monomials\""@.
   Description
     Text
       The {\em holonomic rank} of a D-module @EM "M = D^r/N"@ provides analytic information
@@ -439,14 +443,18 @@ doc ///
       Then the holonomic rank of $M = D^r/N$ is equal to the dimension of
       $R^r/RN$ as a vector space over
       $\CC[x_1,\dots,x_n]$.
-      More details can be found in
-      [@HREF("https://mathscinet.ams.org/mathscinet/pdf/1734566.pdf","SST")@, Section 1.4].
---      See the book 'Groebner deformations of hypergeometric differential equations' by
---      Saito-Sturmfels-Takayama (1999) for more details of the algorithm.
     Example
       makeWA(QQ[x,y])
       I = ideal (x*dx+2*y*dy-3, dx^2-dy)
       holonomicRank I
+    Text
+      The holonomic rank is also determined by the number of standard monomials $\{\partial^\alpha\}$
+      with respect to a Gröbner basis of $I$ for any term order on $R$. For convenience, these
+      standard monomials, which form a basis for differential operators modulo the system, are cached.
+    Example
+      (comodule I).cache#"standard monomials"
+  References
+    See [@HREF("https://mathscinet.ams.org/mathscinet/pdf/1734566.pdf","SST")@, Algorithm 1.4.17] for more details.
   SeeAlso
     characteristicIdeal
     DsingularLocus

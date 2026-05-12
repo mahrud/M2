@@ -578,6 +578,7 @@ export {
 	"compareExchange",
 	"complement",
 	"complete",
+	"component",
 	"components",
 	"compose",
 	"compositions",

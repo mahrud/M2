@@ -277,7 +277,15 @@ degrees Module := -*(cacheValue symbol degrees) (*-N -> (
 -----------------------------------------------------------------------------
 -- free modules and vector spaces
 
-Ring ^ ZZ   := Module => (R, n) -> (
+-- TODO: the cache table should be there already
+module RingFamily :=
+module Ring := Module => R -> ( R.cache ??= new CacheTable ).module ??= (
+    if not R.?RawRing then error "non-engine free modules with degrees not implemented yet";
+    new Module from (R, rawFreeModule(R.RawRing, 1)))
+
+-- Note: we do NOT cache here, because otherwise cached
+-- stuff for any kk^1 = Ext^m(F, G) will be identical!!
+Ring ^ ZZ := Module => (R, n) -> (
     if not R.?RawRing then error "non-engine free modules with degrees not implemented yet";
     new Module from (R, rawFreeModule(R.RawRing, n)))
 

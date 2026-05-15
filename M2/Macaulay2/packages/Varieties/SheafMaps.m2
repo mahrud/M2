@@ -561,7 +561,7 @@ cohomology(ZZ, ProjectiveVariety, SheafMap) := Matrix => opts -> (p, X, f) -> (
     if p == 0 then part(z, matrix prune f) else (
 	-- pushforward F to a projective space first
 	-- TODO: should f be pruned here?
-	g := flattenMorphism matrix f;
+	g := liftMorphism matrix f;
 	A := ring g;
 	-- TODO: both n and w need to be adjusted for the multigraded case
 	n := dim A-1;
@@ -595,8 +595,8 @@ Ext(ZZ, CoherentSheaf, SheafMap) := Matrix => opts -> (m, F, f) -> (
 	l2 := min(dim N2, m));
     -- TODO: confirm that these length limits are correct
     S := ring presentation R;
-    P1 := resolution(flattenModule N1, LengthLimit => dim S);
-    P2 := resolution(flattenModule N2, LengthLimit => dim S);
+    P1 := resolution(liftModule N1, LengthLimit => dim S);
+    P2 := resolution(liftModule N2, LengthLimit => dim S);
     p := max(
 	p1 := length P1,
 	p2 := length P2);
@@ -650,9 +650,9 @@ ExtLongExactSequence(CoherentSheaf, SheafMap, SheafMap) := Matrix => opts -> (F,
 	l1 := min(dim N1, max(hi, 0)),
 	l2 := min(dim N2, max(hi, 0)),
 	l3 := min(dim N3, max(hi, 0)));
-    P1 := resolution flattenModule N1;
-    P2 := resolution flattenModule N2;
-    P3 := resolution flattenModule N3;
+    P1 := resolution liftModule N1;
+    P2 := resolution liftModule N2;
+    P3 := resolution liftModule N3;
     p := max(
 	p1 := length P1,
 	p2 := length P2,

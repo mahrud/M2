@@ -18,6 +18,7 @@ libraries/4ti2/Makefile
 libraries/M2/Makefile
 libraries/Macaulay2-docs/Makefile
 libraries/Makefile.library
+libraries/barvinok/Makefile
 libraries/cddlib/Makefile
 libraries/cohomcalg/Makefile
 libraries/csdp/Makefile

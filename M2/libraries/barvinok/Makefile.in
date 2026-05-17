@@ -1,6 +1,7 @@
 URL = https://barvinok.sourceforge.io
 VERSION = 0.41.8
 SHA256SUM = cc40feee5a882ea9fbaee696b303f377e9c46b2321831303480bed1adb8eca3a
+PATCHFILE = @abs_srcdir@/patch-$(VERSION)
 LICENSEFILES = LICENSE
 
 include ../Makefile.library

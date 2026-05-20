@@ -639,7 +639,7 @@ citePackage = pkg -> (
 apropos = method()
 apropos String := (pattern) -> (
     last \ sort unique select(flatten \\ pairs \ dictionaryPath,
-        (name, sym) -> match(pattern, name) and not match("\\$", name)))
+        (name, sym) -> not match("\\$", name) and fuzzyMatch(pattern, name)))
 
 -----------------------------------------------------------------------------
 -- get a list of commands whose documentation matches the regex

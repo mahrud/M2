@@ -248,3 +248,39 @@ export regexSelect(regexp:string, form:string, text:string, regexFlags:int, matc
 	    return ", buildErrorPacket("unable to compile regular expression"), ";
 	}");
     toExpr(r));
+
+-----------------------------------------------------------------------------
+-- Levenshtein distance (full matrix iterative algorithm)
+-- See https://en.wikipedia.org/wiki/Levenshtein_distance
+-----------------------------------------------------------------------------
+
+min3(x:int, y:int, z:int):int := (
+    if x < y then if x < z then x else z else if y < z then y else z);
+
+doubleArrayIndex(i:int, j:int, m:int):int := j * (m + 1) + i;
+
+levenshtein(s:string, t:string):int := (
+    m := length(s);
+    n := length(t);
+    -- TODO: are double arrays easy in d?
+    d := new array(int) len ((m + 1) * (n + 1)) do provide 0;
+    for i from 0 to m do d.(doubleArrayIndex(i, 0, m)) = i;
+    for j from 0 to n do d.(doubleArrayIndex(0, j, m)) = j;
+    for j from 1 to n do
+	for i from 1 to m do
+	    d.(doubleArrayIndex(i, j, m)) = min3(
+		d.(doubleArrayIndex(i - 1, j,     m)) + 1,
+		d.(doubleArrayIndex(i,     j - 1, m)) + 1,
+		d.(doubleArrayIndex(i - 1, j - 1, m)) + if s.(i - 1) == t.(j - 1) then 0 else 1);
+    d.(doubleArrayIndex(m, n, m)));
+
+levenshtein(e:Expr):Expr := (
+    when e is s:Sequence do
+    if length(s) == 2 then (
+	when s.0 is s0:stringCell do
+	when s.1 is s1:stringCell do toExpr(levenshtein(s0.v, s1.v))
+	else WrongArgString(2)
+	else WrongArgString(1))
+    else WrongNumArgs(2)
+    else WrongNumArgs(2));
+setupfun("levenshtein", levenshtein).Protected = false; -- will be overloaded in m2/regex.m2

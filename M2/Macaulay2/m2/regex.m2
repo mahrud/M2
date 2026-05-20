@@ -117,3 +117,11 @@ toUpper = s -> replace("(\\w+)", "\\U$1", s)
 
 regexQuote = method(Dispatch => Thing, TypicalValue => String)
 regexQuote String := s -> replace(regexSpecialChars, "\\\\$1", s)
+
+-----------------------------------------------------------------------------
+-- Levenshtein distance
+-----------------------------------------------------------------------------
+
+levenshtein' = levenshtein
+levenshtein = method()
+levenshtein(String, String) := ZZ => levenshtein'

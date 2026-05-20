@@ -125,3 +125,55 @@ regexQuote String := s -> replace(regexSpecialChars, "\\\\$1", s)
 levenshtein' = levenshtein
 levenshtein = method()
 levenshtein(String, String) := ZZ => levenshtein'
+
+-----------------------------------------------------------------------------
+-- fuzzyScore and fuzzyMatch
+-----------------------------------------------------------------------------
+
+-- TODO: min/max use fold which seems to be very slow
+max2 = (x, y) -> if x <= y then y else x
+min2 = (y, x) -> if x <= y then y else x
+
+-- e.g. "abc" appears in "AaBbCcDd"_{1..5}
+fuzzySubsequenceSpan = (pat, str) -> (
+    (j, m) := (0, length pat);
+    eqs := select(length str, i -> if j < m and pat#j === str#i
+	then ( j += 1; true ) else false);
+    if j === m then (first eqs, last eqs - first eqs + 1) else (length str, 0))
+
+fuzzyWindowScore = (errors, m, len, start, distance) -> (
+    accuracy := errors / max2(m, len);
+    if distance === 0 then accuracy
+    else accuracy + start / distance / 3)
+
+protect Distance
+protect Threshold
+fuzzyScore = method(Options => { Threshold => 1/3, Distance => 100 })
+fuzzyScore(String, String) := Number => opts -> (pat, str) -> (
+    pat = toLower pat;
+    str = toLower str;
+    m := length pat;
+    n := length str;
+    best := infinity;
+    if m === 0 then return 0;
+    if n === 0 then return best;
+    distance  := opts.Distance;
+    threshold := opts.Threshold;
+    minLength := max2(1, m - ceiling(threshold * m));
+    maxLength := min2(n, m + ceiling(threshold * m));
+    --
+    for len from minLength to maxLength do (
+	for start from 0 to n - len do (
+	    -- TODO: should we avoid substrings?
+	    window := substring(str, start, len);
+	    score := fuzzyWindowScore(levenshtein(pat, window), m, len, start, distance);
+	    if score <= threshold and score < best then best = score)
+	);
+    --
+    (start, len) := fuzzySubsequenceSpan(pat, str);
+    if len > 0 then (
+	score := fuzzyWindowScore(len - m, m, len, start, distance);
+	if score <= threshold and score < best then best = score);
+    best)
+
+fuzzyMatch = (pat, str) -> fuzzyScore(pat, str) < 1/3 -- TODO: fine-tune the threshold

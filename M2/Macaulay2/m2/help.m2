@@ -647,13 +647,16 @@ apropos String := (pattern) -> (
 matchfun := (re, db) -> key -> (
     -- not quite right, because the body might assert that the key is undocumented.
     -- We need a quicker way to identify undocumented keys.
-    if db === null then match(re, key)
+    if db === null then fuzzyMatch(re, key)
     -- not quite right, because this string might occur in the raw documentation as
     -- part of the description. Unlikely, though.
     else if instance(db, Database) then (
-        (match(re, key) or match(re, db#key)) and not match(///"undocumented" => true///, db#key))
+	not match(///"undocumented" => true///, db#key) and
+	(fuzzyMatch(re, key) or match(re, db#key)))
     else if instance(db, HashTable) then (
-        not db#key#?"undocumented" and (match(re, key) or db#key.?Description and match(re,toString db#key.Description))))
+        not db#key#?"undocumented" and
+	(fuzzyMatch(re, key) or db#key.?Description and match(re, toString db#key.Description)))
+    )
 
 about = method(Options => {Body => false})
 about Type     :=

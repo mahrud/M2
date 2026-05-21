@@ -423,7 +423,7 @@ doc ///
     :ZZ
       the rank of @EM "M"@
   Consequences
-    Text
+    Item
       if the system has finite holonomic rank, a basis for differential operators modulo the system
       is cached under @TT "M.cache#\"standard monomials\""@ or @TT "(comodule I).cache#\"standard monomials\""@.
   Description

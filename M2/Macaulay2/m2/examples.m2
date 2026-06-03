@@ -79,6 +79,7 @@ capture String := opts -> s -> if opts.UserMode then capture' s else (
     if hasmode ArgPrintWidth  then printWidth = ArgPrintWidthN;
     if hasmode ArgNoBacktrace then backtrace = false;
     if hasmode ArgNotify      then notify = true;
+    -- TODO: disable schedule here
 
     oldPrivateDictionary := User#"private dictionary";
     User#"private dictionary" = new Dictionary;

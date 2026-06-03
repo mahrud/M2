@@ -59,6 +59,7 @@ document {
 	TO "peek'",
 	TO "profile",
 	TO "shield",
+	TO "guard",
 	TO "showStructure",
 	TO "showClassStructure",
 	TO "showUserStructure",

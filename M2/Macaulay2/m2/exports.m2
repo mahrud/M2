@@ -752,6 +752,7 @@ export {
 	"graphRing",
 	"groebnerBasis",
 	"groupID",
+	"guard",
 	"hash",
 	"hashTable",
 	"headlines",

@@ -95,6 +95,11 @@ export evalprof(c:Code):Expr := (
 	    r = measure(w.i, toExpr(""));
 	    i = when r is Error do n else i+1);
 	r)
+    is a:adjacentCode do (
+	when a.lhs
+	is g:globalMemoryReferenceCode
+	do measure(c, getGlobalVariable(g.var))
+	else evalraw(c))
     else evalraw(c));
 evalprofpointer = evalprof;
 

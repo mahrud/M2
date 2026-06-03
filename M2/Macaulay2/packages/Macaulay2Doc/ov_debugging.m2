@@ -160,12 +160,14 @@ Node
     coverageSummary
    (coverageSummary, Thing)
    (coverageSummary, String)
+    resetProfileTable
   Headline
     profile a computation
   Usage
     profile f()
     profileSummary f
     coverageSummary f
+    resetProfileTable
   Consequences
     Item
       The hash table @TT "ProfileTable"@ is updated with the profiling measurement data.

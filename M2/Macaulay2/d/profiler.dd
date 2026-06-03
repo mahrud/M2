@@ -40,7 +40,14 @@ setupfun("stacktrace", stacktrace).Protected = false; -- will be overloaded in m
 -- TODO: this should be thread local as well
 ProfileTable := newHashTable(Tally, nothingClass);
 ProfileTable.beingInitialized = false; -- mutex locks will occur
-setupconst("ProfileTable", Expr(ProfileTable));
+profileTableS := setupvar("ProfileTable", Expr(ProfileTable));
+
+resetProfileTable(e:Expr):Expr := (
+    ProfileTable = newHashTable(Tally, nothingClass);
+    ProfileTable.beingInitialized = false; -- for technical reasons
+    setGlobalVariable(profileTableS, Expr(ProfileTable));
+    nullE);
+setupfun("resetProfileTable", resetProfileTable).Protected = false; -- will be overwritten in m2/profile.m2
 
 -- increments the entry corresponding to key in ProfileTable.
 increment(key:Expr, data:Sequence):Expr := (

@@ -1088,6 +1088,7 @@ export {
 	"removeFile",
 	"reorganize",
 	"replace",
+	"resetProfileTable",
 	"reshape",
 	"restart",
 	"return",

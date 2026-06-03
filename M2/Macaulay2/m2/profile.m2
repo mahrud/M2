@@ -27,6 +27,8 @@ profileSummary String := filename -> (
     TABLE join({head()}, body, {tail(ttime, tticks)}))
 profileSummary = new Command from profileSummary
 
+resetProfileTable = new Command from resetProfileTable
+
 -- prints a list of lines which have been seen by the profiler so far
 -- TODO: also highlight missing lines or sections within a line
 -- TODO: compute the percentage of covered code

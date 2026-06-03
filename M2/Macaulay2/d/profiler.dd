@@ -62,7 +62,11 @@ measure(c:Code):Expr := stackpop(increment(stackpush(codePosition(c)), wallTimer
 -- when profiling = true is set, eval is substituted with evalprof,
 -- so that everytime evalraw recursively calls eval, this one runs.
 export evalprof(c:Code):Expr := (
-    -- stdIO << tostring(codePosition(c)) << " " << tostring(c) << endl;
+    -- higher profileDepth limits low-level data collection
+    if codePosition(c).loadDepth < profileDepth then return evalraw(c);
+    -- this profiles every type of code, but is incredibly slow
+    -- stackpush(codePosition(c));
+    -- stackpop(evalraw(c));
     when c
     is c:ifCode do (
 	p := measure(c.predicate);
@@ -80,9 +84,6 @@ export evalprof(c:Code):Expr := (
 	    i = when r is Error do n else i+1);
 	r)
     else evalraw(c));
---    (
---	stackpush(codePosition(c));
---	stackpop(evalraw(c))));
 evalprofpointer = evalprof;
 
 -- briefly enables the profiler and evaluates the code that follows,

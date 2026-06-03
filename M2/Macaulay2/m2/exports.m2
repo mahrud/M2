@@ -1380,6 +1380,7 @@ exportMutable {
 	"printingPrecision",
 	"printingSeparator",
 	"printingTrailLimit",
+	"profileDepth",
 	"recursionLimit",
 	"scriptCommandLine",
 	"stopIfError",

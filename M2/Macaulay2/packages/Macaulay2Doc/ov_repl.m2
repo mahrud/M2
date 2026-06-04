@@ -1011,8 +1011,8 @@ document { Key => pseudocode,
 	  "One can look at specific part of the code by using ", TT "_",":"
 	  },
      EXAMPLE lines ///
-	  pseudocode resolution
-          oo_4_1_1_0
+	  pseudocode lookup(syz, Matrix)
+	  oo_4_4_0_0_0
 	  value oo
      ///,
      PARA {

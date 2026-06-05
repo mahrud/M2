@@ -190,8 +190,8 @@ pdim    CoherentSheaf := F -> tryHooks((pdim,  CoherentSheaf), F, pdim  @@ modul
 -- twist and powers
 -- TODO: sheaf should dehomogenize modules on Affine varieties
 -- These work correctly even for multigraded rings, e.g. F(1) or F(1,2,3)
-SheafOfRings(ZZ)  := SheafOfRings  Sequence := CoherentSheaf => (O, a) -> O^1(a)
-CoherentSheaf(ZZ) := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> (
+SheafOfRings(ZZ)  := SheafOfRings  Sequence := SheafOfRings  List := CoherentSheaf => (O, a) -> O^1(a)
+CoherentSheaf(ZZ) := CoherentSheaf Sequence := CoherentSheaf List := CoherentSheaf => (F, a) -> (
     X := variety F;
     deg := splice {a};
     -- If a coherent sheaf is defined as a twist, say G = F(a), we cache the original sheaf.

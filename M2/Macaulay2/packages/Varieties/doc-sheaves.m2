@@ -1483,7 +1483,14 @@ Node
 -----------------------------------------------------------------------------
 
 document {
-    Key => {(symbol SPACE, CoherentSheaf, ZZ), (symbol SPACE, SheafOfRings, ZZ)},
+    Key => {
+	(symbol SPACE, CoherentSheaf, ZZ),
+	(symbol SPACE, CoherentSheaf, List),
+	(symbol SPACE, CoherentSheaf, Sequence),
+	(symbol SPACE, SheafOfRings,  ZZ),
+	(symbol SPACE, SheafOfRings,  List),
+	(symbol SPACE, SheafOfRings,  Sequence)
+	},
     Headline => "twist of a coherent sheaf",
     Usage => "F(a)",
     Inputs => {"F" => {"or ", ofClass SheafOfRings, ", on a projective variety"}, "a"},
@@ -1501,8 +1508,6 @@ document {
     ///,
     SeeAlso => {(symbol SPACE,Module,ZZ),(symbol SPACE,Ring,ZZ)}
     }
--- TODO: (symbol SPACE, CoherentSheaf, Sequence)
--- TODO: also for SumOfTwists?
 
 document {
     Key => {(symbol SPACE, Module, ZZ), (symbol SPACE, Module, Sequence)},

@@ -442,14 +442,22 @@ weightedHilbertPolynomials PolynomialRing := RingElement => S -> S.cache.weighte
     assertWeightedZZGraded S;
     A := hilbertFunctionRing();
     n := numgens S; -- dim Proj S = n - 1
-    rho := lcm flatten degrees S; -- the actual period might be a divisor of this
+    degs := degrees S;
+    rho := lcm flatten degs; -- the actual period might be a divisor of this
+    sig := gcd flatten degs; -- if sig != 1, there will be periodic gaps
+    tau := min flatten degs; -- if tau != 1, there will be early gaps
     -- it suffices to compute dim S_(j * rho + a) for 0 <= j < n and 0 <= a < rho,
     -- but Hilbert series is much more sensitive to large n, even if rho is small.
-    pts := listForm hilbertSeries(S, Order => n*rho);
-    levels := partition(i -> i % rho, toList(0..n*rho-1));
+    -- Note: when are gaps, we make sure there are at least n * rho nonzero coeffs:
+    -- if gaps are finite, compute the first (n+1) * rho terms or
+    -- if gaps are periodic, then the first n * rho * gcd(degs) terms.
+    pts := listForm hilbertSeries(S,
+	Order => (n + if tau == 1 then 0 else 1) * rho * sig);
+    -- Note: the classifier here can be generalized
+    levels := partition(i -> i#0#0 % rho, pts);
     -- see comments above about Vandermonde vs Newton interpolation
     -- TODO: implement and try out FFT-based interpolation
-    applyValues(levels, L -> vandermondeInterpolation(A, pts_L)))
+    applyValues(levels, L -> vandermondeInterpolation(A, take(L, n))))
 
 averagedHilbertPolynomial = method()
 averagedHilbertPolynomial PolynomialRing := S -> (

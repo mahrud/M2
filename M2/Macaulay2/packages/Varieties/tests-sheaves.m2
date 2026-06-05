@@ -40,6 +40,7 @@ TEST /// -- tests for weightedHilbertPolynomials
   S = kk[#degs, Degrees => degs]
   elapsedTime hilbertSeries(S, Order => #degs * lcm degs); -- ~4.5s
   elapsedTime hqp = weightedHilbertPolynomials S; -- <1s
+  assert all(values hqp, hp -> degree hp == {#degs - 1})
   assert all(#degs * rho, d -> hqp#(d % rho)[d] - hilbertFunction(d, S) == 0)
 
   -- the low dimension, high period regime
@@ -47,7 +48,31 @@ TEST /// -- tests for weightedHilbertPolynomials
   S = kk[#degs, Degrees => degs]
   elapsedTime hilbertSeries(S, Order => #degs * rho); -- ~3.5s
   elapsedTime hqp = weightedHilbertPolynomials S; -- <0.3s
+  assert all(values hqp, hp -> degree hp == {#degs - 1})
   assert all(#degs * rho, d -> hqp#(d % rho)[d] - hilbertFunction(d, S) == 0)
+
+  -- when gcd isn't 1 (degenerate case)
+  degs = {5,10,15}; (rho, sig) = (lcm degs, gcd degs)
+  S = kk[#degs, Degrees => degs]
+  elapsedTime hilbertSeries(S, Order => (#degs + 1) * rho * sig); -- <0.1s
+  elapsedTime hqp = weightedHilbertPolynomials S; -- <0.1s
+  assert all(values hqp, hp -> degree hp == {#degs - 1})
+  assert all((#degs + 1) * rho * sig,
+      d -> (hqp#(d % rho)[d] ?? 0) - hilbertFunction(d, S) == 0)
+
+  -- some weighted projective planes of mathematical interest
+  -- cf. https://arxiv.org/pdf/1712.04635
+  degs = {16,97, 683}; rho = lcm degs -- ???
+  degs = {5, 77, 101}; rho = lcm degs -- ???
+  degs = {7, 15, 26};  rho = lcm degs -- ~6s + ~2s
+  degs = {7, 13, 16};  rho = lcm degs -- ~3s + ~1s
+  degs = {9, 10, 13};  rho = lcm degs
+  S = kk[#degs, Degrees => degs]
+  elapsedTime hilbertSeries(S, Order => (#degs + 1) * rho); -- ~1.5s
+  elapsedTime hqp = weightedHilbertPolynomials S; -- <0.7s
+  assert all(values hqp, hp -> degree hp == {#degs - 1})
+  assert all((#degs + 1) * rho,
+      d -> hqp#(d % rho)[d] - hilbertFunction(d, S) == 0)
 ///
 
 TEST ///

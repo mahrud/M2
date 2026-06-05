@@ -190,10 +190,10 @@ pdim    CoherentSheaf := F -> tryHooks((pdim,  CoherentSheaf), F, pdim  @@ modul
 -- twist and powers
 -- TODO: sheaf should dehomogenize modules on Affine varieties
 -- These work correctly even for multigraded rings, e.g. F(1) or F(1,2,3)
-SheafOfRings(ZZ)  := SheafOfRings  Sequence := SheafOfRings  List := CoherentSheaf => (O, a) -> O^1(a)
-CoherentSheaf(ZZ) := CoherentSheaf Sequence := CoherentSheaf List := CoherentSheaf => (F, a) -> (
+SheafOfRings(ZZ)  := SheafOfRings  List := SheafOfRings  Sequence := CoherentSheaf => (O, a) -> O^1(a)
+CoherentSheaf(ZZ) := CoherentSheaf List := CoherentSheaf Sequence := CoherentSheaf => (F, a) -> (
     X := variety F;
-    deg := splice {a};
+    deg := splice flatten {a};
     -- If a coherent sheaf is defined as a twist, say G = F(a), we cache the original sheaf.
     -- Any later calculations made about G will be cached as information about F.
     if F.cache.?BaseTwist then (F, deg) = (
@@ -204,9 +204,9 @@ CoherentSheaf(ZZ) := CoherentSheaf Sequence := CoherentSheaf List := CoherentShe
     G.cache.BaseTwist = (F, deg);
     G)
 -- TODO: should modules also cache their base twist?
-Module(ZZ) := Module Sequence := Module => (M, a) -> M ** (ring M)^{splice{a}}
-Matrix(ZZ) := Matrix Sequence := Matrix => (f, a) -> f ** (ring f)^{splice{a}}
-Ring(ZZ)   := Ring   Sequence := Module => (R, a) -> (R^1) ** R^{splice{a}}
+Module(ZZ) := Module Sequence := Module List := Module => (M, a) -> M ** (ring M)^{splice flatten{a}}
+Matrix(ZZ) := Matrix Sequence := Matrix List := Matrix => (f, a) -> f ** (ring f)^{splice flatten{a}}
+Ring(ZZ)   := Ring   Sequence := Module => (R, a) -> (R^1) ** R^{splice{a}} -- R{a,b,c} does something else
 
 CoherentSheaf ^ ZZ := CoherentSheaf ^ List := CoherentSheaf => (F, n) -> sheaf(F.variety, F.module^n)
 SheafOfRings  ^ ZZ := SheafOfRings  ^ List := CoherentSheaf => (O, n) -> (

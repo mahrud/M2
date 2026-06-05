@@ -101,7 +101,7 @@ module ComplexMap := ComplexMap => phi -> phi.cache.module ??= (
     sphi.cache.sheaf = phi;
     sphi)
 
-Complex(ZZ) := Complex(Sequence) := Complex => (C, a) -> (
+Complex(ZZ) := Complex List := Complex Sequence := Complex => (C, a) -> (
     (lo, hi) := concentration C;
     if lo === hi
     then complex(C_lo(a), Base => lo)

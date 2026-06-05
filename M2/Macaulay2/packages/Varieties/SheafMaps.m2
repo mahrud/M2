@@ -393,7 +393,7 @@ Matrix  ^** ZZ := Matrix   => (f, n) -> BinaryPowerMethod(f, n, tensor,
     f -> error "Matrix ^** ZZ: expected non-negative integer")
 
 -- twist notation
-SheafMap(ZZ) := SheafMap => (phi, d) -> phi ** OO_(variety phi)^1(d)
+SheafMap(ZZ) := SheafMap List := SheafMap Sequence := SheafMap => (phi, d) -> phi ** OO_(variety phi)^1(d)
 
 -- TODO: can we also make the target to be the dual of the original source?
 dual SheafMap := SheafMap => options(dual, Matrix) >> o -> f -> map(null, dual target f, dual(matrix f, o))

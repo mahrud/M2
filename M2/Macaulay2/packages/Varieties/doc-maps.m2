@@ -1,6 +1,8 @@
 undocumented {
     -- TODO: document some of these
     (symbol SPACE, SheafMap, ZZ),
+    (symbol SPACE, SheafMap, List),
+    (symbol SPACE, SheafMap, Sequence),
     (symbol +,   SheafMap, SheafMap),
     (symbol *,   SheafMap, SheafMap),
     (symbol *,   RingElement, SheafMap), (symbol *, ZZ, SheafMap),

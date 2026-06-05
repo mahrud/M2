@@ -338,16 +338,16 @@ euler CoherentSheaf := ZZ => F -> tryHooks((euler, CoherentSheaf), F,
 	n := numgens R; -- dim X = n-1
 	w := sum degrees R; -- n+sigma in Symoonds's notation
 	hf := hilbertFunction R;
-	eulerCharOfTwistingSheaf := c -> (
-	    -- Compute the Euler characteristic of O(c) on a weighted projective space X,
-	    -- for an integer c. Here O(c) can be viewed as a line bundle on the stack X.
-	    -- This agrees with the Euler characteristic of the direct image sheaf O(c)
-	    -- on the coarse moduli space of X, X -> Y. But be aware that the sheaves O(c)
+	eulerCharOfTwistingSheaf := a -> (
+	    -- Compute the Euler characteristic of O(a) on a weighted projective space X,
+	    -- for an integer a. Here O(a) can be viewed as a line bundle on the stack X.
+	    -- This agrees with the Euler characteristic of the direct image sheaf O(a)
+	    -- on the coarse moduli space of X, X -> Y. But be aware that the sheaves O(a)
 	    -- on Y behave better when X = P^(n-1)(a_0,...,a_(n-1)) is well-formed, meaning
 	    -- that gcd(a_0,...,a_j omitted,...,a_(n-1)) = 1 for each j. Namely, in that case,
-	    -- O(c+d) = (O(c) ** O(d))^** is the reflexive tensor product of O(c) and O(d) on Y.
-	    if  c <= -w then hilbertFunction(-c-w) * (-1)^(n-1) else
-	    if {0} <= c then hilbertFunction(c)                 else 0);
+	    -- O(a+b) = (O(a) ** O(b))^** is the reflexive tensor product of O(a) and O(b) on Y.
+	    if  a <= -w then hf(-a-w) * (-1)^(n-1) else
+	    if {0} <= a then hf(a)                 else 0);
 	--
 	-- We compute the Euler characteristic using the Betti numbers of a free resolution of M,
 	-- which are captured in the terms of the poincare polynomial (i.e. numerator of its Hilbert series)
@@ -361,8 +361,8 @@ addHook((euler, CoherentSheaf), Strategy => "StandardGraded",
 
 -- the algorithm above also works in the non-standard graded case,
 -- so we take advantage of it for eulr characteristic of modules.
-addHook((euler, Module), Strategy => Varieties,
-    M -> if M.ring.?variety then return try euler sheaf(M.ring.variety, M))
+addHook((euler, Module), Strategy => ProjectiveVariety, M ->
+    if not isStandardGraded M.ring and M.ring.?variety then euler sheaf(M.ring.variety, M))
 
 -- TODO: do these make sense if the ring isn't standard graded?
 eulers SheafOfRings  := O -> eulers module O.ring

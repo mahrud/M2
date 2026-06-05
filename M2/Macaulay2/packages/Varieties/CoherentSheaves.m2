@@ -476,7 +476,7 @@ averagedHilbertPolynomial(PolynomialRing, ZZ) := (S, d) -> (
 -- and the original definition and hook in m2/hilbert.m2
 addHook((hilbertPolynomial, Module), Strategy => Varieties, (opts, M) ->
     if not isStandardGraded M.ring and M.ring.?variety
-    then return try hilbertPolynomial(M.ring.variety, M, opts))
+    then hilbertPolynomial(M.ring.variety, M, opts))
 hilbertPolynomial(Variety, Module)        := o -> (X, M) -> hilbertPolynomial(X, sheaf(X, M), o)
 
 -- these are defined for any Variety, including NormalToricVariety, etc.

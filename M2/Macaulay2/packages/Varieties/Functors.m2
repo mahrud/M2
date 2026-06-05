@@ -565,11 +565,12 @@ addHook((minimalPresentation, CoherentSheaf), Strategy => "SerreTwist",
     (opts, F) -> if isProjective variety F and F.cache.?BaseTwist then (
         (F0, twist) := F.cache.BaseTwist; -- F = F0(twist)
         G := (G0 := minimalPresentation(F0, opts))(twist);
-        G.cache.pruningMap         = G0.cache.pruningMap(twist);
         -- these would normally be set by twistedGlobalSectionsModule,
         -- so we transfer them in the twisted sheaf for use in SheafMaps.m2
+        F.cache.GlobalSectionLimit = F0.cache.GlobalSectionLimit;
         F.cache.TorsionFree        = F0.cache.TorsionFree(twist);
-        F.cache.GlobalSectionLimit = F0.cache.GlobalSectionLimit)
+        G.cache.pruningMap         = G0.cache.pruningMap(twist);
+        G)
     )
 
 -----------------------------------------------------------------------------

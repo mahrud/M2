@@ -64,6 +64,12 @@ N = prune M
 assert(isFreeModule N)
 assert(rank N == 1)
 
+F = R^3
+M = image(id_F | id_F)
+N1 = prune M
+N2 = prune N1
+assert(N1.cache.pruningMap === map(M, F, id_F || 0))
+assert(N2.cache.pruningMap === map(F, F, id_F))
 
 -----------------------------------------------------------------------------
 end

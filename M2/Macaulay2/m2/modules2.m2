@@ -128,10 +128,14 @@ presentation Module := Matrix => M -> M.cache.presentation ??= (
 -- TODO: simplify this caching system
 hasMinPres = M -> any(select(keys M.cache, Option), o -> o#0 === symbol minimalPresentation)
 
-minimalPresentation Module := prune Module := Module => opts -> M -> M.cache#(symbol minimalPresentation => opts) ??= (
-	  if isFreeModule M then (
-	       M.cache.pruningMap = id_M;
-	       return M);
+minimalPresentation Module := prune Module := Module => opts -> M -> M.cache.minimalPresentation ??= (
+    if M.cache.?pruningMap or isFreeModule M then return (
+	-- create a new but identical module
+	N := subquotient(, presentation M);
+	-- so we don't overwrite an existing pruning map
+	N.cache.pruningMap = map(M, N, raw generators M);
+	M.cache.minimalPresentation = N);
+    --
 	  homog := isHomogeneous M;
 	  if debugLevel > 0 and homog then pushvar(symbol flagInhomogeneity,true);
 	  C := runHooks((minimalPresentation, Module), (opts, M));

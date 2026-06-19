@@ -311,11 +311,13 @@ RingFamily ^ List := Module => (T, degs) -> (default T)^degs
 
 -- the key for issub hooks under GlobalHookStore
 protect ContainmentHooks
-issub = (f, g) -> f === g or ring f === ring g and tryHooks(ContainmentHooks, (f, g),
+issub = (f, g) -> f === g or ring f === ring g and (
     -- This is used by isSubset and for checking equality of modules and ideals.
     -- Specialized strategies may be added as hooks, for instance for local rings.
     -- TODO: how can do better in the homogeneous case?
-    (f, g) -> -1 === rawGBContains(raw gb g, raw f))
+    -- e.g. quick rejection if degrees of g are higher than f?
+    f == 0 or tryHooks(ContainmentHooks, (f, g),
+	(f, g) -> -1 === rawGBContains(raw gb g, raw f)))
 
 -- check equality of the column spans as sets
 isequal := (f, g) -> f === g or issub(f, g) and issub(g, f)

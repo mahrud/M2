@@ -62,6 +62,7 @@ localRing(EngineRing, Ideal) := (R, P) ->
     if isField R then R else if R#?(localRing,P) then R#(localRing,P) else (
         if ring P =!= R then error "expected ideal of the same ring";
         RP := new LocalRing from rawLocalRing(raw R, raw gb P);
+	RP.cache = new CacheTable;
         RP.baseRings = append(R.baseRings, R);
         R#(localRing,P) = RP;
         RP.localRing    = RP;

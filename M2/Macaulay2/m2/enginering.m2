@@ -98,8 +98,7 @@ multiplePromoteMatrix = (m,v) -> (
      G := source m;
      dG := - degrees G;
      m = raw m;
-     local S;
-     scan(v, (R,p) -> ( S = R; dF = p dF; dG = p dG; m = rawPromote((raw R)^dF, m)));
+     scan(v, (R,p) -> ( dF = p dF; dG = p dG; m = rawPromote((raw R)^dF, m)));
      map(multiplePromoteModule(F,v),multiplePromoteModule(G,v),m))
 
 basicLiftMatrix = opts -> (m,R,p) -> (
@@ -115,9 +114,7 @@ multipleLiftMatrix = opts -> (m,v) -> (
      dF := - degrees F;
      dG := - degrees G;
      m = raw m;
-     local S;
      scan(v, (R,p) -> ( 
-	       S = R; 
 	       dF = p dF; 
 	       m = rawLift((raw R)^dF, m);		    -- lift as raw matrices to avoid making many intermediate free modules
 	       if m === null then break;
@@ -129,7 +126,7 @@ multipleLiftMatrix = opts -> (m,v) -> (
 basicPromoteMutableMatrix = (m,R) -> map(R, rawPromote(raw R, raw m))
 multiplePromoteMutableMatrix = (m,v) -> (
      m = raw m;
-     scan(v, B -> m = rawPromote(raw B, raw m));
+     scan(v, B -> m = rawPromote(raw B, m));
      map(v#-1, m))
 
 basicLiftMutableMatrix = opts -> (m,R) -> (

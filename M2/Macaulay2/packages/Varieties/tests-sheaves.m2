@@ -60,6 +60,8 @@ TEST /// -- tests for weightedHilbertPolynomials
   assert all((#degs + 1) * rho * sig,
       d -> (hqp#(d % rho)[d] ?? 0) - hilbertFunction(d, S) == 0)
 
+  degs = {1,9,15,22}
+
   -- some weighted projective planes of mathematical interest
   -- cf. https://arxiv.org/pdf/1712.04635
   degs = {16,97, 683}; rho = lcm degs -- ???

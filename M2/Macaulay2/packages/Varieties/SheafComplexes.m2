@@ -200,8 +200,7 @@ ExtLongExactSequence(CoherentSheaf, SheafMap, SheafMap) := Matrix => opts -> (F,
     N2 := module source f;
     N1 := module target f;
     N3 := module source g;
-    R := ring M;
-    if not isAffineRing R
+    if not isAffineRing ring M
     then error "expected sheaves on a variety over a field";
     l := max(
 	l1 := min(dim N1, max(hi, 0)),
@@ -309,8 +308,6 @@ toString   SumOfTwistsComplex := toString @@ expression
 -- or more generally in a weighted projective space.
 -- If you want to compute cohomology with many twists, the functions hh^i(C,b1,b2) or hh^i(C(*))
 -- should be faster than running this program repeatedly.
--- The base ring should be a field. Note that it is usually faster
--- to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
 --
 -- The input complex can also be a complex of graded R-modules,
 -- in which case it is interpreted as the associated complex of coherent sheaves.
@@ -323,16 +320,15 @@ toString   SumOfTwistsComplex := toString @@ expression
 -- for computing cohomology. Twists are interpreted by tensoring with the line bundles O(a) on the stack.
 --
 hh(ZZ, Complex) := ZZ => opts -> (cohodeg, C) -> (
-    R2 := ring module C;
     M := liftComplex module C;
-    R1 := ring M; -- R1 is a graded polynomial ring, and M is a complex of graded R1-modules that represents the complex C of sheaves.
-    if degreeLength R1 =!= 1 then error "expected degree length 1";
-    degs := degrees R1; -- This is a list of the form {{a_0},...,{a_(n-1)}}
-    n := #degs; -- So P = Proj R1 has dimension n-1.
+    S := ring M; -- S is a graded polynomial ring, and M is a complex of graded S-modules that represents the complex C of sheaves.
+    if degreeLength S =!= 1 then error "expected degree length 1";
+    degs := degrees S; -- This is a list of the form {{a_0},...,{a_(n-1)}}
+    n := #degs; -- So P = Proj S has dimension n-1.
     sumOfWeights := sum degs; -- n+sigma in Symonds's notation for P = P^{n-1}(a_0,...,a_(n-1)).
-    R1.cache ??= new MutableHashTable;
-    w := R1.cache.Dualizing ??= R1^{-sumOfWeights};
-    -- We fix the dualizing module w, as a graded R1-module.
+    S.cache ??= new MutableHashTable;
+    w := S.cache.Dualizing ??= S^{-sumOfWeights};
+    -- We fix the dualizing module w, as a graded S-module.
     -- Our formula for the Hilbert series of H^i(P, M~(*)) (where i = cohodeg) is:
     --   hilb(H^i(M)) - phi(hilb(im(Ext^(n-i)(tau^{>=i}M, w) -> Ext^(n-i)(M, w))))
     --   + phi(hilb(Ext^(n-i-1)(M, w))) - phi(hilb(im(Ext^(n-1-i)(tau^{>=i+1}M, w) -> Ext^(n-i-1)(M, w)))).
@@ -361,7 +357,6 @@ hh(ZZ, Complex) := ZZ => opts -> (cohodeg, C) -> (
 --
 -- This function computes only the Hilbert series of the cohomology, not the cohomology as a module.
 -- The algorithm, using local duality, is the same as that used for hh^i(C) and hh^i(C(*)).
--- Note that it is usually faster to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
 --
 -- The distinction between a WPS as a stack X and its associated coarse moduli space, f: X -> V, does not matter
 -- for computing cohomology. Twists are interpreted by tensoring with the line bundles O(a) on the stack.
@@ -369,19 +364,18 @@ hh(ZZ, Complex) := ZZ => opts -> (cohodeg, C) -> (
 hh(ZZ, Complex, ZZ, ZZ) := RingElement => opts -> (cohodeg, C, b1, b2) -> (
     if not instance(b1, ZZ) or not instance(b2, ZZ) or b1>b2 then (
 	error "the input should be in the form hh^i(C,b1,b2), with C a complex of sheaves and b1 <= b2 integers");
-    R2 := ring module C;
     M := liftComplex module C;
-    R1 := ring M; -- R1 is a graded polynomial ring, and M is a complex of graded R1-modules that represents the complex C of sheaves.
-    if degreeLength R1 =!= 1 then error "expected degree length 1";
-    A := degreesRing R1; -- This is a ring of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
+    S := ring M; -- S is a graded polynomial ring, and M is a complex of graded S-modules that represents the complex C of sheaves.
+    if degreeLength S =!= 1 then error "expected degree length 1";
+    A := degreesRing S; -- This is a ring of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
     T := A_0; -- This is the variable in the ring A.
-    degs := degrees R1; -- This is a list of the form {{1},{9},{15},{22}}.
-    n := #degs; -- So P = Proj R1 has dimension n-1.
+    degs := degrees S; -- This is a list of the form {{1},{9},{15},{22}}.
+    n := #degs; -- So P = Proj S has dimension n-1.
     sumOfWeights := sum degs; -- This is the sum of the weights, that is, n+sigma in Symonds's notation,
     -- for P = P^{n-1}(a_0,...,a_(n-1)).
-    R1.cache ??= new MutableHashTable;
-    ww := R1.cache.Dualizing ??= R1^{-sumOfWeights};
-    -- We fix the dualizing module ww, as a graded R1-module.
+    S.cache ??= new MutableHashTable;
+    ww := S.cache.Dualizing ??= S^{-sumOfWeights};
+    -- We fix the dualizing module ww, as a graded S-module.
     -- Our formula for the Hilbert series of H^i(P, M~(*)) (where i = cohodeg) is:
     --   hilb(H^i(M)) - phi(hilb(im(Ext^(n-i)(tau^{>=i}M, ww) -> Ext^(n-i)(M, ww))))
     --   + phi(hilb(Ext^(n-i-1)(M, ww))) - phi(hilb(im(Ext^(n-1-i)(tau^{>=i+1}M, ww) -> Ext^(n-i-1)(M, ww)))).
@@ -420,7 +414,6 @@ hh(ZZ, Complex, ZZ, ZZ) := RingElement => opts -> (cohodeg, C, b1, b2) -> (
 -- This program computes only the Hilbert series of the cohomology, not the cohomology as a module.
 -- The algorithm, using local duality, is the same as that used for hh^i(C) and hh^i(C,b1,b2),
 -- and slightly different from that used for the module HH^i(C(>=b)). It should be faster, in most cases.
--- Note that it is usually faster to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
 --
 -- The distinction between a WPS as a stack X and its associated coarse moduli space, f: X -> V, does not matter
 -- for computing cohomology. Twists are interpreted by tensoring with the line bundles O(a) on the stack.
@@ -430,24 +423,23 @@ hh(ZZ, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, sumoftwists) -> (
     -- where C is a complex of sheaves on a closed subspace of a weighted projective space.
     C := sumoftwists#0; -- For an input of the form hh^i(C(>=b)), the number b is ignored.
     -- Let's not cache whether C was defined as a twist.
-    R2 := ring module C;
     M := liftComplex module C;
-    R1 := ring M; -- R1 is a graded polynomial ring, and M is a complex of graded R1-modules that represents the complex C of sheaves.
-    if degreeLength R1 =!= 1 then error "expected degree length 1";
-    hft := heft R1;
-    A := degreesRing R1; -- This is a ring of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
+    S := ring M; -- S is a graded polynomial ring, and M is a complex of graded S-modules that represents the complex C of sheaves.
+    if degreeLength S =!= 1 then error "expected degree length 1";
+    hft := heft S;
+    A := degreesRing S; -- This is a ring of the form "ZZ[T]" (meaning Z[T,T^(-1)]).
     T := A_0; -- This is the variable in the ring A.
     U := getSymbol "U";
     B := newRing(A,Variables=>{U},MonomialOrder=>{MonomialSize=>32,Weights=>{-1},GroupLex=>1,Position=>Up},Inverses=>true);
     U = B_0;
     -- Thus B is a ring of the form "ZZ[U]" (meaning Z[U,U^(-1)]). We think of U as meaning T^(-1).
-    degs := degrees R1; -- This is a list of the form {{1},{9},{15},{22}}.
-    n := #degs; -- So P = Proj R1 has dimension n-1.
+    degs := degrees S; -- This is a list of the form {{1},{9},{15},{22}}.
+    n := #degs; -- So P = Proj S has dimension n-1.
     sumOfWeights := sum degs; -- This is the sum of the weights, that is, n+sigma in Symonds's notation,
     -- for P = P^{n-1}(a_0,...,a_(n-1)).
-    R1.cache ??= new MutableHashTable;
-    ww := R1.cache.Dualizing ??= R1^{-sumOfWeights};
-    -- We fix the dualizing module ww, as a graded R1-module.
+    S.cache ??= new MutableHashTable;
+    ww := S.cache.Dualizing ??= S^{-sumOfWeights};
+    -- We fix the dualizing module ww, as a graded S-module.
     -- Our formula for the Hilbert series of H^i(P, M~(*)) (where i = cohodeg) is:
     --   hilb(H^i(M)) - phi(hilb(im(Ext^(n-i)(tau^{>=i}M, ww) -> Ext^(n-i)(M, ww))))
     --   + phi(hilb(Ext^(n-i-1)(M, ww))) - phi(hilb(im(Ext^(n-1-i)(tau^{>=i+1}M, ww) -> Ext^(n-i-1)(M, ww)))).
@@ -461,7 +453,7 @@ hh(ZZ, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, sumoftwists) -> (
     mapofresi := liftMapAlongQuasiIsomorphism(mapi*Cresmap, tauiCresmap);
     mapofresiplus1 := liftMapAlongQuasiIsomorphism(mapiplus1*Cresmap, tauiplus1Cresmap);
     rightpart := hilbertSeries(HH^cohodeg(M), Reduce => true);
-    denom := denominator hilbertSeries R1;
+    denom := denominator hilbertSeries S;
     poincimageextmapi := poincare image HH^(n-cohodeg)(Hom(mapofresi, ww));
     poincimageextmapiplus1 := poincare image HH^(n-1-cohodeg)(Hom(mapofresiplus1, ww));
     poincextiplus1 := poincare HH^(n-cohodeg-1)(Hom(source Cresmap, ww));
@@ -528,8 +520,7 @@ hh(ZZ, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, sumoftwists) -> (
 -- The algorithm uses local duality. 
 --
 -- If you want to compute Ext with many twists, the functions ext^i(C,D,b1,b2) or ext^i(C,D(*))
--- may be convenient. Note that it is usually faster
--- to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
+-- may be convenient.
 --
 -- The input complexes can also be complexes of graded R-modules,
 -- in which case they are interpreted as the associated complexes of coherent sheaves.
@@ -537,10 +528,10 @@ hh(ZZ, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, sumoftwists) -> (
 -- ext(ZZ, Complex, Complex) := Sequence => opts -> (cohodeg, C, D) -> (
 --     M := module C;
 --     N := module D;
---     R2 := ring M;
---     if ring N =!= R2 then error "for Ext, the two complexes should be defined on the same space";
+--     R := ring M;
+--     if ring N =!= R then error "for Ext, the two complexes should be defined on the same space";
 --     lengthlimit := cohodeg+1+(max N)-(min M);
---     -- We need a free resolution of the complex M over R2 out to this length.
+--     -- We need a free resolution of the complex M over R out to this length.
 --     if lengthlimit <= 0 then 0 -- In this case, inspecting the proof shows that the output is zero.
 --     else (
 -- 	Mres := freeResolution(M, LengthLimit => lengthlimit);
@@ -559,15 +550,13 @@ hh(ZZ, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, sumoftwists) -> (
 -- The input complexes can also be complexes of graded R-modules,
 -- in which case they are interpreted as the associated complexes of coherent sheaves.
 --
--- Note that it is usually faster to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
---
 ext(ZZ, Complex, Complex, ZZ, ZZ) := Sequence => opts -> (cohodeg, C, D, b1, b2) -> (
     M := module C;
     N := module D;
-    R2 := ring M;
-    if ring N =!= R2 then error "for Ext, the two complexes should be defined on the same space";
+    R := ring M;
+    if ring N =!= R then error "for Ext, the two complexes should be defined on the same space";
     lengthlimit := cohodeg+1+(max N)-(min M);
-    -- We need a free resolution of the complex M over R2 out to this length.
+    -- We need a free resolution of the complex M over R out to this length.
     if lengthlimit <= 0 then 0 -- In this case, inspecting the proof shows that the output is zero.
     else (
 	Mres := freeResolution(M, LengthLimit => lengthlimit);
@@ -592,7 +581,6 @@ ext(ZZ, Complex, Complex, ZZ, ZZ) := Sequence => opts -> (cohodeg, C, D, b1, b2)
 -- in which case they are interpreted as the associated complexes of coherent sheaves.
 --
 -- This function should be faster than computing the module Ext^i_X(C,D(>=b)), in most cases.
--- Note that it is usually faster to work over Z/p for a prime number p <= 32767, say ZZ/31991, rather than over Q.
 --
 -- ext(ZZ, Complex, SumOfTwistsComplex) := Sequence => opts -> (cohodeg, C, sumoftwists) -> (
 --     -- Compute Ext^cohodeg_X(C,D(a)) for all integers a, as a sum of two Laurent series,
@@ -600,10 +588,10 @@ ext(ZZ, Complex, Complex, ZZ, ZZ) := Sequence => opts -> (cohodeg, C, D, b1, b2)
 --     D := sumoftwists#0; -- For an input of the form ext^i(C,D(>=b)), the number b is ignored.
 --     M := module C;
 --     N := module D;
---     R2 := ring M;
---     if ring N =!= R2 then error "for Ext, the two complexes should be defined on the same space";
+--     R := ring M;
+--     if ring N =!= R then error "for Ext, the two complexes should be defined on the same space";
 --     lengthlimit := cohodeg+1+(max N)-(min M);
---     -- We need a free resolution of the complex M over R2 out to this length.
+--     -- We need a free resolution of the complex M over R out to this length.
 --     if lengthlimit <= 0 then ( -- In this case, inspecting the proof shows that the output is zero.
 -- 	bottomdeg := infinity;
 -- 	topdeg := -infinity;
@@ -633,8 +621,7 @@ RHom(Complex,       Complex) := Complex => (C, D) -> (
     then error "expected sheaves on a projective variety";
     M := liftComplex module C;
     N := liftComplex module D;
-    R := ring M;
-    if not isAffineRing R
+    if not isAffineRing ring M
     then error "expected sheaves on a variety over a field";
     H := prune HH N;
     (loH, hiH) := concentration H;
@@ -660,8 +647,7 @@ RHom(Complex, Complex,       ZZ) := Complex => (C, D, d) -> (
     then error "expected sheaves on a projective variety";
     M := liftComplex module C;
     N := liftComplex module D;
-    R := ring M;
-    if not isAffineRing R
+    if not isAffineRing ring M
     then error "expected sheaves on a variety over a field";
     H := prune HH N;
     (loH, hiH) := concentration H;
@@ -684,8 +670,7 @@ Ext(ZZ, CoherentSheaf, Complex) := Complex => opts -> (m, C, D) -> (
     then error "expected sheaves on a projective variety";
     M := liftModule module C;
     N := liftComplex module D;
-    R := ring M;
-    if not isAffineRing R
+    if not isAffineRing ring M
     then error "expected sheaves on a variety over a field";
     H := prune HH N;
     (loH, hiH) := concentration H;

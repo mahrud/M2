@@ -164,7 +164,7 @@ addHook((minimalPresentation, Module), Strategy => Default, (opts, M) -> (
 	  N.cache.pruningMap = map(M,N,submatrix'(id_(cover M),rows));
 	  break N))
 
-addHook((minimalPresentation, Module), (opts, M) -> (
+addHook((minimalPresentation, Module), Strategy => Homogeneous, (opts, M) -> (
      	  R := ring M;
 	  if (isAffineRing R and isHomogeneous M) or (R.?SkewCommutative and isAffineRing coefficientRing R and isHomogeneous M) then (
 	       f := presentation M;
@@ -173,7 +173,7 @@ addHook((minimalPresentation, Module), (opts, M) -> (
 	       N.cache.pruningMap = map(M,N,g);
 	       break N)))
 
-addHook((minimalPresentation, Module), (opts, M) -> (
+addHook((minimalPresentation, Module), Strategy => ZZ, (opts, M) -> (
      	  R := ring M;
 	  if R === ZZ then (
 	       f := presentation M;

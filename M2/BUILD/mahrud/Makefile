@@ -34,8 +34,8 @@ macos-prep-brew:
 	brew install autoconf automake bison ccache cmake ctags libtool ninja pkg-config
 	brew install --only-dependencies macaulay2/tap/M2
 
-# HOMEBREW_DEPS=`brew deps --1 --include-optional macaulay2/tap/M2 | tr '\n' ';'`
-# OPT_PREFIX=$HOMEBREW_PREFIX/opt/${HOMEBREW_DEPS//;/;$HOMEBREW_PREFIX/opt/}
+# OPT_PREFIX=$(brew deps --1 --include-build macaulay2/tap/M2 | \
+# 	cut -d'/' -f-1 | sed "s|^|$HOMEBREW_PREFIX/opt/|" | paste -sd';' -)
 
 HOMEBREW_DEPS           = $(shell brew deps --1 --include-optional macaulay2/tap/M2 | tr '\n' ' ')
 OPT_PREFIX              = $(subst $() $(),;,$(HOMEBREW_DEPS:%=$(HOMEBREW_PREFIX)/opt/%))

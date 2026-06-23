@@ -4,12 +4,12 @@
 needs "modules.m2"
 
 notSameRing := (X,Y) -> (
-     if X === Y then error("expected ",pluralsynonym X, " for the same ring")
-     else error("expected ",synonym X," and ",synonym Y," for the same ring"))
+     if X === Y then error("expected ",pluralsynonym X, " over the same ring")
+     else error("expected ",synonym X," and ",synonym Y," over the same ring"))
 sameRing = (M,N) -> if ring M === ring N then (M,N) else notSameRing(class M,class N)
 notToSameRing := (X,Y) -> (
-     if X === Y then error("expected ",pluralsynonym X, " for compatible rings")
-     else error("expected ",synonym X," and ",synonym Y," for compatible rings"))
+     if X === Y then error("expected ",pluralsynonym X, " over compatible rings")
+     else error("expected ",synonym X," and ",synonym Y," over compatible rings"))
 toSameRing = (M,N) -> (
      R := ring M; S := ring N;
      if R =!= S then (
@@ -644,7 +644,7 @@ map(Module,Module,RingElement) := Matrix => opts -> (M,N,r) -> (
 map(Module,Nothing,Matrix) := Matrix => opts -> (M,f) -> (
      if opts.Degree =!= null then error "expected no Degree option";
      R := ring M;
-     if R =!= ring f then error "expected the same ring";
+     if R =!= ring f then error "expected module and matrix over the same ring";
      if # degrees M =!= # degrees target f then (
 	  error "expected ambient modules of the same rank";
 	  );

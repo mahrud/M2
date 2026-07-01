@@ -73,6 +73,9 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #cmakedefine HAVE_ARPA_INET_H 1
 
+/* whether the barvinok library (and isl, polylib) were found via pkg-config */
+#cmakedefine01 HAVE_BARVINOK
+
 // TODO: only used in Macaulay2/d/system.d. Still needed?
 /* Define to 1 if you have the <assert.h> header file. */
 #cmakedefine HAVE_ASSERT_H 1

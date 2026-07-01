@@ -9,6 +9,7 @@ use struct;
 
 header "// TODO: break apart this file so each piece includes only one:
 #include <interface/aring.h>
+#include <interface/barvinok.h>
 #include <interface/cone.h>
 #include <interface/cra.h>
 #include <interface/factory.h>
@@ -3968,6 +3969,21 @@ export rawConeContains(e:Expr):Expr := (
      else WrongArgMatrix(1)
      else WrongNumArgs(2));
 setupfun("rawConeContains", rawConeContains);
+
+-----------------------------------------------------------------------------
+-- Chamber decomposition and vector partition functions (via barvinok)
+-----------------------------------------------------------------------------
+
+export rawBarvinokEnumerate(e:Expr):Expr := (
+    when e is s:Sequence do
+    if length(s) != 2 then WrongNumArgs(2) else
+    when s.0 is M:RawMatrixCell do
+    when s.1 is C:RawMatrixCell do
+    toExpr(Ccode(RawMatrixStringPairArrayOrNull, "rawBarvinokEnumerate(", M.p, ", ", C.p, ")"))
+    else WrongArgMatrix(2)
+    else WrongArgMatrix(1)
+    else WrongNumArgs(2));
+setupfun("rawBarvinokEnumerate", rawBarvinokEnumerate);
 
 -----------------------------------------------------------------------------
 -- LU

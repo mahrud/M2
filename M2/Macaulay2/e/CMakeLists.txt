@@ -113,6 +113,8 @@ set(CPPONLYFILES
   resolutions/res-a2-gb.cpp
   interface/aring.cpp
   interface/aring.h
+  interface/barvinok.cpp
+  interface/barvinok.h
   interface/computation.h # no .cpp yet
   interface/cra.cpp
   interface/cra.h

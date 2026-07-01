@@ -9,7 +9,7 @@
 # These are some of the libraries linked with Macaulay2 in Macaulay2/{d,e,bin}/CMakeLists.txt
 # Others, like TBB::tbb, FFI::ffi, and Boost::regex, are linked as imported libraries in those files.
 # TODO: turn all these libraries into imported libraries and find incompatibilities another way.
-set(PKGLIB_LIST    FFLAS_FFPACK GIVARO)
+set(PKGLIB_LIST    FFLAS_FFPACK GIVARO BARVINOK)
 set(LIBRARIES_LIST MPSOLVE FROBBY NORMALIZ FACTORY FLINT NTL MPFI MPFR GMP GLPK BDWGC LAPACK)
 set(LIBRARY_LIST   READLINE HISTORY GDBM JANSSON)
 
@@ -179,6 +179,13 @@ find_package(GLPK      4.59.0)
 pkg_search_module(FFLAS_FFPACK	IMPORTED_TARGET	fflas-ffpack>=2.4.3)
 pkg_search_module(GIVARO	IMPORTED_TARGET	givaro>=4.1.1)
 # TODO: add FindModules for these two as well
+
+# barvinok is optional; used by the Chambers package for fast vector partition
+# functions (chamber decomposition + Hilbert quasi-polynomials). It ships its
+# own barvinok.pc, so unlike Normaliz et al. it is detected via pkg-config
+# rather than an ExternalProject build recipe. See BUILD/build/BarvinokFeature.md
+pkg_search_module(BARVINOK	IMPORTED_TARGET	barvinok>=0.30)
+set(HAVE_BARVINOK ${BARVINOK_FOUND})
 
 set(LIBRARY_OPTIONS
   Eigen3 BDWGC MPFR MPFI NTL Flint Factory Frobby cddlib MPSolve

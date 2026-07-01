@@ -3979,7 +3979,7 @@ export rawBarvinokEnumerate(e:Expr):Expr := (
     if length(s) != 2 then WrongNumArgs(2) else
     when s.0 is M:RawMatrixCell do
     when s.1 is C:RawMatrixCell do
-    toExpr(Ccode(RawMatrixStringPairArrayOrNull, "rawBarvinokEnumerate(", M.p, ", ", C.p, ")"))
+    toExpr(Ccode(RawMatrixOrNull, "rawBarvinokEnumerate(", M.p, ", ", C.p, ")"))
     else WrongArgMatrix(2)
     else WrongArgMatrix(1)
     else WrongNumArgs(2));

@@ -127,14 +127,6 @@ typedef struct engine_RawRingElementPair_struct * engine_RawRingElementPair;
 typedef engine_RawRingElementPair engine_RawRingElementPairOrNull;
 struct engine_RawRingElementPair_struct BASECLASS {const struct RingElement * a;const struct RingElement * b;};
 
-typedef struct engine_RawMatrixStringPair_struct * engine_RawMatrixStringPair;
-typedef engine_RawMatrixStringPair engine_RawMatrixStringPairOrNull;
-struct engine_RawMatrixStringPair_struct BASECLASS {const struct Matrix * a;M2_string b;};
-
-typedef struct engine_RawMatrixStringPairArray_struct * engine_RawMatrixStringPairArray;
-typedef engine_RawMatrixStringPairArray engine_RawMatrixStringPairArrayOrNull;
-struct engine_RawMatrixStringPairArray_struct {int len;engine_RawMatrixStringPair array[];};
-
 typedef struct gmp_ZZpair_struct * gmp_ZZpair;
 typedef gmp_ZZpair gmp_ZZpairOrNull;
 struct gmp_ZZpair_struct BASECLASS {mpz_srcptr a;mpz_srcptr b;};

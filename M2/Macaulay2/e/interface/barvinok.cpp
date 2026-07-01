@@ -14,6 +14,8 @@
 #  include "matrix.hpp"
 #  include "relem.hpp"
 
+#  include <csetjmp>
+#  include <csignal>
 #  include <gmpxx.h>
 #  include <vector>
 
@@ -152,6 +154,58 @@ isl_stat collectTerm(__isl_take isl_term *term, void *user)
   return isl_stat_ok;
 }
 
+// For some degenerate chambers, isl_qpolynomial_from_evalue hits a real
+// barvinok/isl bug: evalue_isl.c's assertion `e->x.p->type == polynomial ||
+// flooring || fractional` fails and calls abort() (see the FIXME on the
+// disabled benchmark assertion in Chambers.m2 for a concrete repro). An
+// assert()-triggered abort() is not a C++ exception -- it can't be caught
+// by try/catch, unlike everything else this function might throw -- so the
+// only way to keep it from taking down the whole M2 process is to catch the
+// resulting SIGABRT with a signal handler and jump back out via siglongjmp.
+// This is scoped to SIGABRT specifically, not SIGSEGV: an assert() failure
+// happens at a clean, controlled point before any memory is corrupted, so
+// recovering from it and continuing is reasonably safe; a genuine SIGSEGV
+// would mean actual corruption already happened, and longjmp'ing past that
+// would just continue running atop already-broken state.
+//
+// sigaction's disposition is process-wide, not per-thread, so there's a
+// narrow race if some unrelated abort() fires on another thread while this
+// one is inside a guarded region: that thread's handler invocation sees
+// barvinokRecoveryActive false (correctly, since it's thread_local) and
+// falls through to SIG_DFL+raise, which momentarily changes the *global*
+// disposition and could in principle race with this thread's guard being
+// torn down. Accepted as out of scope: aborting at all is already a rare,
+// degenerate-input path, and two unrelated aborts racing is rarer still.
+thread_local sigjmp_buf barvinokRecoveryPoint;
+thread_local volatile std::sig_atomic_t barvinokRecoveryActive = 0;
+
+extern "C" void barvinokAbortHandler(int sig)
+{
+  if (barvinokRecoveryActive) siglongjmp(barvinokRecoveryPoint, sig);
+  // not inside a guarded region -- restore default behavior and re-raise,
+  // same as if this handler had never been installed
+  signal(sig, SIG_DFL);
+  raise(sig);
+}
+
+struct SignalGuard
+{
+  struct sigaction oldAction{};
+  SignalGuard()
+  {
+    struct sigaction newAction{};
+    newAction.sa_handler = barvinokAbortHandler;
+    sigemptyset(&newAction.sa_mask);
+    sigaction(SIGABRT, &newAction, &oldAction);
+    barvinokRecoveryActive = 1;
+  }
+  ~SignalGuard()
+  {
+    barvinokRecoveryActive = 0;
+    sigaction(SIGABRT, &oldAction, nullptr);
+  }
+};
+
 // Extract the chamber (a cone in the parameter space) as an M2 Matrix of
 // facet inequalities, directly from the Polyhedron's GMP constraint data;
 // equality rows are dropped (only ever used the inequality rows of a
@@ -181,6 +235,13 @@ const Matrix /* or null */ *rawBarvinokEnumerate(const Matrix *M, const Matrix *
 {
   try
     {
+      SignalGuard signalGuard;
+      if (sigsetjmp(barvinokRecoveryPoint, 1) != 0)
+        throw exc::engine_error(
+            "barvinok/isl aborted while decomposing chambers or converting "
+            "a quasipolynomial (a known bug for some degenerate chambers; "
+            "see BUILD/build/BarvinokFeature.md)");
+
       const Ring *R = M->get_ring();
 
       struct barvinok_options *options = barvinok_options_new_with_defaults();
@@ -208,11 +269,8 @@ const Matrix /* or null */ *rawBarvinokEnumerate(const Matrix *M, const Matrix *
           cd.facets = chamberFacets(R, node->ValidityDomain);
 
           isl_space *space = isl_space_params_alloc(ctx, nparam);
-          // NOTE: for some degenerate chambers this hits a real barvinok/isl
-          // bug -- evalue_isl.c's assertion `e->x.p->type == polynomial ||
-          // flooring || fractional` fails and aborts the whole process (not
-          // a catchable C++ exception). See the FIXME on the disabled
-          // benchmark assertion in Chambers.m2 for a concrete repro.
+          // see the SignalGuard comment above: this can abort() for some
+          // degenerate chambers, which is caught around the whole function
           isl_qpolynomial *qp = isl_qpolynomial_from_evalue(space, &node->EP);
           isl_size ndivs = isl_qpolynomial_dim(qp, isl_dim_div);
           if (ndivs > maxDivs) maxDivs = ndivs;

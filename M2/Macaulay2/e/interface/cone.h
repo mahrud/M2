@@ -85,9 +85,6 @@ libnormaliz.
  */
 const Matrix /* or null */ *rawHilbertBasis(const Matrix *C);
 
-const Matrix /* or null */ *rawHilbertQuasiPolynomial(const Matrix *C,
-                                                      const Matrix *grading);
-
 /** \brief Gopakumar-Vafa invariants of a Calabi-Yau threefold.
  *
  * Computes Gopakumar-Vafa (GV) invariants for a Calabi-Yau threefold

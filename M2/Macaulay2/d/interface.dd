@@ -3961,15 +3961,6 @@ export rawConeContains(e:Expr):Expr := (
      else WrongNumArgs(2));
 setupfun("rawConeContains", rawConeContains);
 
-export rawConeContains(e:Expr):Expr := (
-     when e is s:Sequence do if length(s) != 2 then WrongNumArgs(2) else
-     when s.0 is C:RawMatrixCell do
-     when s.1 is deg:RawMatrixCell do toExpr(Ccode(bool, "rawConeContains(", C.p, ",", deg.p, ")"))
-     else WrongArgMatrix(2)
-     else WrongArgMatrix(1)
-     else WrongNumArgs(2));
-setupfun("rawConeContains", rawConeContains);
-
 -----------------------------------------------------------------------------
 -- Chamber decomposition and vector partition functions (via barvinok)
 -----------------------------------------------------------------------------

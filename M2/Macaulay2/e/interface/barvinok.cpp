@@ -10,9 +10,9 @@
 
 #  include "debug.hpp"
 #  include "interface/matrix.h"
-#  include "matrix-con.hpp"
-#  include "matrix.hpp"
-#  include "relem.hpp"
+#  include "matrices/matrix-con.hpp"
+#  include "matrices/matrix.hpp"
+#  include "rings/ringelem.hpp"
 
 #  include <csetjmp>
 #  include <csignal>

@@ -1011,6 +1011,57 @@ ExternalProject_Add(build-normaliz
 _ADD_COMPONENT_DEPENDENCY(libraries normaliz "gmp;nauty" NORMALIZ_FOUND)
 
 
+# https://github.com/mahrud/barvinok (fork of https://repo.or.cz/barvinok.git)
+# barvinok needs gmp and ntl and is used by the Chambers package for fast vector
+# partition functions. We build mahrud's fork, which carries the --M2 option to
+# barvinok_enumerate; it bundles isl and polylib as git submodules (pet is not
+# needed and is skipped). Since it's a git checkout with no shipped configure,
+# ./autogen.sh must run first (it also bootstraps the bundled isl/polylib).
+# Installs barvinok.pc, so it is discovered via pkg_search_module in
+# check-libraries.cmake (needs ${M2_HOST_PREFIX}/lib/pkgconfig on PKG_CONFIG_PATH).
+# Its top-level libbarvinok is a static convenience archive that never builds a
+# .so even with --enable-shared, so pass --with-pic to keep the archive PIC-safe
+# for linking into a shared M2-engine (mirrors normaliz above).
+ExternalProject_Add(build-barvinok
+  GIT_REPOSITORY    https://github.com/mahrud/barvinok.git
+  GIT_TAG           e68bc088aefdd6d36172fa4cfb090de7874f8edf # 0.41.8 + --M2 option
+  GIT_SUBMODULES    isl polylib
+  GIT_SHALLOW       ON
+  PREFIX            libraries/barvinok
+  SOURCE_DIR        libraries/barvinok/build
+  BUILD_IN_SOURCE   ON
+  CONFIGURE_COMMAND ./autogen.sh &&
+                    ${CONFIGURE} --prefix=${M2_HOST_PREFIX}
+                      #-C --cache-file=${CONFIGURE_CACHE}
+                      ${shared_setting}
+                      --with-pic # so the static libbarvinok.a can link into shared M2-engine
+                      --with-isl=bundled
+                      --with-polylib=bundled
+                      --with-pet=no
+                      --with-gmp-prefix=${GMP_ROOT}
+                      --with-ntl-prefix=${NTL_ROOT}
+                      CPPFLAGS=${CPPFLAGS}
+                      CFLAGS=${CFLAGS}
+                      CXXFLAGS=${CXXFLAGS}
+                      LDFLAGS=${LDFLAGS}
+                      CC=${CMAKE_C_COMPILER}
+                      CXX=${CMAKE_CXX_COMPILER}
+                      AR=${CMAKE_AR}
+                      OBJDUMP=${CMAKE_OBJDUMP}
+                      STRIP=${CMAKE_STRIP}
+                      RANLIB=${CMAKE_RANLIB}
+  BUILD_COMMAND     ${MAKE} -j${PARALLEL_JOBS}
+  INSTALL_COMMAND   ${MAKE} -j${PARALLEL_JOBS} install
+          COMMAND   ${CMAKE_COMMAND} -E make_directory ${M2_INSTALL_LICENSESDIR}/barvinok
+          COMMAND   ${CMAKE_COMMAND} -E copy_if_different LICENSE ${M2_INSTALL_LICENSESDIR}/barvinok
+  TEST_COMMAND      ${MAKE} -j${PARALLEL_JOBS} check
+  EXCLUDE_FROM_ALL  ON
+  TEST_EXCLUDE_FROM_MAIN ON
+  STEP_TARGETS      install test
+  )
+_ADD_COMPONENT_DEPENDENCY(libraries barvinok "gmp;ntl" BARVINOK_FOUND)
+
+
 # https://www.wm.uni-bayreuth.de/de/team/rambau_joerg/TOPCOM/
 set(topcom_PROGRAMS
   B_A B_A_center B_D checkregularity cocircuits2facets cross cube cyclic hypersimplex lattice

@@ -436,6 +436,8 @@ ExternalProject_Add(build-frobby
                     -DCMAKE_SYSTEM_PREFIX_PATH=${M2_HOST_PREFIX}
                     -DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/cmake
                     -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+		    # let's libfrobby.a be used by shared M2 engine library
+                    -DCMAKE_POSITION_INDEPENDENT_CODE=${BUILD_SHARED_LIBS}
                     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                     -DBUILD_TESTING=OFF # FIXME: ${BUILD_TESTING}
                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -986,6 +988,7 @@ ExternalProject_Add(build-normaliz
             COMMAND ${CONFIGURE} --prefix=${M2_HOST_PREFIX}
                       #-C --cache-file=${CONFIGURE_CACHE}
                       --disable-shared # TODO: for polymake --enable-shared
+                      --with-pic # let's libnormaliz.a be used by shared M2 engine library
                       --without-flint # ${FLINT_ROOT}
 		      --without-nauty
 		      --without-cocoalib

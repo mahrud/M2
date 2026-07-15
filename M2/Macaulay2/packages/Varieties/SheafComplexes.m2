@@ -127,6 +127,10 @@ isFree Complex := Boolean => C -> all(values C.module,
     -- TODO: in the sheafy case, should we check the differentials, too?
     if isSheafComplex C then isFreeModule @@ module else isFreeModule)
 
+-- FIXME
+minimize' = lookup(minimize, Complex)
+minimize Complex := C -> if isSheafComplex C then sheaf(variety ring C, minimize' module C) else minimize' C
+
 sheafHom(Complex, Complex) := Complex => opts -> (C,D) -> (
     -- signs here are based from Christensen and Foxby
     -- which agrees with Conrad (Grothendieck duality book)

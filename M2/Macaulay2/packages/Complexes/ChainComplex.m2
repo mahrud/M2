@@ -1181,7 +1181,7 @@ minimize Complex := C -> (
     D := prune C';  -- TODO: this appears to be overkill.  write a specialized prune
                       -- that works in this specific case, where the result will consist of
                       -- free modules.
-    phi := map(D, C, i -> (D_i.cache.pruningMap)^(-1) * inducedMap(C'_i, C_i));
+    phi := map(D, C, i -> (D.cache.pruningMap_i)^(-1) * inducedMap(C'_i, C_i));
     D.cache.minimizingMap = phi;
     D
     )

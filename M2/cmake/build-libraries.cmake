@@ -281,6 +281,10 @@ _ADD_COMPONENT_DEPENDENCY(libraries mpfi "gmp;mpfr" MPFI_FOUND)
 
 
 # http://shoup.net/ntl
+# NTL's own DoConfig script forces NATIVE=off whenever the CXXFLAGS
+# it's given contain -march=/-mcpu=/-mtune=, so we use NATIVE=on
+# so NTL derives its own matching flags instead.
+string(REGEX REPLACE "-march=[^ ]*|-mcpu=[^ ]*|-mtune=[^ ]*" "" NTL_CXXFLAGS "${CXXFLAGS}")
 ExternalProject_Add(build-ntl
   URL               https://libntl.org/ntl-11.6.0.tar.gz
   URL_HASH          SHA256=bc0ef9aceb075a6a0673ac8d8f47d5f8458c72fe806e4468fbd5d3daff056182
@@ -291,13 +295,13 @@ ExternalProject_Add(build-ntl
   CONFIGURE_COMMAND cd src && ${CONFIGURE} PREFIX=${M2_HOST_PREFIX}
                       #-C --cache-file=${CONFIGURE_CACHE}
                       TUNE=generic
-                      NATIVE=off
+                      NATIVE=on
                       GMP_PREFIX=${GMP_ROOT}
                       SHARED=$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,on,off>
                       NTL_STD_CXX14=on
                       NTL_NO_INIT_TRANS=on # TODO: still necessary?
                       CPPFLAGS=${CPPFLAGS} # TODO: add -DDEBUG if DEBUG
-                      CXXFLAGS=${CXXFLAGS}
+                      CXXFLAGS=${NTL_CXXFLAGS}
                       LDFLAGS=${LDFLAGS}
                       CXX=${CMAKE_CXX_COMPILER}
                       RANLIB=${CMAKE_RANLIB}
@@ -321,7 +325,7 @@ ExternalProject_Add_Step(build-ntl wizard
                       NTL_STD_CXX14=on
                       NTL_NO_INIT_TRANS=on # TODO: still necessary?
                       CPPFLAGS=${CPPFLAGS} # TODO: add -DDEBUG if DEBUG
-                      CXXFLAGS=${CXXFLAGS}
+                      CXXFLAGS=${NTL_CXXFLAGS}
                       LDFLAGS=${LDFLAGS}
                       CXX=${CMAKE_CXX_COMPILER}
                       RANLIB=${CMAKE_RANLIB}

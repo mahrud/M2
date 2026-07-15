@@ -333,10 +333,7 @@ Symbol ^ Complex := ComplexMap => (sym, C) -> (
     )
 
 isFree = method()
-isFree Complex := Boolean => C -> (
-    (lo, hi) := concentration C;
-    all(lo..hi, i -> isFreeModule C_i)
-    )
+isFree Complex := Boolean => C -> all(values C.module, isFreeModule)
 
 --isExact = method()
 isExact(Complex, Number, Number) := 

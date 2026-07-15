@@ -123,6 +123,10 @@ Complex(ZZ) := Complex(Sequence) := Complex => (C, a) -> (
     then complex(for i from lo to hi list C_i(a), Base => lo)
     else complex applyValues(C.dd.map, f -> f(a)))
 
+isFree Complex := Boolean => C -> all(values C.module,
+    -- TODO: in the sheafy case, should we check the differentials, too?
+    if isSheafComplex C then isFreeModule @@ module else isFreeModule)
+
 sheafHom(Complex, Complex) := Complex => opts -> (C,D) -> (
     -- signs here are based from Christensen and Foxby
     -- which agrees with Conrad (Grothendieck duality book)

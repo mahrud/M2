@@ -79,7 +79,7 @@ isGRevLexRing = (R) -> (
      mo := (options monoid R).MonomialOrder;
      if #mo === 0 then return false;
      mo = select(mo, x -> x#0 =!= MonomialSize and x#0 =!= Position);
-     isgrevlex := mo#0#0 === GRevLex and mo#0#1 === apply(degrees R, first);
+     isgrevlex := mo#0#0 === GRevLex and mo#0#1 === flatten degrees R;
      #mo === 1 and isgrevlex and all(mo, x -> x#0 =!= Weights and x#0 =!= Lex))
 
 -- Helper for Linear strategies

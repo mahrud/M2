@@ -3,6 +3,9 @@
 #ifndef M2_COMPUTATIONS_COMP_HPP_
 #define M2_COMPUTATIONS_COMP_HPP_
 
+#include <atomic>
+#include <cstddef>
+
 #include "interface/computation.h"
 #include "hash.hpp"
 
@@ -20,6 +23,19 @@ class Computation : public MutableEngineObject
  private:
   enum ComputationStatusCode computation_status;
 
+  // Engine computations (gbA in particular) carry mutable internal state and
+  // are not thread safe.  Two interpreter threads driving the same computation
+  // object -- which happens when parallel tasks force the same cached Groebner
+  // basis or resolution -- corrupt that state, and the symptom is a SIGSEGV or
+  // "pure virtual method called" deep inside the engine, far from the cause.
+  // Rather than race, the interface routines claim the computation with a
+  // ThreadGuard and report a top-level error when a second thread shows up.
+  //
+  // mOwner is the tag of the thread currently inside this computation, or 0
+  // when nobody holds it; mOwnerDepth is touched only by the owning thread.
+  std::atomic<std::size_t> mOwner{0};
+  int mOwnerDepth{0};
+
  protected:
   StopConditions stop_;
 
@@ -34,6 +50,35 @@ class Computation : public MutableEngineObject
   virtual ~Computation();
 
  public:
+  // A unique small integer identifying the calling thread, for error messages.
+  static std::size_t currentThreadTag();
+
+  // RAII claim of exclusive use of a computation by the current thread.
+  // Re-entrant for the thread that already holds the claim, so nested engine
+  // calls on one thread are fine.  If another thread holds it, ok() is false
+  // and the caller must bail out instead of proceeding into the computation.
+  class ThreadGuard
+  {
+   private:
+    Computation *mComputation;
+    std::size_t mOtherThread;
+    bool mOk;
+
+   public:
+    explicit ThreadGuard(Computation *C);
+    ~ThreadGuard();
+
+    ThreadGuard(const ThreadGuard &) = delete;
+    ThreadGuard &operator=(const ThreadGuard &) = delete;
+
+    bool ok() const { return mOk; }
+    // tag of the thread that is already inside the computation; only
+    // meaningful when ok() is false
+    std::size_t otherThread() const { return mOtherThread; }
+    // issues the standard top-level error message; only call when !ok()
+    void reportConflict() const;
+  };
+
   Computation /* or null */ *set_stop_conditions(M2_bool always_stop,
                                                  M2_arrayint degree_limit,
                                                  int basis_element_limit,

@@ -19,9 +19,20 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+// The flag and the message are per-thread: ERROR is called by the engine on
+// whichever thread made the call, and error()/error_message() are read back by
+// the D layer on that same thread (see EngineError in d/engine.dd).  With a
+// single shared buffer, two threads erroring at once clobber each other and one
+// of them ends up reporting "unknown engine error" instead of the real message.
+#if defined(_MSC_VER)
+#define M2_THREADLOCAL __declspec(thread)
+#else
+#define M2_THREADLOCAL __thread
+#endif
+
 #define MAXERROR 200
-static int iserror = 0;
-static char errmsg[MAXERROR] = {'\0'};
+static M2_THREADLOCAL int iserror = 0;
+static M2_THREADLOCAL char errmsg[MAXERROR] = {'\0'};
 
 void ERROR(const char *s, ...)
 {

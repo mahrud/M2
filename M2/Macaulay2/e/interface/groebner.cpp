@@ -267,6 +267,12 @@ Computation /* or null */ *rawStartComputation(Computation *C)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       C->start_computation();
 
       if (M2_gbTrace == 15)
@@ -324,6 +330,12 @@ const Matrix /* or null */ *rawGBGetMatrix(Computation *C)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_gb();
       ERROR("computation type unknown or not implemented");
@@ -344,6 +356,12 @@ const Matrix /* or null */ *rawGBMinimalGenerators(Computation *C)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_mingens();
       ERROR("computation type unknown or not implemented");
@@ -365,6 +383,12 @@ const Matrix /* or null */ *rawGBChangeOfBasis(Computation *C)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_change();
       ERROR("computation type unknown or not implemented");
@@ -381,6 +405,12 @@ const Matrix /* or null */ *rawGBGetLeadTerms(Computation *C, int nparts)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_initial(nparts);
       ERROR("computation type unknown or not implemented");
@@ -398,6 +428,12 @@ const Matrix /* or null */ *rawGBGetParallelLeadTerms(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_parallel_lead_terms(w);
       ERROR("computation type unknown or not implemented");
@@ -419,6 +455,12 @@ const Matrix /* or null */ *rawGBSyzygies(Computation *C)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->get_syzygies();
       ERROR("computation type unknown or not implemented");
@@ -436,6 +478,12 @@ const Matrix /* or null */ *rawGBMatrixRemainder(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->matrix_remainder(m);
       ERROR("computation type unknown or not implemented");
@@ -455,6 +503,12 @@ M2_bool IM2_GB_matrix_lift(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return false;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr)
         return G->matrix_lift(m, result_remainder, result_quotient);
@@ -472,6 +526,12 @@ int IM2_GB_contains(Computation *C, const Matrix *m)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return -2;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G != nullptr) return G->contains(m);
       ERROR("computation type unknown or not implemented");
@@ -488,6 +548,12 @@ const Matrix /* or null */ *rawResolutionGetMatrix(Computation *C, int level)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
       if (G != nullptr) return G->get_matrix(level);
       ERROR("expected resolution computation type");
@@ -506,6 +572,12 @@ MutableMatrix /* or null */ *rawResolutionGetMatrix2(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
       if (G != nullptr) return G->get_matrix(level, degree);
       ERROR("expected resolution computation type");
@@ -529,6 +601,12 @@ MutableMatrix /* or null */ *rawResolutionGetMutableMatrixB(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       F4ResComputation *G = dynamic_cast<F4ResComputation *>(C);
       if (G != nullptr) return G->get_mutable_matrix(R, level);
       ERROR("expected fast nonminimal resolution computation type");
@@ -549,6 +627,12 @@ MutableMatrix /* or null */ *rawResolutionGetMutableMatrix2B(
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       F4ResComputation *G = dynamic_cast<F4ResComputation *>(C);
       if (G != nullptr) return G->get_mutable_matrix(KK, level, degree);
       ERROR("expected fast nonminimal resolution computation type");
@@ -565,6 +649,12 @@ const FreeModule /* or null */ *rawResolutionGetFree(Computation *C, int level)
   try
     {
       clear_emit_size();
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
       if (G != nullptr) return G->get_free(level);
       ERROR("expected resolution computation type");
@@ -619,6 +709,12 @@ M2_arrayintOrNull rawResolutionBetti(Computation *C, int type)
 {
   try
     {
+      Computation::ThreadGuard guard(C);
+      if (!guard.ok())
+        {
+          guard.reportConflict();
+          return nullptr;
+        }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
       if (G != nullptr) return G->get_betti(type);
       ERROR("expected resolution computation type");

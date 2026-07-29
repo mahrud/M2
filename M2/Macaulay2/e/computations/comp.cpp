@@ -5,8 +5,61 @@
 #include <stdio.h>
 
 #include "buffer.hpp"
+#include "error.h"
 #include "exceptions.hpp"
 #include "finalize.hpp"
+
+namespace {
+std::atomic<std::size_t> nextThreadTag{1};
+}
+
+std::size_t Computation::currentThreadTag()
+{
+  static thread_local std::size_t tag =
+      nextThreadTag.fetch_add(1, std::memory_order_relaxed);
+  return tag;
+}
+
+Computation::ThreadGuard::ThreadGuard(Computation *C)
+    : mComputation(C), mOtherThread(0), mOk(false)
+{
+  std::size_t self = currentThreadTag();
+  std::size_t owner = 0;  // expected value: unowned
+  if (C->mOwner.compare_exchange_strong(
+          owner, self, std::memory_order_acq_rel, std::memory_order_acquire))
+    {
+      // we just claimed it
+      C->mOwnerDepth = 1;
+      mOk = true;
+    }
+  else if (owner == self)
+    {
+      // already ours: a nested engine call on the same thread
+      C->mOwnerDepth++;
+      mOk = true;
+    }
+  else
+    {
+      // another thread is inside this computation
+      mOtherThread = owner;
+    }
+}
+
+Computation::ThreadGuard::~ThreadGuard()
+{
+  if (!mOk) return;
+  if (--mComputation->mOwnerDepth == 0)
+    mComputation->mOwner.store(0, std::memory_order_release);
+}
+
+void Computation::ThreadGuard::reportConflict() const
+{
+  ERROR(
+      "engine computation already in use by thread %lu (this is thread %lu): "
+      "Groebner basis and resolution computations are not thread safe",
+      static_cast<unsigned long>(mOtherThread),
+      static_cast<unsigned long>(currentThreadTag()));
+}
 
 Computation /* or null */ *Computation::set_stop_conditions(
     M2_bool always_stop,

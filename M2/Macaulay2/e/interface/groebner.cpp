@@ -164,6 +164,12 @@ Computation /* or null */ *IM2_GB_set_hilbert_function(Computation *C,
   try
     {
       clear_emit_size();
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
+        {
+          lock.reportConflict();
+          return nullptr;
+        }
       GBComputation *G = C->cast_to_GBComputation();
       if (G->get_ring()->get_degree_ring() != h->get_ring())
         {
@@ -245,6 +251,12 @@ Computation /* or null */ *IM2_Computation_set_stop(
   try
     {
       clear_emit_size();
+      Computation::ThreadLock lock(G);
+      if (!lock.ok())
+        {
+          lock.reportConflict();
+          return nullptr;
+        }
       return G->set_stop_conditions(always_stop,
                                     degree_limit,
                                     basis_element_limit,
@@ -267,10 +279,10 @@ Computation /* or null */ *rawStartComputation(Computation *C)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       C->start_computation();
@@ -330,10 +342,13 @@ const Matrix /* or null */ *rawGBGetMatrix(Computation *C)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      // get_gb() is short and only auto-reduces already-computed state, so
+      // rather than fail when another thread is inside this computation we
+      // just wait for it to finish.
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -356,10 +371,10 @@ const Matrix /* or null */ *rawGBMinimalGenerators(Computation *C)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -383,10 +398,10 @@ const Matrix /* or null */ *rawGBChangeOfBasis(Computation *C)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -405,10 +420,10 @@ const Matrix /* or null */ *rawGBGetLeadTerms(Computation *C, int nparts)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -428,10 +443,10 @@ const Matrix /* or null */ *rawGBGetParallelLeadTerms(Computation *C,
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -455,10 +470,10 @@ const Matrix /* or null */ *rawGBSyzygies(Computation *C)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -478,10 +493,10 @@ const Matrix /* or null */ *rawGBMatrixRemainder(Computation *C,
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -503,10 +518,12 @@ M2_bool IM2_GB_matrix_lift(Computation *C,
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      // Like get_gb(), matrix_lift() only reduces against an already-computed
+      // basis, so waiting for the other thread beats failing the division.
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return false;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -526,10 +543,10 @@ int IM2_GB_contains(Computation *C, const Matrix *m)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return -2;
         }
       GBComputation *G = C->cast_to_GBComputation();
@@ -548,10 +565,10 @@ const Matrix /* or null */ *rawResolutionGetMatrix(Computation *C, int level)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
@@ -572,10 +589,10 @@ MutableMatrix /* or null */ *rawResolutionGetMatrix2(Computation *C,
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
@@ -601,10 +618,10 @@ MutableMatrix /* or null */ *rawResolutionGetMutableMatrixB(Computation *C,
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       F4ResComputation *G = dynamic_cast<F4ResComputation *>(C);
@@ -627,10 +644,10 @@ MutableMatrix /* or null */ *rawResolutionGetMutableMatrix2B(
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       F4ResComputation *G = dynamic_cast<F4ResComputation *>(C);
@@ -649,10 +666,10 @@ const FreeModule /* or null */ *rawResolutionGetFree(Computation *C, int level)
   try
     {
       clear_emit_size();
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();
@@ -709,10 +726,10 @@ M2_arrayintOrNull rawResolutionBetti(Computation *C, int type)
 {
   try
     {
-      Computation::ThreadGuard guard(C);
-      if (!guard.ok())
+      Computation::ThreadLock lock(C);
+      if (!lock.ok())
         {
-          guard.reportConflict();
+          lock.reportConflict();
           return nullptr;
         }
       ResolutionComputation *G = C->cast_to_ResolutionComputation();

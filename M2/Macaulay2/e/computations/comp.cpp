@@ -3,11 +3,16 @@
 #include "computations/comp.hpp"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <chrono>
 
 #include "buffer.hpp"
 #include "error.h"
 #include "exceptions.hpp"
 #include "finalize.hpp"
+#include "interrupted.hpp"
 
 namespace {
 std::atomic<std::size_t> nextThreadTag{1};
@@ -20,45 +25,77 @@ std::size_t Computation::currentThreadTag()
   return tag;
 }
 
-Computation::ThreadGuard::ThreadGuard(Computation *C)
-    : mComputation(C), mOtherThread(0), mOk(false)
+// Record that the current thread now holds C->mMutex.  Only the outermost
+// acquisition sets mOwner; nested ones just deepen the count.  Both fields are
+// only ever touched while holding the mutex.
+static void noteAcquired(std::atomic<std::size_t> &owner, int &depth)
 {
-  std::size_t self = currentThreadTag();
-  std::size_t owner = 0;  // expected value: unowned
-  if (C->mOwner.compare_exchange_strong(
-          owner, self, std::memory_order_acq_rel, std::memory_order_acquire))
-    {
-      // we just claimed it
-      C->mOwnerDepth = 1;
-      mOk = true;
-    }
-  else if (owner == self)
-    {
-      // already ours: a nested engine call on the same thread
-      C->mOwnerDepth++;
-      mOk = true;
-    }
-  else
-    {
-      // another thread is inside this computation
-      mOtherThread = owner;
-    }
+  if (depth++ == 0)
+    owner.store(Computation::currentThreadTag(), std::memory_order_relaxed);
 }
 
-Computation::ThreadGuard::~ThreadGuard()
+static void noteReleased(std::atomic<std::size_t> &owner, int &depth)
+{
+  if (--depth == 0) owner.store(0, std::memory_order_relaxed);
+}
+
+bool Computation::failFastOnThreadConflict()
+{
+  static const bool failFast = [] {
+    const char *s = getenv("M2_ENGINE_THREAD_CONFLICT");
+    return s != nullptr && strcmp(s, "error") == 0;
+  }();
+  return failFast;
+}
+
+Computation::ThreadLock::ThreadLock(Computation *C)
+    : mComputation(C), mOtherThread(0), mOk(false), mInterrupted(false)
+{
+  // The mutex is recursive, so try_lock always succeeds for the thread that
+  // already holds this computation; only a genuinely concurrent thread waits.
+  if (C->mMutex.try_lock())
+    {
+      noteAcquired(C->mOwner, C->mOwnerDepth);
+      mOk = true;
+      return;
+    }
+
+  mOtherThread = C->mOwner.load(std::memory_order_relaxed);
+  if (failFastOnThreadConflict()) return;
+
+  // Wait for the other thread, but in slices, so that a thread parked behind a
+  // long Groebner basis computation still answers ^C instead of hanging.
+  while (!C->mMutex.try_lock_for(std::chrono::milliseconds(100)))
+    {
+      if (system_interrupted())
+        {
+          mInterrupted = true;
+          return;
+        }
+      mOtherThread = C->mOwner.load(std::memory_order_relaxed);
+    }
+  noteAcquired(C->mOwner, C->mOwnerDepth);
+  mOk = true;
+}
+
+Computation::ThreadLock::~ThreadLock()
 {
   if (!mOk) return;
-  if (--mComputation->mOwnerDepth == 0)
-    mComputation->mOwner.store(0, std::memory_order_release);
+  noteReleased(mComputation->mOwner, mComputation->mOwnerDepth);
+  mComputation->mMutex.unlock();
 }
 
-void Computation::ThreadGuard::reportConflict() const
+void Computation::ThreadLock::reportConflict() const
 {
-  ERROR(
-      "engine computation already in use by thread %lu (this is thread %lu): "
-      "Groebner basis and resolution computations are not thread safe",
-      static_cast<unsigned long>(mOtherThread),
-      static_cast<unsigned long>(currentThreadTag()));
+  if (mInterrupted)
+    ERROR("interrupted while waiting for an engine computation held by thread %lu",
+          static_cast<unsigned long>(mOtherThread));
+  else
+    ERROR(
+        "engine computation already in use by thread %lu (this is thread %lu): "
+        "Groebner basis and resolution computations are not thread safe",
+        static_cast<unsigned long>(mOtherThread),
+        static_cast<unsigned long>(currentThreadTag()));
 }
 
 Computation /* or null */ *Computation::set_stop_conditions(

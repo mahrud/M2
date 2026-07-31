@@ -426,10 +426,31 @@ mySat = (I, f) -> saturate(I, last \ factors f)
 --addHook((saturate, Ideal, RingElement), (opts, I, f) -> saturate(I, last \ factors f, opts), Strategy => Factorization)
 
 -- needs documentation
+-- Note: this is locked because it is the single funnel for every Factory call
+-- made on the default path (via monicUniqueFactors, mySat, findElementThatFactors,
+-- squarefreeGenerators, splitLexGB), and Factory is not thread-safe: enter_factory
+-- in e/interface/factory.cpp mutates process-global switches with no lock of its own.
+-- Calling 'factor' from several tasks at once hangs or returns wrong answers, even
+-- within a single characteristic. Compare makeMonomialOrdering in m2/engine.m2.
+-- Factory is only 1-9% of the running time, so serializing it here is nearly free.
+-- Caveat: this does NOT cover arithmetic over kk(basevars)[fibervars], which reaches
+-- Factory through rawGCDRingElement inside e/rings/frac.cpp; see parallelStrategies.
 factors = method()
-factors RingElement := (F) -> (
+factors RingElement := lock((F) -> (
     R := ring F;
     if F == 0 then return {(1,F)};
+    -- Results are memoized per ring: on the default path 96% of the calls repeat an
+    -- argument that was already factored, because monicUniqueFactors re-reduces the
+    -- nonzerodivisor and inverted lists of every annotated ideal it constructs and those
+    -- lists grow by appending.  On the QQ example in the end-- section this turns 705
+    -- calls into 26 factorizations, and on gonnet 134 into 24.  The memo lives in the
+    -- ring's cache, so it is collected along with the ring.  The setAmbientField side
+    -- effect below is not lost: the first call in a given ring always runs the body and
+    -- sets R.toAmbientField, after which every later call takes the first branch anyway.
+    if not R.?cache then R.cache = new CacheTable;
+    memo := R.cache#"MinimalPrimes$factors" ??= new MutableHashTable;
+    if memo#?F then return memo#F;
+    Forig := F; -- F is reassigned below, but the memo is keyed on the original
     facs := if R.?toAmbientField then (
         F = R.toAmbientField F;
         RU := ring numerator F;
@@ -457,8 +478,8 @@ factors RingElement := (F) -> (
     facs = select(facs, z -> ring first z === RU);
     facs = apply(#facs, i -> (facs#i#1, (1/leadCoefficient facs#i#0) * facs#i#0 ));
     facs = select(facs, (n,f) -> # support f =!= 0);
-    if R.?toAmbientField then apply(facs, (r,g) -> (r, R.fromAmbientField g)) else facs
-    )
+    memo#Forig = if R.?toAmbientField then apply(facs, (r,g) -> (r, R.fromAmbientField g)) else facs
+    ))
 
 makeFiberRings = method()
 makeFiberRings List       :=  basevars    -> (

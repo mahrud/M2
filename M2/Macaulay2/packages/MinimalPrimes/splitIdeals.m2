@@ -57,6 +57,50 @@ splitIdeal Ideal          := opts -> I -> (
     opts = opts ++ {"PDState" => createPDState I};
     splitIdeals({annotatedIdeal(I, {}, {}, {})}, opts.Strategy, opts))
 
+-- EXPERIMENTAL, OFF BY DEFAULT.  Set this to true after 'debug MinimalPrimes' to run
+-- each round of the worklist below as one task per ideal.  It is off because measuring
+-- it showed it does not pay:
+--
+--   butcher ZZ/32003   2.09s -> 2.26s     PD example QQ  1.16s -> 1.50s
+--   gonnet  ZZ/101     0.37s -> 0.49s     (allowableThreads = 8)
+--
+-- The answers were identical at 1, 4 and 8 threads, so this is not a correctness
+-- problem with the worklist; it is the runtime.  Eight independent saturations that
+-- cost 0.016s sequentially cost 0.32s of CPU when run as tasks -- a 20x inflation for
+-- the same work -- because this algebra is allocation-bound and the collector and the
+-- engine's arena allocator (e/memtailor, e/myalloc.hpp:13 "not thread safe",
+-- e/mem.cpp:88 "TODO: MAKE THREADSAFE") serialize and contend.  Until that changes,
+-- task parallelism at this level costs more than it buys.
+parallelSplit = false
+
+-- Strategies whose splitFunction may be run in parallel tasks, if parallelSplit is on.
+-- Excluded, and each for a reason that would be a silent-wrong-answer or a crash:
+--   Birational          calls eliminate, which builds an elimination ring
+--                       (Elimination.m2:42,63) -- ring construction is a check-then-act
+--                       on shared state, exactly like the case below.
+--   IndependentSet      calls makeFiberRings: newRing, frac and setAmbientField, and
+--                       then computes over kk(basevars)[fibervars], where even ordinary
+--                       arithmetic reaches the non-thread-safe Factory library through
+--                       rawGCDRingElement in e/rings/frac.cpp, which the lock on
+--                       'factors' cannot guard.
+--   SplitTower          builds a quotient ring per factor (factorTower.m2:191).
+--   CharacteristicSets  calls rawCharSeries, another Factory entry point.
+-- Building a ring inside a task is not a theoretical worry: doing it reproducibly
+-- produces "expected pair to have a method for '*'" and "common ring not found" from
+-- enginering.m2, and can abort in memtailor's Arena.
+parallelStrategies = set { Linear, Factorization, DecomposeMonomials, Trim }
+
+-- Scheduling a task costs on the order of 5ms, so a round is only worth running in
+-- parallel if the ideals in it are expensive enough.  We estimate that from the mean
+-- per-ideal time of the previous round of the same strategy, which means the first
+-- round of each strategy always runs sequentially.
+parallelSplitThreshold = 0.01
+
+useParallelSplit = (strat, n, pdState) -> (
+    parallelSplit and n > 1 and allowableThreads > 1 and parallelStrategies#?strat and (
+        costs := pdState#"RoundCost";
+        costs#?strat and costs#strat >= parallelSplitThreshold))
+
 -- each of the splitIdeals routines:
 --  takes a list of annotated ideals, and returns a similar list
 splitIdeals = method(Options => options splitIdeal)
@@ -79,24 +123,45 @@ splitIdeals(List, Symbol) := opts -> (L, strat) -> (
             }) then
           error ("Unknown strategy " | toString strat | " given.");
     pdState := opts#"PDState";
-    flatten for f in L list (
-        if opts.Verbosity >= 2 then (
-            << "  Strategy: " << pad(toString strat,18) << flush;
-            );
-        -- check to see if this ideal is redundant before performing the splitting computation
-        if isRedundantIdeal(f,pdState) then (
-           if opts.Verbosity >= 2 then << " ** Redundant Ideal found and skipped." << endl;
-           continue;
-        );
+    verbose := opts.Verbosity >= 2;
+    -- check to see if any ideal is redundant before performing the splitting computations
+    L = select(L, f -> (
+            if not isRedundantIdeal(f, pdState) then true
+            else ( if verbose then
+                << "  Strategy: " << pad(toString strat,18)
+                << " ** Redundant Ideal found and skipped." << endl; false)));
+    -- the per-ideal unit of work: it touches only f, the ideals it creates from f,
+    -- and their caches, so it is safe to run several of these at once.  Note that
+    -- everything that writes to pdState is deliberately left out of it.
+    splitOne := f -> (
         tim := timing splitFunction#strat(f, opts);
         ans := tim#1;
         numOrig := #ans;
-        if opts.CodimensionLimit =!= null then 
+        if opts.CodimensionLimit =!= null then
             ans = select(ans, i -> codimLowerBound i <= opts.CodimensionLimit);
-        (primes,others) := separatePrime(ans);
-        updatePDState(pdState,primes,numOrig - #ans);
-        if opts.Verbosity >= 2 then << pad("(time " | toString (tim#0) | ") ", 16);
-        if opts.Verbosity >= 2 then (
+        (primes, others) := separatePrime(ans);
+        -- 'ideal' and 'codim' of each new prime are computed here rather than in
+        -- updatePDState, to keep the shared-state update below free of engine calls
+        (preparePrimes primes, others, numOrig - #ans, tim#0));
+    results := if useParallelSplit(strat, #L, pdState)
+        then await apply(L, async splitOne)
+        else apply(L, splitOne);
+    -- Record the mean per-ideal cost, to decide whether the next round of this
+    -- strategy should be run in parallel.  A failed task contributes nothing.
+    times := for r in results list if r === null then continue else r#3;
+    if #times > 0 then pdState#"RoundCost"#strat = (sum times) / #times;
+    -- Fold the results into pdState in the original order, so that PrimesSoFar comes
+    -- out identical to a sequential run.
+    flatten for i to #results - 1 list (
+        -- a task that raised an error yields null (see 'schedule'), and must not be
+        -- mistaken for an ideal that split into nothing
+        if results#i === null then error("MinimalPrimes: the ", toString strat,
+            " computation failed for ideal ", toString i, " of ", toString(#results));
+        (primes, others, pruned, t) := results#i;
+        updatePDState(pdState, primes, pruned);
+        if verbose then (
+            << "  Strategy: " << pad(toString strat,18);
+            << pad("(time " | toString t | ") ", 16);
             << " #primes = " << numPrimesInPDState(pdState);
             << " #prunedViaCodim = " << pdState#"PrunedViaCodim" << endl;
             );

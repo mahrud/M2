@@ -103,6 +103,10 @@ checkRing = A -> (
 -- TODO: eventually turn into a method and move to Core
 assert' = (bool, msg) -> bool or ( if debugLevel > 0 then printerr msg; false )
 
+-- FIXME
+flattenMorphism = liftMorphism
+flattenModule   = liftModule
+
 -----------------------------------------------------------------------------
 -- Variety, etc. type declarations and basic constructors
 -----------------------------------------------------------------------------

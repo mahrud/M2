@@ -323,6 +323,50 @@ fixGB := A -> (
     A.cache#(symbol isHomogeneous)= true;
     )
 
+--Caching of data that does not depend on the order of the lift.  Every cache
+--below hangs off the CacheTable of an object that lives exactly as long as the
+--family being lifted (the parameter ring, or F_0, or C_0), so that a sweep over
+--many examples does not accumulate them.  Note that matrices hash by value in
+--M2, so a matrix is a usable key: the point of several of these caches is that
+--consecutive orders present an *equal* but freshly built matrix.
+
+--the cache keys, protected so they are not mutable unexported symbols
+protect HomAction
+protect ObstructionSetup
+protect RegradedRing
+protect LowestOrderIdeal
+protect VarSwap
+protect SwappedCoefficients
+
+--value of f(), computed once per object and key
+cachedValue := (X, key, f) -> (
+    if X.cache#?key then X.cache#key else X.cache#key = f())
+
+--a MutableHashTable hanging off X, created on first use
+cacheTableFor := (X, key) -> (
+    if X.cache#?key then X.cache#key else X.cache#key = new MutableHashTable)
+
+--Hom(R_0, coker F_0), the order independent part of RACTION.  Only the
+--** QT base change below is per order.
+homAction := (F0, R0) -> (
+    c := cacheTableFor(F0, symbol HomAction);
+    if c#?R0 then c#R0 else c#R0 = Hom(R0, coker F0))
+
+--The ring QT = T/ideal(lowG) in which obstructions are computed, together with
+--the module A = coker F_0 over it and the induced map RACTION.  These depend on
+--the order only through lowG, and lowG is frequently unchanged from one order to
+--the next; when it is, rebuilding QT (which runs a Groebner basis) and the Hom
+--is pure waste.  Both liftDeformation and correctDeformation go through here.
+obstructionSetup := (T, lowG, F0, R0) -> (
+    c := cacheTableFor(T, symbol ObstructionSetup);
+    key := (lowG, F0, R0);
+    if c#?key then return c#key;
+    QT := T/ideal(lowG);
+    A := coker sub(F0, QT); -- setup a module to compute obstructions in
+    RACTION := map(A^(numcols R0), QT^((numrows F0)*(numcols F0)),
+        homAction(F0, R0) ** QT);
+    c#key = (QT, A, RACTION))
+
 --outputs the least degree term of a polynomial, up to degree n
 leastTerm := (f, n) -> (
     cf := coefficients(f);
@@ -332,17 +376,15 @@ leastTerm := (f, n) -> (
     (((cf_0)_pos)*((cf_1)^pos))_0_0
     )
 
---transforms a polynomial into a list of polynomials, by degree
+--transforms a polynomial into a list of polynomials, by ORDER, that is by
+--total degree in the deformation parameters.  This is deliberately NOT the
+--degree with respect to the grading of the ring: the lists F_i, R_i, G_i, C_i
+--are all indexed by order, and the parameters carry non-standard degrees
+--whenever the input is weighted homogeneous, so part(i, i, f) splits them in
+--the wrong places (it made check(6) fail with "Sanity check failed").
 polyToList := (f, n) -> (
-    -- FIXME: this routine ignores non-standard gradings
-    -- and only considers the total grading, is it right?
-    apply(n+1, i -> part(i, i, f))
-    -- deglist := apply(exponents f, e -> sum e);
-    -- cf := coefficients(f);
-    -- apply(n+1, i -> (
-    --         pos := positions(deglist, j -> j == i);
-    -- 	    (cf_0_pos * cf_1^pos)_0_0))
-    )
+    wts := toList(numgens ring f : 1);
+    apply(n+1, i -> part(i, i, wts, f)))
 
 --auxiliary function to get lowest order terms of obstruction equations
 lowestOrderTerms := (G, n, d) -> (
@@ -359,16 +401,38 @@ lowestOrder := (G, F, C, nk) -> (
     if G == {} then return (map(T0^1, T0^0, 0), null);
     assert(T0 === ring G_0);
     (n, k) := nk;
-    T := newRing(T0, Join => false, Global => false, 
-        DegreeMap => (i -> {1}), Degrees => splice {numgens T0 : 1}, 
-        MonomialOrder => Weights => splice {numgens T0 : -1});
-    I := ideal sub(sum G, T);
+    -- The re-graded ring depends on nothing but T0, so build it once.  It used
+    -- to be rebuilt on every order, which also forced a brand new ideal object
+    -- each time and hence a Groebner basis restarted from scratch.
+    T := cachedValue(T0, symbol RegradedRing, () -> newRing(T0,
+        Join => false, Global => false,
+        DegreeMap => (i -> {1}), Degrees => splice {numgens T0 : 1},
+        MonomialOrder => Weights => splice {numgens T0 : -1}));
+    g := sub(sum G, T);
+    -- Keep the ideal object alive across orders.  The obstruction equations
+    -- stop changing well before the lifting loop ends, and from then on this is
+    -- literally the same ideal asked for to a larger DegreeLimit, so the engine
+    -- resumes the computation it already has instead of restarting it.  Only the
+    -- previous order can ever be resumed, so hold exactly one ideal: keeping the
+    -- older ones alive keeps their Groebner computations alive too, and that
+    -- costs more in heap than the resume saves.  The generator matrix is the key,
+    -- so an ideal is only reused when it really is the same ideal.
+    prev := cacheTableFor(T0, symbol LowestOrderIdeal);
+    if not (prev#?(symbol gens) and prev#(symbol gens) == g) then (
+        prev#(symbol gens) = g;
+        prev#(symbol ideal) = ideal g);
+    I := prev#(symbol ideal);
     dl := n+k;
     if dl == infinity then dl = {};
     elapsedTime GBcalc := gb(I, DegreeLimit => dl, ChangeMatrix => true); -- ~20% of the computation
     GB := flatten entries gens GBcalc;
-    LO := apply(GB, f -> part(, n, f));
-    keep := positions(LO, not zero);
+    -- A must hold the LOWEST order term of each generator, not every term of
+    -- order <= n: part(, n, f) keeps the whole truncation, which enlarges the
+    -- tangent cone ideal and hence QT (it made check(6) fail with
+    -- "Sanity check failed").  leastTerm returns null when the lowest order
+    -- present already exceeds n, which is what drops the generator here.
+    LO := apply(GB, f -> leastTerm(f, n));
+    keep := positions(LO, i -> i =!= null);
     LO = LO_keep;
     h := getChangeMatrix GBcalc;
     B := sub(h_keep, T0);
@@ -401,20 +465,21 @@ liftDeformation(List, List, List, List) := opts -> (F, R, G, C) -> (
      if opts.Verbose > 3 then print "Calculating tangent cone for obstructions";
      if d > 0 then (lowG, cm) := lowestOrder(G, F, C, (n+1, opts.DegreeBound))
      else lowG = map(T^1, source C_0, 0); --unobstructed case
-     QT := T/ideal(lowG);
-     A := coker sub(F_0, QT); -- setup a module to compute obstructions in
+     (QT, A, RACTION) := obstructionSetup(T, lowG, F_0, R_0);
      if opts.Verbose > 3 then print "Calculating residual terms";
      fterms := sum(1..n,     i -> F_i * R_(n+1-i)); -- order n+1 terms
      eterms := sum(1..(n-2), i -> C_i * G_(n-1-i)); -- terms from base equations
      rem := map(A^l, QT^1, (sub((transpose flatten fterms)+eterms, QT))); --reduce modulo generators and lowest order terms
      if opts.Verbose > 3 then print "Lifting Family";
-     RACTION := map(A^l, (QT)^(r*m), Hom(R_0, coker F_0)**QT);
      lfam := sub(rem // RACTION, T); -- ~10% of the computation
      FO := F | { vecToHom(-lfam, target F_0, source F_0) }; --lift the family
      if opts.Verbose > 3 then print "Calculating Obstruction Equations";
      obstructions := rem - (RACTION * lfam);
-     B := varSwap T;
-     clist := coefficients sub(C_0, B);
+     -- B depends only on T and clist only on C_0 and B, so neither belongs
+     -- inside the lifting loop; building a ring per order is pure waste.
+     B := cachedValue(T, symbol VarSwap, () -> varSwap T);
+     clist := cachedValue(C_0, symbol SwappedCoefficients,
+         () -> coefficients sub(C_0, B));
      coeff := (coefficients(sub(matrix obstructions, B), Monomials => clist_0))_1;
      NG := -sub(coeff // clist_1, T);
      GO := G | { NG };
@@ -469,14 +534,12 @@ correctDeformation(Sequence, Matrix, List) :=  opts -> (S, M, L) -> (
      -- find lowest order terms of obstruction equations
      lowG := lowestOrderTerms(G, n, d);
      T := ring F_0;
-     QT := T/ideal(lowG);
-     A := coker sub(F_0, QT); -- setup a module to compute obstructions in
+     (QT, A, RACTION) := obstructionSetup(T, lowG, F_0, R_0);
      if opts.Verbose > 3 then print "Calculating next order residual terms";
      fterms := sum(1..n,     i -> F_i * R_(n+1-i)); -- order n+1 terms
      eterms := sum(1..(n-2), i -> C_i * G_(n-1-i)); -- terms from base equations
      rem := map(A^l, QT^1, (sub((transpose flatten fterms)+eterms, QT))); --reduce modulo generators and lowest order terms
      if opts.Verbose > 3 then print "Trying to kill obstructions";
-     RACTION := map(A^l, (QT)^(r*m), Hom(R_0, coker F_0)**QT);
      -- ~20 of the computation is here:
      elapsedTime kobseq := rem//(RACTION | sub(M, QT));
      CM := -lift(kobseq^(toList((numcols RACTION)..(numcols RACTION)+(numcols M)-1)), T); --here is how to perturb F

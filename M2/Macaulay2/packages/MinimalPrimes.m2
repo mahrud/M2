@@ -213,7 +213,8 @@ updateComputation(MinimalPrimesComputation, List) := List => options minimalPrim
 
 -- Helper for minimalPrimes and decompose
 minprimesHelper = (I, key, opts) -> (
-    if I == 1 then return {};
+    -- Note: avoid computing a gb right off the bat!!
+    -- if I == 1 then return {};
     J := first flattenRing I;
     if J == 0 then return {I};
     S := ring presentation ring J;
@@ -449,6 +450,7 @@ factors RingElement := (F) -> (
         )
     else (
         RU = ring F;
+        -- TODO: is this parallelized?
         factor F
         );
     facs = facs//toList/toList; -- elements of facs: {factor, multiplicity}

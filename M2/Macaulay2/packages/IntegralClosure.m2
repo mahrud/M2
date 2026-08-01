@@ -88,7 +88,7 @@ idealInSingLocus Ring := Ideal => opts -> S -> (
      if member(StartWithOneMinor, opts.Strategy) then 
           t1 := timing (J := ideal nonzeroMinor(codim ideal S, jacobian S))
      else
-          t1 = timing (J = minors(codim ideal S, jacobian S));
+          t1 = timing (J = minors(codim ideal S, jacobian S, Strategy => Dynamic));
 
      if opts.Verbosity >= 1 then (
         << t1#0 << " sec #minors " << numgens J << "]" << endl;

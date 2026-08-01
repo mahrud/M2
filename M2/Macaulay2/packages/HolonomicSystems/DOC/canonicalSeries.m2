@@ -2,7 +2,7 @@ doc ///
   Key
       "Canonical Series Tutorial"
   Headline
-      Computing Nilssom series solutions to regular holonomic systems
+      Computing Nilsson series solutions to regular holonomic systems
   Description
     Text
       If $I$ is a regular holonomic D-module, the solutions of the system of differential equations
@@ -66,7 +66,7 @@ doc ///
       isTorusFixed(I)
       isTorusFixed(inI)
       indI = indicialIdeal(I, w)
-      dinI = distraction(inI);
+      dinI = distraction(inI, ring indI);
       indI == dinI
 
 
@@ -78,18 +78,20 @@ doc ///
       of $I$ with respect to $w$.
 
     Text
-      To construct the actual leading terms of the series (which handles applying {\tt solveFrobeniusIdeal}
-      to the indicial ideal under the hood), we use {\tt cssLeadTerms}. This outputs a list of elements
-      in the Nilsson ring.
+      To construct the actual leading terms of the series (which handles applying @TO solveFrobeniusIdeal@
+      to the indicial ideal under the hood), we use @TO cssLeadTerm@. This outputs a list of elements
+      in the Nilsson ring: a noncommutative algebra whose generators @TT "X_i"@, @TT "Xinv_i"@,
+      @TT "logX_i"@ and @TT "dX_i"@ stand for the $i$-th variable of the Weyl algebra, its inverse,
+      its logarithm and the corresponding partial derivative. See @TO truncatedCanonicalSeries@.
 
     Example
-      cssLeadTerms(I, w)
+      netList cssLeadTerm(I, w)
 
     Text
       Step 4: Series support
 
       To construct more terms in the canonical series solutions, we need to know which monomials can appear
-      with a nonzero coefficient. The function {\tt nilssonSupport} computes the supporting cone for the
+      with a nonzero coefficient. The function @TO nilssonSupport@ computes the supporting cone for the
       solutions. By passing an integer weight $k$ as a third argument, it returns a finite list of the
       truncated lattice points within that cone up to weight $k$.
 
@@ -99,15 +101,16 @@ doc ///
     Text
       Step 5: Canonical series expansions
 
-      Finally, we compute the expanded series solutions. The function {\tt truncatedCanonicalSeries} takes
+      Finally, we compute the expanded series solutions. The function @TO truncatedCanonicalSeries@ takes
       the regular holonomic $D$-ideal $I$, the weight $w$, and a positive integer $k$. It outputs the
-      Nilsson series expansions for a basis of solutions to $I$, up to weight $k$.
+      generators it used together with the Nilsson series expansions for a basis of solutions to $I$,
+      up to weight $k$.
 
       Because our parameter vector $\beta$ is nonresonant for this GKZ system, the roots naturally avoid
       integer shifts, guaranteeing a basis of standard logarithm-free series.
 
     Example
-      sols = truncatedCanonicalSeries(I, w, 2);
+      (G, sols) = truncatedCanonicalSeries(I, w, 2);
       #sols
       sols#0
 
@@ -117,17 +120,17 @@ doc ///
     Text
       To speed things up, if one wishes to avoid working with logarithms at all and only wants the
       exponents on the monomial parts of lead terms of canonical series solutions, the functions
-      {\tt cssExpts} and {\tt cssExptsMult} return these values. The latter includes an integer
+      @TO cssExpts@ and @TO cssExptsMult@ return these values. The latter includes an integer
       indicating how many canonical series each exponent appears in, which can signal the presence
       of logarithms when the multiplicity is greater than 1.
 
       To compute only the exponents with respect to a weight vector, which are the exponents on the
-      monomials in cssLeadTerm, use cssExpts and cssExptsMult.
+      monomials in @TO cssLeadTerm@, use @TO cssExpts@ and @TO cssExptsMult@.
 
       Since I is holonomic, indicialIdeal(I,w) is height n in \CC[\theta], and the finite collection
       of points in \CC^n that make up its variety are the exponents of I.
-      Thus, both cssExpts(I,w) and cssExptsMult(I,w) run primary decomposition routines
-      on indicialIdeal(I,w) and then solve for the corresponding closed points (and
+      Thus, both @TT "cssExpts(I,w)"@ and @TT "cssExptsMult(I,w)"@ run primary decomposition routines
+      on @TT "indicialIdeal(I,w)"@ and then solve for the corresponding closed points (and
       multiplicities, when asked).
 
       Consider a variation of our GKZ system with a different parameter vector:
@@ -183,7 +186,8 @@ doc ///
       holonomicRank(I)
       cssExpts(I,{1,0,0})
       cssLeadTerm(I,{1,0,0})
-      truncatedCanonicalSeries(I,{1,0,0})
+      (G, sols) = truncatedCanonicalSeries(I,{1,0,0},2);
+      netList sols
 
     Text
       Here is an example that can be continued when more functions are implemented.
@@ -193,9 +197,10 @@ doc ///
       A = matrix{{1,1,1,1,1},{-1,1,1,-1,0},{-1,-1,1,1,0}}
       I = gkz(A,{1,0,0})
       holonomicRank(I)
-      cssExpts(I,{1,1,1,1,0})
-      cssExptsMult(I,{1,0,0})
-      cssLeadTerm(I,{1,0,0})
+      w = {1,1,1,1,0} -- the weight must have one entry per variable of the Weyl algebra
+      cssExpts(I,w)
+      cssExptsMult(I,w)
+      cssLeadTerm(I,w)
 
   Subnodes
     "cssExpts"
@@ -205,6 +210,10 @@ doc ///
     "indicialIdeal"
     "isTorusFixed"
     "solveFrobeniusIdeal"
+    "nilssonSupport"
+    "truncatedCanonicalSeries"
+///
+
 ///
 
 doc ///
@@ -447,7 +456,178 @@ doc ///
       beta = {2,1,0,2}
       Hbeta = gkz(A,beta)
       w = {9,1,99999, 9999999, 3, 999}
-      -- FIXME: netList cssLeadTerm(Hbeta, w)
+      netList cssLeadTerm(Hbeta, w)
+   Caveat
+     Start terms whose exponents are integral are returned as elements of the Nilsson ring
+     described in @TO truncatedCanonicalSeries@, but a start term with a rational exponent is
+     returned as an @TO Expression@ instead, since the Nilsson ring only has integral powers of
+     the variables. A list of start terms may therefore be inhomogeneous in this respect, and
+     @TO truncatedCanonicalSeries@ does not accept the rational ones.
+   SeeAlso
+     cssExpts
+     cssExptsMult
+     truncatedCanonicalSeries
+///
+
+doc ///
+   Key
+     truncatedCanonicalSeries
+    (truncatedCanonicalSeries, Ideal, List, ZZ)
+   Headline
+     canonical series solutions of a regular holonomic ideal, truncated by weight
+   Usage
+     (G, sols) = truncatedCanonicalSeries(I, w, k)
+   Inputs
+     I:Ideal
+       a regular holonomic ideal in a Weyl algebra on $n$ variables
+     w:List
+       a (generic) weight vector of length $n$
+     k:ZZ
+       the truncation weight
+   Outputs
+     :Sequence
+       a pair @TT "(G, sols)"@, where @TT "G"@ is the list of generators of $I$ that were used
+       to set up the linear system, and @TT "sols"@ is a list of
+       @TO2(holonomicRank, "holonomic rank")@ many canonical series, each truncated after
+       $w$-weight $k$
+   Description
+    Text
+      This carries out the canonical series method of
+      [@HREF("https://mathscinet.ams.org/mathscinet/pdf/1734566.pdf","SST")@, Section 2.5]:
+      the start terms of the series are computed with @TO cssLeadTerm@, the monomials that can
+      occur are bounded by @TO nilssonSupport@, and the coefficients are found by solving one
+      linear system per start term.
+    Text
+      Both the generators and the series are returned as elements of the {\em Nilsson ring} of
+      the Weyl algebra, a noncommutative $\mathbb{Q}$-algebra with four blocks of generators
+      @TT "dX_i"@, @TT "X_i"@, @TT "logX_i"@ and @TT "Xinv_i"@, standing for $\partial_{i+1}$,
+      $x_{i+1}$, $\log x_{i+1}$ and $x_{i+1}^{-1}$ (note that the indexing starts at zero).
+      Multiplication normal-orders the relations of the Weyl algebra together with
+      $\partial_i \log x_i = \log x_i \, \partial_i + x_i^{-1}$, so that a product moves every
+      $\partial$ to the right. Applying an operator to a function therefore means multiplying
+      and then discarding the terms that still end in a $\partial$, since those annihilate
+      constants.
+    Text
+      For instance, the Gauss hypergeometric equation with $c = 1$ has a single exponent of
+      multiplicity two at the origin, so one of its two solutions carries a logarithm.
+    Example
+      W = makeWA(QQ[z]);
+      J = ideal(z*(1-z)*dz^2 + (1-(1/2+3+1)*z)*dz - 3/2);
+      (G, sols) = truncatedCanonicalSeries(J, {1}, 3);
+      netList sols
+    Text
+      Truncation is by $w$-weight relative to the start term: each series satisfies the system
+      up to terms whose weight exceeds that of its own start term by more than $k$.
+    Text
+      Applying the single generator to either series leaves nothing below relative weight $4$,
+      one past the truncation, which is what it means for the truncation at $k = 3$ to be
+      correct.
+   Caveat
+     The input is assumed to be regular holonomic. There is no algorithm to check this, and for
+     an irregular ideal the output need not converge or even be a basis of formal solutions.
+
+     Two limitations are inherited from the steps this builds on. Start terms with rational
+     exponents are not supported, since the Nilsson ring only has integral powers of the
+     variables; see the caveat in @TO cssLeadTerm@. And when @TO nilssonSupport@ returns a cone
+     that is too small to contain the actual support of the series, the truncated linear system
+     has no solution and an error is raised.
+   SeeAlso
+     cssLeadTerm
+     nilssonSupport
+///
+
+doc ///
+   Key
+     nilssonSupport
+    (nilssonSupport, Ideal, List)
+    (nilssonSupport, Ideal, List, ZZ)
+   Headline
+     the cone supporting the exponents of the canonical series solutions
+   Usage
+     C = nilssonSupport(I, w)
+     L = nilssonSupport(I, w, k)
+   Inputs
+     I:Ideal
+       a regular holonomic ideal in a Weyl algebra on $n$ variables
+     w:List
+       a (generic) weight vector of length $n$
+     k:ZZ
+       a bound on the $w$-weight
+   Outputs
+     :{Cone,List}
+       with two arguments, the cone in $\mathbb{R}^n$ containing the exponent vectors that can
+       occur in a canonical series solution of $I$ relative to its start term; with three
+       arguments, the list of lattice points of that cone of $w$-weight at most $k$
+   Description
+    Text
+      Once the start terms are known, a canonical series solution has the form
+      $x^\rho \sum_v c_v x^v (\log x)^\nu$, and the vectors $v$ that can occur with a nonzero
+      coefficient lie in a rational cone determined by the initial forms of a Gr\"obner basis of
+      $I$ with respect to $(-w,w)$; see
+      [@HREF("https://mathscinet.ams.org/mathscinet/pdf/1734566.pdf","SST")@, Theorem 2.5.14].
+      Truncating that cone at weight $k$ gives the finite set of monomials that
+      @TO truncatedCanonicalSeries@ solves for.
+    Example
+      W = makeWeylAlgebra(QQ[x]);
+      I = ideal(x*dx*(x*dx-3) - x*(x*dx+10)*(x*dx+20));
+      nilssonSupport(I, {1})
+      nilssonSupport(I, {1}, 4)
+   Caveat
+     The generators are assumed to have initial forms of $w$-weight zero. Passing an arbitrary
+     ideal will generally give a different, and usually too small, cone. Internally
+     @TO truncatedCanonicalSeries@ first replaces $I$ by generators normalized in this way, and
+     the cone it uses may differ from @TT "nilssonSupport(I, w, k)"@ computed on the raw ideal.
+
+     Truncating the cone at weight $k$ has to leave a bounded polyhedron. When the weight
+     vector is zero on a ray of the cone this fails, and the error comes from
+     @TO2("Polyhedra::latticePoints", "latticePoints")@ rather than from this function.
+   SeeAlso
+     truncatedCanonicalSeries
+     cssLeadTerm
+///
+
+doc ///
+   Key
+     applyNilssonOperator
+    (applyNilssonOperator, RingElement, RingElement)
+   Headline
+     apply an operator in the Nilsson ring to a Nilsson series
+   Usage
+     applyNilssonOperator(g, b)
+   Inputs
+     g:RingElement -- an operator in the Nilsson ring
+     b:RingElement -- a Nilsson series
+   Outputs
+     :RingElement
+       a table whose $(i,j)$ entry is the least $w$-weight, measured relative to the start term
+       of @TT "sols#j"@, of a term surviving in @TT "G#i"@ applied to @TT "sols#j"@, or
+       @TO infinity@ if the operator annihilates the series exactly
+   Description
+    Text
+      In the Nilsson ring the product $g*b$ of an operator and a function is
+      an operator whose normal form is a function plus terms ending in $\partial_i$
+      which annihilate the constant function 1, so applying the operator $g$ to
+      the function $b$ means keeping only the $\partial$-free part of the normal form.
+
+      A series computed by @TT "truncatedCanonicalSeries(I, w, k)"@ is a solution of $I$
+      up to weight $k$ precisely when apply every Nilsson operator gives a term with
+      weight higher than $k$.
+    Example
+      W = makeWeylAlgebra(QQ[x_1,x_2,x_3]); w = {-1,0,1}
+      netList(I = ideal(
+	  x_1*dx_1^2 - x_3*dx_3^2 + dx_1 - dx_3,
+	  x_2*dx_2^2 - x_3*dx_3^2 + dx_2 - dx_3,
+	  x_1*dx_1 + x_2*dx_2 + x_3*dx_3 + 1))_*
+      elapsedTime (G, sols) = truncatedCanonicalSeries(I, w, 2);
+      netList G
+      netList sols
+      netList(residues = table(G, sols, applyNilssonOperator))
+      assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight(w, e) > 2))
+    Text
+      Here the first generator annihilates all four series exactly, while the other two leave a
+      residual starting at relative weight three, one past the truncation.
+   SeeAlso
+     truncatedCanonicalSeries
 ///
 
 end--

@@ -260,8 +260,8 @@ solveFrobeniusIdeal(Ideal, Ring) := List => (I, W) -> (
 
 --Input: I regular holonomic ideal in a Weyl algebra on n vars, weight vector w in \ZZ^n as a List
 --Output: starting monomials for the css for I for weight w, as a List of ring elements in vars for I and their logs
-cssLeadTerm = method()
-cssLeadTerm(Ideal, List) := List => (I, w) -> solveFrobeniusIdeal(indicialIdeal(I, w), ring I)
+cssLeadTerms = method()
+cssLeadTerms(Ideal, List) := List => (I, w) -> solveFrobeniusIdeal(indicialIdeal(I, w), ring I)
 
 --TODO: where should this go?
 --Input: cone C, weight vector k
@@ -342,7 +342,7 @@ truncatedCanonicalSeries(Ideal, List, ZZ) := List => (I, w, k) -> (
     G := ideal nonpositiveWeightGens(I, w);
     (S, WtoS, StoW) := nilssonRing W;
     -- FIXME: this step fails if any start terms have rational exponents
-    A := apply(cssLeadTerm(G, w), a -> if ring a === W then WtoS a else a);
+    A := apply(cssLeadTerms(G, w), a -> if ring a === W then WtoS a else a);
     assert all(A, a -> ring a === S);
     V := elapsedTime nilssonSupport(G, w, k);
     G' := WtoS \ G_*;
@@ -392,7 +392,7 @@ TEST /// -- test solveFrobeniusIdeal
   J = ideal(T_0+T_1+T_2+T_3+T_4, T_0+T_1-T_3, T_1+T_2-T_3, T_0*T_2, T_1*T_3)
   F = solveFrobeniusIdeal J
   g = map(W, T, apply(5, i -> W_i*W_(i+5)))
-  cssLeadTerm(g J, w)
+  cssLeadTerms(g J, w)
   -- FIXME
   --truncatedCanonicalSeries(g J, w, 5)
 ///
@@ -404,7 +404,7 @@ TEST ///
 
   I = ideal(x*dx*(x*dx-3)-x*(x*dx+101)*(x*dx+13))
   assert(nilssonSupport(I,w,3) == {{0},{1},{2},{3}})
-  assert(toString cssLeadTerm(I, w) == "{1, X_0^3}")
+  assert(toString cssLeadTerms(I, w) == "{1, X_0^3}")
   (G, sols) = truncatedCanonicalSeries(I, w, 4)
   residues = table(G, sols, applyNilssonOperator)
   assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 4))
@@ -425,7 +425,7 @@ TEST ///
   W = makeWeylAlgebra(QQ[x_0,x_1]); w = {-10,-17}
   netList(I = ideal(x_0*dx_0^2 - x_1*dx_1^2 + dx_0 - dx_1, x_0*dx_0 + x_1*dx_1 + 1))_*
   netList(J = ideal nonpositiveWeightGens(I, w))_*
-  assert(toString cssLeadTerm(I, w) == "{Xinv_1, -Xinv_1*logX_0+Xinv_1*logX_1}")
+  assert(toString cssLeadTerms(I, w) == "{Xinv_1, -Xinv_1*logX_0+Xinv_1*logX_1}")
   elapsedTime (G, sols) = truncatedCanonicalSeries(I, w, 10); -- <1s
   residues = table(G, sols, applyNilssonOperator)
   assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 30))
@@ -438,7 +438,7 @@ TEST ///
       x_1*dx_1 + x_2*dx_2 + x_3*dx_3 + 1))_*
   netList(J = ideal nonpositiveWeightGens(I, w))_*
   assert(sort nilssonSupport(J, w, 2) == {{-2,2,0},{-1,0,1},{-1,1,0},{0,0,0}})
-  assert(toString cssLeadTerm(I, w) == "{Xinv_0, -Xinv_0*logX_0+Xinv_0*logX_2, -Xinv_0*logX_0+Xinv_0*logX_1, Xinv_0*logX_0^2-Xinv_0*logX_1*logX_0-Xinv_0*logX_2*logX_0+Xinv_0*logX_2*logX_1}")
+  assert(toString cssLeadTerms(I, w) == "{Xinv_0, -Xinv_0*logX_0+Xinv_0*logX_2, -Xinv_0*logX_0+Xinv_0*logX_1, Xinv_0*logX_0^2-Xinv_0*logX_1*logX_0-Xinv_0*logX_2*logX_0+Xinv_0*logX_2*logX_1}")
   elapsedTime (G, sols) = truncatedCanonicalSeries(I, w, 2) -- ~20s
   residues = table(G, sols, applyNilssonOperator)
   assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 2))
@@ -455,7 +455,7 @@ TEST ///
   w = {1,1,1,1} -- NOTE: this used to be {1,1,1,1,0}, which is not a weight for I
   nilssonSupport(I,w)
   nilssonSupport(I,w,3)
-  cssLeadTerm(I, w)
+  cssLeadTerms(I, w)
   (G, sols) = truncatedCanonicalSeries(I, w, 4);
 *-
 

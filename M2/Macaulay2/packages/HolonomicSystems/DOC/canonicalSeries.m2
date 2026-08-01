@@ -20,7 +20,7 @@ doc ///
     Text
       Currently, this contains the computation of @TO truncatedCanonicalSeries@, which computes the terms in
       canonical series up to a specified weight when they are logarithm free, as well as the leading
-      terms via @TO cssLeadTerm@ for arbitrary regular holonomic I, which can include logarithms.
+      terms via @TO cssLeadTerms@ for arbitrary regular holonomic I, which can include logarithms.
 
     Text
       This tutorial walks through the five-step algorithm for computing canonical Nilsson series solutions
@@ -79,13 +79,13 @@ doc ///
 
     Text
       To construct the actual leading terms of the series (which handles applying @TO solveFrobeniusIdeal@
-      to the indicial ideal under the hood), we use @TO cssLeadTerm@. This outputs a list of elements
+      to the indicial ideal under the hood), we use @TO cssLeadTerms@. This outputs a list of elements
       in the Nilsson ring: a noncommutative algebra whose generators @TT "X_i"@, @TT "Xinv_i"@,
       @TT "logX_i"@ and @TT "dX_i"@ stand for the $i$-th variable of the Weyl algebra, its inverse,
       its logarithm and the corresponding partial derivative. See @TO truncatedCanonicalSeries@.
 
     Example
-      netList cssLeadTerm(I, w)
+      netList cssLeadTerms(I, w)
 
     Text
       Step 4: Series support
@@ -125,7 +125,7 @@ doc ///
       of logarithms when the multiplicity is greater than 1.
 
       To compute only the exponents with respect to a weight vector, which are the exponents on the
-      monomials in @TO cssLeadTerm@, use @TO cssExpts@ and @TO cssExptsMult@.
+      monomials in @TO cssLeadTerms@, use @TO cssExpts@ and @TO cssExptsMult@.
 
       Since I is holonomic, indicialIdeal(I,w) is height n in \CC[\theta], and the finite collection
       of points in \CC^n that make up its variety are the exponents of I.
@@ -185,7 +185,7 @@ doc ///
       I = gkz(A,{10,8})
       holonomicRank(I)
       cssExpts(I,{1,0,0})
-      cssLeadTerm(I,{1,0,0})
+      cssLeadTerms(I,{1,0,0})
       (G, sols) = truncatedCanonicalSeries(I,{1,0,0},2);
       netList sols
 
@@ -200,12 +200,13 @@ doc ///
       w = {1,1,1,1,0} -- the weight must have one entry per variable of the Weyl algebra
       cssExpts(I,w)
       cssExptsMult(I,w)
-      cssLeadTerm(I,w)
+      cssLeadTerms(I,w)
 
   Subnodes
+    "Applications of canonical series"
     "cssExpts"
     "cssExptsMult"
-    "cssLeadTerm"
+    "cssLeadTerms"
     "distraction"
     "indicialIdeal"
     "isTorusFixed"
@@ -429,12 +430,12 @@ doc ///
 
 doc ///
    Key
-     cssLeadTerm
-    (cssLeadTerm, Ideal, List)
+     cssLeadTerms
+    (cssLeadTerms, Ideal, List)
    Headline
      lead term of the canonical series solutions of I
    Usage
-     cssLeadTerm(I, w)
+     cssLeadTerms(I, w)
    Inputs
      I:Ideal
        (regular) holonomic ideal in the Weyl algebra
@@ -456,7 +457,7 @@ doc ///
       beta = {2,1,0,2}
       Hbeta = gkz(A,beta)
       w = {9,1,99999, 9999999, 3, 999}
-      netList cssLeadTerm(Hbeta, w)
+      netList cssLeadTerms(Hbeta, w)
    Caveat
      Start terms whose exponents are integral are returned as elements of the Nilsson ring
      described in @TO truncatedCanonicalSeries@, but a start term with a rational exponent is
@@ -494,7 +495,7 @@ doc ///
     Text
       This carries out the canonical series method of
       [@HREF("https://mathscinet.ams.org/mathscinet/pdf/1734566.pdf","SST")@, Section 2.5]:
-      the start terms of the series are computed with @TO cssLeadTerm@, the monomials that can
+      the start terms of the series are computed with @TO cssLeadTerms@, the monomials that can
       occur are bounded by @TO nilssonSupport@, and the coefficients are found by solving one
       linear system per start term.
     Text
@@ -528,12 +529,13 @@ doc ///
 
      Two limitations are inherited from the steps this builds on. Start terms with rational
      exponents are not supported, since the Nilsson ring only has integral powers of the
-     variables; see the caveat in @TO cssLeadTerm@. And when @TO nilssonSupport@ returns a cone
+     variables; see the caveat in @TO cssLeadTerms@. And when @TO nilssonSupport@ returns a cone
      that is too small to contain the actual support of the series, the truncated linear system
      has no solution and an error is raised.
    SeeAlso
-     cssLeadTerm
+     cssLeadTerms
      nilssonSupport
+     "Applications of canonical series"
 ///
 
 doc ///
@@ -583,7 +585,7 @@ doc ///
      @TO2("Polyhedra::latticePoints", "latticePoints")@ rather than from this function.
    SeeAlso
      truncatedCanonicalSeries
-     cssLeadTerm
+     cssLeadTerms
 ///
 
 doc ///
@@ -683,7 +685,7 @@ Hbeta = gkz(A,beta)
 w = {9,1,99999, 9999999, 3, 999}
 
 cssExptsMult(Hbeta, w)
-cssLeadTerm(Hbeta, w)
+cssLeadTerms(Hbeta, w)
 
 
 A = matrix{{1,1,1,1},{0,1,3,4}}

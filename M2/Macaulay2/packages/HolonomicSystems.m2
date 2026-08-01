@@ -64,7 +64,7 @@ export {
     -- factorial'
     "cssExpts",
     "cssExptsMult",
-    "cssLeadTerm",
+    "cssLeadTerms",
     "distraction",
     "indicialIdeal",
     -- solvePrimaryFrobeniusIdeal

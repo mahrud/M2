@@ -78,8 +78,8 @@ isGRevLexRing = (R) -> (
      -- vector in the ring.
      mo := (options monoid R).MonomialOrder;
      if #mo === 0 then return false;
-     mo = select(mo, x -> x#0 =!= MonomialSize and x#0 =!= Position);
-     isgrevlex := mo#0#0 === GRevLex and mo#0#1 === flatten degrees R;
+     mo = select(mo, x -> x#0 === GRevLex);
+     isgrevlex := #mo > 0 and mo#0#1 === flatten degrees R;
      #mo === 1 and isgrevlex and all(mo, x -> x#0 =!= Weights and x#0 =!= Lex))
 
 -- Helper for Linear strategies
@@ -566,6 +566,7 @@ algorithms#(saturate, Ideal, RingElement) = new MutableHashTable from {
 	A  := R1/(f1 - R1_n); -- TODO: add to ideal instead of quotient?
 	iback := map(R, A, vars R | f);
 	IA := generators I1 ** A;
+        -- FIXME: F4 is silently ignored because A is not a polynomial ring!
 	g := groebnerBasis(IA, Strategy => "F4"); -- TODO: compare with MGB
 	(g1, notused) := divideByVariable(g, A_n);
 	ideal iback g1),

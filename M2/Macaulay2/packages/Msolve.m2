@@ -25,6 +25,7 @@ export{
     "msolveRUR",
     "msolveLeadMonomials",
     "msolveRealSolutions",
+    "msolveSetup",
     "QQi",
     }
 
@@ -253,6 +254,140 @@ msolveSaturate(Ideal, RingElement) := opts -> (I0, f0) -> (
 addHook((saturate, Ideal, RingElement), Strategy => Msolve,
     -- msolveSaturate doesn't use any options of saturate, like DegreeLimit, etc.
     (opts, I, f) -> try ideal msolveSaturate(I, f))
+
+--------------------------------------------------------------------------------
+-- Routing Macaulay2's own commands through msolve
+--------------------------------------------------------------------------------
+
+-- Everything below is opt in: calling msolveSetup() redirects gb,
+-- groebnerBasis, eliminate and kernel to msolve whenever msolve can handle the
+-- input, and leaves Macaulay2's own implementation in charge otherwise.
+-- Compare with fast-kernel.m2, which this generalizes.
+
+msolveDefaultGB      = lookup(gb, Matrix)
+msolveDefaultBasis   = lookup(groebnerBasis, Matrix)
+msolveDefaultElim    = lookup(eliminate, List, Ideal)
+
+-- true if msolve is applicable to the one-rowed matrix m: it is over a ring
+-- msolve understands, and there is something to compute
+msolveApplicable = m -> m != 0 and numrows m === 1 and msolveEngineUsable m
+
+-- A GroebnerBasis object for m, computed by msolve and declared with forceGB.
+-- Returns null when msolve does not apply, so callers can fall back.
+msolveForceGB = (m, elim, opts) -> (
+    if not msolveApplicable m then return null;
+    if (G := msolveGBMatrix(m, elim, opts)) === null then return null;
+    G = forceGB G;
+    -- records that no Hilbert function hint was needed, as gb.m2 would
+    G#"rawGBSetHilbertFunction log" = true;
+    G)
+
+-- The same variables in the same order, but with a plain grevlex order: msolve
+-- expresses an elimination by the length of a leading block of variables rather
+-- than by the monomial order of the ring, so the block order that
+-- eliminationRing produces is not what should be handed to it.
+msolveGRevLexRing = R -> (
+    A := ambient R;
+    (coefficientRing A)(monoid [Variables => numgens A, Degrees => degrees A]))
+
+-- A Groebner basis of the one-rowed matrix m for the order eliminating the
+-- first e variables, returned as a pair (S1, G) with G a matrix over the plain
+-- grevlex ring S1 on the same variables. This is the trick fast-kernel.m2 uses:
+-- the ring m comes from -- whether it is the block ordered ring produced by
+-- eliminationRing or by graphIdeal -- carries an order msolve cannot represent,
+-- but msolve does not need it, since it takes the elimination as a block length.
+-- A quotient contributes its relations to the generators, as in msolveGBMatrix.
+-- Returns null when msolve does not apply.
+msolveElimGB = (m, e) -> (
+    if not rawMsolvePresent() then return null;
+    R1 := ring m;
+    A1 := ambient R1;
+    S1 := msolveGRevLexRing R1;
+    mm := lift(matrix m, A1);
+    if A1 =!= R1 then mm = mm | presentation R1;
+    m1 := substitute(mm, vars S1);
+    if not msolveApplicable m1 then return null;
+    G := msolveGBMatrix(m1, e, msolveDefaultOptions);
+    if G === null then return null;
+    -- an element lies in the elimination ideal exactly when it does not involve
+    -- any of the first e variables; those coming from the relations of a
+    -- quotient map to zero later on and so contribute nothing
+    (S1, matrix(S1, {select(first entries G, f -> all(e, i -> degree(S1_i, f) === 0))})))
+
+-- I intersected with the subring on the variables other than v, computed by
+-- msolve and returned as an ideal of ring I. Returns null when msolve does not
+-- apply. Compare with eliminate in fast-kernel.m2.
+msolveEliminationGB = (I, v) -> (
+    R := ring I;
+    if I == 0 then return null;
+    idx := unique monoidIndices_R v;
+    -- puts the variables to be eliminated first, which is the form msolve wants
+    (toR1, toR) := eliminationRing(idx, R);
+    J := toR1 I;
+    result := msolveElimGB(generators J, #idx);
+    if result === null then return null;
+    (S1, G) := result;
+    ideal toR substitute(G, vars ring J))
+
+msolveGBHook = (opts, m) -> (
+    -- msolve computes a full reduced basis, so a subring or degree limited
+    -- request has to go back to Macaulay2's own implementation
+    if opts.?SubringLimit and opts.SubringLimit =!= infinity
+    or opts.?DegreeLimit and opts.DegreeLimit =!= {} then return null;
+    msolveForceGB(m, 0, msolveDefaultOptions))
+
+-- msolveSetup() installs all of them; msolveSetup {gb, eliminate} a selection
+msolveSetup = arg -> (
+    installed := if instance(arg, VisibleList) then toList arg else {arg};
+    if not rawMsolvePresent() then printerr(
+	"warning: this Macaulay2 was not built against the msolve library; ",
+	"msolveSetup will route through the msolve executable instead");
+
+    if member(gb, installed) or #installed === 0 then
+    gb Matrix := opts -> m -> (
+	if (G := msolveGBHook(opts, m)) =!= null then G
+	else (msolveDefaultGB opts)(m));
+
+    if member(groebnerBasis, installed) or #installed === 0 then
+    groebnerBasis Matrix := opts -> m -> (
+	if (G := msolveGBHook(opts, m)) =!= null then generators G
+	else (msolveDefaultBasis opts)(m));
+
+    if member(eliminate, installed) or #installed === 0 then (
+	eliminate(List, Ideal) := Ideal => (v, I) -> (
+	    R := ring I;
+	    if #v === 0 then return I;
+	    if any(v, x -> ring x =!= R)
+	    then error "expected a list of elements in the ring of the ideal";
+	    G := msolveEliminationGB(I, v);
+	    if G === null then return msolveDefaultElim(v, I);
+	    G);
+	eliminate(Ideal, List) := Ideal => (I, v) -> eliminate(v, I);
+	eliminate(RingElement, Ideal) := Ideal => (x, I) -> eliminate({x}, I);
+	eliminate(Ideal, RingElement) := Ideal => (I, x) -> eliminate({x}, I));
+
+    if member(kernel, installed) or #installed === 0 then
+    addHook((kernel, RingMap), Strategy => Msolve, (opts, f) -> (
+	    (F, R) := (target f, source f);
+	    if not isAffineRing R or not isAffineRing F
+	    or coefficientRing R =!= coefficientRing F
+	    or opts.?SubringLimit and opts.SubringLimit =!= infinity then return null;
+	    -- the kernel is what survives eliminating the variables of the target
+	    -- from the graph ideal
+	    g := generators graphIdeal f;
+	    n1 := numgens F;
+	    result := msolveElimGB(g, n1);
+	    if result === null then return null;
+	    (S1, G) := result;
+	    mapback := map(R, ring g, map(R^1, R^n1, 0) | vars R);
+	    ideal mapback substitute(G, vars ring g)));
+
+    -- saturate already has its hook installed when the package is loaded, but
+    -- it may have been removed, so put it back
+    if member(saturate, installed) or #installed === 0 then
+    addHook((saturate, Ideal, RingElement), Strategy => Msolve,
+	(opts, I, f) -> try ideal msolveSaturate(I, f));
+    )
 
 --------------------------------------------------------------------------------
 -- Rational interval type, constructors, and basic methods

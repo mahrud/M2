@@ -341,9 +341,11 @@ truncatedCanonicalSeries(Ideal, List, ZZ) := List => (I, w, k) -> (
     r := holonomicRank I;
     G := ideal nonpositiveWeightGens(I, w);
     (S, WtoS, StoW) := nilssonRing W;
-    -- FIXME: this step fails if any start terms have rational exponents
-    A := apply(cssLeadTerms(G, w), a -> if ring a === W then WtoS a else a);
-    assert all(A, a -> ring a === S);
+    LT := cssLeadTerms(G, w);
+    inds := positions(LT, lt -> class lt === S);
+    if #inds === 0   then error "truncatedCanonicalSeries: no solutions without rational exponents were found";
+    if #inds =!= #LT then printerr "Warning: canonical series solutions with rational exponents are excluded";
+    A := apply(LT_inds, a -> if ring a === W then WtoS a else a);
     V := elapsedTime nilssonSupport(G, w, k);
     G' := WtoS \ G_*;
     -- The variables of S are ordered as dX_i..., X_i..., logX_i..., Xinv_i...

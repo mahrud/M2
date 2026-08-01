@@ -634,7 +634,6 @@ doc ///
 
 end--
 restart
-path = prepend("~/Projects/M2/Workshops/Workshop-2019-Minneapolis/M2/Macaulay2/packages/", path)
 installPackage "HolonomicSystems"
 viewHelp solveFrobeniusIdeal
 
@@ -686,13 +685,3 @@ w = {9,1,99999, 9999999, 3, 999}
 
 cssExptsMult(Hbeta, w)
 cssLeadTerms(Hbeta, w)
-
-
-A = matrix{{1,1,1,1},{0,1,3,4}}
-beta = {1,2}
-Hbeta = gkz(A,beta)
-W = ring Hbeta
-w = {2,51,999,1}
-I = inw(Hbeta,-w|w)
-
-(G, sols) = truncatedCanonicalSeries(I, w, 4)

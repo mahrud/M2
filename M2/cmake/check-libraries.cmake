@@ -10,7 +10,7 @@
 # Others, like TBB::tbb, FFI::ffi, and Boost::regex, are linked as imported libraries in those files.
 # TODO: turn all these libraries into imported libraries and find incompatibilities another way.
 set(PKGLIB_LIST    FFLAS_FFPACK GIVARO BARVINOK)
-set(LIBRARIES_LIST MPSOLVE FROBBY NORMALIZ FACTORY FLINT NTL MPFI MPFR GMP GLPK BDWGC LAPACK)
+set(LIBRARIES_LIST MSOLVE MPSOLVE FROBBY NORMALIZ FACTORY FLINT NTL MPFI MPFR GMP GLPK BDWGC LAPACK)
 set(LIBRARY_LIST   READLINE HISTORY GDBM JANSSON)
 
 message(CHECK_START " Checking for existing libraries and programs")
@@ -168,6 +168,8 @@ find_package(Normaliz	3.8.0)
 # TODO: add minimum version checks
 find_package(EAntic	2.0.0 QUIET) # only needed when libnormaliz.so needs it
 find_package(MSolve	0.7.0)
+# used by e/interface/msolve.cpp for the direct in-memory msolve interface
+set(HAVE_MSOLVE ${MSOLVE_FOUND})
 find_package(Frobby	0.9.0)
 find_package(CDDLIB)  # 0.94m?
 find_package(GTest	1.16)

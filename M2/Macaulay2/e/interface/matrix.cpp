@@ -16,6 +16,7 @@
 #include "interface/monoid.h"
 #include "basic-mutable-matrices/mat.hpp"
 #include "matrices/matrix-con.hpp"
+#include "matrices/matrix-stream.hpp"
 #include "matrices/matrix.hpp"
 #include "mutable-matrices/mutablemat-defs.hpp"
 #include "ring-elements/ring-element.hpp"
@@ -302,6 +303,34 @@ const Matrix* /* or null */ rawMatrixReadMsolveFile(const Ring* R, M2_string fil
     {
       ERROR(e.what());
       return nullptr;
+    }
+}
+
+M2_bool rawMatrixWriteMsolveFile(const Matrix* M, M2_string filename)
+{
+  try
+    {
+      const PolyRing* P = M->get_ring()->cast_to_PolyRing();
+      if (P == nullptr)
+        throw exc::engine_error("expected a matrix over a polynomial ring");
+      if (M->n_rows() != 1)
+        throw exc::engine_error("expected a matrix with one row");
+      // matrixToStream needs a positive characteristic: it reduces every
+      // coefficient into [0, characteristic) via coerceToLongInteger.
+      long charac = static_cast<long>(P->characteristic());
+      if (charac <= 0)
+        throw exc::engine_error("expected a polynomial ring of positive characteristic");
+      BasicPolyListStreamCollector S(charac, P->n_vars(), M->n_rows());
+      matrixToStream(M, S);
+      writeMsolveFile(string_M2_to_std(filename),
+                      S.value(),
+                      msolveVarNames(P->n_vars()),
+                      charac);
+      return true;
+    } catch (const exc::engine_error& e)
+    {
+      ERROR(e.what());
+      return false;
     }
 }
 

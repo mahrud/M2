@@ -28,7 +28,50 @@ export{
     "QQi",
     }
 
-importFrom_Core { "raw", "rawMatrixReadMsolveFile" }
+importFrom_Core { "raw", "rawMatrixReadMsolveFile", "rawMatrixWriteMsolveFile",
+    "rawMsolveGB", "rawMsolveSaturate", "rawMsolvePresent" }
+
+-- Direct in-memory interface to msolve's F4, with no temporary files and no
+-- string conversion in either direction. Only applies over ZZ/p in a ring with
+-- the standard grevlex order, which is all msolve's F4 handles; everything else
+-- still goes through the executable. Returns null when it does not apply.
+-- mirrors isStandardGRevLex in e/interface/msolve.cpp: a single GRevLex block
+-- over all the variables with every weight 1. Note this is strictly stronger
+-- than isGRevLexRing in the Saturation package, which accepts a GRevLex block
+-- whose weights are the ring's degrees, whatever those are; in a weighted ring
+-- M2 and msolve break degree ties differently.
+isStandardGRevLexRing = R -> (
+    mo := toList (options monoid R).MonomialOrder;
+    blocks := select(mo, x -> x#0 === GRevLex);
+    #blocks === 1
+    and blocks#0#1 === toList(numgens R : 1)
+    and all(mo, x -> member(x#0, {GRevLex, MonomialSize, Position})))
+
+-- note isField excludes tower rings such as (ZZ/p[x,y])[u,v], whose
+-- coefficients msolve cannot represent; those still go through toMsolveRing,
+-- which flattens them first
+msolveEngineUsable = m -> (
+    R := ring m;
+    rawMsolvePresent()
+    and instance(R, PolynomialRing)
+    and numrows m === 1
+    and isField (kk := coefficientRing R)
+    and char kk != 0 and char kk <= 2^31
+    and precision kk === infinity
+    and not instance(kk, GaloisField)
+    and isStandardGRevLexRing R)
+
+msolveGBEngine = (m, elim, opts) -> (
+    if not msolveEngineUsable m then return null;
+    map(ring m, rawMsolveGB(raw m, elim,
+	    min(opts.Threads, allowableThreads), opts.Verbosity)))
+
+-- F4SAT additionally needs the characteristic to be larger than 2^16, see
+-- https://github.com/algebraic-solving/msolve/issues/165
+msolveSaturateEngine = (m, f, opts) -> (
+    if not msolveEngineUsable m or char ring m < 2^16 then return null;
+    map(ring m, rawMsolveSaturate(raw m, raw matrix {{f}},
+	    min(opts.Threads, allowableThreads), opts.Verbosity)))
 
 -- used in msolveEliminate
 importFrom_Core { "monoidIndices" }
@@ -91,9 +134,19 @@ toMsolveInput = (S, K, I) -> demark_newline {
     replace(",", ",\n",
 	toMsolveString I)}
 
+-- over ZZ/p the engine can write the input file directly from the matrix,
+-- which avoids building a (potentially enormous) string in the interpreter;
+-- over QQ the engine has no rational coefficients, so we fall back to strings.
+use'writeMsolveInputFile := true;
+writeMsolveInputFile = (S, K, I, mIn) -> (
+    if use'writeMsolveInputFile and char K > 0 and #I > 0
+    then rawMatrixWriteMsolveFile(raw matrix {I}, mIn)
+    else (mIn << toMsolveInput(S, K, I) << endl << close;);
+    mIn)
+
 msolve = (S, K, I, args, opts) -> (
     tmp := temporaryFileName();
-    mIn := (tmp | "-in.ms") << toMsolveInput(S, K, I) << endl << close;
+    mIn := writeMsolveInputFile(S, K, I, tmp | "-in.ms");
     mOut := tmp | "-out.ms";
     runMsolve(mIn, mOut, args, opts);
     mOut)
@@ -121,6 +174,8 @@ readMsolveList = mOutStr -> (
 
 msolveGB = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
 msolveGB Ideal := opts -> I0 -> (
+    if (G := msolveGBEngine(generators I0, 0, opts)) =!= null
+    then return gens forceGB G;
     (S, K, I) := toMsolveRing I0;
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
@@ -132,6 +187,10 @@ msolveLeadMonomials Ideal := opts -> I0 -> (
     -- TODO: premute the coefficient variables to make this work for tower rings
     S0 := ring I0;
     if numgens S0 =!= S0.numallvars then error "msolveLeadMonomials: unsupported tower ring";
+    -- msolve's -g 1 computes the same basis and merely prints less of it, so
+    -- with the engine we take the lead terms of the basis it hands back
+    if (G := msolveGBEngine(generators I0, 0, opts)) =!= null
+    then return gens forceGB leadTerm G;
     (S, K, I) := toMsolveRing I0;
     mOut := msolve(S, K, I_*, "-g 1", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
@@ -148,15 +207,22 @@ msolveEliminate(Ideal,        List) := Ideal => opts -> (I0, elimvars) -> (
     -- gives ring maps to and from a ring with elimvars first, keepvars last
     (toS0', toS0) := eliminationRing(elimIndices, S0);
     (S, K, I) := toMsolveRing(I' := toS0' I0);
-    mOut := msolve(S, K, I_*, "-g 2 -e " | length elimIndices, opts);
     S' := if char K === 0
     then K(monoid [keepvars]) -- msolve does not return the remaining generators over QQ
     else newRing(ring I', MonomialOrder => {#elimvars, #keepvars}); -- but over ZZ/p it does
+    -- toMsolveRing already moved the ideal into a plain grevlex ring, which is
+    -- what msolve wants: the elimination is expressed by the block length, not
+    -- by the monomial order of the ring
+    if (G := msolveGBEngine(generators I, #elimIndices, opts)) =!= null
+    then return ideal substitute(G, vars S');
+    mOut := msolve(S, K, I_*, "-g 2 -e " | length elimIndices, opts);
     ideal readMsolveOutputFile(S', mOut))
 -- TODO: add as a hook for eliminate
 
 msolveSaturate = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
 msolveSaturate(Ideal, RingElement) := opts -> (I0, f0) -> (
+    if (G := msolveSaturateEngine(generators I0, f0, opts)) =!= null
+    then return gens forceGB G;
     (S, K, I) := toMsolveRing I0;
     f := substitute(f0, vars S);
     -- see https://github.com/algebraic-solving/msolve/issues/165

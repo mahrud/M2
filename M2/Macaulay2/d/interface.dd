@@ -18,6 +18,7 @@ header "// TODO: break apart this file so each piece includes only one:
 #include <interface/groebner.h>
 #include <interface/matrix.h>
 #include <interface/monomial-ideal.h>
+#include <interface/msolve.h>
 #include <interface/mutable-matrix.h>
 #include <interface/random.h>
 #include <interface/ring.h>
@@ -2128,6 +2129,73 @@ export rawMatrixReadMsolveFile(e:Expr):Expr := (
   ) else WrongNumArgs(2)
   );
 setupfun("rawMatrixReadMsolveFile",rawMatrixReadMsolveFile);
+
+export rawMsolvePresent(e:Expr):Expr := (
+  when e is s:Sequence do
+  if length(s) == 0 then toExpr(Ccode(bool, "rawMsolvePresent()"))
+  else WrongNumArgs(0)
+  else WrongNumArgs(0)
+  );
+setupfun("rawMsolvePresent",rawMsolvePresent);
+
+export rawMsolveGB(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 4 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is elim:ZZcell do if !isInt(elim) then WrongArgSmallInteger(2) else
+  when s.2 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(3) else
+  when s.3 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(4) else
+    toExpr(Ccode(RawMatrixOrNull,
+      "rawMsolveGB(",
+        M.p, ",", toInt(elim), ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(4)
+  else WrongArgZZ(3)
+  else WrongArgZZ(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(4)
+  ) else WrongNumArgs(4)
+  );
+setupfun("rawMsolveGB",rawMsolveGB);
+
+export rawMsolveSaturate(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 4 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is F:RawMatrixCell do
+  when s.2 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(3) else
+  when s.3 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(4) else
+    toExpr(Ccode(RawMatrixOrNull,
+      "rawMsolveSaturate(",
+        M.p, ",", F.p, ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(4)
+  else WrongArgZZ(3)
+  else WrongArgMatrix(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(4)
+  ) else WrongNumArgs(4)
+  );
+setupfun("rawMsolveSaturate",rawMsolveSaturate);
+
+export rawMatrixWriteMsolveFile(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 2 then (
+  when s.0 is wa:RawMatrixCell do (a := wa.p;
+  when s.1 is wb:stringCell do (b := wb.v;
+    possibleEngineError(Ccode(bool,
+      "rawMatrixWriteMsolveFile(",
+        a, ",", b,
+      ")"
+    ))
+  ) else WrongArg(2,"a string")
+  ) else WrongArgMatrix(1)
+  ) else WrongNumArgs(2)
+  ) else WrongNumArgs(2)
+  );
+setupfun("rawMatrixWriteMsolveFile",rawMatrixWriteMsolveFile);
 
 export rawConcat(e:Expr):Expr := (
      if isSequenceOfMatrices(e) then

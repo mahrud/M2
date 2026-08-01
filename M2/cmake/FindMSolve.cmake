@@ -27,15 +27,30 @@ if(NOT MSOLVE_FOUND)
       )
   endif()
 
-  if(NOT MSOLVE_LIBRARIES)
-    find_library(MSOLVE_LIBRARIES NAMES msolve neogb
+  # msolve installs two libraries: libmsolve holds the solver and the rational
+  # (multi-modular) Groebner routines, libneogb holds the F4 engine used over
+  # finite fields. Both are needed, libmsolve first since it depends on libneogb.
+  if(NOT MSOLVE_LIBRARY)
+    find_library(MSOLVE_LIBRARY NAMES msolve
       HINTS ENV MSOLVEDIR
       PATHS ${LIB_INSTALL_DIR} ${CMAKE_INSTALL_PREFIX}/lib
       )
   endif()
 
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(MSolve DEFAULT_MSG MSOLVE_INCLUDE_DIR MSOLVE_LIBRARIES)
+  if(NOT NEOGB_LIBRARY)
+    find_library(NEOGB_LIBRARY NAMES neogb
+      HINTS ENV MSOLVEDIR
+      PATHS ${LIB_INSTALL_DIR} ${CMAKE_INSTALL_PREFIX}/lib
+      )
+  endif()
 
-  mark_as_advanced(MSOLVE_INCLUDE_DIR MSOLVE_LIBRARIES)
+  if(MSOLVE_LIBRARY AND NEOGB_LIBRARY)
+    set(MSOLVE_LIBRARIES ${MSOLVE_LIBRARY} ${NEOGB_LIBRARY})
+  endif()
+
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(MSolve DEFAULT_MSG
+    MSOLVE_INCLUDE_DIR MSOLVE_LIBRARY NEOGB_LIBRARY)
+
+  mark_as_advanced(MSOLVE_INCLUDE_DIR MSOLVE_LIBRARY NEOGB_LIBRARY MSOLVE_LIBRARIES)
 endif()

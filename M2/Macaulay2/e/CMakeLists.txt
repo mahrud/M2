@@ -124,6 +124,8 @@ set(CPPONLYFILES
   interface/factory.h
   interface/flint.cpp
   interface/flint.h
+  interface/msolve.cpp
+  interface/msolve.h
   interface/freemodule.cpp # TODO: .h
   interface/gmp-util.h # only has inline definitions
   interface/groebner.cpp

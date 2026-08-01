@@ -518,6 +518,9 @@ ExternalProject_Add(build-msolve
   STEP_TARGETS      install test
   )
 _ADD_COMPONENT_DEPENDENCY(programs msolve "gmp;mpfr;flint" MSOLVE)
+# msolve is both a program and a library: the engine links libmsolve/libneogb
+# for the direct in-memory interface in e/interface/msolve.cpp.
+_ADD_COMPONENT_DEPENDENCY(libraries msolve "gmp;mpfr;flint" MSOLVE_FOUND)
 
 
 # https://numpi.dm.unipi.it/software/mpsolve

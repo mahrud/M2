@@ -9,6 +9,24 @@ const Matrix* toMatrix(const FreeModule *target, const BasicPolyList& Fs)
   return S.value();
 }
 
+BasicPolyListStreamCollector::BasicPolyListStreamCollector()
+    : BasicPolyListStreamCollector(0, 0, 0)
+{
+}
+
+BasicPolyListStreamCollector::BasicPolyListStreamCollector(Coefficient modulus,
+                                                           VarIndex varCount,
+                                                           Component comCount)
+    : mValue(),
+      mModulus(static_cast<ModulusType>(modulus.get_si())),
+      mVarCount(varCount),
+      mComCount(comCount),
+      mCurrentPoly(-1),
+      mCurrentTerm(-1),
+      mSizeEntryInMonomial(0)
+{
+}
+
 void BasicPolyListStreamCollector::idealBegin(size_t polyCount)
 {
   mValue.clear();

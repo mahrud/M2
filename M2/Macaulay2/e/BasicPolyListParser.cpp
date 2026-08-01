@@ -346,6 +346,47 @@ BasicPolyList parseMsolveFile(std::string filename)
   return parseMsolveFromString(fileContents);
 }
 
+std::vector<std::string> msolveVarNames(int nvars)
+{
+  std::vector<std::string> result;
+  result.reserve(nvars);
+  for (int i = 0; i < nvars; ++i) result.push_back("x" + std::to_string(i));
+  return result;
+}
+
+void writeMsolveFormat(std::ostream& o,
+                       const BasicPolyList& Fs,
+                       const std::vector<std::string>& varnames,
+                       long characteristic)
+{
+  for (size_t i = 0; i < varnames.size(); ++i)
+    {
+      if (i > 0) o << ',';
+      o << varnames[i];
+    }
+  o << '\n' << characteristic << '\n';
+  // msolve separates the input polynomials by commas, with no trailing comma.
+  for (size_t i = 0; i < Fs.size(); ++i)
+    {
+      Fs[i].display(o, varnames);
+      o << (i + 1 < Fs.size() ? ",\n" : "\n");
+    }
+}
+
+void writeMsolveFile(const std::string& filename,
+                     const BasicPolyList& Fs,
+                     const std::vector<std::string>& varnames,
+                     long characteristic)
+{
+  std::ofstream ofs(filename.c_str(), std::ios::out | std::ios::binary);
+  if (not ofs)
+    throw exc::engine_error("could not open file " + filename + " for writing");
+  writeMsolveFormat(ofs, Fs, varnames, characteristic);
+  ofs.close();
+  if (not ofs)
+    throw exc::engine_error("error writing msolve input to file " + filename);
+}
+
 // TODO:
 //   readMSolveHeader: returns vector of strings, characteristic, and monomial order, and number of polynomials.
 //     input format: first line is list of variables

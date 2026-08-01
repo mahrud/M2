@@ -139,6 +139,12 @@ const Matrix* /* or null */ rawMatrixReadMsolveString(const Ring* R, M2_string c
 
 const Matrix* /* or null */ rawMatrixReadMsolveFile(const Ring* R, M2_string filename);
 
+/* Writes the entries of the one-rowed matrix M to `filename` as an msolve input
+   file, the inverse of rawMatrixReadMsolveFile.  M must be over a polynomial
+   ring of positive characteristic.  Returns false, having set an error message,
+   if the matrix cannot be written. */
+M2_bool rawMatrixWriteMsolveFile(const Matrix* M, M2_string filename);
+
 /**********************************************************************************/
 
 M2_bool IM2_Matrix_is_zero(const Matrix *M); /* drg: connected rawIsZero*/

@@ -6,6 +6,7 @@
 #include "monomials/montableZZ.hpp"
 #include "groebner-computations/gbring.hpp"
 #include "rings/poly.hpp"
+#include "rings/geopoly.hpp"
 
 #include "basic-rings/aring-glue.hpp"  // for globalQQ??
 
@@ -123,10 +124,20 @@ void QRingInfo_field_basic::normal_form(ring_elem &f) const
   exponents_t EXP1 = ALLOCATE_EXPONENTS(exp_size);
 
   const Monoid *M = R->getMonoid();
+
+  // The part of f still to be reduced is kept in a geobucket rather than as a
+  // single sorted list.  Reducing the lead term used to merge the reducer into
+  // the whole remaining tail of f, making normal_form quadratic in the number
+  // of terms; here each reducer is instead dropped into a small bucket, and the
+  // buckets are merged geometrically.
+  NtermHeap h(R);
+  h.add(f);
+  f = ZERO_RINGELEM;
+
   Nterm head;
   Nterm *result = &head;
-  Nterm *t = f;
-  while (t != nullptr)
+  Nterm *t;
+  while ((t = h.remove_lead_term()) != nullptr)
     {
       M->to_expvector(t->monom, EXP1);
       Bag *b;
@@ -135,12 +146,14 @@ void QRingInfo_field_basic::normal_form(ring_elem &f) const
           Nterm *s = quotient_element(b->basis_elem());
           // Now we must replace t with
           // t + c*m*s, where in(t) = in(c*m*s), and c is 1 or -1.
+          // Since t is a single term here, its lead cancels against that of
+          // c*m*s and this costs O(#terms(s)) rather than O(#terms(f)).
           reduce_lead_term_basic_field(t, s);
+          h.add(t);
         }
       else
         {
           result->next = t;
-          t = t->next;
           result = result->next;
         }
     }

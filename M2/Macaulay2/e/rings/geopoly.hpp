@@ -80,6 +80,7 @@ inline void polyheap::add(Nterm *p)
 
 inline Nterm *polyheap::remove_lead_term()
 {
+  const Monoid *M = F->getMonoid();
   int lead_so_far = -1;
   for (int i = 0; i <= top_of_heap; i++)
     {
@@ -89,7 +90,7 @@ inline Nterm *polyheap::remove_lead_term()
           lead_so_far = i;
           continue;
         }
-      int cmp = EQ;  // F->compare(heap[lead_so_far], heap[i]);
+      int cmp = M->compare(heap[lead_so_far]->monom, heap[i]->monom);
       if (cmp == GT) continue;
       if (cmp == LT)
         {
@@ -132,6 +133,120 @@ inline Nterm *polyheap::value()
       F->add_to(tmp1, tmp2);
       result = tmp1;
       heap[i] = NULL;
+    }
+  top_of_heap = -1;
+  return result;
+}
+
+// A geometric bucket ("geobucket", Yan 1998) of Nterm lists over a PolyRing.
+// Bucket i holds a polynomial of length < heap_size[i], so accumulating n terms
+// costs O(n log n) merging work rather than the O(n^2) of repeatedly merging
+// into one long list.  This is the Nterm analogue of gbvectorHeap (gbring.cpp),
+// and the two are deliberately kept structurally identical.
+//
+// Unlike polyheap above, the merges here are DESTRUCTIVE: add() and value()
+// consume their arguments via PolyRing::internal_add_to, splicing the terms
+// they are given into the buckets rather than copying them.  Callers must not
+// use a polynomial after handing it to add().
+class NtermHeap
+{
+  const PolyRing *R;  // Our elements will be polynomials in here
+  const Monoid *M;    // The monoid of R, used to compare lead monomials
+  const Ring *K;      // The coefficient ring
+  Nterm *heap[GEOHEAP_SIZE];
+  int top_of_heap;
+
+  // Destructively add b into a, setting b to zero.  No terms are copied.
+  void add_to(Nterm *&a, Nterm *&b) const
+  {
+    ring_elem f = a;
+    ring_elem g = b;
+    R->internal_add_to(f, g);
+    a = f;
+    b = NULL;
+  }
+
+ public:
+  NtermHeap(const PolyRing *R0)
+      : R(R0), M(R0->getMonoid()), K(R0->getCoefficientRing()), top_of_heap(-1)
+  {
+    for (int i = 0; i < GEOHEAP_SIZE; i++) heap[i] = NULL;
+  }
+  ~NtermHeap() {}  // The terms are garbage collected.
+
+  void add(Nterm *p);  // Consumes p.
+
+  Nterm *remove_lead_term();  // Returns NULL if none.
+
+  Nterm *value();  // Returns the linearized value, and resets the heap.
+};
+
+inline void NtermHeap::add(Nterm *p)
+{
+  int len = R->n_terms(p);
+  int i = 0;
+  while (len >= heap_size[i]) i++;
+
+  add_to(heap[i], p);
+
+  len = R->n_terms(heap[i]);
+  while (len >= heap_size[i])
+    {
+      i++;
+      add_to(heap[i], heap[i - 1]);
+      len = R->n_terms(heap[i]);
+    }
+  if (i > top_of_heap) top_of_heap = i;
+}
+
+inline Nterm *NtermHeap::remove_lead_term()
+{
+  int lead_so_far = -1;
+  for (int i = 0; i <= top_of_heap; i++)
+    {
+      if (heap[i] == NULL) continue;
+      if (lead_so_far < 0)
+        {
+          lead_so_far = i;
+          continue;
+        }
+      int cmp = M->compare(heap[lead_so_far]->monom, heap[i]->monom);
+      if (cmp == GT) continue;
+      if (cmp == LT)
+        {
+          lead_so_far = i;
+          continue;
+        }
+      // At this point we have equality
+      K->add_to(heap[lead_so_far]->coeff, heap[i]->coeff);
+      Nterm *tmp = heap[i];
+      heap[i] = tmp->next;
+      tmp->next = NULL;
+
+      if (K->is_zero(heap[lead_so_far]->coeff))
+        {
+          // Remove, and start over
+          tmp = heap[lead_so_far];
+          heap[lead_so_far] = tmp->next;
+          tmp->next = NULL;
+          lead_so_far = -1;
+          i = -1;
+        }
+    }
+  if (lead_so_far < 0) return NULL;
+  Nterm *result = heap[lead_so_far];
+  heap[lead_so_far] = result->next;
+  result->next = NULL;
+  return result;
+}
+
+inline Nterm *NtermHeap::value()
+{
+  Nterm *result = NULL;
+  for (int i = 0; i <= top_of_heap; i++)
+    {
+      if (heap[i] == NULL) continue;
+      add_to(result, heap[i]);
     }
   top_of_heap = -1;
   return result;

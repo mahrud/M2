@@ -287,6 +287,7 @@ nilssonSupport(Ideal, List) := Cone => (I, w) -> (
 	--loop over the remaining terms of g:
 	apply(first \ exponents \ (terms g - set { LTg }),
 	    m -> { matrix { take(m, -n) - take(m, n) }, vec }));
+    -- TODO: add a check to make sure this is correct
     tailCone polar polyhedronFromHData(concatRows first L, concatRows last L))
 --Input: I regular holonomic ideal in a Weyl algebra on n vars, weight vector w in \ZZ^n as a List, weight k
 --Output: lattice points in cone of weight \leq k, as a List of Lists
@@ -309,7 +310,29 @@ nonpositiveWeightGens(Ideal, List) := List => (I, w) -> (
 	    W_epos * g // W_eneg))
     )
 
-concatMats = T -> concatRows for row in T list concatCols row
+-- In the Nilsson ring the product g*b of an operator and a function is
+-- an *operator* whose normal form is (a function) + (terms ending in dX_i).
+-- The latter annihilate the constant function 1, so applying operator g to
+-- the function b means keeping only the dX-free part of the normal form.
+applyNilssonOperator = method()
+applyNilssonOperator(RingElement, RingElement) := RingElement => (g, b) -> (
+    S := ring b;
+    n := numgens S // 4;
+    sum(listForm(g * b), (m, c) -> if all(n, i -> m#i == 0) then c * S_m else 0_S))
+
+-- the x-exponent vector of a Nilsson monomial, i.e. the X block minus the Xinv block
+-- internal
+nilssonExponent = m -> (n := #m // 4; apply(n, i -> m#(n+i) - m#(3*n+i)))
+
+-- the w-weight of the Nilsson monomial with exponent vector m
+-- internal
+nilssonWeight = (w, m) -> sum(#w, i -> w#i * (nilssonExponent m)#i)
+
+-- the coefficient of the monomial with exponent vector m in f
+-- internal
+nilssonCoefficient = (f, m) -> (
+    t := select(listForm f, u -> first u == m);
+    if #t == 0 then 0 else last first t)
 
 truncatedCanonicalSeries = method()
 truncatedCanonicalSeries(Ideal, List, ZZ) := List => (I, w, k) -> (
@@ -322,27 +345,37 @@ truncatedCanonicalSeries(Ideal, List, ZZ) := List => (I, w, k) -> (
     A := apply(cssLeadTerm(G, w), a -> if ring a === W then WtoS a else a);
     assert all(A, a -> ring a === S);
     V := elapsedTime nilssonSupport(G, w, k);
-    -- The variables of S are ordered as dX_i..., X_i..., logX_i..., Xinv_i...
-    -- B is a truncated basis of the Nilsson ring up to k
-    B := splice table(V, (n:0)..(n:r-1), (e, l) -> S_(toList join(n:0,e,l)));
-    B  = B - set apply((n:0)..(n:r-1), l -> S_(toList join(n:0,n:0,l)));
-    --
---    error 0;
-    R := ((coefficientRing S)(monoid[S_*_(toList(2*n..2*n+n-1))]))(
-	monoid[S_*_(toList(n..n+n-1) | toList(n..3*n+n-1))]);
     G' := WtoS \ G_*;
+    -- The variables of S are ordered as dX_i..., X_i..., logX_i..., Xinv_i...
+    -- B is the truncated Nilsson basis x^v log^l, for v != 0 in the support and
+    -- log exponents below the holonomic rank; the start terms sit in the v = 0 block
+    B := apply(flatten table(select(V, v -> v != toList(n:0)), toList((n:0)..(n:r-1)),
+	    (v, l) -> toList join(n:0, v, l)), e -> S_e);
     G', apply(A, a -> (
-	    B' := a * B - set A;
-	    -- the issue is here:
-	    --(B0, M) := coefficients(matrix vector G' * matrix {B'}, Monomials => B');
-	    --v := last coefficients(matrix vector G' * a, Monomials => B0);
-	    M := concatMats table(G', B',
-		(g, b) -> last coefficients(g * b, Monomials => B'));
-	    v := concatRows apply(G',
-		g -> last coefficients(g * a, Monomials => B'));
+	    -- all terms of a start term share one x-exponent, and only that monomial
+	    -- (not the log part of the start term) may be factored out of the ansatz
+	    rho := nilssonExponent first first listForm a;
+	    wrho := sum(n, i -> w#i * rho#i);
+	    B' := apply(B, b -> S_(toList join(n:0, rho, n:0)) * b);
+	    -- apply each generator to the start term and to each basis element
+	    p := apply(G', g -> applyNilssonOperator(g, a));
+	    q := table(G', B', applyNilssonOperator);
+	    -- one equation per generator and per monomial of w-weight at most k above
+	    -- rho; everything past the truncation weight is discarded
+	    keep := f -> select(apply(listForm f, first), m -> nilssonWeight(w, m) - wrho <= k);
+	    rows := sort unique flatten apply(#G',
+		i -> apply(keep p#i | flatten apply(q#i, keep), m -> (i, m)));
+	    M := matrix table(rows, toList(0 ..< #B'),
+		(im, j) -> nilssonCoefficient(q#(im#0)#j, im#1));
+	    v := matrix table(rows, {0},
+		(im, j) -> nilssonCoefficient(p#(im#0), im#1));
 	    if M == 0 and v == 0 then error "truncatedCanonicalSeries: k was too small";
-	    s := solve(sub(M, QQ), sub(-v, QQ));
-	    first first entries(a + matrix{B'} * s)))
+	    -- solve returns null when the truncated system has no solution, which happens
+	    -- when nilssonSupport misses part of the support of the series
+	    if null === (s := solve(sub(M, QQ), sub(-v, QQ)))
+	    then error "truncatedCanonicalSeries: no solution supported on nilssonSupport(I, w, k)";
+	    a + sum(#B', j -> s_(j,0) * B'#j))
+        )
     )
 
 --------------------

@@ -167,7 +167,10 @@ TEST /// -- GB over quotient rings
   assert(gbA == gbC) -- because it falls back to working version
 
   needsPackage "Msolve"
-  assert try(msolveGB(ideal J1_*, Threads => 8); false) else true -- correctly gives error
+  -- msolveGB now supports quotient rings by lifting to the ambient ring and
+  -- appending the presentation ideal, so it should agree with the answer above
+  gbM = flatten entries msolveGB(ideal J1_*, Threads => 8);
+  assert(ideal gbM == ideal gbA)
 ///
 
 

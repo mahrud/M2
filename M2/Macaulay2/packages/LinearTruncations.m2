@@ -8,6 +8,7 @@ newPackage(
 	{Name => "Navid Nemati", Email => "Navid.Nemati@inria.fr"}},
     Headline => "find the multigraded truncations that give linear resolutions",
     PackageExports => {"Complexes", "TateOnProducts", "Truncations"},
+    PackageImports => {"Varieties"},
     DebuggingMode => false,
     Keywords => {"Commutative Algebra"},
     Certification => {

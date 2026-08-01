@@ -203,7 +203,6 @@ doc ///
       cssLeadTerms(I,w)
 
   Subnodes
-    "Applications of canonical series"
     "cssExpts"
     "cssExptsMult"
     "cssLeadTerms"
@@ -212,6 +211,7 @@ doc ///
     "isTorusFixed"
     "solveFrobeniusIdeal"
     "nilssonSupport"
+    "applyNilssonOperator"
     "truncatedCanonicalSeries"
 ///
 
@@ -535,7 +535,6 @@ doc ///
    SeeAlso
      cssLeadTerms
      nilssonSupport
-     "Applications of canonical series"
 ///
 
 doc ///
@@ -615,6 +614,7 @@ doc ///
       up to weight $k$ precisely when apply every Nilsson operator gives a term with
       weight higher than $k$.
     Example
+      debug HolonomicSystems -- for nilssonWeight
       W = makeWeylAlgebra(QQ[x_1,x_2,x_3]); w = {-1,0,1}
       netList(I = ideal(
 	  x_1*dx_1^2 - x_3*dx_3^2 + dx_1 - dx_3,

@@ -14,6 +14,7 @@ TEST /// -- test solveFrobeniusIdeal
 ///
 
 TEST ///
+  debug needsPackage "HolonomicSystems" -- for nilssonWeight
   S = QQ[x]
   w = {1}
   W = makeWeylAlgebra S;

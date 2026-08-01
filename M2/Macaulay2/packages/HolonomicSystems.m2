@@ -70,6 +70,7 @@ export {
     -- solvePrimaryFrobeniusIdeal
     "solveFrobeniusIdeal",
     "nilssonSupport",
+    "applyNilssonOperator",
     "truncatedCanonicalSeries",
     }
 

@@ -429,6 +429,22 @@ class GBRing : public our_new_delete
       const gbvector *g,
       const gbvector *gsyz);
 
+  void reduce_lead_term_heap(
+      const FreeModule *F,
+      const FreeModule *Fsyz,
+      const gbvector *fcurrent_lead,
+      const_exponents exp,  // exponents of fcurrent_lead
+      gbvector *flead,
+      gbvectorHeap &f,
+      gbvectorHeap &fsyz,
+      const gbvector *g,
+      const gbvector *gsyz,
+      bool use_denom,
+      ring_elem &denom);
+  // As above, but also accumulates into 'denom' the coefficient that the
+  // accumulating polynomial had to be scaled by, exactly as the non-heap
+  // gbvector_reduce_lead_term does.
+
   void reduce_marked_lead_term_heap(
       const FreeModule *F,
       const FreeModule *Fsyz,

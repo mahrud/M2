@@ -359,6 +359,11 @@ class gbA : public GBComputation
   void tail_remainder_ZZ(POLY &f, int degf);
   // Used when replacing GB element with one with smaller coeff
   void remainder_non_ZZ(POLY &f, int degf, bool use_denom, ring_elem &denom);
+  void remainder_non_ZZ_geo(POLY &f, int degf, bool use_denom, ring_elem &denom);
+  // Geobucket version of remainder_non_ZZ, used when STRATEGY_LONGPOLYNOMIALS
+  // is set.  Accumulating the tail in a gbvectorHeap rather than in one sorted
+  // list means a term is merged O(log n) times instead of once per reduction
+  // step, which matters when the polynomials being reduced are long.
 
  public:
   //////////////////////////

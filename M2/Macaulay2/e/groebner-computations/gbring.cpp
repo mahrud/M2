@@ -1637,6 +1637,45 @@ void gbvectorHeap::show() const
     }
 }
 
+void GBRing::reduce_lead_term_heap(
+    const FreeModule *F,
+    const FreeModule *Fsyz,
+    const gbvector *fcurrent_lead,
+    const_exponents exp,  // exponents of fcurrent_lead
+    gbvector *flead,
+    gbvectorHeap &f,
+    gbvectorHeap &fsyz,
+    const gbvector *g,
+    const gbvector *gsyz,
+    bool use_denom,
+    ring_elem &denom)
+{
+  int comp;
+  ring_elem u, v;
+
+  monomial MONOM1 = ALLOCATE_MONOMIAL(monom_size);
+
+  (void) exp;
+  find_reduction_coeffs(F, fcurrent_lead, g, u, v);
+  find_reduction_monomial(F, fcurrent_lead, g, comp, MONOM1);
+
+  if (!K->is_equal(u, _one))
+    {
+      gbvector_mult_by_coeff_to(flead, u);
+      f.mult_by_coeff(u);
+      fsyz.mult_by_coeff(u);
+      if (use_denom) K->mult_to(denom, u);
+    }
+
+  gbvector *result1 = mult_by_term(F, g, v, MONOM1, comp);
+  f.add(result1);
+  if (gsyz != nullptr)
+    {
+      gbvector *result_syz1 = mult_by_term(Fsyz, gsyz, v, MONOM1, comp);
+      fsyz.add(result_syz1);
+    }
+}
+
 void GBRing::reduce_marked_lead_term_heap(
     const FreeModule *F,
     const FreeModule *Fsyz,

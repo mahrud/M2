@@ -2006,6 +2006,12 @@ void gbA::remainder_non_ZZ(POLY &f, int degf, bool use_denom, ring_elem &denom)
 //     ANSWER: NO.  Instead, use a routine to make a new GB.
 // (e) Special handling of quotient rings: none needed.
 {
+  if ((_strategy & STRATEGY_LONGPOLYNOMIALS) != 0)
+    {
+      remainder_non_ZZ_geo(f, degf, use_denom, denom);
+      return;
+    }
+
   exponents_t EXP = ALLOCATE_EXPONENTS(exp_size);
 
   gbvector head;
@@ -2047,6 +2053,87 @@ void gbA::remainder_non_ZZ(POLY &f, int degf, bool use_denom, ring_elem &denom)
         }
     }
   h.f = head.next;
+  R->gbvector_remove_content(h.f, h.fsyz, use_denom, denom);
+  f.f = h.f;
+  f.fsyz = h.fsyz;
+  if ((M2_gbTrace & PRINT_SPAIR_TRACKING) != 0)
+    {
+      buffer o;
+      o << "number of reduction steps was " << count;
+      emit_line(o.str());
+    }
+  else if (M2_gbTrace >= 4 && M2_gbTrace != 15)
+    {
+      buffer o;
+      o << "," << count;
+      emit_wrapped(o.str());
+    }
+}
+
+void gbA::remainder_non_ZZ_geo(POLY &f,
+                               int degf,
+                               bool use_denom,
+                               ring_elem &denom)
+// Same contract as remainder_non_ZZ, but the polynomial still to be reduced is
+// held in a gbvectorHeap.  remainder_non_ZZ merges each reducer into one sorted
+// list, so every surviving term is walked again on every reduction step; here
+// the merge is deferred into geometrically sized buckets instead.  Modelled on
+// GB_comp::gb_geo_reduce in gb-homog2.cpp.
+{
+  exponents_t EXP = ALLOCATE_EXPONENTS(exp_size);
+
+  gbvector head;
+  gbvector *frem = &head;  // the terms already known to be in the remainder
+
+  frem->next = nullptr;
+  int count = 0;
+
+  gbvectorHeap fb(R, _F);
+  gbvectorHeap fsyzb(R, _Fsyz);
+  fb.add(f.f);
+  fsyzb.add(f.fsyz);
+
+  const gbvector *lead;
+  while ((lead = fb.get_lead_term()) != nullptr)
+    {
+      int gap;
+      R->gbvector_get_lead_exponents(_F, lead, EXP);
+      int x = lead->comp;
+      int w = find_good_divisor(EXP, x, degf, gap);
+      if (w < 0 || gap > 0)
+        {
+          frem->next = fb.remove_lead_term();
+          frem = frem->next;
+          frem->next = nullptr;
+        }
+      else
+        {
+          POLY g = gb[w]->g;
+          R->reduce_lead_term_heap(_F,
+                                   _Fsyz,
+                                   lead,
+                                   EXP,
+                                   head.next,
+                                   fb,
+                                   fsyzb,
+                                   g.f,
+                                   g.fsyz,
+                                   use_denom,
+                                   denom);
+          count++;
+          if (M2_gbTrace >= 10)
+            {
+              buffer o;
+              o << "  tail reducing by ";
+              R->gbvector_text_out(o, _F, g.f, 2);
+              emit_line(o.str());
+            }
+        }
+    }
+
+  POLY h;
+  h.f = head.next;
+  h.fsyz = fsyzb.value();
   R->gbvector_remove_content(h.f, h.fsyz, use_denom, denom);
   f.f = h.f;
   f.fsyz = h.fsyz;

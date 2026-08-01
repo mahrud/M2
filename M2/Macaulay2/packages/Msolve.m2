@@ -32,45 +32,65 @@ importFrom_Core { "raw", "rawMatrixReadMsolveFile", "rawMatrixWriteMsolveFile",
     "rawMsolveGB", "rawMsolveSaturate", "rawMsolvePresent" }
 
 -- Direct in-memory interface to msolve's F4, with no temporary files and no
--- string conversion in either direction. Only applies over ZZ/p in a ring with
--- the standard grevlex order, which is all msolve's F4 handles; everything else
--- still goes through the executable. Returns null when it does not apply.
--- mirrors isStandardGRevLex in e/interface/msolve.cpp: a single GRevLex block
--- over all the variables with every weight 1. Note this is strictly stronger
--- than isGRevLexRing in the Saturation package, which accepts a GRevLex block
--- whose weights are the ring's degrees, whatever those are; in a weighted ring
--- M2 and msolve break degree ties differently.
-isStandardGRevLexRing = R -> (
+-- string conversion in either direction. Everything the engine cannot take
+-- still goes through the executable; these routines return null in that case.
+
+-- mirrors grevlexWeights in e/interface/msolve.cpp: a single GRevLex block over
+-- all the variables, with positive weights. A weighted order is fine because
+-- the engine applies the substitution x_i -> x_i^(w_i) to the exponents as it
+-- marshals them, which carries the order over to msolve's exactly.
+isGRevLexEngineRing = R -> (
     mo := toList (options monoid R).MonomialOrder;
     blocks := select(mo, x -> x#0 === GRevLex);
     #blocks === 1
-    and blocks#0#1 === toList(numgens R : 1)
+    and #(blocks#0#1) === numgens R
+    and all(blocks#0#1, w -> w >= 1)
     and all(mo, x -> member(x#0, {GRevLex, MonomialSize, Position})))
 
 -- note isField excludes tower rings such as (ZZ/p[x,y])[u,v], whose
 -- coefficients msolve cannot represent; those still go through toMsolveRing,
 -- which flattens them first
 msolveEngineUsable = m -> (
-    R := ring m;
-    rawMsolvePresent()
-    and instance(R, PolynomialRing)
-    and numrows m === 1
+    if not rawMsolvePresent() or numrows m =!= 1 then return false;
+    R := ambient first flattenRing ring m;
+    instance(R, PolynomialRing)
     and isField (kk := coefficientRing R)
     and char kk != 0 and char kk <= 2^31
     and precision kk === infinity
     and not instance(kk, GaloisField)
-    and isStandardGRevLexRing R)
+    and isGRevLexEngineRing R)
 
-msolveGBEngine = (m, elim, opts) -> (
+-- A Groebner basis of the one-rowed matrix m, eliminating the first elim
+-- variables. msolve knows nothing of quotient rings, so over R = S/J the
+-- generators are lifted to S and the presentation of R is appended to them: a
+-- Groebner basis of I + J in S restricts to one of I in R once the elements
+-- whose lead term already lies in in(J) are dropped. Compare with fast-kernel.m2.
+msolveGBMatrix = (m, elim, opts) -> (
     if not msolveEngineUsable m then return null;
-    map(ring m, rawMsolveGB(raw m, elim,
-	    min(opts.Threads, allowableThreads), opts.Verbosity)))
+    (threads, verbosity) := (min(opts.Threads, allowableThreads), opts.Verbosity);
+    (R0, phi) := flattenRing ring m;
+    S := ambient R0;
+    if S === R0 then return map(S, rawMsolveGB(raw sub(matrix m, S), elim, threads, verbosity));
+    rels := presentation R0;
+    G := map(S, rawMsolveGB(raw(lift(matrix m, S) | rels), elim, threads, verbosity));
+    -- keep only the elements that are not already accounted for by in(J)
+    LT := leadTerm G % gb leadTerm rels;
+    G = G_(positions(first entries LT, f -> f != 0));
+    phi substitute(G, vars R0))
+
+msolveGBEngine = (m, elim, opts) -> msolveGBMatrix(m, elim, opts)
 
 -- F4SAT additionally needs the characteristic to be larger than 2^16, see
 -- https://github.com/algebraic-solving/msolve/issues/165
 msolveSaturateEngine = (m, f, opts) -> (
     if not msolveEngineUsable m or char ring m < 2^16 then return null;
-    map(ring m, rawMsolveSaturate(raw m, raw matrix {{f}},
+    (R0, phi) := flattenRing ring m;
+    S := ambient R0;
+    -- saturating in a quotient would need the presentation appended here too,
+    -- but msolve's F4SAT expects exactly the polynomials to saturate by as its
+    -- trailing generators, so quotients are left to the executable for now
+    if S =!= R0 then return null;
+    map(S, rawMsolveSaturate(raw sub(matrix m, S), raw sub(matrix {{f}}, S),
 	    min(opts.Threads, allowableThreads), opts.Verbosity)))
 
 -- used in msolveEliminate

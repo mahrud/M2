@@ -64,6 +64,7 @@ extern "C" {
 #include "rings/poly.hpp"
 #include "rings/ring.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <vector>
 
@@ -101,18 +102,23 @@ const Matrix* rawMsolveSaturate(const Matrix* /*M*/,
 namespace {
 
 // msolve implements exactly one monomial order, standard degree reverse
-// lexicographic, so a GRevLex block carrying a nontrivial weight vector has to
-// be refused: M2 breaks ties in such a ring by weighted degree, msolve by total
-// degree, and the two orders disagree as soon as some variable has degree != 1.
-// (Note this is stricter than isGRevLexRing in the Saturation package, which
-// accepts a GRevLex block whose weights are the ring's degrees, whatever those
-// are.)  Callers that want a weighted order must substitute x_i -> x_i^(d_i)
-// into a standard graded ring first.
-bool isStandardGRevLex(const MonomialOrdering* mo, int nvars)
+// lexicographic.  A ring whose GRevLex block carries weights w is still usable,
+// because substituting x_i -> x_i^(w_i) carries its order over to msolve's
+// exactly: a monomial's weighted degree sum(e_i w_i) becomes the image's total
+// degree, and scaling coordinates by positive w_i changes neither which
+// coordinate revlex breaks a tie on nor the sign of the difference there.  So
+// the substitution is order preserving in both directions, and rather than
+// performing it on the polynomials -- which is what callers used to do, at
+// interpreter speed, and then undo term by term on the (much larger) result --
+// it is applied to the exponents while they are marshalled in and out below.
+//
+// Returns the weight vector of the GRevLex block, or an empty vector if the
+// order is not one msolve can be handed at all.
+std::vector<int> grevlexWeights(const MonomialOrdering* mo, int nvars)
 {
-  if (mo == nullptr) return false;
-  bool seen = false;
-  int nvars_seen = 0;
+  std::vector<int> none;
+  if (mo == nullptr) return none;
+  std::vector<int> wts;
   for (unsigned int i = 0; i < mo->len; i++)
     {
       mon_part p = mo->array[i];
@@ -121,29 +127,38 @@ bool isStandardGRevLex(const MonomialOrdering* mo, int nvars)
           case MO_GREVLEX:
           case MO_GREVLEX2:
           case MO_GREVLEX4:
-            if (seen) return false;
-            seen = true;
-            nvars_seen += p->nvars;
+            if (not wts.empty()) return none;  // at most one grevlex block
+            wts.assign(p->nvars, 1);
             break;
           case MO_GREVLEX_WTS:
           case MO_GREVLEX2_WTS:
           case MO_GREVLEX4_WTS:
-            if (seen) return false;
-            seen = true;
-            nvars_seen += p->nvars;
+            if (not wts.empty()) return none;
+            wts.assign(p->nvars, 1);
             if (p->wts != nullptr)
               for (int j = 0; j < p->nvars; j++)
-                if (p->wts[j] != 1) return false;
+                {
+                  // grevlex needs strictly positive weights; a zero or negative
+                  // one would make the substitution non-invertible
+                  if (p->wts[j] < 1) return none;
+                  wts[j] = p->wts[j];
+                }
             break;
           case MO_POSITION_UP:
           case MO_POSITION_DOWN:
             break;
           default:
-            return false;
+            return none;
         }
     }
-  return seen and nvars_seen == nvars;
+  if (static_cast<int>(wts.size()) != nvars) return none;
+  return wts;
 }
+
+// msolve stores exponents, and the per-block degrees it accumulates from them,
+// in a uint16_t.  It never checks for overflow, so scaled exponents that do not
+// fit have to be rejected here rather than silently wrapping.
+const long msolveMaxExponent = 65535;
 
 // msolve's input is three flat arrays: the number of terms of each generator,
 // the exponent vectors concatenated (nvars entries per term, in variable
@@ -158,7 +173,10 @@ struct MsolveInput
 
 // appends the columns of M, so that several matrices can be concatenated into
 // one input, as msolve's saturation expects
-void collectInput(const Matrix* M, const PolyRing* P, MsolveInput& in)
+void collectInput(const Matrix* M,
+                  const PolyRing* P,
+                  const std::vector<int>& wts,
+                  MsolveInput& in)
 {
   const Ring* KK = P->getCoefficientRing();
   const int nvars = P->n_vars();
@@ -178,8 +196,18 @@ void collectInput(const Matrix* M, const PolyRing* P, MsolveInput& in)
           for (Nterm& s : t)
             {
               P->getMonoid()->to_expvector(s.monom, exp);
+              // x_i -> x_i^(w_i), applied to the exponent vector in passing
+              long deg = 0;
               for (int j = 0; j < nvars; j++)
-                in.exps.push_back(static_cast<int32_t>(exp[j]));
+                {
+                  long e = static_cast<long>(exp[j]) * wts[j];
+                  deg += e;
+                  if (e > msolveMaxExponent or deg > msolveMaxExponent)
+                    throw exc::engine_error(
+                        "exponent too large for msolve, which stores exponents "
+                        "and degrees in 16 bits");
+                  in.exps.push_back(static_cast<int32_t>(e));
+                }
               std::pair<bool, long> b = KK->coerceToLongInteger(s.coeff);
               if (not b.first)
                 throw exc::engine_error("expected word size coefficients");
@@ -197,7 +225,40 @@ void collectInput(const Matrix* M, const PolyRing* P, MsolveInput& in)
 
 // The basis comes back in the same layout as the input, with bcf an array of
 // int32_t coefficients since the characteristic is positive.
+// MatrixStream appends terms in the order it receives them, so they have to
+// arrive sorted descending in the target ring's order.  With no elimination
+// block that is automatic: msolve's degree reverse lexicographic order on the
+// scaled exponents is exactly the ring's (possibly weighted) grevlex order, as
+// argued above.  With an elimination block msolve orders by the block order
+// instead, which is a different order on the same monomials, so the terms have
+// to be put back in the ring's order before they are handed over.
+void sortTermsDescending(const PolyRing* P,
+                         int nterms,
+                         int nvars,
+                         const std::vector<int32_t>& exps,
+                         std::vector<int>& order)
+{
+  const Monoid* M = P->getMonoid();
+  const int msize = M->monomial_size();
+  std::vector<int> monoms(static_cast<size_t>(nterms) * msize);
+  exponents_t exp = ALLOCATE_EXPONENTS(EXPONENT_BYTE_SIZE(nvars));
+  for (int t = 0; t < nterms; t++)
+    {
+      for (int j = 0; j < nvars; j++)
+        exp[j] = static_cast<int>(exps[static_cast<size_t>(t) * nvars + j]);
+      M->from_expvector(exp, monoms.data() + static_cast<size_t>(t) * msize);
+    }
+  order.resize(nterms);
+  for (int t = 0; t < nterms; t++) order[t] = t;
+  std::sort(order.begin(), order.end(), [&](int x, int y) {
+    return M->compare(monoms.data() + static_cast<size_t>(x) * msize,
+                      monoms.data() + static_cast<size_t>(y) * msize) > 0;
+  });
+}
+
 const Matrix* buildResult(const PolyRing* P,
+                          const std::vector<int>& wts,
+                          bool needsSorting,
                           int32_t bld,
                           const int32_t* blen,
                           const int32_t* bexp,
@@ -206,20 +267,43 @@ const Matrix* buildResult(const PolyRing* P,
   const int nvars = P->n_vars();
   MatrixStream S(P->make_FreeModule(1));
   int64_t ce = 0, cc = 0;
+  std::vector<int32_t> exps;
+  std::vector<int> order;
   S.idealBegin(static_cast<size_t>(bld));
   for (int32_t k = 0; k < bld; k++)
     {
-      S.appendPolynomialBegin(static_cast<size_t>(blen[k]));
-      for (int32_t t = 0; t < blen[k]; t++)
+      const int32_t nterms = blen[k];
+      S.appendPolynomialBegin(static_cast<size_t>(nterms));
+
+      // undoes the substitution: every exponent of a basis element is divisible
+      // by its weight, since msolve only ever takes least common multiples and
+      // quotients of monomials that came from the scaled input, and those stay
+      // in the sublattice spanned by the weights
+      exps.resize(static_cast<size_t>(nterms) * nvars);
+      for (int32_t t = 0; t < nterms; t++)
+        for (int j = 0; j < nvars; j++)
+          exps[static_cast<size_t>(t) * nvars + j] = bexp[ce++] / wts[j];
+
+      if (needsSorting)
+        sortTermsDescending(P, nterms, nvars, exps, order);
+      else
         {
+          order.resize(nterms);
+          for (int32_t t = 0; t < nterms; t++) order[t] = t;
+        }
+
+      for (int32_t i = 0; i < nterms; i++)
+        {
+          const int t = order[i];
           S.appendTermBegin(0);
           for (int j = 0; j < nvars; j++)
             {
-              int32_t e = bexp[ce++];
+              int32_t e = exps[static_cast<size_t>(t) * nvars + j];
               if (e != 0) S.appendExponent(j, e);
             }
-          S.appendTermDone(bcf[cc++]);
+          S.appendTermDone(bcf[cc + t]);
         }
+      cc += nterms;
       S.appendPolynomialDone();
     }
   S.idealDone();
@@ -248,11 +332,27 @@ const PolyRing* checkedPolyRing(const Matrix* M)
     throw exc::engine_error(
         "expected a polynomial ring whose coefficient ring is a field");
 
-  if (not isStandardGRevLex(P->getMonoid()->getMonomialOrdering(), P->n_vars()))
+  // A quotient S/J is a PolyRing here too, but msolve knows nothing of J and
+  // would silently compute in S.  Callers wanting a Groebner basis over a
+  // quotient must lift to S and append the presentation of the quotient to the
+  // generators; msolveGBMatrix in the Msolve package does exactly that.
+  if (P->is_quotient_ring())
     throw exc::engine_error(
-        "expected a ring with the standard degree reverse lexicographic "
-        "order; msolve implements no other monomial order");
+        "expected a polynomial ring, not a quotient of one");
+
   return P;
+}
+
+// the grevlex weights of M's ring, refusing any order msolve cannot represent
+std::vector<int> checkedWeights(const PolyRing* P)
+{
+  std::vector<int> wts =
+      grevlexWeights(P->getMonoid()->getMonomialOrdering(), P->n_vars());
+  if (wts.empty())
+    throw exc::engine_error(
+        "expected a ring with a degree reverse lexicographic order, possibly "
+        "weighted; msolve implements no other monomial order");
+  return wts;
 }
 
 // msolve's own defaults, as used by its command line driver.
@@ -282,6 +382,7 @@ const Matrix* rawMsolveGB(const Matrix* M,
   try
     {
       const PolyRing* P = checkedPolyRing(M);
+      const std::vector<int> wts = checkedWeights(P);
       long charac = static_cast<long>(P->characteristic());
       const int nvars = P->n_vars();
       if (elim_block_len < 0 or elim_block_len > nvars)
@@ -289,7 +390,7 @@ const Matrix* rawMsolveGB(const Matrix* M,
                                 "between 0 and the number of variables");
 
       MsolveInput in;
-      collectInput(M, P, in);
+      collectInput(M, P, wts, in);
 
       // With no nonzero generators there is nothing for msolve to do, and it
       // would reject the input outright (calling exit(1) on our behalf).
@@ -331,7 +432,8 @@ const Matrix* rawMsolveGB(const Matrix* M,
         throw exc::engine_error("msolve returned no basis");
 
       const Matrix* result =
-          buildResult(P, bld, blen, bexp, static_cast<const int32_t*>(bcf));
+          buildResult(P, wts, elim_block_len > 0, bld, blen, bexp,
+                      static_cast<const int32_t*>(bcf));
 
       free_f4_julia_result_data(
           free, &blen, &bexp, &bcf, static_cast<int64_t>(bld), charac);
@@ -360,6 +462,7 @@ const Matrix* rawMsolveSaturate(const Matrix* M,
   try
     {
       const PolyRing* P = checkedPolyRing(M);
+      const std::vector<int> wts = checkedWeights(P);
       if (F->get_ring() != M->get_ring())
         throw exc::engine_error("expected both matrices over the same ring");
       if (F->n_rows() != 1)
@@ -385,9 +488,9 @@ const Matrix* rawMsolveSaturate(const Matrix* M,
       // saturate by, with nr_nf recording how many of the trailing ones those
       // are; collectInput appends, so the concatenation is built in place.
       MsolveInput in;
-      collectInput(M, P, in);
+      collectInput(M, P, wts, in);
       const int32_t ngens = static_cast<int32_t>(in.lens.size());
-      collectInput(F, P, in);
+      collectInput(F, P, wts, in);
       const int32_t nsat = static_cast<int32_t>(in.lens.size()) - ngens;
 
       if (nsat == 0)
@@ -443,7 +546,8 @@ const Matrix* rawMsolveSaturate(const Matrix* M,
         throw exc::engine_error("msolve returned no basis");
 
       const Matrix* result =
-          buildResult(P, bld, blen, bexp, static_cast<const int32_t*>(bcf));
+          buildResult(P, wts, false, bld, blen, bexp,
+                      static_cast<const int32_t*>(bcf));
 
       free_f4_julia_result_data(
           free, &blen, &bexp, &bcf, static_cast<int64_t>(bld), charac);

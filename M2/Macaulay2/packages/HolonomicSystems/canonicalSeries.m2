@@ -399,65 +399,65 @@ TEST /// -- test solveFrobeniusIdeal
 
 TEST ///
   S = QQ[x]
-  W = makeWeylAlgebra S;
-  I = ideal(x*dx*(x*dx-3)-x*(x*dx+101)*(x*dx+13))
   w = {1}
-  nilssonSupport(I,w)
-  nilssonSupport(I,w,3)
-  cssLeadTerm(I, w)
-  (G, sols) = truncatedCanonicalSeries(I, w, 4)
-  -- error terms:
-  table(G, sols, (g, s) -> (g * s)[0,x,0,0])
+  W = makeWeylAlgebra S;
 
-  -- TODO: do SST eq. (1.22)
-  -- See SST pp. 26
+  I = ideal(x*dx*(x*dx-3)-x*(x*dx+101)*(x*dx+13))
+  assert(nilssonSupport(I,w,3) == {{0},{1},{2},{3}})
+  assert(toString cssLeadTerm(I, w) == "{1, X_0^3}")
+  (G, sols) = truncatedCanonicalSeries(I, w, 4)
+  residues = table(G, sols, applyNilssonOperator)
+  assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 4))
+
+  I = ideal(x*dx*(x*dx-3) - x*(x*dx+10)*(x*dx+20))
+  -- this used to crash when k = 3; see https://github.com/Macaulay2/M2/issues/2831
+  (G, sols) = truncatedCanonicalSeries(I, w, 3)
+  residues = table(G, sols, applyNilssonOperator)
+  assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 3))
+  (G, sols) = truncatedCanonicalSeries(I, w, 4)
+  residues = table(G, sols, applyNilssonOperator)
+  assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 4))
+///
+
+TEST ///
+  debug needsPackage "HolonomicSystems" -- for nonpositiveWeightGens
+  -- simple version first
+  W = makeWeylAlgebra(QQ[x_0,x_1]); w = {-10,-17}
+  netList(I = ideal(x_0*dx_0^2 - x_1*dx_1^2 + dx_0 - dx_1, x_0*dx_0 + x_1*dx_1 + 1))_*
+  netList(J = ideal nonpositiveWeightGens(I, w))_*
+  assert(toString cssLeadTerm(I, w) == "{Xinv_1, -Xinv_1*logX_0+Xinv_1*logX_1}")
+  elapsedTime (G, sols) = truncatedCanonicalSeries(I, w, 10); -- <1s
+  residues = table(G, sols, applyNilssonOperator)
+  assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 30))
+
+  -- Lizzie Pratt's example
+  W = makeWeylAlgebra(QQ[x_1,x_2,x_3]); w = {-1,0,1}
+  netList(I = ideal(
+      x_1*dx_1^2 - x_3*dx_3^2 + dx_1 - dx_3,
+      x_2*dx_2^2 - x_3*dx_3^2 + dx_2 - dx_3,
+      x_1*dx_1 + x_2*dx_2 + x_3*dx_3 + 1))_*
+  netList(J = ideal nonpositiveWeightGens(I, w))_*
+  assert(sort nilssonSupport(J, w, 2) == {{-2,2,0},{-1,0,1},{-1,1,0},{0,0,0}})
+  assert(toString cssLeadTerm(I, w) == "{Xinv_0, -Xinv_0*logX_0+Xinv_0*logX_2, -Xinv_0*logX_0+Xinv_0*logX_1, Xinv_0*logX_0^2-Xinv_0*logX_1*logX_0-Xinv_0*logX_2*logX_0+Xinv_0*logX_2*logX_1}")
+  elapsedTime (G, sols) = truncatedCanonicalSeries(I, w, 2) -- ~20s
+  residues = table(G, sols, applyNilssonOperator)
+  assert all(flatten residues, f -> all(exponents f, e -> nilssonWeight_w e > 2))
+///
+
+-- FIXME: nilssonSupport fails here, because truncating the Nilsson cone at
+-- weight k leaves an unbounded polyhedron and latticePoints gives up with
+-- "Something went wrong, vertex with negative height."
+-- TODO: do SST eq. (1.22); see SST pp. 26
+-*
   A = matrix{{1,0,0,-1},{0,1,0,1},{0,0,1,1}}
   beta = {1,0,0}
   I = gkz(A,beta)
-  w = {1,1,1,1,0}
+  w = {1,1,1,1} -- NOTE: this used to be {1,1,1,1,0}, which is not a weight for I
   nilssonSupport(I,w)
   nilssonSupport(I,w,3)
   cssLeadTerm(I, w)
   (G, sols) = truncatedCanonicalSeries(I, w, 4);
-///
-
-TEST ///
-  R = QQ[x]
-  W = makeWeylAlgebra R
-  w = {1}
-  I = ideal(x*dx*(x*dx-3) - x*(x*dx+10)*(x*dx+20))
-  -- FIXME: crashes when k = 3; see https://github.com/Macaulay2/M2/issues/2831
-  (G, sols) = truncatedCanonicalSeries(I, w, 4)
-  netList G
-  netList sols
-  -- error terms:
-  table(G, sols, (g, s) -> (g * s)[0,x,0,0])
-///
-
-TEST ///
-restart
-debug needsPackage "HolonomicSystems"
-  W = makeWeylAlgebra(QQ[x_0,x_1])
-  I = ideal(x_0*dx_0^2 - x_1*dx_1^2 + dx_0 - dx_1, x_0*dx_0 + x_1*dx_1 + 1) -- TODO: +1 instead of -1
-  gens gb I
-  I
-  w = {-10,-17}
-  inw(I, -w | w)
-  
-  I
-  I = gbw(I, fw := -w|w)
-  netList I_*
-  G = ideal nonpositiveWeightGens(I, w);
-  netList G_*
-
-  errorDepth=2
-  cssLeadTerm(G, w)
-
-  (G, sols) = truncatedCanonicalSeries(I, w, 10);
-  M
-  v
-  break
-///
+*-
 
 end--
 restart
@@ -466,32 +466,3 @@ installPackage "Dmodules"
 needsPackage "HolonomicSystems"
 check HolonomicSystems
 viewHelp HolonomicSystems
-
-
-
-
--- Lizzie Pratt
-restart
-debug needsPackage "HolonomicSystems"
-
-W = makeWeylAlgebra(QQ[x_1,x_2,x_3])
-
-I = ideal(
-    x_1*dx_1^2 - x_3*dx_3^2 + dx_1 - dx_3,
-    x_2*dx_2^2 - x_3*dx_3^2 + dx_2 - dx_3,
-    x_1*dx_1 + x_2*dx_2 + x_3*dx_3 + 1) -- +1
-
-k = 2
-w = {-1,0,1}
-
-inw(I, -w | w)
-indicialIdeal(I, w)
-
-min nilssonSupport(I, w, k)
-netList cssLeadTerm(I, w)
-
-errorDepth=2
-(G, sols) = truncatedCanonicalSeries(I, w, 2);
-
--- error terms:
-table(G, sols, (g, s) -> (g * s)[0,x,0,0])

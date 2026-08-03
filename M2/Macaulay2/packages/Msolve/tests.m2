@@ -128,6 +128,34 @@ TEST ///
   assert(sub(W1, R) == W2)
 ///
 
+TEST ///
+  -- genus 6, 14th semigroup
+  msolveSetup()
+  kk = ZZ/32003
+  R = kk[x_0..x_7]/(x_5^2-x_4*x_6,x_4*x_5-x_3*x_7,x_3*x_5-x_2*x_6,x_4^2-x_2*x_7,x_3*x_4-x_2*x_5,
+      x_2*x_4-x_1*x_7,x_3^2-x_1*x_6,x_2*x_3-x_1*x_5,x_1*x_3-x_0*x_6,x_0*x_3-5*x_6^2+5*x_5*x_7,
+      x_2^2-x_1*x_4,x_1*x_2-x_0*x_5,x_0*x_2-5*x_5*x_6+5*x_4*x_7,x_1^2-5*x_6^2+5*x_5*x_7,
+      x_0*x_1-5*x_3*x_6+5*x_2*x_7,x_0^2*x_6-5*x_1*x_6^2+5*x_1*x_5*x_7,
+      x_0^2*x_5-5*x_1*x_5*x_6+5*x_1*x_4*x_7,x_0^2*x_4-5*x_1*x_4*x_6+5*x_0*x_7^2)
+  I = ideal(-x_0,-x_1,-x_2,-x_3,-x_4,-x_5,-x_6)
+  L = map(R^1, R^{5:{-10}, 2:{-20}}, {{
+              x_6^10+4*x_5*x_6^8*x_7-x_4*x_6^7*x_7^2-2*x_3*x_6^5*x_7^4+2*x_2*x_6^4*x_7^5+x_2*x_5*x_6^2*x_7^6-2*x_0^2*x_7^8-5*x_1*x_6*x_7^8,
+              x_5*x_6^9+4*x_4*x_6^8*x_7+x_0^7*x_7^3-2*x_3*x_6^6*x_7^3+3*x_2*x_6^5*x_7^4+3*x_2*x_5*x_6^3*x_7^5+2*x_1*x_5*x_7^8,
+              x_3*x_6^9+4*x_2*x_6^8*x_7-x_2*x_5*x_6^6*x_7^2-5*x_0^6*x_7^4-x_1*x_6^5*x_7^4-2*x_1*x_5*x_6^3*x_7^5-4*x_1*x_4*x_6^2*x_7^6+3*x_0*x_6*x_7^8,
+              x_0*x_4*x_6^8-x_0^8*x_7^2-3*x_6^8*x_7^2-2*x_5*x_6^6*x_7^3-x_4*x_6^5*x_7^4-2*x_3*x_6^3*x_7^6+3*x_2*x_6^2*x_7^7+5*x_2*x_5*x_7^8,
+              x_0^10, x_0^19*x_7, x_0*x_5*x_6^18-2*x_0*x_4*x_6^17*x_7+5*x_6^17*x_7^3-5*x_5*x_6^15*x_7^4-4*x_0^5*x_7^15}})
+  a = gcd flatten degrees source L
+  degs = degrees source L // a
+  T = kk(monoid[ #degs, VariableBaseName => getSymbol "s", Degrees => degs ]);
+  f = map(R, T, L, DegreeMap => d -> d * a)
+  assert isHomogeneous f
+  -- allowableThreads = 8
+  gbTrace = 2
+  -- you should see msolve's internal log
+  elapsedTime J = ker f; -- 23s
+  assert(numgens J == 972);
+///
+
 /// 
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];

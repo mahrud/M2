@@ -1,20 +1,19 @@
 newPackage(
-	"Msolve",
-	Version => "1.24.06", 
-    	Date => "September 2025",
-    	Authors => {{Name => "Martin Helmer", 
-		  Email => "martin.helmer@swansea.ac.uk", 
-		  HomePage => "http://martin-helmer.com/"}, {Name => "Mike Stillman", 
-		  Email => "mike@math.cornell.edu", 
-		  HomePage => "https://math.cornell.edu/michael-e-stillman"},{Name => "Anton Leykin", 
-		  Email => "leykin@math.gatech.edu", 
-		  HomePage => "https://antonleykin.math.gatech.edu/"}},
-	  Keywords => {"Groebner Basis Algorithms" , "Interfaces"},
-	Headline => "interface to the msolve library for solving multivariate polynomial systems using Groebner Bases",
-	PackageImports => { "Elimination", "Saturation" },
-    	AuxiliaryFiles => true,
-	DebuggingMode => false
-	)
+    "Msolve",
+    Version => "1.26.08",
+    Date => "August 2026",
+    Authors => {
+        { Name => "Martin Helmer",  Email => "martin.helmer@swansea.ac.uk", HomePage => "http://martin-helmer.com/" },
+        { Name => "Mike Stillman",  Email => "mike@math.cornell.edu",       HomePage => "https://math.cornell.edu/michael-e-stillman" },
+        { Name => "Anton Leykin",   Email => "leykin@math.gatech.edu",      HomePage => "https://antonleykin.math.gatech.edu/" },
+        { Name => "Mahrud Sayrafi", Email => "mahrud@mcmaster.ca",          HomePage => "https://mahrud.github.io/" },
+        },
+    Keywords => {"Groebner Basis Algorithms" , "Interfaces"},
+    Headline => "interface to the msolve library for solving multivariate polynomial systems using Groebner Bases",
+    PackageImports => { "Elimination", "Saturation" },
+    AuxiliaryFiles => true,
+    DebuggingMode => false
+    )
 
 ---------------------------------------------------------------------------
 
@@ -29,8 +28,17 @@ export{
     "QQi",
     }
 
-importFrom_Core { "raw", "rawMatrixReadMsolveFile", "rawMatrixWriteMsolveFile",
-    "rawMsolveGB", "rawMsolveSaturate", "rawMsolvePresent" }
+importFrom_Core {
+    "raw",
+    "rawMatrixReadMsolveFile",
+    "rawMatrixWriteMsolveFile",
+    --
+    "rawMsolveGB",
+    "rawMsolveSaturate",
+    "rawMsolvePresent",
+    --
+    "ContainmentHooks",
+    }
 
 -- Direct in-memory interface to msolve's F4, with no temporary files and no
 -- string conversion in either direction. Everything the engine cannot take
@@ -52,14 +60,19 @@ isGRevLexEngineRing = R -> (
 -- coefficients msolve cannot represent; those still go through toMsolveRing,
 -- which flattens them first
 msolveEngineUsable = m -> (
-    if not rawMsolvePresent() or numrows m =!= 1 then return false;
+    if not rawMsolvePresent()
+    or numrows m =!= 1 then return false;
     R := ambient first flattenRing ring m;
+    kk := coefficientRing R;
     instance(R, PolynomialRing)
-    and isField (kk := coefficientRing R)
-    and char kk != 0 and char kk <= 2^31
+    and isField kk
+    and char kk != 0
+    and char kk <= 2^31
     and precision kk === infinity
     and not instance(kk, GaloisField)
     and isGRevLexEngineRing R)
+
+---------------------------------------------------------------------------
 
 -- A Groebner basis of the one-rowed matrix m, eliminating the first elim
 -- variables. msolve knows nothing of quotient rings, so over R = S/J the
@@ -68,7 +81,8 @@ msolveEngineUsable = m -> (
 -- whose lead term already lies in in(J) are dropped. Compare with fast-kernel.m2.
 msolveGBMatrix = (m, elim, opts) -> (
     if not msolveEngineUsable m then return null;
-    (threads, verbosity) := (min(opts.Threads, allowableThreads), opts.Verbosity);
+    threads := opts.Threads ?? allowableThreads;
+    verbosity := opts.Verbosity ?? gbTrace;
     (R0, phi) := flattenRing ring m;
     S := ambient R0;
     if S === R0 then return map(S, rawMsolveGB(raw sub(matrix m, S), elim, threads, verbosity));
@@ -92,7 +106,7 @@ msolveSaturateEngine = (m, f, opts) -> (
     -- trailing generators, so quotients are left to the executable for now
     if S =!= R0 then return null;
     map(S, rawMsolveSaturate(raw sub(matrix m, S), raw sub(matrix {{f}}, S),
-	    min(opts.Threads, allowableThreads), opts.Verbosity)))
+            opts.Threads ?? allowableThreads, opts.Verbosity ?? gbTrace)))
 
 -- used in msolveEliminate
 importFrom_Core { "monoidIndices" }
@@ -112,19 +126,17 @@ if msolveProgram === null then (
     msolveProgram = findProgram("msolve", "true", Verbose => debugLevel > 0))
 
 msolveDefaultOptions = new OptionTable from {
-    Threads => allowableThreads,
-    Verbosity => 0,
-    }
+    Threads => null, Verbosity => null }
 
 runMsolve = (mIn, mOut, args, opts) -> runProgram(msolveProgram,
     demark_" " { args,
-	"-t", toString opts.Threads,
-	"-v", toString opts.Verbosity,
+	"-t", toString(opts.Threads ?? allowableThreads),
+	"-v", toString(opts.Verbosity ?? gbTrace),
 	"-f", toString mIn,
 	"-o", toString mOut },
     KeepFiles => true,
     RaiseError => true,
-    Verbose => opts.Verbosity > 0)
+    Verbose => (opts.Verbosity ?? gbTrace) > 0)
 
 -- e.g. turns x_(0,0)... to p_0...
 toMsolveRing = I -> (
@@ -193,6 +205,10 @@ readMsolveList = mOutStr -> (
     mOutStr = first separate(":", mOutStr);
     mOutStr)
 
+---------------------------------------------------------------------------
+-- Core msolve algorithm calls
+---------------------------------------------------------------------------
+
 msolveGB = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
 msolveGB Ideal := opts -> I0 -> (
     if (G := msolveGBEngine(generators I0, 0, opts)) =!= null
@@ -200,7 +216,6 @@ msolveGB Ideal := opts -> I0 -> (
     (S, K, I) := toMsolveRing I0;
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
--- TODO: add as a hook for gb
 
 importFrom_Core "numallvars"
 msolveLeadMonomials = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
@@ -238,7 +253,6 @@ msolveEliminate(Ideal,        List) := Ideal => opts -> (I0, elimvars) -> (
     then return ideal substitute(G, vars S');
     mOut := msolve(S, K, I_*, "-g 2 -e " | length elimIndices, opts);
     ideal readMsolveOutputFile(S', mOut))
--- TODO: add as a hook for eliminate
 
 msolveSaturate = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
 msolveSaturate(Ideal, RingElement) := opts -> (I0, f0) -> (
@@ -251,9 +265,6 @@ msolveSaturate(Ideal, RingElement) := opts -> (I0, f0) -> (
     -- msolve expects a list of the generators of the ideal followed by f
     mOut := msolve(S, K, I_* | {f}, "-S -g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
-addHook((saturate, Ideal, RingElement), Strategy => Msolve,
-    -- msolveSaturate doesn't use any options of saturate, like DegreeLimit, etc.
-    (opts, I, f) -> try ideal msolveSaturate(I, f))
 
 --------------------------------------------------------------------------------
 -- Routing Macaulay2's own commands through msolve
@@ -264,12 +275,11 @@ addHook((saturate, Ideal, RingElement), Strategy => Msolve,
 -- input, and leaves Macaulay2's own implementation in charge otherwise.
 -- Compare with fast-kernel.m2, which this generalizes.
 
-msolveDefaultGB      = lookup(gb, Matrix)
-msolveDefaultBasis   = lookup(groebnerBasis, Matrix)
-msolveDefaultElim    = lookup(eliminate, List, Ideal)
+M2DefaultGB        = lookup(gb, Matrix)
+M2DefaultGBasis    = lookup(groebnerBasis, Matrix)
+M2DefaultEliminate = lookup(eliminate, List, Ideal)
 
--- true if msolve is applicable to the one-rowed matrix m: it is over a ring
--- msolve understands, and there is something to compute
+-- true if msolve is applicable to the one-rowed matrix m
 msolveApplicable = m -> m != 0 and numrows m === 1 and msolveEngineUsable m
 
 -- A GroebnerBasis object for m, computed by msolve and declared with forceGB.
@@ -329,51 +339,46 @@ msolveEliminationGB = (I, v) -> (
     (S1, G) := result;
     ideal toR substitute(G, vars ring J))
 
-msolveGBHook = (opts, m) -> (
+msolveGBHook = options gb >> opts -> m -> (
     -- msolve computes a full reduced basis, so a subring or degree limited
     -- request has to go back to Macaulay2's own implementation
-    if opts.?SubringLimit and opts.SubringLimit =!= infinity
-    or opts.?DegreeLimit and opts.DegreeLimit =!= {} then return null;
+    if opts.DegreeLimit =!= {} or opts.SubringLimit =!= infinity
+    or opts.ChangeMatrix or opts.Syzygies then return null;
     msolveForceGB(m, 0, msolveDefaultOptions))
 
 -- msolveSetup() installs all of them; msolveSetup {gb, eliminate} a selection
 msolveSetup = arg -> (
-    installed := if instance(arg, VisibleList) then toList arg else {arg};
+    install := if instance(arg, VisibleList) then toList arg else {arg};
+    if #install == 0 then install = {gb, groebnerBasis, eliminate, kernel, saturate, ContainmentHooks};
+    printerr("installing msolve hooks for ", install);
+
     if not rawMsolvePresent() then printerr(
 	"warning: this Macaulay2 was not built against the msolve library; ",
 	"msolveSetup will route through the msolve executable instead");
 
-    if member(gb, installed) or #installed === 0 then
+    if member(gb, install) then
     gb Matrix := opts -> m -> (
-	if (G := msolveGBHook(opts, m)) =!= null then G
-	else (msolveDefaultGB opts)(m));
+        msolveGBHook(opts, m) ?? (M2DefaultGB opts)(m));
 
-    if member(groebnerBasis, installed) or #installed === 0 then
+    if member(groebnerBasis, install) then
     groebnerBasis Matrix := opts -> m -> (
-	if (G := msolveGBHook(opts, m)) =!= null then generators G
-	else (msolveDefaultBasis opts)(m));
+        generators msolveGBHook(opts, m) ?? (M2DefaultGBasis opts)(m));
 
-    if member(eliminate, installed) or #installed === 0 then (
-	eliminate(List, Ideal) := Ideal => (v, I) -> (
-	    R := ring I;
-	    if #v === 0 then return I;
-	    if any(v, x -> ring x =!= R)
-	    then error "expected a list of elements in the ring of the ideal";
-	    G := msolveEliminationGB(I, v);
-	    if G === null then return msolveDefaultElim(v, I);
-	    G);
-	eliminate(Ideal, List) := Ideal => (I, v) -> eliminate(v, I);
-	eliminate(RingElement, Ideal) := Ideal => (x, I) -> eliminate({x}, I);
-	eliminate(Ideal, RingElement) := Ideal => (I, x) -> eliminate({x}, I));
+    if member(eliminate, install) then
+    eliminate(List, Ideal) := Ideal => (v, I) -> (
+        R := ring I;
+        if #v === 0 then return I;
+        if any(v, x -> ring x =!= R)
+        then error "expected a list of elements in the ring of the ideal";
+        msolveEliminationGB(I, v) ?? M2DefaultEliminate(v, I));
 
-    if member(kernel, installed) or #installed === 0 then
+    if member(kernel, install) then
     addHook((kernel, RingMap), Strategy => Msolve, (opts, f) -> (
 	    (F, R) := (target f, source f);
 	    if not isAffineRing R or not isAffineRing F
 	    or coefficientRing R =!= coefficientRing F
 	    or opts.?SubringLimit and opts.SubringLimit =!= infinity then return null;
-	    -- the kernel is what survives eliminating the variables of the target
-	    -- from the graph ideal
+	    -- the kernel is what survives eliminating the variables of the target from the graph ideal
 	    g := generators graphIdeal f;
 	    n1 := numgens F;
 	    result := msolveElimGB(g, n1);
@@ -382,11 +387,17 @@ msolveSetup = arg -> (
 	    mapback := map(R, ring g, map(R^1, R^n1, 0) | vars R);
 	    ideal mapback substitute(G, vars ring g)));
 
-    -- saturate already has its hook installed when the package is loaded, but
-    -- it may have been removed, so put it back
-    if member(saturate, installed) or #installed === 0 then
+    if member(saturate, install) then
     addHook((saturate, Ideal, RingElement), Strategy => Msolve,
 	(opts, I, f) -> try ideal msolveSaturate(I, f));
+
+    -- by default, Ideal == ZZ calls rawGBContains
+    if member(ContainmentHooks, install) then
+    addHook(ContainmentHooks, Strategy => Msolve,
+        (f, g) -> f % msolveGBHook g == 0);
+
+    -- TODO: what other rawGB... compiled functions can use msolve?
+    -- TODO: try out pushforward using msolve?
     )
 
 --------------------------------------------------------------------------------

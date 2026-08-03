@@ -64,9 +64,13 @@ extern "C" {
 #include "rings/poly.hpp"
 #include "rings/ring.hpp"
 
+#include "../../d/interrupt-jump.h"
+
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
+
+extern JumpCell interrupt_jmp;
 
 M2_bool rawMsolvePresent()
 {
@@ -409,6 +413,15 @@ const Matrix* rawMsolveGB(const Matrix* M,
 
       // Note msolve reduces in.cfs into [0, charac) in place, which is fine
       // since we own it and do not use it afterwards.
+      // msolve does not poll M2's interrupted flag.  Install the jump target
+      // used by the SIGINT handler while control is inside the library so a
+      // Ctrl-C can return immediately to the interpreter.
+      interrupt_jmp.is_set = true;
+      if (SETJMP(interrupt_jmp.addr))
+        {
+          interrupt_jmp.is_set = false;
+          return nullptr;
+        }
       export_f4(malloc,
                 &bld, &blen, &bexp, &bcf,
                 in.lens.data(),
@@ -427,6 +440,7 @@ const Matrix* rawMsolveGB(const Matrix* M,
                 reduce_gb,
                 pbm_file,
                 static_cast<int32_t>(info_level));
+      interrupt_jmp.is_set = false;
 
       if (blen == nullptr or bexp == nullptr or bcf == nullptr)
         throw exc::engine_error("msolve returned no basis");
@@ -529,7 +543,15 @@ const Matrix* rawMsolveSaturate(const Matrix* M,
       for (int32_t k = 0; k < nsat; k++) sat->lmps[k] = k;
 
       int error = 0;
+      // Like export_f4, core_f4sat does not poll M2's interrupted flag.
+      interrupt_jmp.is_set = true;
+      if (SETJMP(interrupt_jmp.addr))
+        {
+          interrupt_jmp.is_set = false;
+          return nullptr;
+        }
       success = core_f4sat(bs, sat, st, &error);
+      interrupt_jmp.is_set = false;
       // core_f4sat releases sat itself, via free_basis_elements followed by
       // free_basis_without_hash_table, so it must not be freed again below.
       sat = nullptr;

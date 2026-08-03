@@ -250,7 +250,8 @@ void segv_handler(int sig) {
 
 void interrupt_handler(int sig) {
   (void) sig;
-  // libnormaliz::nmz_interrupted = 1;
+  // Normaliz polls this signal-safe flag and throws InterruptException.
+  libnormaliz::nmz_interrupted = 1;
   if (tryGlobalInterrupt() == 0) {
     if (test_Field(THREADLOCAL(interrupts_interruptedFlag, struct atomic_field)) ||
                    THREADLOCAL(interrupts_interruptPending, bool)) {

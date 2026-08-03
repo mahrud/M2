@@ -24,30 +24,13 @@
 
 #include "../c/compat.h"
 
-/* set this jump and the flag below if the handler should always jump;
-   e.g., for interrupting a slow 3rd party or system library routine */
-#include <setjmp.h>
-#ifdef _POSIX_C_SOURCE
-# define JMPBUF sigjmp_buf
-# define SETJMP(env) sigsetjmp(env, TRUE)
-# define LONGJUMP(env) siglongjmp(env, 1)
-#else
-# define JMPBUF jmp_buf
-# define SETJMP(env) setjmp(env)
-# define LONGJUMP(env) longjmp(env, 1)
-#endif
+#include "interrupt-jump.h"
 
 struct ArgCell
 {
   int argc, envc;
   /* const */ char * /* const */ * argv;
   /* const */ char * /* const */ * envp;
-};
-
-struct JumpCell
-{
-  JMPBUF addr;
-  bool is_set;
 };
 
 #ifdef HAVE_UNISTD_H

@@ -63,9 +63,8 @@ msolveEngineUsable = m -> (
     if not rawMsolvePresent()
     or numrows m =!= 1 then return false;
     R := ambient first flattenRing ring m;
-    kk := coefficientRing R;
     instance(R, PolynomialRing)
-    and isField kk
+    and isField(kk := coefficientRing R)
     and char kk != 0
     and char kk <= 2^31
     and precision kk === infinity
@@ -343,13 +342,17 @@ msolveGBHook = options gb >> opts -> m -> (
     -- msolve computes a full reduced basis, so a subring or degree limited
     -- request has to go back to Macaulay2's own implementation
     if opts.DegreeLimit =!= {} or opts.SubringLimit =!= infinity
-    or opts.ChangeMatrix or opts.Syzygies then return null;
+    or opts.ChangeMatrix or opts.Syzygies
+    or opts.StopWithMinimalGenerators then return null;
     msolveForceGB(m, 0, msolveDefaultOptions))
 
 -- msolveSetup() installs all of them; msolveSetup {gb, eliminate} a selection
 msolveSetup = arg -> (
     install := if instance(arg, VisibleList) then toList arg else {arg};
-    if #install == 0 then install = {gb, groebnerBasis, eliminate, kernel, saturate, ContainmentHooks};
+    if #install == 0 then install = {
+        gb, groebnerBasis, mingens, trim,
+        eliminate, kernel, saturate,
+        ContainmentHooks};
     printerr("installing msolve hooks for ", install);
 
     if not rawMsolvePresent() then printerr(
@@ -394,10 +397,51 @@ msolveSetup = arg -> (
     -- by default, Ideal == ZZ calls rawGBContains
     if member(ContainmentHooks, install) then
     addHook(ContainmentHooks, Strategy => Msolve,
-        (f, g) -> f % msolveGBHook g == 0);
+        (f, g) -> try f % msolveGBHook g == 0);
 
+    if member(mingens, install) then
+    addHook((mingens, Module), Strategy => Msolve, (opts, M) -> (
+            if M.?relations or not M.?generators
+            or not msolveApplicable M.generators
+            then return null;
+
+            R := ring M;
+            m := vars R;
+
+            -- Find classes in M / m*M
+            f := M.generators;
+            B := f % msolveGBHook(m ** f);
+
+            -- Select a kk-basis of the classes
+            kk := coefficientRing R;
+            -- TODO: this should be embarrasingly degree parallelized
+            (N, C) := coefficients B;
+            cols := columnRankProfile mutableMatrix lift(C, kk);
+            N * C_cols));
+
+    if member(trim, install) then
+    addHook((trim, Module), Strategy => Msolve, (opts, M) -> (
+            if M.?relations or not M.?generators
+            or not msolveApplicable M.generators
+            then return null;
+
+            if (g := mingens M) === M.generators
+            then M else image mingens M));
+
+    ///
     -- TODO: what other rawGB... compiled functions can use msolve?
     -- TODO: try out pushforward using msolve?
+
+    if member(ReduceHooks, install) then
+    if member(length, install) then
+    if member(prune, install) then
+    if member(pushForward, install) then
+    if member(quotient, install) then
+    if member(quotientRemainder, install) then
+    if member(remainder, install) then
+    if member(res, install) then
+    if member(syz, install) then
+    ///;
     )
 
 --------------------------------------------------------------------------------

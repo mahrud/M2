@@ -1909,6 +1909,61 @@ assert(minimalPrimes ideal 4_R == {ideal 2_R})
 assert(minimalPrimes ideal 5_R == {})
 ///
 
+TEST ///
+-- Counterexample-guided minimal primes of determinantal ideals.
+R = QQ[a..f]
+M = matrix{{a,b,c},{d,e,f}}
+
+J = ideal 0_R
+computed = minimalPrimesOfMinors(2, M, J)
+expected = minimalPrimes(J + minors(2, M))
+assert(#computed == #expected)
+assert all(computed, P -> any(expected, Q -> P == Q))
+
+-- A reducible base ideal exercises simultaneous witness refinement.
+J = ideal(a*d)
+computed = minimalPrimesOfMinors(2, M, J, InitialMinors => 1)
+expected = minimalPrimes(J + minors(2, M))
+assert(#computed == #expected)
+assert all(computed, P -> any(expected, Q -> P == Q))
+
+-- The matrix already has rank below two modulo this component.
+J = ideal(a,b,c)
+assert(minimalPrimesOfMinors(2, M, J) == {J})
+
+-- Empty and vacuous determinantal conditions.
+assert(minimalPrimesOfMinors(0, M, J) == {})
+computed = minimalPrimesOfMinors(3, M, ideal(a*d))
+expected = minimalPrimes ideal(a*d)
+assert(#computed == #expected)
+assert all(computed, P -> any(expected, Q -> P == Q))
+
+-- The motivating singular-locus calculation and a small-characteristic check.
+T = QQ[x,y]
+I = ideal(x*y)
+assert(minimalPrimesOfMinors(1, jacobian I, I) == {ideal(x,y)})
+
+R = ZZ/2[a..f]
+M = matrix{{a,b,c},{d,e,f}}
+J = ideal(a*d)
+computed = minimalPrimesOfMinors(2, M, J)
+expected = minimalPrimes(J + minors(2, M))
+assert(#computed == #expected)
+assert all(computed, P -> any(expected, Q -> P == Q))
+///
+
+TEST ///
+-- Quotient-ring input.
+R = QQ[a..f]
+S = R/ideal(a*d)
+M = sub(matrix{{a,b,c},{d,e,f}}, S)
+J = ideal sub(b, S)
+computed = minimalPrimesOfMinors(2, M, J)
+expected = minimalPrimes(J + minors(2, M))
+assert(#computed == #expected)
+assert all(computed, P -> any(expected, Q -> P == Q))
+///
+
 end--
 
 -- UHOH problem with finite fields

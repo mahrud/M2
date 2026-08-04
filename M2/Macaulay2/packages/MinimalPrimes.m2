@@ -66,7 +66,17 @@ newPackage(
 -- .  Document minprimes, something about the strategies
 -- .  Export only the symbols we want
 
-export { "Hybrid", "minimalPrimes", "minprimes" => "minimalPrimes", "radical", "radicalContainment"}
+export {
+    "Hybrid",
+    "minimalPrimes",
+    "minprimes" => "minimalPrimes",
+    "radical",
+    "radicalContainment",
+    --
+    "decomposeMinors",
+    "InitialMinors",
+    "MinorsStrategy",
+    }
 
 importFrom_Core { "raw", "rawCharSeries", "rawGBContains", "rawRadical", "newMonomialIdeal" }
 importFrom_Core { "isComputationDone", "cacheComputation", "fetchComputation", "updateComputation", "cacheHit", "Context", "Computation" }
@@ -397,6 +407,112 @@ legacyMinimalPrimes = J -> (
 ----- Development section
 --------------------------------------------------------------------
 -- TODO: where should these go? Reduce redundancy
+
+--------------------------------------------------------------------
+-- Minimal primes of a determinantal ideal modulo an ideal
+--------------------------------------------------------------------
+
+-- Return null when the generic rank of M modulo P is less than k.
+-- Otherwise, return a representative modulo J of a k-minor which is nonzero modulo P.
+-- Since P is prime, its quotient is a domain, and rank profiles over its
+-- fraction field give a certificate without constructing all k-minors.
+-- The determinant itself is computed in R/J to reduce intermediate expressions;
+-- its lift differs from the corresponding minor over R by an element of J.
+determinantalWitness = (k, M, M', P, minorsStrategy) -> (
+    R := ring M;
+    B := quotient P;
+    kk := coefficientRing B; -- TODO: ultimate
+    for ctr to 1000 do (
+        -- this is not the same as working over the
+        -- fraction field, but it is much, much faster!
+        ev := map(kk, B, random(kk^1, kk^(numgens B)));
+        Mk := ev M;
+        --
+        rows := rowRankProfile mutableMatrix Mk;
+        if #rows < k then continue;
+        rows = take(rows, k);
+        --
+        cols := columnRankProfile mutableMatrix Mk^rows;
+        if #cols < k then continue;
+        cols = take(cols, k);
+        --
+        witness := det(submatrix(M', rows, cols), Strategy => minorsStrategy);
+        if witness == 0 then continue;
+        return lift(witness, R))
+    )
+
+decomposeMinors = method(
+    Options => {
+	Verbosity              => 0,
+	Strategy               => null,
+	InitialMinors          => 0,
+	MinorsStrategy         => null,
+	"SquarefreeFactorSize" => 1
+	}
+    )
+
+-- Compute Min(J + I_k(M)) without first constructing I_k(M).  Starting from
+-- J and a small optional seed, decompose the current approximation.  A minimal
+-- prime P is final exactly when rank(M mod P) < k.  Otherwise a nonzero k-minor
+-- modulo P strictly refines the approximation without removing any component
+-- of the desired determinantal locus.
+-- TODO: integrate with FastMinors
+decomposeMinors(ZZ, Matrix)        := List => opts -> (k, M)    -> decomposeMinors(k, M, ideal 0_(ring M))
+decomposeMinors(ZZ, Matrix, Ideal) := List => opts -> (k, M, J) -> (
+    if k <= 0 then return {};
+
+    R := ring M;
+    if ring J =!= R then
+	error "decomposeMinors: expected the matrix and ideal to have the same ring";
+    if not instance(opts.InitialMinors, ZZ) or opts.InitialMinors < 0 then
+	error "decomposeMinors: expected InitialMinors to be a nonnegative integer";
+
+    decompose' := I -> decompose(I,
+        -- TODO: would CodimensionLimit be useful?
+	Verbosity              => opts.Verbosity,
+	Strategy               => "Legacy",
+	MinimalGenerators      => false,
+	"SquarefreeFactorSize" => opts#"SquarefreeFactorSize");
+
+    if k > min(numRows M, numColumns M) then return decompose' J;
+
+    A := quotient J;
+    M' := sub(M, A);
+    seed := if opts.InitialMinors == 0
+    then ideal 0_R else ideal lift(
+	gens minors(k, M',
+	    Limit    => opts.InitialMinors,
+	    Strategy => opts.MinorsStrategy), R);
+    pending := {J};  -- branches still containing false components
+    certified := {}; -- primes on which the generic rank is below k
+    iteration := 0;
+
+    while #pending > 0 do (
+	iteration = iteration + 1;
+	current := first pending;
+	pending = drop(pending, 1);
+	if opts.Verbosity >= 1 then printerr(
+	    "decomposeMinors: branch ", toString iteration,
+	    ", decomposing an ideal with ", toString numgens current,
+	    " generators; ", toString(#pending), " branches pending");
+	candidates := decompose' current;
+	numCertified := 0;
+
+	for P in candidates do (
+	    witness := determinantalWitness(k, M, M', P, opts.MinorsStrategy);
+	    if witness === null then (
+		certified = append(certified, P);
+		numCertified = numCertified + 1)
+	    else
+		-- Refining P alone avoids decomposing completed components again.
+		pending = append(pending, P + witness));
+
+	if opts.Verbosity >= 1 then printerr(
+	    "decomposeMinors: certified ", toString numCertified,
+	    " of ", toString(#candidates), " candidate components")
+	);
+
+    if #certified == 0 then {} else selectMinimalIdeals certified)
 
 ----------------------------------------------
 -- Factorization and fraction field helper routines

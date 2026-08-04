@@ -20,6 +20,7 @@ Node
     might have bugs in small characteristic and larger degree (although, many of these cases are caught correctly).
   Subnodes
     minimalPrimes
+    decomposeMinors
     (isPrime, Ideal)
     (radical, Ideal)
     "minimal primes of an ideal"
@@ -146,11 +147,78 @@ Node
       P == oo
   SeeAlso
     (isPrime, Ideal)
+    decomposeMinors
     "PrimaryDecomposition :: topComponents"
     "PrimaryDecomposition :: removeLowestDimension"
     radical
     irreducibleCharacteristicSeries
     "Macaulay2Doc :: dual(MonomialIdeal)"
+
+Node
+  Key
+    decomposeMinors
+   (decomposeMinors, ZZ, Matrix, Ideal)
+   [decomposeMinors, InitialMinors]
+   [decomposeMinors, MinorsStrategy]
+   [decomposeMinors, Strategy]
+   [decomposeMinors, Verbosity]
+  Headline
+    minimal primes of a determinantal ideal modulo an ideal
+  Usage
+    decomposeMinors(k, M, J)
+  Inputs
+    k:ZZ
+      the size of the minors
+    M:Matrix
+      a matrix over the same ring as @TT "J"@
+    J:Ideal
+      the ideal modulo which the determinantal locus is considered
+    InitialMinors => ZZ
+      the number of minors to compute before the first minimal-prime decomposition; the default is zero
+    MinorsStrategy => Symbol
+      the determinant strategy, such as @TO Cofactor@ or @TO Dynamic@, used for seed and witness minors
+    Strategy => Thing
+      the strategy passed to @TO minimalPrimes@ at each refinement step
+    Verbosity => ZZ
+      a larger number prints the number of candidates certified at each refinement step
+  Outputs
+    :List
+      the minimal primes of $J+I_k(M)$
+  Description
+    Text
+      This function computes the irreducible components of the determinantal
+      locus defined by $J+I_k(M)$ without first constructing the ideal of all
+      $k$ by $k$ minors.  It starts from @TT "J"@ and an optional small set of
+      seed minors.  For every minimal prime @TT "P"@ of the current
+      approximation, it computes the generic rank of @TT "M"@ over the
+      fraction field of $(R/P)$.  If this rank is less than @TT "k"@, then
+      @TT "P"@ is certified.  Otherwise, a rank profile supplies a $k$ by $k$
+      minor which is nonzero modulo @TT "P"@; this witness is added to the
+      approximation and the process repeats.
+
+      Every refinement polynomial represents an actual minor modulo @TT "J"@,
+      so it belongs to $J+I_k(M)$ and no component of the desired determinantal
+      locus is removed.  When all current minimal primes are certified, they
+      are exactly the minimal primes of $J+I_k(M)$.
+    Example
+      R = QQ[a..f]
+      M = matrix{{a,b,c},{d,e,f}}
+      J = ideal(a*d)
+      C = decomposeMinors(2, M, J)
+      expected = minimalPrimes(J + minors(2, M));
+      all(C, P -> any(expected, Q -> P == Q)) and all(expected, P -> any(C, Q -> P == Q))
+    Text
+      Setting @TT "InitialMinors"@ to a small positive value may reduce the
+      number of provisional components in the first decomposition.  Large
+      values partly defeat the purpose of this function and may create the
+      same large intermediate expressions as a direct call to @TO minors@.
+  Caveat
+    The generic-rank certificate forms fraction fields of prime quotients.
+    Thus the supported coefficient rings are the same as for @TO minimalPrimes@.
+  SeeAlso
+    minimalPrimes
+    minors
+    determinant
 
 Node
   Key

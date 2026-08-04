@@ -143,6 +143,7 @@ splitIdeals(List, Symbol) := opts -> (L, strat) -> (
         -- 'ideal' and 'codim' of each new prime are computed here rather than in
         -- updatePDState, to keep the shared-state update below free of engine calls
         (preparePrimes primes, others, numOrig - #ans, tim#0));
+    -- FIXME: try parallelizing by default?
     results := if useParallelSplit(strat, #L, pdState)
         then await apply(L, async splitOne)
         else apply(L, splitOne);
@@ -175,7 +176,7 @@ splitIdeals(List, Sequence) := opts -> (L, strat) -> (
     (L1,L2) := separateDone(L, strategies);
     while n > 0 and #L2 != 0 do (
         --<< endl << L2 / codimLowerBound << endl;
-        M := splitIdeals(L2, strategy, opts);
+        M := splitIdeals(L2, strategy, opts); -- TODO: MAJOR BOTTLENECK
         (M1,M2) := separateDone(M, strategies);
         L1 = join(L1, M1);
         L2 = M2;
@@ -188,7 +189,7 @@ splitIdeals(List, List) := opts -> (L, strat) -> (
     strategies := toList strategySet strat;
     (L1,L2) := separateDone(L, strategies);
     for s from 0 to #strat-1 do (
-         L2 = splitIdeals(L2, strat#s, opts);
+         L2 = splitIdeals(L2, strat#s, opts); -- TODO: also bottleneck, is it the same?
          (M1,M2) := separateDone(L2, strategies);
          L1 = join(L1, M1);
          L2 = M2;

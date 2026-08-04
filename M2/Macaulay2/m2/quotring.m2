@@ -290,13 +290,14 @@ char QuotientRing := S -> S.char ??= ((
      m := g_(0,0);
      lift(m,ZZ,Verify=>false) ?? 0))
 
-singularLocus = method()
-singularLocus(Ring) := QuotientRing => (R) -> (
-     f := presentation R;
-     A := ring f;
-     A / (ideal f + minors(codim(R,Generic=>true), jacobian presentation R)))
-
-singularLocus(Ideal) := QuotientRing => (I) -> singularLocus(ring I / I)
+singularLocus = method(Options => { Strategy => null })
+singularLocus Ideal := QuotientRing => opts -> I -> singularLocus(quotient I, opts)
+singularLocus Ring  := QuotientRing => opts -> R -> (
+    c := codim(R, Generic => true);
+    f := presentation R;
+    m := jacobian f;
+    -- TODO: is it better to compute minors over R or S?
+    quotient(ideal f + minors(c, m, opts)))
 
 -----------------------------------------------------------------------------
 

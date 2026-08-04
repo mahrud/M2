@@ -191,7 +191,7 @@ degree JoinOfCoincidentRootLoci := (Z) -> (
    Z#"degree"
 );
 
-singularLocus (CoincidentRootLocus) := (X) -> ( -- Chipalkatti - On equations defining coincident root loci
+singularLocus (CoincidentRootLocus) := opts -> (X) -> ( -- Chipalkatti - On equations defining coincident root loci
    if X#"singularLocus" === null then (
        d := X#"ambient";
        e := X#"multiplicities";

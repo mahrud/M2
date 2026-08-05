@@ -25,12 +25,56 @@
 #include <vector>
 typedef mpz_class Integer;
 
+/* Interrupting a libnormaliz computation.
+ *
+ * polls the signal-safe flag libnormaliz::nmz_interrupted and raises
+ * libnormaliz::InterruptException.  Macaulay2's SIGINT handler sets that flag
+ * (interrupt_handler in Macaulay2/bin/main.cpp), so the two halves are already
+ * wired together -- but nothing between here and the interpreter is compiled
+ * with exception handling, so an InterruptException that escapes one of the
+ * entry points below reaches std::terminate instead, and Macaulay2 dies with
+ *
+ *   terminate called after throwing an instance of
+ *   'libnormaliz::InterruptException'
+ *
+ * rather than returning to the prompt.  Note InterruptException derives from
+ * NormalizException, which derives from std::exception directly and *not* from
+ * std::runtime_error, so neither the exc::engine_error nor the
+ * std::runtime_error clauses used elsewhere in this file catch it.
+ *
+ * The flag is sticky: libnormaliz never clears it, and clearing it is the
+ * caller's job.  Without that, the first interrupt of a session would make
+ * every later libnormaliz call throw immediately.
+ */
+
+// The flag is sticky so before entering libnormaliz we clear old interrupts
+static inline void clearNormalizInterrupt() { libnormaliz::nmz_interrupted = 0; }
+
+// Use to close a try block that entered libnormaliz.  Three cases, and they
+// have to stay distinct: an interrupt is the interpreter's to report, since
+// the same signal handler already set Macaulay2's own interrupted flag and an
+// error message here would only mask it; a Normaliz complaint (bad input, not
+// computable, arithmetic overflow) becomes an ordinary engine error; and
+// anything else would otherwise reach std::terminate.
+#define CATCH_NORMALIZ(failure, where)        \
+  catch (const libnormaliz::InterruptException &) \
+    {                                         \
+      ERROR(where " interrupted");            \
+      return failure;                         \
+    }                                         \
+  catch (const std::exception &e)             \
+    {                                         \
+      ERROR(e.what());                        \
+      return failure;                         \
+    }
+
 /**
  * \ingroup cones
  */
 
 const Matrix /* or null */ *rawFourierMotzkin(const Matrix *A, const Matrix *B)
 {
+  clearNormalizInterrupt();
   try
     {
       // TODO: generalize the input type, in particular to allow lineality space
@@ -85,15 +129,13 @@ const Matrix /* or null */ *rawFourierMotzkin(const Matrix *A, const Matrix *B)
 	}
 
       return mat.to_matrix();
-  } catch (const exc::engine_error &e)
-    {
-      ERROR(e.what());
-      return nullptr;
   }
+  CATCH_NORMALIZ(nullptr, "rawFourierMotzkin")
 }
 
 const Matrix /* or null */ *rawHilbertBasis(const Matrix *C)
 {
+  clearNormalizInterrupt();
   try
     {
       // TODO: Check that C is over ZZ
@@ -126,11 +168,8 @@ const Matrix /* or null */ *rawHilbertBasis(const Matrix *C)
           }
 
       return mat.to_matrix();
-  } catch (const exc::engine_error &e)
-    {
-      ERROR(e.what());
-      return nullptr;
   }
+  CATCH_NORMALIZ(nullptr, "rawHilbertBasis")
 }
 
 // Keep this in sync with the typedef in Macaulay2/e/computeGV.hpp.
@@ -301,6 +340,7 @@ MutableMatrix *rawLatticePoints(const Matrix *A,
 // above, where the entries and bounds need to be 32 bit integers.
 MutableMatrix *rawLatticePointsNormaliz(const Matrix *A, const Matrix *b)
 {
+  clearNormalizInterrupt();
   try
     {
       const size_t n_hyps = A->n_rows();
@@ -344,11 +384,8 @@ MutableMatrix *rawLatticePointsNormaliz(const Matrix *A, const Matrix *b)
           M->set_entry(j, i,
                        globalZZ->from_int(result.points[i][j].get_mpz_t()));
       return M;
-  } catch (const std::runtime_error &e)
-    {
-      ERROR(e.what());
-      return nullptr;
   }
+  CATCH_NORMALIZ(nullptr, "rawLatticePointsNormaliz")
 }
 
 // This function attempts to find an interior point of the cone `Ax <= 0`.

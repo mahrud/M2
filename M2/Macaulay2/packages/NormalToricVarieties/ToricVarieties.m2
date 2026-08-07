@@ -665,22 +665,21 @@ toricBlowup = method(Options => { WeilToClass => null })
 toricBlowup(List, NormalToricVariety)       := NormalToricVariety => opts -> (s, X) -> (
     toricBlowup(s, X, makePrimitive sum ((rays X)_s), opts))
 toricBlowup(List, NormalToricVariety, List) := NormalToricVariety => opts -> (s, X, v) -> (
-    coneList := max X;
-    starIndex := positions (coneList, t -> all (s, i -> member (i,t)));
-    star := coneList_starIndex;
-    rayMatrix := transpose matrix rays X;
+    s = sort s;
     d := dim X;
-    clStar := {};
-    if member(sort s, coneList)
-    then clStar = subsets(sort s, d-1)
-    else for t in star do (
-    	c := 1 + d - rank rayMatrix_t;
-    	clStar = clStar | select (orbits(X,c), r -> all (r, j -> member(j,t)))
-	);
+    coneList := max X;
+    star := select(coneList, tau -> isSubset(s, tau));
+    rayMatrix := transpose matrix rays X;
+    clStar := flatten if isSimplicial X and not isDegenerate X
+    then apply(star, tau -> subsets(tau, #tau - 1))
+    -- TODO: probably can do something better in the non-simplicial case, too
+    -- e.g. cache facesOfCone for each sigma in X, then call that here instead
+    else apply(star, tau -> select(orbits(X, 1 + d - rank rayMatrix_tau), orbit -> isSubset(orbit, tau)));
     clStar = unique clStar;
-    n := #rays X;
-    coneList = coneList_(select (#coneList, i -> not member (i, starIndex)));
+    coneList = coneList - set star;
     if #s === 1 then (
+        -- FIXME: how can I blow-up a cone over a square
+        -- by just dividing it into two cones over triangles?
     	coneList' := for t in clStar list (
       	    if member (s#0,t) then continue
       	    else sort (t | s)
@@ -692,10 +691,8 @@ toricBlowup(List, NormalToricVariety, List) := NormalToricVariety => opts -> (s,
         Z.cache.toricBlowup = X;
         return Z
 	);
-    coneList' = for t in clStar list (
-	if all (s, i -> member (i,t)) then continue
-	else t | {n}
-	);
+    n := #rays X;
+    coneList' = for t in clStar list if isSubset(s, t) then continue else append(t, n);
     Z = normalToricVariety(rays X | {v}, coneList | coneList',
 	CoefficientRing => X.cache.CoefficientRing,
 	Variable        => X.cache.Variable,

@@ -708,20 +708,18 @@ makeSmooth = method(
 makeSmooth NormalToricVariety := opts -> X -> (
     Y := X;
     while true do (
-      	coneList := max Y;
       	rayMatrix := transpose matrix rays Y;
-      	k := position (coneList, 
-	    tau -> #tau =!= rank rayMatrix_tau or 1 != minors (#tau, rayMatrix_tau));
-      	if k === null then break;
-      	sigma := coneList#k;
-      	tau := first select (select (subsets (sigma), t -> #t > 1), 
-  	    f -> #f =!= rank rayMatrix_f or 1 != minors (#f,rayMatrix_f));
-      	H := hilbertBasis (posHull rayMatrix_tau);
+        singCones := select(1, max Y,
+	    tau -> #tau =!= rank rayMatrix_tau or 1 != minors(#tau, rayMatrix_tau));
+      	sigma := if singCones === {} then break else singCones#0;
+        sigma1 := (rays Y)_sigma;
+      	tau := first select(1, subsets sigma,
+  	    f -> #f > 1 and #f =!= rank rayMatrix_f or 1 != minors(#f, rayMatrix_f));
+        H := hilbertBasis (posHull rayMatrix_tau);
       	H = H / (v -> flatten entries v);
-      	--time H := entries transpose hilbertBasis(Vt,"notused");
-      	w := select(H, h -> not member (h, (rays Y)_sigma));
-      	if w === {} then Y = makeSimplicial (Y, Strategy => opts.Strategy)
-      	else Y = toricBlowup (tau,Y, first w)
-	);
+      	w := select(H, h -> not member(h, sigma1));
+        if w === {} then Y = makeSimplicial (Y, opts)
+        else Y = toricBlowup (tau,Y, first w)
+        );
     Y 
     );

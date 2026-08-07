@@ -491,8 +491,8 @@ endif()
 
 # https://github.com/algebraic-solving/msolve
 ExternalProject_Add(build-msolve
-  URL               https://github.com/algebraic-solving/msolve/archive/refs/tags/v0.9.5.tar.gz
-  URL_HASH          SHA256=92b94775cd5a046de307e2ad0fc576d2631e43fbd0eb7749517a033d7e77ddf4
+  URL               https://github.com/mahrud/msolve/archive/refs/heads/main.tar.gz
+#  URL_HASH          SHA256=92b94775cd5a046de307e2ad0fc576d2631e43fbd0eb7749517a033d7e77ddf4
   PREFIX            libraries/msolve
   SOURCE_DIR        libraries/msolve/build
   DOWNLOAD_DIR      ${CMAKE_SOURCE_DIR}/BUILD/tarfiles

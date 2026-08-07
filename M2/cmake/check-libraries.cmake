@@ -190,8 +190,8 @@ pkg_search_module(BARVINOK	IMPORTED_TARGET	barvinok>=0.30)
 set(HAVE_BARVINOK ${BARVINOK_FOUND})
 
 set(LIBRARY_OPTIONS
-  Eigen3 BDWGC MPFR MPFI NTL Flint Factory Frobby cddlib MPSolve
-  GTest GLPK Givaro FFLAS_FFPACK Normaliz)
+  Eigen3 BDWGC MPFR MPFI NTL Flint Factory Frobby cddlib
+  GTest GLPK Givaro FFLAS_FFPACK Normaliz MSolve MPSolve)
 
 ###############################################################################
 ## Optional libraries:

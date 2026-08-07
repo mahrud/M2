@@ -558,41 +558,21 @@ facesOfCone (Matrix, List) := HashTable => (R, s) -> (
 	);
     d = numRows R - d;
     new HashTable from apply(keys faceTable, f -> {f,d+faceTable#f}));
--- Given a list 'L' whose entries label rays in a simplicial cone and an
--- integer 'i' which is the codimension of the cone, this method makes a
--- HashTable whose keys label the faces and values give the codimension, In
--- the simplicial case, we don't actually need the rays of the cone.
-facesOfCone (List,ZZ) := (L,i) -> new HashTable from 
-    apply (drop (subsets (L), 1), s -> {s,#L-#s+i});
 
-orbits = method ()   
-orbits NormalToricVariety := HashTable => (
-    cacheValue symbol orbits) (
-    X -> (
-    	hTable := new HashTable;
-    	raysMatrix := transpose matrix rays X; 
-    	d := dim X;
-    	if isSimplicial X and not isDegenerate X then (
-      	    for s in max X do (
-		hTable = merge(hTable, facesOfCone (s, d - rank raysMatrix_s), 
-		    (p,q) -> p
-		    )
-		)
-	    )
-    	else for s in max X do (
-	    hTable = merge(hTable, facesOfCone (raysMatrix_s,s), (p,q) -> p));
-    	O := new MutableHashTable from apply (d+1, i -> {i,{}});
-    	for k in keys hTable do O#(hTable#k) = O#(hTable#k) | {k};
-    	new HashTable from apply (keys O, k -> {k, sort O#k}) | {{d,{{}}}} 
-	)
-    );
-orbits (NormalToricVariety, ZZ) := List => (X,i) -> (
-    if i < 0 or i > dim X then 
-    	error "-- expected a nonnegative integer that is at most the dimension";
-    O := orbits X;
-    O#i
-    )
 
+orbits = method()
+orbits(NormalToricVariety, ZZ) := List => (X,i) -> (
+    d := dim X;
+    if d < i and i < 0 then error "orbits expected a nonnegative integer that is at most the dimension";
+    if not isSimplicial X or isDegenerate X then (orbits X)#i
+    then unique flatten for sigma in max X list subsets(sigma, #sigma - i))
+orbits NormalToricVariety := HashTable => X -> X.cache.orbits ??= (
+    hTable := new MutableHashTable; -- tau => codim(tau)
+    raysMatrix := transpose matrix rays X;
+    if isSimplicial X and not isDegenerate X
+    then for sigma in max X do apply(subsets sigma, tau -> hTable#tau ??= #sigma - #tau)
+    else for sigma in max X do hTable = merge(hTable, facesOfCone(raysMatrix_sigma, sigma), first);
+    partition(tau -> hTable#tau, keys hTable, toList(0..dim X)))
 
 
 ------------------------------------------------------------------------------

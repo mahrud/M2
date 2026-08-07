@@ -19,6 +19,10 @@ newPackage(
 
 export{
     "msolveGB",
+    "msolveSyzygy",
+    "msolveResolution",
+    "MsolveResolution",
+    "MsolveDifferential",
     "msolveSaturate",
     "msolveEliminate",
     "msolveRUR",
@@ -34,8 +38,13 @@ importFrom_Core {
     "rawMatrixWriteMsolveFile",
     --
     "rawMsolveGB",
+    "rawMsolveSyzygy",
+    "rawMsolveResolution",
     "rawMsolveSaturate",
     "rawMsolvePresent",
+    "rawResolutionGetFree",
+    "rawResolutionGetMatrix",
+    "fullgens",
     --
     "ContainmentHooks",
     }
@@ -60,8 +69,7 @@ isGRevLexEngineRing = R -> (
 -- coefficients msolve cannot represent; those still go through toMsolveRing,
 -- which flattens them first
 msolveEngineUsable = m -> (
-    if not rawMsolvePresent()
-    or numrows m =!= 1 then return false;
+    if not rawMsolvePresent() then return false;
     R := ambient first flattenRing ring m;
     instance(R, PolynomialRing)
     and isField(kk := coefficientRing R)
@@ -70,6 +78,30 @@ msolveEngineUsable = m -> (
     and precision kk === infinity
     and not instance(kk, GaloisField)
     and isGRevLexEngineRing R)
+
+---------------------------------------------------------------------------
+
+-- A Betti tally key is (level, degree, heft degree), and the degree is a
+-- *vector*: the layout above spells the length one case as a single number,
+-- and it is only because one number can be subtracted from another that such a
+-- table can be laid out slanted and dense, one row per degree minus level.
+-- rawMsolveMinimalBetti reports the multidegrees themselves, which have nothing
+-- to slant by -- a multidegree minus a level is not a multidegree -- and which
+-- are far too sparse to lay out densely, a grading of length seven having its
+-- nonzero entries scattered over a lattice.  So what comes back is the nonzero
+-- entries and nothing else, grouped by homological level:
+--   [r, len, n_0, ..., n_(len-1), (d_1, ..., d_r, heft, beta) x n_i per level i]
+-- where r is the degree length, len the homological length, and n_i the number
+-- of entries at level i.  This is a plain BettiTally: a table whose degrees are
+-- longer than one prints folded onto the heft degree, as BettiTally's own net
+-- does, until the caller asks for `multigraded`.
+unpackMsolveBetti = w -> (
+    (r, len) := (w#0, w#1);
+    (stride, offset) := (r + 2, len + 2);
+    new BettiTally from flatten for i to len - 1 list (
+	recs := pack(stride, take(w, {offset, offset + w#(2+i) * stride - 1}));
+	offset = offset + w#(2+i) * stride;
+	for rec in recs list (i, take(rec, r), rec#r) => rec#(r+1)))
 
 ---------------------------------------------------------------------------
 
@@ -126,6 +158,121 @@ if msolveProgram === null then (
 
 msolveDefaultOptions = new OptionTable from {
     Threads => null, Verbosity => null }
+
+---------------------------------------------------------------------------
+-- Which of Macaulay2's gb, syz and res options msolve can honor
+---------------------------------------------------------------------------
+-- msolveDefaultOptions above is deliberately tiny: Threads and Verbosity are
+-- the only two knobs every msolve entry point, executable or engine, already
+-- takes. The table below records what it would take to accept the rest, so
+-- that the next person to reach for one of these knows whether it is a matter
+-- of forwarding an argument or of changing msolve itself.
+--
+-- The engine entry points are export_module_f4, export_module_frame,
+-- export_module_resolution, export_module_betti and the res_comp_t handle in
+-- msolve's src/neogb/res.h, reached from here through rawMsolveGB,
+-- rawMsolveSyzygy, rawMsolveMinimalBetti, rawMsolvePoincare and
+-- rawMsolveResolution. Between them they accept max_level, syz_of, minimal,
+-- verify, ht_size, nr_threads, max_nr_pairs, la_option, reduce_gb and
+-- info_level -- and nothing else. In particular msolve's F4 loop has no stop
+-- conditions at all: it runs a degree at a time to completion, so every "stop
+-- after N of something" option below is engine work rather than plumbing.
+--
+--   Done      forwarded already; see the option it is spelled as
+--   Yes       already reachable; forwarding it is interface work here
+--   Partial   an msolve knob exists but does not mean the same thing
+--   Engine    wants a change inside msolve; see the milestone in the plan
+--   No        M2-side or meaningless for F4; nothing to forward
+--
+-- gb and syz:
+--
+--   Option                     |         | Notes
+--   ---------------------------|---------|--------------------------------------
+--   Algorithm                  | No      | msolve is F4 only; la_option picks the
+--                              |         | linear algebra variant, not the pair
+--                              |         | selection strategy
+--   BasisElementLimit          | Engine  | no stop conditions
+--   ChangeMatrix               | Engine  | the graph module (f_j, e_j) already
+--                              |         | carries it: the adjoined part of each
+--                              |         | GB element is its expression in the
+--                              |         | input. RES_SYZ_OF_INPUT computes this
+--                              |         | GB and discards exactly the elements a
+--                              |         | change matrix would keep
+--   CodimensionLimit           | Engine  | no stop conditions
+--   DegreeLimit                | Engine  | cheapest of the stops to add: the F4
+--                              |         | round loop is already degree by degree
+--                              |         | (symbol.c selects the minimal degree),
+--                              |         | so this is a ceiling on that loop
+--   GBDegrees                  | Partial | isGRevLexEngineRing passes a weight
+--                              |         | vector, applied as the substitution
+--                              |         | x_i -> x_i^(w_i). The Betti and
+--                              |         | Hilbert entry points no longer do:
+--                              |         | they hand msolve the ring's grading
+--                              |         | outright -- a degree for each
+--                              |         | variable, a heft, and any torsion
+--                              |         | factors -- and it computes in the
+--                              |         | heft order that induces, which is
+--                              |         | what lets a multigraded ring through.
+--                              |         | The Groebner basis paths still
+--                              |         | substitute; see collectGrading in
+--                              |         | e/interface/msolve.cpp
+--   HardDegreeLimit            | Engine  | as DegreeLimit, plus discarding above it
+--   Hilbert                    | Engine  | msolve has no Hilbert driven early
+--                              |         | termination. Now that M5 *produces* the
+--                              |         | numerator (rawMsolvePoincare), teaching
+--                              |         | the F4 to *consume* one is the natural
+--                              |         | next step and the highest value item here
+--   MaxReductionCount          | No      | an M2 gb auto-reduction knob; F4 reduces
+--                              |         | a whole Macaulay matrix at once
+--   PairLimit                  | Partial | max_nr_pairs exists but is st->mnsel,
+--                              |         | the most pairs selected in one round
+--                              |         | (symbol.c:268), a batching knob. It is
+--                              |         | not a stop and must not be mapped to one
+--   StopBeforeComputation      | No      | interpreter side
+--   StopWithMinimalGenerators  | Engine  | no stop conditions
+--   Strategy                   | Partial | la_option and reduce_gb are the only
+--                              |         | strategy dials msolve exposes
+--   SubringLimit               | Engine  | msolve takes an elimination block length
+--                              |         | but has no count to stop at
+--   Syzygy                     | Yes     | export_module_resolution with
+--                              |         | syz_of = RES_SYZ_OF_INPUT and
+--                              |         | max_level = 2; this is msolveSyzygy,
+--                              |         | just not surfaced as a gb option
+--   SyzygyLimit                | Engine  | no stop conditions
+--   SyzygyRows                 | Partial | free as an output filter, since the rows
+--                              |         | are the adjoined components; pruning the
+--                              |         | *work* needs those components ordered last
+--
+-- res:
+--
+--   DegreeLimit                | Engine  | as above; res_diff_compute is already
+--                              |         | driven one (level, degree) at a time
+--   HardDegreeLimit            | Engine  | as above
+--   LengthLimit                | Done    | max_level, taken by every entry point
+--                              |         | that builds a frame; plumbed as
+--                              |         | rawMsolveMinimalBetti's length_limit and
+--                              |         | as msolveResolution's LengthLimit.
+--                              |         | Note whole module invariants (poincare,
+--                              |         | pdim, regularity, dim, degree) are refused
+--                              |         | on a truncated table, since the frame is
+--                              |         | nonminimal and can run past numgens R
+--   PairLimit                  | Partial | as above
+--   ParallelizeByDegree        | No      | msolve parallelizes inside each linear
+--                              |         | algebra step instead; use Threads
+--   SortStrategy               | No      | the block order within a frame level is
+--                              |         | fixed at degree ascending then ring order
+--                              |         | descending, which is what M2 does anyway
+--   StopBeforeComputation      | No      | interpreter side
+--   Strategy                   | Yes     | export_module_betti's minimal flag is
+--                              |         | Minimal vs Nonminimal: with minimal = 0
+--                              |         | it reports frame ranks and performs no
+--                              |         | field arithmetic past the Groebner basis
+--   SyzygyLimit                | Engine  | no stop conditions
+--
+-- msolve also offers three knobs M2's option tables have no name for:
+-- ht_size (initial hash table size, a log2), verify (an exact d o d = 0 check
+-- over the whole complex, several times the cost of the resolution itself),
+-- and reduce_gb (whether to fully interreduce the basis before returning).
 
 runMsolve = (mIn, mOut, args, opts) -> runProgram(msolveProgram,
     demark_" " { args,
@@ -209,12 +356,126 @@ readMsolveList = mOutStr -> (
 ---------------------------------------------------------------------------
 
 msolveGB = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
+msolveGB Matrix := opts -> M -> (
+    if (G := msolveGBEngine(M, 0, opts)) =!= null then return G;
+    error "msolveGB: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31")
+msolveGB Module := opts -> M -> (
+    if M.?relations
+    then msolveGB(fullgens M, opts) -- TODO: do we need SyzygyRows => numgens source generators M?
+    else msolveGB(generators M, opts))
 msolveGB Ideal := opts -> I0 -> (
     if (G := msolveGBEngine(generators I0, 0, opts)) =!= null
     then return gens forceGB G;
+    --
     (S, K, I) := toMsolveRing I0;
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
+
+msolveSyzygy = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
+msolveSyzygy Matrix := opts -> M -> (
+    if not rawMsolvePresent() then
+        error "msolveSyzygy: this Macaulay2 was built without the msolve library";
+    R := ring M;
+    if not instance(R, PolynomialRing)
+    or not isField(coefficientRing R)
+    or char R == 0 or char R >= 2^31
+    or precision(coefficientRing R) =!= infinity
+    or instance(coefficientRing R, GaloisField)
+    or not isGRevLexEngineRing R
+    then error "msolveSyzygy: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31";
+    threads := opts.Threads ?? allowableThreads;
+    verbosity := opts.Verbosity ?? gbTrace;
+    map(R, rawMsolveSyzygy(raw matrix M, threads, verbosity)))
+
+---------------------------------------------------------------------------
+-- Free resolutions, one free module and one differential at a time
+---------------------------------------------------------------------------
+
+-- msolveResolution returns a live computation rather than a complex.  Building
+-- it runs the module Groebner basis and the whole Schreyer frame; the frame is
+-- combinatorial, so from that point on C_i is free -- rank and degrees, no
+-- field arithmetic -- while C.dd_i is what makes msolve reduce, and then only
+-- up to level i.  Levels already computed are remembered, so asking twice
+-- costs nothing and asking out of order costs no more than asking in order.
+--
+-- The complex is the *nonminimal* one, as with res(..., Strategy => Nonminimal):
+-- C_1 is the Groebner basis of the image of the input, not the input columns,
+-- since msolve keeps no change of basis between them.  Its ranks therefore
+-- depend on the Groebner basis and so on the module order, and need not agree
+-- with Macaulay2's own nonminimal resolution of the same module -- only the
+-- minimal Betti numbers are an invariant, and those come from
+-- rawMsolveMinimalBetti without any of this being materialized.
+
+protect RawComputation
+
+MsolveResolution = new Type of MutableHashTable
+MsolveResolution.synonym = "msolve resolution"
+
+MsolveDifferential = new Type of MutableHashTable
+MsolveDifferential.synonym = "differential of an msolve resolution"
+
+msolveResolutionOptions = new OptionTable from {
+    Threads => null, Verbosity => null, LengthLimit => infinity }
+
+msolveResolution = method(TypicalValue => MsolveResolution,
+    Options => msolveResolutionOptions)
+msolveResolution Matrix := opts -> M -> (
+    if not rawMsolvePresent() then
+        error "msolveResolution: this Macaulay2 was built without the msolve library";
+    R := ring M;
+    if not instance(R, PolynomialRing)
+    or not isField(coefficientRing R)
+    or char R == 0 or char R >= 2^31
+    or precision(coefficientRing R) =!= infinity
+    or instance(coefficientRing R, GaloisField)
+    or not isGRevLexEngineRing R
+    then error "msolveResolution: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31";
+    len := if opts.LengthLimit === infinity then 0 else opts.LengthLimit;
+    if not instance(len, ZZ) or len < 0
+    then error "msolveResolution: expected LengthLimit to be a nonnegative integer or infinity";
+    threads := opts.Threads ?? allowableThreads;
+    verbosity := opts.Verbosity ?? gbTrace;
+    G := rawMsolveResolution(raw matrix M, len, threads, verbosity);
+    -- msolve reports the reason on stderr; the overwhelmingly likely one is
+    -- that a resolution is a graded object and this input is not homogeneous
+    if G === null then error("msolveResolution: msolve could not resolve this "
+        | "matrix; it must be homogeneous over a singly graded ring whose "
+        | "variable degrees are its GRevLex weights");
+    C := new MsolveResolution from {
+        symbol ring => R,
+        symbol source => M,
+        RawComputation => G,
+        symbol cache => new CacheTable };
+    C.dd = new MsolveDifferential from { symbol target => C };
+    C)
+msolveResolution Ideal  := opts -> I -> msolveResolution(generators I, opts)
+-- the resolution is of the cokernel, so it is the presentation that goes in
+msolveResolution Module := opts -> N -> msolveResolution(presentation N, opts)
+
+ring MsolveResolution := C -> C.ring
+
+-- F_i, free and immediate: this is the frame
+MsolveResolution _ ZZ := Module => (C, i) -> (
+    if i < 0 then return (ring C)^0;
+    if C.cache#?i then return C.cache#i;
+    C.cache#i = new Module from (ring C, rawResolutionGetFree(C.RawComputation, i)))
+
+-- d_i, and the only thing here that costs anything
+MsolveDifferential _ ZZ := Matrix => (D, i) -> (
+    C := D.target;
+    if i < 1 or C_i == 0 then return map(C_(i-1), C_i, 0);
+    map(C_(i-1), C_i, rawResolutionGetMatrix(C.RawComputation, i)))
+
+-- the last level with a nonzero free module; the frame is nonminimal, so this
+-- is not bounded by numgens R, and with a LengthLimit it is the limit itself
+length MsolveResolution := C -> (
+    if C.cache#?(symbol length) then return C.cache#(symbol length);
+    i := 0;
+    while C_(i+1) != 0 do i = i+1;
+    C.cache#(symbol length) = i)
+
+net MsolveResolution := C -> horizontalJoin between(" <-- ",
+    apply(1 + length C, i -> net C_i))
 
 importFrom_Core "numallvars"
 msolveLeadMonomials = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
@@ -279,7 +540,7 @@ M2DefaultGBasis    = lookup(groebnerBasis, Matrix)
 M2DefaultEliminate = lookup(eliminate, List, Ideal)
 
 -- true if msolve is applicable to the one-rowed matrix m
-msolveApplicable = m -> m != 0 and numrows m === 1 and msolveEngineUsable m
+msolveApplicable = m -> m != 0 and msolveEngineUsable m
 
 -- A GroebnerBasis object for m, computed by msolve and declared with forceGB.
 -- Returns null when msolve does not apply, so callers can fall back.
@@ -640,7 +901,110 @@ Node
 	    lT=monomialIdeal leadTerm gB
 	    degree lT
 	    dim lT  
-Node 
+Node
+    Key
+        msolveSyzygy
+       (msolveSyzygy, Matrix)
+       [msolveSyzygy, Threads]
+       [msolveSyzygy, Verbosity]
+    Headline
+        compute syzygies of the columns of a matrix using msolve
+    Usage
+        msolveSyzygy M
+    Inputs
+        M:Matrix
+            over a GRevLex polynomial ring over a prime field of characteristic less than $2^{31}$
+        Threads => ZZ -- number of processor threads to use
+        Verbosity => ZZ -- level of verbosity between 0, 1, and 2
+    Outputs
+        S:Matrix
+            whose columns generate the syzygy module of the columns of M
+    Description
+        Text
+            This function uses msolve's graph-module computation.  The result
+            is a Groebner basis of the syzygy module and need not be a minimal
+            generating set.
+        Example
+            R = ZZ/32003[x,y,z,w]
+            M = matrix {{x,y,z}, {y,z,w}}
+            S = msolveSyzygy M
+            M * S == 0
+            image S == image syz M
+Node
+    Key
+        msolveResolution
+       (msolveResolution, Matrix)
+       (msolveResolution, Ideal)
+       (msolveResolution, Module)
+       [msolveResolution, Threads]
+       [msolveResolution, Verbosity]
+       [msolveResolution, LengthLimit]
+        MsolveResolution
+        MsolveDifferential
+       (symbol _, MsolveResolution, ZZ)
+       (symbol _, MsolveDifferential, ZZ)
+       (length, MsolveResolution)
+       (ring, MsolveResolution)
+       (net, MsolveResolution)
+    Headline
+        a free resolution computed by msolve, one differential at a time
+    Usage
+        C = msolveResolution M
+    Inputs
+        M:{Matrix,Ideal,Module}
+            over a GRevLex polynomial ring over a prime field of characteristic
+            less than $2^{31}$, homogeneous, and singly graded with each
+            variable's degree equal to its weight
+        Threads => ZZ -- number of processor threads to use
+        Verbosity => ZZ -- level of verbosity between 0, 1, and 2
+        LengthLimit => ZZ -- truncate the resolution at this level
+    Outputs
+        C:MsolveResolution
+    Description
+        Text
+            Unlike the other functions here, this one returns a live
+            computation rather than an answer.  Building it runs the module
+            Groebner basis and the whole Schreyer frame.  The frame is
+            combinatorial -- no field arithmetic happens past the Groebner
+            basis -- so from that point on every free module @TT "C_i"@ in the
+            resolution, its rank and the degrees of its generators, is free to
+            ask for.
+        Example
+            R = ZZ/32003[x,y,z,w]
+            I = minors_2 matrix {{x,y,z}, {y,z,w}}
+            C = msolveResolution I
+            length C
+            C_2
+            degrees C_2
+        Text
+            Asking for a differential is what makes msolve reduce, and then
+            only up to the level asked for: the block at level $i$ in degree
+            $d$ reduces against level $i-1$ in degrees at most $d$, so $d_i$
+            needs $d_2, \dots, d_{i-1}$ and nothing above.  Levels already
+            computed are remembered, so asking twice costs nothing and asking
+            out of order costs no more than asking in order.
+        Example
+            C.dd_2
+            C.dd_1 * C.dd_2 == 0
+            image C.dd_1 == module I
+        Text
+            The complex is the @EM "nonminimal"@ one, as with
+            @TT "res(..., Strategy => Nonminimal)"@: @TT "C_1"@ is the Groebner
+            basis of the image of the input, not the input columns, since
+            msolve keeps no change of basis between the two.  Its ranks
+            therefore depend on the Groebner basis, hence on the module order,
+            and need not agree with Macaulay2's own nonminimal resolution of
+            the same module.  Only the minimal Betti numbers are an invariant.
+        Text
+            @TT "LengthLimit"@ truncates the frame.  Note there is no level
+            that is always enough: the frame is nonminimal, so Hilbert's syzygy
+            theorem does not bound it, and it really can run past the number of
+            variables.
+        Example
+            S = ZZ/32003[x,y,z]
+            msolveResolution ideal(z, y^2, x^2*y, x^3)
+            msolveResolution(ideal(z, y^2, x^2*y, x^3), LengthLimit => 2)
+Node
     Key
     	msolveLeadMonomials
        (msolveLeadMonomials, Ideal)

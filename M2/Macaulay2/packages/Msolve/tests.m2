@@ -66,6 +66,71 @@ TEST ///
   assert(ideal msolveGB I == ideal groebnerBasis I)
   assert(leadTerm msolveGB I == matrix{{7*z_1*z_2, 8*z_1^2, 56*z_1*z_3^2, 235*z_2^2*z_3^2}})
 ///
+
+TEST ///
+  -- rawMsolveGB dispatches a multi-row matrix to msolve's module F4, using
+  -- Macaulay2's default module order: term over position up.
+  debug Core
+  needsPackage "Msolve"
+  S = ZZ/32003[x,y,z,w]
+  A = matrix {{x,y,z}, {y,z,w}}
+  I = minors_2 A
+  assert(msolveGB I == gens gb I)
+  assert(msolveGB A == gens gb A)
+  assert(msolveSyzygy A === syz A)
+  assert(unpackMsolveBetti rawMsolveMinimalBetti(raw A, 5, 1, 0) === minimalBetti coker A)
+  assert(rawMsolvePoincare(raw A, 3, 0) === raw poincare coker A)
+
+  -- technically the output is a gb but not mingens
+  -- does M2 do extra work to get the mingens? might be worth it
+  S = ZZ/32003[x,y,z,w]
+  A = matrix {{x,y,z}, {y,z,w}}
+  I = minors_2 A
+  msolveSyzygy gens I
+  syz gb(gens I, Syzygies => true)
+  res(coker gens ideal I_*, Strategy => Nonminimal)
+
+  gens gb syz gens truncate(1, S)
+  msolveSyzygy gens truncate(1, S) -- FIXME
+
+  R = quotient I
+  syz gens truncate(2, R)
+  msolveSyzygy gens truncate(2, R) -- FIXME
+
+  -- Claude profile this example
+  restart
+  debug Core
+  needsPackage "Msolve"
+  needsPackage "NormalToricVarieties"
+  X = smoothFanoToricVariety(3, 10, CoefficientRing => ZZ/101)
+  S = ring X
+  M = truncate({4,4,4}, S^2);
+  f = raw presentation M;
+  elapsedTime assert(unpackMsolveBetti rawMsolveMinimalBetti(f, 3, 1, 0) == betti res M) -- 1.5s
+  elapsedTime assert(rawMsolvePoincare(f, 1, 0) === raw poincare M) -- 1.4s
+
+  -- Claude profile this advanced example
+  m = 4 -- >= 4
+  d = 2*m-1
+  N = ZZ^d
+  A = map(N, ZZ^1, 0) | N_{0..d-2} | (sum(d-1, i -> (m-1) * N_{i}) + m*N_{d-1})
+  P = 3 * convexHull A
+  D = toricDivisor(P, CoefficientRing => ZZ/101)
+  X = variety D
+  S = ring X
+  isVeryAmple D   -- isVeryAmple P
+  isNormal P
+  isSimplicial X  -- isSimplicial P
+  classGroup X
+  effGenerators S -- matrix transpose degrees S
+  I = ideal monomials D
+  -- elapsedTime C = res I
+  -- elapsedTime poincare I;
+  -- elapsedTime minimalBetti I; -- ??
+  errorDepth = 2
+  elapsedTime unpackMsolveBetti rawMsolveMinimalBetti(raw gens I, 8, 1, 2);
+  elapsedTime assert(rawMsolvePoincare(raw gens I, 1, 2) === raw poincare I)
+///
 	      
 TEST ///
   R = QQ[x,y];

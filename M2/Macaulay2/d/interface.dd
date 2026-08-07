@@ -2159,6 +2159,91 @@ export rawMsolveGB(e:Expr):Expr := (
   );
 setupfun("rawMsolveGB",rawMsolveGB);
 
+export rawMsolveSyzygy(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 3 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(2) else
+  when s.2 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(3) else
+    toExpr(Ccode(RawMatrixOrNull,
+      "rawMsolveSyzygy(",
+        M.p, ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(3)
+  else WrongArgZZ(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(3)
+  ) else WrongNumArgs(3)
+  );
+setupfun("rawMsolveSyzygy",rawMsolveSyzygy);
+
+export rawMsolveMinimalBetti(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 4 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is lengthlimit:ZZcell do if !isInt(lengthlimit) then WrongArgSmallInteger(2) else
+  when s.2 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(3) else
+  when s.3 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(4) else
+    toExpr(Ccode(RawArrayIntOrNull,
+      "rawMsolveMinimalBetti(",
+        M.p, ",", toInt(lengthlimit), ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(4)
+  else WrongArgZZ(3)
+  else WrongArgZZ(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(4)
+  ) else WrongNumArgs(4)
+  );
+setupfun("rawMsolveMinimalBetti",rawMsolveMinimalBetti);
+
+export rawMsolvePoincare(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 3 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(2) else
+  when s.2 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(3) else
+    toExpr(Ccode(RawRingElementOrNull,
+      "rawMsolvePoincare(",
+        M.p, ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(3)
+  else WrongArgZZ(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(3)
+  ) else WrongNumArgs(3)
+  );
+setupfun("rawMsolvePoincare",rawMsolvePoincare);
+
+-- Returns a resolution computation, to be driven with rawResolutionGetFree and
+-- rawResolutionGetMatrix.  Unlike the entry points above, this one keeps msolve
+-- state alive: building it runs the Groebner basis and the whole Schreyer
+-- frame, so every free module is known immediately, and a differential is
+-- computed only when a matrix is asked for, and only up to that level.
+export rawMsolveResolution(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 4 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is lengthlimit:ZZcell do if !isInt(lengthlimit) then WrongArgSmallInteger(2) else
+  when s.2 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(3) else
+  when s.3 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(4) else
+    toExpr(Ccode(RawComputationOrNull,
+      "rawMsolveResolution(",
+        M.p, ",", toInt(lengthlimit), ",", toInt(nthreads), ",", toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(4)
+  else WrongArgZZ(3)
+  else WrongArgZZ(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(4)
+  ) else WrongNumArgs(4)
+  );
+setupfun("rawMsolveResolution",rawMsolveResolution);
+
 export rawMsolveSaturate(e:Expr):Expr := (
   when e is s:Sequence do (
   if length(s) == 4 then (

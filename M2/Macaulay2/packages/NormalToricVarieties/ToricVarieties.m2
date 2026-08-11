@@ -625,24 +625,18 @@ regularSubdivisionLocal (NormalToricVariety, List, List) := (X,s,w) -> (
     Y 
     );    
 
-encodeFanCones = C -> {#C} | flatten apply(C, s -> {#s} | s);
-
-decodeRawFan = M -> (
+packEngineCones = cones -> {#cones} | flatten apply(cones, sigma -> {#sigma} | sigma)
+unpackEngineFan = M -> (
     rows := entries M;
-    rayRows := select(rows, r -> r#0 == 0);
-    coneRows := select(rows, r -> r#0 == 1);
-    {
-        apply(rayRows, r -> take(drop(r, 2), r#1)),
-        apply(coneRows, r -> take(drop(r, 2), r#1))
-    }
-    );
-
-rawRefinedFan = (X, M) -> (
-    data := decodeRawFan M;
-    normalToricVariety(data#0, data#1,
-        CoefficientRing => X.cache.CoefficientRing,
-        Variable        => X.cache.Variable)
-    );
+    raylist  := new MutableList;
+    conelist := new MutableList;
+    for row in rows do (
+        -- [0, dimension, coordinates of rho]
+        if row#0 == 0 then  raylist##raylist  = take(row, {2, 2+row#1});
+        -- [1, numgens, ray indices in sigma]
+        if row#0 == 1 then conelist##conelist = take(row, {2, 2+row#1});
+        );
+    (toList raylist, toList conelist))
 
 makeSimplicial = method (
     TypicalValue => NormalToricVariety,
@@ -651,8 +645,11 @@ makeSimplicial = method (
 makeSimplicial NormalToricVariety := opts -> X -> (
     if opts.Strategy =!= "Greedy" then (
         M := map(ZZ, rawSimplicialFan(raw matrix rays X,
-            encodeFanCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
-        Z := rawRefinedFan(X, M);
+            packEngineCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
+        (raylist, conelist) := unpackEngineFan M;
+        Z := normalToricVariety(raylist, conelist,
+            CoefficientRing => X.cache.CoefficientRing,
+            Variable        => X.cache.Variable);
         Z.cache.toricBlowup = X;
         return Z
         );
@@ -740,8 +737,11 @@ makeSmooth = method(
 makeSmooth NormalToricVariety := opts -> X -> (
     if opts.Strategy =!= "Greedy" then (
         M := map(ZZ, rawSmoothFan(raw matrix rays X,
-            encodeFanCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
-        Z := rawRefinedFan(X, M);
+            packEngineCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
+        (raylist, conelist) := unpackEngineFan M;
+        Z := normalToricVariety(raylist, conelist,
+            CoefficientRing => X.cache.CoefficientRing,
+            Variable        => X.cache.Variable);
         Z.cache.toricBlowup = X;
         return Z
         );

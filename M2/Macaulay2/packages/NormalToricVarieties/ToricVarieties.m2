@@ -566,8 +566,8 @@ orbits = method()
 orbits(NormalToricVariety, ZZ) := List => (X,i) -> (
     d := dim X;
     if d < i and i < 0 then error "orbits expected a nonnegative integer that is at most the dimension";
-    if not isSimplicial X or isDegenerate X then (orbits X)#i
-    then unique flatten for sigma in max X list subsets(sigma, #sigma - i))
+    if X.cache.?orbits or not isSimplicial X or isDegenerate X then return (orbits X)#i;
+    X.cache#(symbol orbits, i) ??= sort unique flatten for sigma in max X list subsets(sigma, #sigma - i))
 orbits NormalToricVariety := HashTable => X -> X.cache.orbits ??= (
     hTable := new MutableHashTable; -- tau => codim(tau)
     raysMatrix := transpose matrix rays X;

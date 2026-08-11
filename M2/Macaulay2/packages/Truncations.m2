@@ -218,7 +218,8 @@ truncationMonomials(List, Ring) := opts -> (d, R) -> (
         b := transpose matrix{d_F};
         P := truncationPolyhedron(A^F, b, opts);
 	-- FIXME: this is a kludge, but alas entries is slow: https://github.com/Macaulay2/M2/issues/4016
-	H := transpose entries transpose map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~50% of computation
+        -- TODO: call rawNormalizDeg1Elements instead
+	H := transpose entries transpose map(ZZ, rawHilbertBasis(raw transpose rays cone P, 0, 0, false)); -- ~50% of computation
         J := leadTerm ideal R1;
         ambR := ring J;
         -- generates the Nef cone
@@ -401,7 +402,8 @@ basisMonomials(List, Ring) := opts -> (d, R) -> (
 	    B = R#(symbol basis', d, opts) = map(R^1, R^0, 0);
 	    unlock mutex; return B);
 	-- TODO: somehow pass Limit to ask for a single monomial only?
-        H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P); -- ~40% of computation
+        -- TODO: call rawNormalizDeg1Elements instead
+        H := entries map(ZZ, rawHilbertBasis(raw transpose rays cone P, 0, 0, false)); -- ~40% of computation
         J := leadTerm ideal R1;
         ambR := ring J;
         -- generates the degree zero part of the basis

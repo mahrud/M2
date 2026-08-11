@@ -68,6 +68,84 @@ static inline void clearNormalizInterrupt() { libnormaliz::nmz_interrupted = 0; 
       return failure;                         \
     }
 
+namespace {
+
+libnormaliz::ConeProperties rawNormalizComputation(
+    libnormaliz::ConeProperty::Enum property, int strategy)
+{
+  libnormaliz::ConeProperties computation(property);
+  switch (strategy)
+    {
+    case RawHilbertBasisDefault:
+      computation.set(libnormaliz::ConeProperty::DefaultMode);
+      break;
+    case RawHilbertBasisDual:
+      computation.set(libnormaliz::ConeProperty::DualMode);
+      break;
+    case RawHilbertBasisPrimal:
+      computation.set(libnormaliz::ConeProperty::PrimalMode);
+      break;
+    case RawHilbertBasisPrimalBottom:
+      computation.set(libnormaliz::ConeProperty::PrimalMode);
+      computation.set(libnormaliz::ConeProperty::BottomDecomposition);
+      break;
+    case RawHilbertBasisPrimalNoBottom:
+      computation.set(libnormaliz::ConeProperty::PrimalMode);
+      computation.set(libnormaliz::ConeProperty::NoBottomDec);
+      break;
+    default:
+      throw std::invalid_argument("invalid Normaliz strategy");
+    }
+  return computation;
+}
+
+struct RawNormalizThreadLimitGuard {
+  int old;
+  bool active;
+
+  explicit RawNormalizThreadLimitGuard(int requested)
+    : old(0), active(requested > 0)
+  {
+    if (active)
+      old = libnormaliz::set_thread_limit(requested);
+  }
+
+  ~RawNormalizThreadLimitGuard()
+  {
+    if (active)
+      libnormaliz::set_thread_limit(old);
+  }
+};
+
+libnormaliz::Matrix<Integer> rawNormalizRays(const Matrix *C)
+{
+  const size_t c = C->n_cols();
+  const size_t r = C->n_rows();
+  libnormaliz::Matrix<Integer> rays(r, c);
+  for (size_t i = 0; i < r; i++)
+    for (size_t j = 0; j < c; j++)
+      rays[i][j] = static_cast<Integer>(C->elem(i, j).get_mpz());
+  return rays;
+}
+
+const Matrix *rawNormalizMatrix(const Ring *R,
+                                const std::vector<std::vector<Integer>>& rows,
+                                size_t c)
+{
+  MatrixConstructor mat(R->make_FreeModule(rows.size()), c);
+  for (size_t i = 0; i < rows.size(); i++)
+    for (size_t j = 0; j < c; j++)
+      {
+        mpz_ptr z = newitem(__mpz_struct);
+        mpz_init_set(z, rows[i][j].get_mpz_t());
+        mpz_reallocate_limbs(z);
+        mat.set_entry(i, j, ring_elem(z));
+      }
+  return mat.to_matrix();
+}
+
+}
+
 /**
  * \ingroup cones
  */
@@ -133,7 +211,10 @@ const Matrix /* or null */ *rawFourierMotzkin(const Matrix *A, const Matrix *B)
   CATCH_NORMALIZ(nullptr, "rawFourierMotzkin")
 }
 
-const Matrix /* or null */ *rawHilbertBasis(const Matrix *C)
+const Matrix /* or null */ *rawHilbertBasis(const Matrix *C,
+                                            int strategy,
+                                            int threads,
+                                            bool verbose)
 {
   clearNormalizInterrupt();
   try
@@ -144,32 +225,85 @@ const Matrix /* or null */ *rawHilbertBasis(const Matrix *C)
       // algebraic number fields embedded in RR
       const Ring *R = C->get_ring();
       const size_t c = C->n_cols();  // rank of ambient lattice
-      const size_t r = C->n_rows();  // number of cone rays
-
-      auto rays = libnormaliz::Matrix<Integer>(r, c);
-      for (size_t i = 0; i < r; i++)
-        for (size_t j = 0; j < c; j++)
-          rays[i][j] = static_cast<Integer>(C->elem(i, j).get_mpz());
+      auto rays = rawNormalizRays(C);
+      auto computation = rawNormalizComputation(
+        libnormaliz::ConeProperty::HilbertBasis, strategy);
+      RawNormalizThreadLimitGuard thread_limit_guard(threads);
 
       auto cone = libnormaliz::Cone<Integer>(libnormaliz::Type::cone, rays);
-      // cone.compute(libnormaliz::ConeProperty::HilbertBasis,
-      //              libnormaliz::ConeProperty::DefaultMode);
+      cone.setVerbose(verbose);
+      cone.compute(computation);
       auto HB = cone.getHilbertBasis();
-      size_t n = HB.size();  // number of basis elements
-
-      MatrixConstructor mat(R->make_FreeModule(n), c);
-      for (size_t i = 0; i < n; i++)
-        for (size_t j = 0; j < c; j++)
-          {
-            mpz_ptr z = newitem(__mpz_struct);
-            mpz_init_set(z, HB[i][j].get_mpz_t());
-            mpz_reallocate_limbs(z);
-            mat.set_entry(i, j, ring_elem(z));
-          }
-
-      return mat.to_matrix();
+      return rawNormalizMatrix(R, HB, c);
   }
   CATCH_NORMALIZ(nullptr, "rawHilbertBasis")
+}
+
+const Matrix *rawNormalizDeg1Elements(const Matrix *C,
+                              int strategy,
+                              int threads,
+                              bool verbose)
+{
+  clearNormalizInterrupt();
+  try
+    {
+      const Ring *R = C->get_ring();
+      const size_t c = C->n_cols();
+      auto rays = rawNormalizRays(C);
+      auto computation = rawNormalizComputation(
+        libnormaliz::ConeProperty::Deg1Elements, strategy);
+      RawNormalizThreadLimitGuard thread_limit_guard(threads);
+      auto cone = libnormaliz::Cone<Integer>(libnormaliz::Type::cone, rays);
+      cone.setVerbose(verbose);
+      cone.compute(computation);
+      return rawNormalizMatrix(R, cone.getDeg1Elements(), c);
+    }
+  CATCH_NORMALIZ(nullptr, "rawNormalizDeg1Elements")
+}
+
+bool rawNormalizIsIntegrallyClosed(const Matrix *C,
+                           int strategy,
+                           int threads,
+                           bool verbose)
+{
+  clearNormalizInterrupt();
+  try
+    {
+      auto rays = rawNormalizRays(C);
+      auto computation = rawNormalizComputation(
+        libnormaliz::ConeProperty::IsIntegrallyClosed, strategy);
+      RawNormalizThreadLimitGuard thread_limit_guard(threads);
+      auto cone = libnormaliz::Cone<Integer>(libnormaliz::Type::cone, rays);
+      cone.setVerbose(verbose);
+      cone.compute(computation);
+      return cone.isIntegrallyClosed();
+    }
+  CATCH_NORMALIZ(false, "rawNormalizIsIntegrallyClosed")
+}
+
+const Matrix *rawNormalizWitnessNotIntegrallyClosed(const Matrix *C,
+                                            int strategy,
+                                            int threads,
+                                            bool verbose)
+{
+  clearNormalizInterrupt();
+  try
+    {
+      const Ring *R = C->get_ring();
+      const size_t c = C->n_cols();
+      auto rays = rawNormalizRays(C);
+      auto computation = rawNormalizComputation(
+        libnormaliz::ConeProperty::WitnessNotIntegrallyClosed, strategy);
+      RawNormalizThreadLimitGuard thread_limit_guard(threads);
+      auto cone = libnormaliz::Cone<Integer>(libnormaliz::Type::cone, rays);
+      cone.setVerbose(verbose);
+      cone.compute(computation);
+      auto witness = cone.getWitnessNotIntegrallyClosed();
+      if (witness.empty()) return nullptr;
+      std::vector<std::vector<Integer>> rows { witness };
+      return rawNormalizMatrix(R, rows, c);
+    }
+  CATCH_NORMALIZ(nullptr, "rawNormalizWitnessNotIntegrallyClosed")
 }
 
 // Keep this in sync with the typedef in Macaulay2/e/computeGV.hpp.

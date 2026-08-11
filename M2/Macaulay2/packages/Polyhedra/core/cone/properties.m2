@@ -178,7 +178,8 @@ compute#Cone#computedDimension Cone := C -> (
 importFrom_Core { "raw", "rawHilbertBasis" } -- calls libnormaliz
 compute#Cone#computedHilbertBasis = method()
 compute#Cone#computedHilbertBasis Cone := C -> (
-   hb := transpose map(ZZ, rawHilbertBasis raw transpose rays C);
+    -- inputs: ray generators, strategy, #threads, verbose
+    hb := transpose map(ZZ, rawHilbertBasis(raw transpose rays C, 1, 0, debugLevel > 2));
    apply(numColumns hb, i -> hb_{i})
 )
 
@@ -274,6 +275,5 @@ compute#Cone#ambientDimension Cone := C -> (
    else if hasProperty(C, computedHyperplanes) then numColumns hyperplanes C
    else error("Is the cone fully defined? Cannot compute ambient dimension.")
 )
-
 
 

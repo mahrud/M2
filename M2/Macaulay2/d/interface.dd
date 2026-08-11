@@ -11,6 +11,7 @@ header "// TODO: break apart this file so each piece includes only one:
 #include <interface/aring.h>
 #include <interface/barvinok.h>
 #include <interface/cone.h>
+#include <interface/toric.h>
 #include <interface/cra.h>
 #include <interface/factory.h>
 #include <interface/flint.h>
@@ -4101,9 +4102,147 @@ export rawFourierMotzkin(e:Expr):Expr := (
 setupfun("rawFourierMotzkin", rawFourierMotzkin);
 
 export rawHilbertBasis(e:Expr):Expr := (
-     when e is G:RawMatrixCell do toExpr(Ccode(RawMatrixOrNull, "rawHilbertBasis(", G.p, ")"))
+     when e is G:RawMatrixCell do
+       toExpr(Ccode(RawMatrixOrNull, "rawHilbertBasis(", G.p, ", 0, 0, false)"))
+     else when e is s:Sequence do (
+       if length(s) != 4 then WrongNumArgs(4) else
+       when s.0 is G:RawMatrixCell do
+       when s.1 is strategy:ZZcell do
+       if !isInt(strategy) then WrongArgSmallInteger(2) else
+       when s.2 is threads:ZZcell do
+       if !isInt(threads) then WrongArgSmallInteger(3) else
+       if isBoolean(s.3) then
+         toExpr(Ccode(RawMatrixOrNull, "rawHilbertBasis(", G.p, ", ",
+                              toInt(strategy.v), ", ", toInt(threads.v), ", ",
+                              toBoolean(s.3), ")"))
+       else WrongArg(4,"a boolean")
+       else WrongArg(3,"an integer")
+       else WrongArg(2,"an integer")
+       else WrongArgMatrix(1))
      else WrongArgMatrix());
 setupfun("rawHilbertBasis", rawHilbertBasis);
+
+export rawNormalizDeg1Elements(e:Expr):Expr := (
+     when e is G:RawMatrixCell do
+       toExpr(Ccode(RawMatrixOrNull, "rawNormalizDeg1Elements(", G.p, ", 0, 0, false)"))
+     else when e is s:Sequence do (
+       if length(s) != 4 then WrongNumArgs(4) else
+       when s.0 is G:RawMatrixCell do
+       when s.1 is strategy:ZZcell do
+       if !isInt(strategy) then WrongArgSmallInteger(2) else
+       when s.2 is threads:ZZcell do
+       if !isInt(threads) then WrongArgSmallInteger(3) else
+       if isBoolean(s.3) then
+         toExpr(Ccode(RawMatrixOrNull, "rawNormalizDeg1Elements(", G.p, ", ",
+                              toInt(strategy.v), ", ", toInt(threads.v), ", ",
+                              toBoolean(s.3), ")"))
+       else WrongArg(4,"a boolean")
+       else WrongArg(3,"an integer")
+       else WrongArg(2,"an integer")
+       else WrongArgMatrix(1))
+     else WrongArgMatrix());
+setupfun("rawNormalizDeg1Elements", rawNormalizDeg1Elements);
+
+export rawNormalizIsIntegrallyClosed(e:Expr):Expr := (
+     when e is G:RawMatrixCell do
+       toExpr(Ccode(bool, "rawNormalizIsIntegrallyClosed(", G.p, ", 0, 0, false)"))
+     else when e is s:Sequence do (
+       if length(s) != 4 then WrongNumArgs(4) else
+       when s.0 is G:RawMatrixCell do
+       when s.1 is strategy:ZZcell do
+       if !isInt(strategy) then WrongArgSmallInteger(2) else
+       when s.2 is threads:ZZcell do
+       if !isInt(threads) then WrongArgSmallInteger(3) else
+       if isBoolean(s.3) then
+         toExpr(Ccode(bool, "rawNormalizIsIntegrallyClosed(", G.p, ", ",
+                              toInt(strategy.v), ", ", toInt(threads.v), ", ",
+                              toBoolean(s.3), ")"))
+       else WrongArg(4,"a boolean")
+       else WrongArg(3,"an integer")
+       else WrongArg(2,"an integer")
+       else WrongArgMatrix(1))
+     else WrongArgMatrix());
+setupfun("rawNormalizIsIntegrallyClosed", rawNormalizIsIntegrallyClosed);
+
+export rawNormalizWitnessNotIntegrallyClosed(e:Expr):Expr := (
+     when e is G:RawMatrixCell do
+       toExpr(Ccode(RawMatrixOrNull,
+                    "rawNormalizWitnessNotIntegrallyClosed(", G.p,
+                    ", 0, 0, false)"))
+     else when e is s:Sequence do (
+       if length(s) != 4 then WrongNumArgs(4) else
+       when s.0 is G:RawMatrixCell do
+       when s.1 is strategy:ZZcell do
+       if !isInt(strategy) then WrongArgSmallInteger(2) else
+       when s.2 is threads:ZZcell do
+       if !isInt(threads) then WrongArgSmallInteger(3) else
+       if isBoolean(s.3) then
+         toExpr(Ccode(RawMatrixOrNull,
+                      "rawNormalizWitnessNotIntegrallyClosed(", G.p, ", ",
+                      toInt(strategy.v), ", ", toInt(threads.v), ", ",
+                      toBoolean(s.3), ")"))
+       else WrongArg(4,"a boolean")
+       else WrongArg(3,"an integer")
+       else WrongArg(2,"an integer")
+       else WrongArgMatrix(1))
+     else WrongArgMatrix());
+setupfun("rawNormalizWitnessNotIntegrallyClosed", rawNormalizWitnessNotIntegrallyClosed);
+
+export rawSimplicialFan(e:Expr):Expr := (
+  when e is s:Sequence do (
+    if length(s) != 7 then WrongNumArgs(7) else
+    when s.0 is R:RawMatrixCell do (
+      if isSequenceOfSmallIntegers(s.1) then (
+        when s.2 is strategy:ZZcell do (
+        if !isInt(strategy) then WrongArgSmallInteger(3) else
+        when s.3 is seed:ZZcell do (
+        if !isInt(seed) then WrongArgSmallInteger(4) else
+        when s.4 is limit:ZZcell do (
+        if !isInt(limit) then WrongArgSmallInteger(5) else
+        when s.5 is threads:ZZcell do (
+        if !isInt(threads) then WrongArgSmallInteger(6) else
+        if isBoolean(s.6) then
+          toExpr(Ccode(RawMatrixOrNull, "rawSimplicialFan(", R.p, ", ",
+            getSequenceOfSmallIntegers(s.1), ", ", toInt(strategy.v), ", ",
+            toInt(seed.v), ", ", toInt(limit.v), ", ", toInt(threads.v), ", ",
+            toBoolean(s.6), ")"))
+        else WrongArg(7,"a boolean")
+        ) else WrongArg(6,"an integer")
+        ) else WrongArg(5,"an integer")
+        ) else WrongArg(4,"an integer")
+        ) else WrongArg(3,"an integer"))
+      else WrongArg(2,"a sequence of small integers"))
+    else WrongArgMatrix(1))
+  else WrongNumArgs(7));
+setupfun("rawSimplicialFan", rawSimplicialFan);
+
+export rawSmoothFan(e:Expr):Expr := (
+  when e is s:Sequence do (
+    if length(s) != 7 then WrongNumArgs(7) else
+    when s.0 is R:RawMatrixCell do (
+      if isSequenceOfSmallIntegers(s.1) then (
+        when s.2 is strategy:ZZcell do (
+        if !isInt(strategy) then WrongArgSmallInteger(3) else
+        when s.3 is seed:ZZcell do (
+        if !isInt(seed) then WrongArgSmallInteger(4) else
+        when s.4 is limit:ZZcell do (
+        if !isInt(limit) then WrongArgSmallInteger(5) else
+        when s.5 is threads:ZZcell do (
+        if !isInt(threads) then WrongArgSmallInteger(6) else
+        if isBoolean(s.6) then
+          toExpr(Ccode(RawMatrixOrNull, "rawSmoothFan(", R.p, ", ",
+            getSequenceOfSmallIntegers(s.1), ", ", toInt(strategy.v), ", ",
+            toInt(seed.v), ", ", toInt(limit.v), ", ", toInt(threads.v), ", ",
+            toBoolean(s.6), ")"))
+        else WrongArg(7,"a boolean")
+        ) else WrongArg(6,"an integer")
+        ) else WrongArg(5,"an integer")
+        ) else WrongArg(4,"an integer")
+        ) else WrongArg(3,"an integer"))
+      else WrongArg(2,"a sequence of small integers"))
+    else WrongArgMatrix(1))
+  else WrongNumArgs(7));
+setupfun("rawSmoothFan", rawSmoothFan);
 
 export rawConeContains(e:Expr):Expr := (
      when e is s:Sequence do if length(s) != 2 then WrongNumArgs(2) else

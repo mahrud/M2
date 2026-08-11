@@ -21,7 +21,7 @@ assert all(flatten entries (A * transpose B), x -> x <= 0)
 -- Output: rows are the Hilbert basis of that cone.
 ------------------------------------------------------------
 C = matrix {{1,0}, {1,2}}
-HB = map(ZZ, rawHilbertBasis raw C)
+HB = map(ZZ, rawHilbertBasis(raw C, 0, 0, false))
 assert(set entries HB === set {{1,0}, {1,1}, {1,2}})
 
 ------------------------------------------------------------

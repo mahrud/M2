@@ -120,6 +120,8 @@ set(CPPONLYFILES
   interface/cra.h
   interface/cone.cpp
   interface/cone.h
+  interface/toric.cpp
+  interface/toric.h
   interface/factory.cpp
   interface/factory.h
   interface/flint.cpp

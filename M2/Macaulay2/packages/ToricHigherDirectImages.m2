@@ -221,7 +221,8 @@ affineSemigroupGenerators (NormalToricVariety, List) := Matrix => (X, w) -> (
 -- Internal method. computes the "generating lattice points" in a polyhedron via Hilbert bases.
 generatingLatticePoints = method();
 generatingLatticePoints Polyhedron := List => P -> (
-    H := entries map(ZZ, rawHilbertBasis raw transpose rays cone P);
+    -- TODO: call rawNormalizDeg1Elements instead
+    H := entries map(ZZ, rawHilbertBasis(raw transpose rays cone P, 0, 0, false));
     for h in H list if h#0 === 1 then drop(h,1) else continue
     )
 

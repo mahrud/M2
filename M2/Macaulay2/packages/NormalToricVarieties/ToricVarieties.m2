@@ -3,6 +3,8 @@
 ------------------------------------------------------------------------------
 KK = QQ  -- global base ring
 
+importFrom_Core { "raw", "rawSimplicialFan", "rawSmoothFan" }
+
 --- kludge to access parts of the 'Core'
 hasAttribute = value Core#"private dictionary"#"hasAttribute";
 getAttribute = value Core#"private dictionary"#"getAttribute";
@@ -623,11 +625,37 @@ regularSubdivisionLocal (NormalToricVariety, List, List) := (X,s,w) -> (
     Y 
     );    
 
+encodeFanCones = C -> {#C} | flatten apply(C, s -> {#s} | s);
+
+decodeRawFan = M -> (
+    rows := entries M;
+    rayRows := select(rows, r -> r#0 == 0);
+    coneRows := select(rows, r -> r#0 == 1);
+    {
+        apply(rayRows, r -> take(drop(r, 2), r#1)),
+        apply(coneRows, r -> take(drop(r, 2), r#1))
+    }
+    );
+
+rawRefinedFan = (X, M) -> (
+    data := decodeRawFan M;
+    normalToricVariety(data#0, data#1,
+        CoefficientRing => X.cache.CoefficientRing,
+        Variable        => X.cache.Variable)
+    );
+
 makeSimplicial = method (
     TypicalValue => NormalToricVariety,
     Options => {Strategy => 0}
     )
 makeSimplicial NormalToricVariety := opts -> X -> (
+    if opts.Strategy =!= "Greedy" then (
+        M := map(ZZ, rawSimplicialFan(raw matrix rays X,
+            encodeFanCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
+        Z := rawRefinedFan(X, M);
+        Z.cache.toricBlowup = X;
+        return Z
+        );
     Y := X;
     while true do (
 	coneList := max Y;
@@ -647,7 +675,11 @@ makeSimplicial NormalToricVariety := opts -> X -> (
       	    	n := #s;
       	    	m := (n // 10) + 1;
       	    	w := apply (n, i -> random (2,100*m));
-      	    	Y = regularSubdivisionLocal (Y,s,w) )));
+                Y0 := Y;
+                Y = regularSubdivisionLocal (Y,s,w);
+                Y.cache.toricBlowup = Y0)
+            )
+        );
     Y 
     );
 
@@ -706,6 +738,13 @@ makeSmooth = method(
     Options => {Strategy => 0}
     )
 makeSmooth NormalToricVariety := opts -> X -> (
+    if opts.Strategy =!= "Greedy" then (
+        M := map(ZZ, rawSmoothFan(raw matrix rays X,
+            encodeFanCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
+        Z := rawRefinedFan(X, M);
+        Z.cache.toricBlowup = X;
+        return Z
+        );
     Y := X;
     while true do (
       	rayMatrix := transpose matrix rays Y;

@@ -83,7 +83,58 @@ libnormaliz.
  *
  * \ingroup cones
  */
-const Matrix /* or null */ *rawHilbertBasis(const Matrix *C);
+/**
+ * Strategy values accepted by the Normaliz-backed cone routines below.
+ *
+ * The values are intentionally independent of libnormaliz's internal enum
+ * values, which are not part of the Macaulay2 interface ABI.
+ */
+enum RawHilbertBasisStrategy {
+  RawHilbertBasisDefault = 0,
+  RawHilbertBasisDual = 1,
+  RawHilbertBasisPrimal = 2,
+  RawHilbertBasisPrimalBottom = 3,
+  RawHilbertBasisPrimalNoBottom = 4
+};
+
+const Matrix /* or null */ *rawHilbertBasis(const Matrix *C,
+                                            int strategy,
+                                            int threads,
+                                            bool verbose);
+
+/** \brief Degree-one lattice elements of a graded cone, via libnormaliz.
+ *
+ * The input is the row matrix of cone rays.  The cone must have a positive
+ * grading for Normaliz to define degree one.  The strategy values and the
+ * thread and verbosity options are the same as for rawHilbertBasis.
+ *
+ * \return An $n \times c$ integer matrix whose rows are the degree-one
+ *         elements, or `nullptr` on engine error.
+ */
+const Matrix /* or null */ *rawNormalizDeg1Elements(const Matrix *C,
+                                            int strategy,
+                                            int threads,
+                                            bool verbose);
+
+/** \brief Test whether a graded cone is integrally closed, via libnormaliz.
+ *
+ * The input and options have the same meaning as for rawNormalizDeg1Elements.
+ */
+bool rawNormalizIsIntegrallyClosed(const Matrix *C,
+                           int strategy,
+                           int threads,
+                           bool verbose);
+
+/** \brief Return a witness that a graded cone is not integrally closed.
+ *
+ * The witness is returned as a one-row integer matrix, or `nullptr` when no
+ * witness exists (or on engine error).  The input and options have the same
+ * meaning as for rawNormalizDeg1Elements.
+ */
+const Matrix /* or null */ *rawNormalizWitnessNotIntegrallyClosed(const Matrix *C,
+                                                          int strategy,
+                                                          int threads,
+                                                          bool verbose);
 
 /** \brief Gopakumar-Vafa invariants of a Calabi-Yau threefold.
  *

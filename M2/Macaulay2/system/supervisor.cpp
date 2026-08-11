@@ -21,6 +21,9 @@ const static int maxNumThreads = numCores; // ((numCores < 4) ? 4 : (16 < numCor
 static atomic_int currentAllowedThreads(5);
 
 
+// Defined in bin/main.cpp; nudges foreign libraries' own interrupt flags.
+extern "C" void interrupts_notifyForeignLibraries();
+
 // The thread that the interpreter runs in.
 pthread_t interpThread;
 
@@ -232,6 +235,7 @@ void* ThreadTask::waitOn()
 	  atomic_store(&m_CurrentThread->m_Interrupt->field, 1);
 	  atomic_store(&m_CurrentThread->m_Exception->field, 1);
 	  m_KeepRunning = false;
+	  interrupts_notifyForeignLibraries();
 	}
       pthread_cond_wait(&m_FinishCondition,&m_Mutex.m_Mutex);
     }
@@ -346,6 +350,7 @@ void ThreadSupervisor::_i_cancelTask(struct ThreadTask* task)
     {
       atomic_store(&task->m_CurrentThread->m_Interrupt->field, 1);
       atomic_store(&task->m_CurrentThread->m_Exception->field, 1);
+      interrupts_notifyForeignLibraries();
     }
   task->m_KeepRunning=false;
 }

@@ -31,7 +31,13 @@
 /* ######################################################################### */
 
 JumpCell abort_jmp;
-JumpCell interrupt_jmp;
+
+// thread-local: a jmp_buf must be resumed on the thread that set it (see msolve.cpp)
+thread_local JumpCell interrupt_jmp;
+
+// True while this thread is inside libnormaliz (see NormalizActiveGuard in cone.cpp);
+// gates whether interrupt_handler should touch the process-wide nmz_interrupted flag.
+thread_local bool normalizComputationActive = false;
 
 extern "C" void clean_up();
 extern "C" void system_cpuTime_init();
@@ -207,6 +213,13 @@ void* interpFunc(ArgCell* vargs)
 
 /* ######################################################################### */
 
+// Called when a specific task is explicitly cancelled (see supervisor.cpp), to nudge
+// foreign libraries that poll a process-wide flag rather than a per-thread one.
+extern "C" void interrupts_notifyForeignLibraries()
+{
+  libnormaliz::nmz_interrupted = 1;
+}
+
 extern "C" void oursignal(int sig, void (*handler)(int)) {
  #ifdef HAVE_SIGACTION
   struct sigaction act;
@@ -250,8 +263,6 @@ void segv_handler(int sig) {
 
 void interrupt_handler(int sig) {
   (void) sig;
-  // Normaliz polls this signal-safe flag and throws InterruptException.
-  libnormaliz::nmz_interrupted = 1;
   if (tryGlobalInterrupt() == 0) {
     if (test_Field(THREADLOCAL(interrupts_interruptedFlag, struct atomic_field)) ||
                    THREADLOCAL(interrupts_interruptPending, bool)) {
@@ -318,6 +329,7 @@ void interrupt_handler(int sig) {
 	}
 	interrupts_setInterruptFlag();
 	pthread_cond_broadcast(currentTask);
+	if (normalizComputationActive) libnormaliz::nmz_interrupted = 1;
 	if (interrupt_jmp.is_set) LONGJUMP(interrupt_jmp.addr);
       }
 

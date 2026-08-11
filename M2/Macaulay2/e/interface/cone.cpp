@@ -50,6 +50,17 @@ typedef mpz_class Integer;
 // The flag is sticky so before entering libnormaliz we clear old interrupts
 static inline void clearNormalizInterrupt() { libnormaliz::nmz_interrupted = 0; }
 
+// Declared thread-local in bin/main.cpp; tells interrupt_handler whether this
+// thread is currently inside libnormaliz.
+extern thread_local bool normalizComputationActive;
+
+// RAII so the flag is cleared on every exit path, not just the ones CATCH_NORMALIZ catches.
+struct NormalizActiveGuard
+{
+  NormalizActiveGuard() { normalizComputationActive = true; }
+  ~NormalizActiveGuard() { normalizComputationActive = false; }
+};
+
 // Use to close a try block that entered libnormaliz.  Three cases, and they
 // have to stay distinct: an interrupt is the interpreter's to report, since
 // the same signal handler already set Macaulay2's own interrupted flag and an
@@ -153,6 +164,7 @@ const Matrix *rawNormalizMatrix(const Ring *R,
 const Matrix /* or null */ *rawFourierMotzkin(const Matrix *A, const Matrix *B)
 {
   clearNormalizInterrupt();
+  NormalizActiveGuard normalizActiveGuard;
   try
     {
       // TODO: generalize the input type, in particular to allow lineality space
@@ -217,6 +229,7 @@ const Matrix /* or null */ *rawHilbertBasis(const Matrix *C,
                                             bool verbose)
 {
   clearNormalizInterrupt();
+  NormalizActiveGuard normalizActiveGuard;
   try
     {
       // TODO: Check that C is over ZZ
@@ -475,6 +488,7 @@ MutableMatrix *rawLatticePoints(const Matrix *A,
 MutableMatrix *rawLatticePointsNormaliz(const Matrix *A, const Matrix *b)
 {
   clearNormalizInterrupt();
+  NormalizActiveGuard normalizActiveGuard;
   try
     {
       const size_t n_hyps = A->n_rows();

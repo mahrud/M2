@@ -11,7 +11,7 @@
 #include <readline/history.h>
 
 extern struct JumpCell abort_jmp;
-extern struct JumpCell interrupt_jmp;
+extern _Thread_local struct JumpCell interrupt_jmp; /* thread-local, see bin/main.cpp */
 
 extern void alarm_handler(int sig);
 extern void interrupt_handler(int sig);

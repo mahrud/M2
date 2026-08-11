@@ -77,7 +77,8 @@ extern "C" {
 #include <cstdlib>
 #include <vector>
 
-extern JumpCell interrupt_jmp;
+// Thread-local: see bin/main.cpp.
+extern thread_local JumpCell interrupt_jmp;
 
 M2_bool rawMsolvePresent()
 {

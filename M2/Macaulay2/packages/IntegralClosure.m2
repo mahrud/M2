@@ -653,8 +653,8 @@ fInIdeal = (f,I) -> (
 -- However, it first checks the less expensive S2 condition and then 
 -- checks R1.  
 
---isNormal = method()     
-isNormal(Ring) := Boolean => (R) -> (
+--isNormal = method()
+isNormal Ring := Boolean => R -> R.cache.isNormal ??= (
      -- 1 argument:  A ring - usually a quotient ring. 
      -- Return: A boolean value, true if the ring is normal and false
      -- otherwise. 

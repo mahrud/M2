@@ -68,6 +68,21 @@ TEST ///
 ///
 
 TEST ///
+  -- msolveGBMatrix over a quotient ring R = S/J, fed a matrix with more than
+  -- one row: rels = presentation R must be tensored with id_(target m0) so
+  -- its row count matches m0's, and the in(J) filter afterward must inspect
+  -- the whole lead term column, not just its first row, or generators whose
+  -- lead term is nonzero only past row 1 are silently dropped.
+  S = ZZ/32003[x,y,z, MonomialOrder => GRevLex]
+  J = ideal(x^2 - y*z, y^3 - x*z^2)
+  R = S/J
+  M = matrix {{x, y}, {y, z}, {z, x^2}}
+  G = msolveGB M
+  assert(image G == image M)
+  assert(image G == image gens gb M)
+///
+
+TEST ///
   -- rawMsolveGB dispatches a multi-row matrix to msolve's module F4, using
   -- Macaulay2's default module order: term over position up.
   debug Core
@@ -100,7 +115,7 @@ TEST ///
   -- Claude profile this example
   restart
   debug Core
-  needsPackage "Msolve"
+  debug needsPackage "Msolve"
   needsPackage "NormalToricVarieties"
   X = smoothFanoToricVariety(3, 10, CoefficientRing => ZZ/101)
   S = ring X

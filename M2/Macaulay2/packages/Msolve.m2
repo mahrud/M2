@@ -105,11 +105,13 @@ unpackMsolveBetti = w -> (
 
 ---------------------------------------------------------------------------
 
--- A Groebner basis of the one-rowed matrix m, eliminating the first elim
--- variables. msolve knows nothing of quotient rings, so over R = S/J the
--- generators are lifted to S and the presentation of R is appended to them: a
--- Groebner basis of I + J in S restricts to one of I in R once the elements
--- whose lead term already lies in in(J) are dropped. Compare with fast-kernel.m2.
+-- A Groebner basis of the columns of m, a matrix of any number of rows,
+-- eliminating the first elim variables. msolve knows nothing of quotient
+-- rings, so over R = S/J the generators are lifted to S^r (r = numrows m) and
+-- the presentation of R is appended to them once per row, via a tensor with
+-- id_(target m0): a Groebner basis of the submodule <m> + J*S^r in S^r
+-- restricts to one of <m> in R^r once the elements whose lead term already
+-- lies in in(J*S^r) are dropped. Compare with fast-kernel.m2.
 msolveGBMatrix = (m, elim, opts) -> (
     if not msolveEngineUsable m then return null;
     threads := opts.Threads ?? allowableThreads;
@@ -117,11 +119,14 @@ msolveGBMatrix = (m, elim, opts) -> (
     (R0, phi) := flattenRing ring m;
     S := ambient R0;
     if S === R0 then return map(S, rawMsolveGB(raw sub(matrix m, S), elim, threads, verbosity));
-    rels := presentation R0;
-    G := map(S, rawMsolveGB(raw(lift(matrix m, S) | rels), elim, threads, verbosity));
-    -- keep only the elements that are not already accounted for by in(J)
+    m0 := lift(matrix m, S);
+    rels := presentation R0 ** id_(target m0);
+    G := map(S, rawMsolveGB(raw(m0 | rels), elim, threads, verbosity));
+    -- keep only the columns not already accounted for by in(J*S^r); a column
+    -- is accounted for exactly when its whole lead term vector reduces to
+    -- zero, which takes all rows into account, not just the first
     LT := leadTerm G % gb leadTerm rels;
-    G = G_(positions(first entries LT, f -> f != 0));
+    G = G_(positions(entries transpose LT, col -> any(col, f -> f != 0)));
     phi substitute(G, vars R0))
 
 msolveGBEngine = (m, elim, opts) -> msolveGBMatrix(m, elim, opts)

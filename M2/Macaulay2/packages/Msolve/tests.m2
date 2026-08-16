@@ -1,4 +1,20 @@
 TEST ///
+  -- the msolve hooks must not drop the grading of the target: msolve is handed
+  -- bare polynomials, so a basis returned as if the target were S^r shifts every
+  -- degree read off `gens gb` -- poincare, hilbertFunction and basis included.
+  msolveSetup()
+  R = ZZ/3[q]
+  N = coker map(R^{-6}, R^{-9}, matrix{{q^3}}) -- generated in degree 6, length 3
+  assert(degrees N == {{6}})
+  assert(degrees target gens gb presentation N == {{6}})
+  assert(degrees source gens gb presentation N == {{9}})
+  assert(poincare N == (ring poincare N)_0^6 - (ring poincare N)_0^9)
+  assert(apply(10, d -> hilbertFunction(d, N)) == {0,0,0,0,0,0,1,1,1,0})
+  assert(degrees source basis N == {{6}, {7}, {8}})
+  assert isHomogeneous basis N
+///
+
+TEST ///
   -- c.f. https://github.com/algebraic-solving/msolve/issues/165
   K = ZZ/65537 -- > 2^16
   R = K[x_(0,0), x_(0,1)]
@@ -236,7 +252,153 @@ TEST ///
   assert(numgens J == 972);
 ///
 
-/// 
+TEST ///
+  -- msolve's elimination block length is not only an elimination device: it is
+  -- a two block degree reverse lexicographic order, and it is Macaulay2's
+  -- {GRevLex => a, GRevLex => b} exactly. So a ring with two grevlex blocks is
+  -- not msolveApplicable -- msolve cannot be handed the order -- and yet
+  -- msolveBlockGB gets the very basis of that order out of it, by computing in
+  -- the plain grevlex ring on the same variables.
+  debug needsPackage "Msolve"
+  kk = ZZ/1073741827
+  S = kk[a..e, MonomialOrder => {GRevLex => 2, GRevLex => 3}]
+  gensI = {a^2-b*c+d*e, a*b*c-d^2*e+a*e^2, b^3-c*d*e+a^3, c^2*d-a*b*e}
+
+  assert(grevlexBlockLength S === 2)
+  assert(grevlexBlockLength(kk[a..e]) === null)
+  -- Eliminate n is a weight order in Macaulay2, and a different order
+  assert(grevlexBlockLength(kk[a..e, MonomialOrder => Eliminate 2]) === null)
+  assert(grevlexBlockLength(kk[a..e, MonomialOrder => {GRevLex => 2, GRevLex => 2}]) === null)
+
+  I = ideal gensI
+  assert not msolveApplicable gens I
+  ref = sort first entries gens gb I
+  G = msolveBlockGB(gens I, msolveDefaultOptions)
+  assert instance(G, GroebnerBasis)
+  assert(sort first entries gens G == ref)
+
+  -- weights are carried across one block at a time by the same substitution
+  W = kk[a..e, Degrees => {2,3,1,4,2},
+      MonomialOrder => {GRevLex => {2,3}, GRevLex => {1,4,2}}]
+  IW = ideal apply(gensI, f -> sub(f, vars W))
+  assert(sort first entries gens msolveBlockGB(gens IW, msolveDefaultOptions)
+      == sort first entries gens gb IW)
+
+  -- over a quotient of a block ring the relations go in with the generators and
+  -- what in(J) accounts for comes back out, as in msolveGBMatrix
+  use S
+  R = S/ideal(a^2 - b*c, b^3 - c*d*e)
+  M = matrix {{a*b - d*e, c^2*d - a*e^2}}
+  assert(sort first entries gens msolveBlockGB(M, msolveDefaultOptions)
+      == sort first entries gens gb M)
+
+  -- what msolve cannot do with a block order, and so falls back for: modules,
+  -- noncommutative rings, and anything but two blocks
+  use S
+  assert(msolveBlockGB(matrix {{a,b},{c,d}}, msolveDefaultOptions) === null)
+  assert(msolveBlockGB(gens ideal(a^2-b*c, c*d-b^2), msolveDefaultOptions) =!= null)
+  -- a plain grevlex ring is msolveForceGB's business, not this one's
+  P = kk[a..e]
+  assert(msolveBlockGB(substitute(gens I, vars P), msolveDefaultOptions) === null)
+  D = ZZ/32003[x,y,dx,dy, WeylAlgebra => {x=>dx, y=>dy},
+      MonomialOrder => {GRevLex => 2, GRevLex => 2}]
+  assert(msolveBlockGB(matrix {{x*dx - 1, y*dy}}, msolveDefaultOptions) === null)
+  E = ZZ/32003[e_1..e_4, SkewCommutative => true,
+      MonomialOrder => {GRevLex => 2, GRevLex => 2}]
+  assert(msolveBlockGB(matrix {{e_1*e_2, e_3*e_4}}, msolveDefaultOptions) === null)
+///
+
+TEST ///
+  -- a tower is stored with a block order -- kk[x,y,z][a,b,c] flattens to
+  -- kk[a,b,c,x,y,z] with the outer variables their own leading grevlex block,
+  -- and that is the order Macaulay2 computes a Groebner basis over the tower in
+  -- -- so msolveBlockGB reaches it, the block length being the number of outer
+  -- variables and the flattening being carried by flattenRing's two maps.
+  debug needsPackage "Msolve"
+  kk = ZZ/1073741827
+  A = kk[x,y,z]
+  B = A[a,b,c]
+  assert(grevlexBlockLength ambient first flattenRing B === 3)
+  use B
+
+  I = minors_2 matrix {{x,y,z}, {a,b,c}} -- homogeneous in the flattened bigrading
+  assert isHomogeneous I
+  G = msolveBlockGB(gens I, msolveDefaultOptions)
+  assert instance(G, GroebnerBasis)
+  assert(ring gens G === B) -- and not the flattening
+  assert(sort first entries gens G == sort first entries gens gb I)
+  assert isHomogeneous gens G
+  assert(degrees target gens G == degrees target gens gb I)
+  assert(degrees source gens G == degrees source gens gb I)
+
+  -- a quotient of a tower flattens to a quotient, and its relations go in with
+  -- the generators as before
+  C = B/ideal(a^2 - b*x)
+  M = matrix {{a*b - c*y, b^2*z - a*c*x}}
+  assert(sort first entries gens msolveBlockGB(M, msolveDefaultOptions)
+      == sort first entries gens gb M)
+
+  -- three levels are three blocks, and msolve has only two
+  T = (kk[p])[q][r]
+  assert(grevlexBlockLength ambient first flattenRing T === null)
+  use T
+  assert(msolveBlockGB(matrix {{p*q - r^2, q^3 - p*r}}, msolveDefaultOptions) === null)
+///
+
+TEST ///
+  -- the gb hook picks a two block grevlex order up, so a quotient ring of such
+  -- a ring is built from msolve's basis rather than from Macaulay2's
+  debug Core
+  debug needsPackage "Msolve"
+  kk = ZZ/1073741827
+  S = kk[a..e, MonomialOrder => {GRevLex => 2, GRevLex => 3}]
+  gensI = {a^2-b*c+d*e, a*b*c-d^2*e+a*e^2, b^3-c*d*e+a^3, c^2*d-a*b*e}
+  -- Macaulay2's own answers, taken before the hooks are installed
+  ref = sort first entries gens gb ideal gensI
+  f = a^3*b + c*d*e^2
+  nf = f % gens gb ideal gensI
+
+  msolveSetup {gb}
+  I = ideal gensI
+  G = gb I
+  assert(toString raw G == "declared GB") -- i.e. msolve's, not recomputed
+  assert(sort first entries gens G == ref)
+  Q = S/I
+  assert(lift(sub(f, Q), S) == nf)
+
+  -- other orders still go to Macaulay2's own implementation
+  L = kk[x,y,z, MonomialOrder => Lex]
+  assert(gens gb ideal(x^2-y*z, y^3-x*z^2, x*y-z^2) != 0)
+  T = kk[u_1..u_6, MonomialOrder => {GRevLex => 2, GRevLex => 2, GRevLex => 2}]
+  assert(gens gb ideal(u_1^2-u_2*u_3, u_4^2-u_5*u_6, u_1*u_4-u_2*u_5) != 0)
+///
+
+TEST ///
+  -- the same over a tower, which is where a block order most often comes from:
+  -- gb, and so the quotient ring built out of it, goes through msolve
+  debug Core
+  debug needsPackage "Msolve"
+  kk = ZZ/1073741827
+  A = kk[x,y,z]
+  B = A[a,b,c]
+  gensI = first entries gens minors_2 matrix {{x,y,z}, {a,b,c}}
+  -- Macaulay2's own answers, taken before the hooks are installed
+  ref = sort first entries gens gb ideal gensI
+  f = a^2*b*x + c^3*z
+  nf = f % gens gb ideal gensI
+
+  msolveSetup {gb}
+  I = ideal gensI
+  G = gb I
+  assert(toString raw G == "declared GB") -- i.e. msolve's, not recomputed
+  assert(sort first entries gens G == ref)
+  Q = B/I
+  assert(lift(sub(f, Q), B) == nf)
+  assert(numerator hilbertSeries(Q, Reduce => true)
+      == numerator hilbertSeries(B/ideal ref, Reduce => true))
+///
+
+///
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];
 setRandomSeed 42

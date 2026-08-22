@@ -38,6 +38,7 @@ importFrom_Core {
     "rawMatrixWriteMsolveFile",
     --
     "rawMsolveGB",
+    "rawMsolveGBRestrictToQuotient",
     "rawMsolveSyzygy",
     "rawMsolveResolution",
     "rawMsolveSaturate",
@@ -147,6 +148,17 @@ unpackMsolveBetti = w -> (
 -- lies in in(J*S^r) are dropped. Compare with fast-kernel.m2.
 msolveGBMatrix = (m, elim, opts) -> (
     if not msolveEngineUsable m then return null;
+    -- msolve's module F4 offers position over term and term over position on
+    -- the components, but not an induced (Schreyer) order: res.h's
+    -- RES_MORD_SCHREYER wants per component base monomials that only its
+    -- resolution engine supplies, and export_module_f4 has no way to accept
+    -- them.  What it would return under a Schreyer target still generates the
+    -- right submodule, but with the lead terms of the wrong order, and
+    -- msolveDeclareGB's forceGB would declare a non-Groebner basis to be one,
+    -- silently corrupting poincare, %, and everything else lead term based.
+    -- Twists of the target are fine: rawMsolveModuleGB passes no row degrees,
+    -- so its order compares deg(m) and then the component, as Macaulay2 does.
+    if numrows m > 1 and schreyerOrder target m != 0 then return null;
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
     (R0, phi) := flattenRing ring m;
@@ -154,12 +166,14 @@ msolveGBMatrix = (m, elim, opts) -> (
     if S === R0 then return map(target m, , rawMsolveGB(raw sub(matrix m, S), elim, threads, verbosity));
     m0 := lift(matrix m, S);
     rels := presentation R0 ** id_(target m0);
-    G := map(S, rawMsolveGB(raw(m0 | rels), elim, threads, verbosity));
+    G := rawMsolveGB(raw(m0 | rels), elim, threads, verbosity);
     -- keep only the columns not already accounted for by in(J*S^r); a column
-    -- is accounted for exactly when its whole lead term vector reduces to
-    -- zero, which takes all rows into account, not just the first
-    LT := leadTerm G % gb leadTerm rels;
-    G = G_(positions(entries transpose LT, col -> any(col, f -> f != 0)));
+    -- is accounted for exactly when its lead term is already in R0's own
+    -- initial ideal.  R0 already has that as a MonomialTable, built when it
+    -- was constructed for its own ring arithmetic, so this is a membership
+    -- query against existing engine data rather than a second Groebner basis
+    -- computation of leadTerm(rels) done here at the interpreter level.
+    G = map(S, rawMsolveGBRestrictToQuotient(G, raw R0));
     map(target m, , phi substitute(G, vars R0)))
 
 msolveGBEngine = (m, elim, opts) -> msolveGBMatrix(m, elim, opts)
@@ -409,21 +423,25 @@ msolveGB Ideal := opts -> I0 -> (
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
 
+-- The syzygies come from msolve's module F4, which takes neither a quotient
+-- ring nor a block order -- compare msolveEngineUsable, which allows a quotient
+-- by flattening it, and msolveBlockGB, which takes the block order but only for
+-- one row.
+msolveSyzygyUsable = m -> (
+    rawMsolvePresent()
+    and instance(R := ring m, PolynomialRing)
+    and msolveCoefficientsUsable coefficientRing R
+    and isGRevLexEngineRing R)
+
 msolveSyzygy = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
 msolveSyzygy Matrix := opts -> M -> (
     if not rawMsolvePresent() then
         error "msolveSyzygy: this Macaulay2 was built without the msolve library";
-    R := ring M;
-    if not instance(R, PolynomialRing)
-    or not isField(coefficientRing R)
-    or char R == 0 or char R >= 2^31
-    or precision(coefficientRing R) =!= infinity
-    or instance(coefficientRing R, GaloisField)
-    or not isGRevLexEngineRing R
+    if not msolveSyzygyUsable M
     then error "msolveSyzygy: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31";
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
-    map(R, rawMsolveSyzygy(raw matrix M, threads, verbosity)))
+    map(ring M, rawMsolveSyzygy(raw matrix M, threads, verbosity)))
 
 ---------------------------------------------------------------------------
 -- Free resolutions, one free module and one differential at a time
@@ -690,10 +708,10 @@ msolveBlockGB = (m, opts) -> (
     if G === null then return null;
     -- back in the block ring, whose order is the one msolve computed in
     G = substitute(G, vars A);
-    if rels =!= null then (
-        -- keep only what in(J) does not already account for, as in msolveGBMatrix
-        LT := leadTerm G % gb leadTerm rels;
-        G = G_(positions(first entries LT, f -> f != 0)));
+    -- keep only what in(J) does not already account for, exactly as in
+    -- msolveGBMatrix: a membership query against R0's existing MonomialTable,
+    -- rather than a second Groebner basis computation of leadTerm(rels) here
+    if rels =!= null then G = map(A, rawMsolveGBRestrictToQuotient(raw G, raw R0));
     msolveDeclareGB map(target m, , psi substitute(G, vars R0)))
 
 msolveGBHook = options gb >> opts -> m -> (
@@ -706,6 +724,49 @@ msolveGBHook = options gb >> opts -> m -> (
     -- as a block length rather than as an order; the two are mutually exclusive
     msolveForceGB(m, 0, msolveDefaultOptions)
     ?? msolveBlockGB(m, msolveDefaultOptions))
+
+-- The syzygies of m, computed by msolve's module F4.
+--
+-- msolve computes the whole syzygy module in one go and has no stop conditions
+-- at all (see the option table above), so the two options that merely shape the
+-- answer are honored by trimming what it returns, while the ones that would
+-- have to stop the computation early -- a degree, a basis element or a pair
+-- count -- send the request back to Macaulay2 rather than being ignored.
+--
+-- Only homogeneous input is taken: rawMsolveSyzygy reads the syzygies off a
+-- graded resolution of one step, which msolve will not start otherwise.  That
+-- is also why what comes back is only a generating set and not the basis
+-- Macaulay2 would return, in a different order than it would return it -- see
+-- the note in rawMsolveSyzygy -- so, as in the Default hook of syz, the
+-- generators are minimalized, and then sorted the way syz sorts a basis it
+-- reads off a Groebner basis, ascending by degree and then by lead monomial.
+-- Minimalizing on its own does not do that: it inherits the order of what it
+-- was handed, and what msolve hands over is sorted neither way.
+--
+-- Returns null when msolve does not apply, so the remaining hooks can be tried;
+-- takes its arguments the way runHooks hands them over, as one pair.
+msolveSyzygyHook = (opts, m) -> (
+    if opts.DegreeLimit =!= {} or opts.HardDegreeLimit =!= null
+    or opts.BasisElementLimit =!= infinity or opts.PairLimit =!= infinity
+    or opts.StopBeforeComputation
+    or m == 0 or not isHomogeneous m or not msolveSyzygyUsable m then return null;
+    S := msolveSyzygy m;
+    -- SyzygyRows asks for the coefficients on the first few generators only,
+    -- which is the image of the syzygy module under the projection onto them;
+    -- msolve's columns generate the whole module, so their first rows generate
+    -- that, and minimalizing below brings them down to a basis of it
+    if opts.SyzygyRows =!= infinity
+    then S = S^(toList(0 .. min(opts.SyzygyRows, numrows S) - 1));
+    S = if numrows S > 0 then mingens image S else S_(toList(0 .. -1));
+    S = sort(S, DegreeOrder => Ascending);
+    -- SyzygyLimit asks Macaulay2 to stop once it has that many syzygies, which
+    -- leaves it holding the ones of lowest degree.  msolve cannot stop, so that
+    -- many of the lowest degree ones stand in for them: a minimal generating
+    -- set of the whole module cut down, rather than the partial computation
+    -- Macaulay2 would have interrupted
+    if opts.SyzygyLimit =!= infinity
+    then S = S_(toList(0 .. min(opts.SyzygyLimit, numcols S) - 1));
+    S)
 
 -- rawMsolveMinimalBetti only takes a length limit, not a degree limit, and
 -- always resolves in the ring's own heft grading (see the option table above),
@@ -725,7 +786,7 @@ msolveMinimalBettiHook = options minimalBetti >> opts -> M -> (
 msolveSetup = arg -> (
     install := if instance(arg, VisibleList) then toList arg else {arg};
     if #install == 0 then install = {
-        gb, groebnerBasis, mingens, trim,
+        gb, groebnerBasis, -* syz, *- mingens, trim,
         eliminate, kernel, saturate,
         ContainmentHooks, minimalBetti};
     printerr("installing msolve hooks for ", install);
@@ -741,6 +802,9 @@ msolveSetup = arg -> (
     if member(groebnerBasis, install) then
     groebnerBasis Matrix := opts -> m -> (
         generators msolveGBHook(opts, m) ?? (M2DefaultGBasis opts)(m));
+
+    if member(syz, install) then
+    addHook((syz, Matrix), Strategy => Msolve, msolveSyzygyHook);
 
     if member(eliminate, install) then
     eliminate(List, Ideal) := Ideal => (v, I) -> (
@@ -785,7 +849,10 @@ msolveSetup = arg -> (
 
             -- Find classes in M / m*M
             f := M.generators;
-            B := f % msolveGBHook(m ** f);
+            -- msolve may decline the generators of m ** f even when it
+            -- accepts f itself, in which case the hook defers to Macaulay2
+            if (G := msolveGBHook(m ** f)) === null then return null;
+            B := f % G;
 
             -- Select a kk-basis of the classes
             kk := coefficientRing R;
@@ -819,7 +886,6 @@ msolveSetup = arg -> (
     if member(quotientRemainder, install) then
     if member(remainder, install) then
     if member(res, install) then
-    if member(syz, install) then
     ///;
     )
 

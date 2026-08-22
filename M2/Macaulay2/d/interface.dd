@@ -2266,6 +2266,23 @@ export rawMsolveSaturate(e:Expr):Expr := (
   );
 setupfun("rawMsolveSaturate",rawMsolveSaturate);
 
+export rawMsolveGBRestrictToQuotient(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 2 then (
+  when s.0 is G:RawMatrixCell do
+  when s.1 is R0:RawRingCell do
+    toExpr(Ccode(RawMatrixOrNull,
+      "rawMsolveGBRestrictToQuotient(",
+        G.p, ",", R0.p,
+      ")"
+    ))
+  else WrongArg(2, "a raw ring")
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(2)
+  ) else WrongNumArgs(2)
+  );
+setupfun("rawMsolveGBRestrictToQuotient",rawMsolveGBRestrictToQuotient);
+
 export rawMatrixWriteMsolveFile(e:Expr):Expr := (
   when e is s:Sequence do (
   if length(s) == 2 then (

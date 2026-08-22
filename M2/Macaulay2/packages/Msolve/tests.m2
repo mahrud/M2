@@ -398,6 +398,69 @@ TEST ///
       == numerator hilbertSeries(B/ideal ref, Reduce => true))
 ///
 
+TEST ///
+  -- the syz hook, and the two options it honors by trimming msolve's answer
+  debug needsPackage "Msolve"
+  kk = ZZ/1073741827
+  R = kk[a..h]
+  A = matrix {{a, b, c}, {b, c, d}}
+  B = genericMatrix(R, a, 2, 3) | matrix {{a^2}, {b^2}}
+  -- inhomogeneous, and so not msolve's: it reads the syzygies off a graded
+  -- resolution, which it will not start without a grading
+  C = matrix {{a, b+1, c^2}, {b, c, d+a}}
+  -- a quotient ring and a block order, neither of which msolve's module F4
+  -- takes; note the quotient rebinds a..h, hence the use R
+  Q = R/ideal(a^2 - b^2)
+  AQ = sub(A, Q)
+  P = kk[x,y,z,u,v, MonomialOrder => {GRevLex => 2, GRevLex => 3}]
+  AP = matrix {{x, y, z}, {y, z, u}}
+  use R
+
+  -- Macaulay2's own answers, taken before the hooks are installed
+  refA = syz A
+  refB = syz B
+  refC = syz C
+  refQ = syz AQ
+  refP = syz AP
+  refnone = syz matrix {{a}, {b}}
+  refempty = syz map(R^2, R^0, 0)
+  -- rows 1 comes out on the nose; rows 2 only up to a different basis of the
+  -- same module, minimal generators being unique only up to that
+  refrows0 = syz(B, SyzygyRows => 0)
+  refrows1 = syz(B, SyzygyRows => 1)
+  refrows2 = syz(B, SyzygyRows => 2)
+  -- stopping conditions msolve has no way to impose, so these fall back
+  refdeg  = syz(B, DegreeLimit => 3)
+  refpair = syz(B, PairLimit => 3)
+  refstop = syz(B, StopBeforeComputation => true)
+
+  msolveSetup {syz}
+  assert(syz A == refA)
+  assert(syz B == refB)
+  assert(syz C == refC)
+  assert(syz AQ == refQ)
+  assert(syz AP == refP)
+  assert(syz matrix {{a}, {b}} == refnone)
+  assert(syz map(R^2, R^0, 0) == refempty)
+
+  assert(syz(B, SyzygyRows => 1) == refrows1)
+  S2 = syz(B, SyzygyRows => 2)
+  assert(numrows S2 == 2 and image S2 == image refrows2)
+  assert(degrees source S2 == degrees source refrows2)
+  assert(syz(B, SyzygyRows => 0) == refrows0)
+  -- more rows than there are is not an error, it just asks for all of them
+  assert(syz(B, SyzygyRows => 100) == refB)
+
+  -- msolve cannot stop early, so a limit takes that many of the lowest degree
+  -- minimal syzygies instead of the ones a stopped computation would hold
+  assert(syz(B, SyzygyLimit => 2) == refB_{0,1})
+  assert(syz(B, SyzygyLimit => 100) == refB)
+
+  assert(syz(B, DegreeLimit => 3) == refdeg)
+  assert(syz(B, PairLimit => 3) == refpair)
+  assert(syz(B, StopBeforeComputation => true) == refstop)
+///
+
 ///
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];
@@ -407,6 +470,49 @@ elapsedTime gbC = flatten entries gens (G = gb(ideal J1_*));
 gbMsolve = flatten entries msolveGB ideal J1_*;
 assert(gbC == gbMsolve)
 ///
+TEST ///
+  -- msolve's module F4 has no induced (Schreyer) order, so it must not be
+  -- used when the target free module carries one: the result generates the
+  -- right submodule but is not a Groebner basis in Macaulay2's order, and
+  -- forceGB would declare it one.  Twists of the target are fine, as long as
+  -- rawMsolveModuleGB keeps them out of the order it asks msolve for.
+  debug needsPackage "Msolve"
+  S = ZZ/32003[x,y,z]
+  opts = msolveDefaultOptions
+
+  -- constant target degrees: msolve applies, and agrees with Macaulay2
+  m = map(S^{-3,-3,-3}, S^{-5,-5,-5}, matrix{{x^2, y*z, 0_S},{z^2, x^2, y^2},{y^2, 0_S, x*z}})
+  G = msolveGBMatrix(m, 0, opts)
+  assert(G =!= null)
+  assert(image leadTerm G == image leadTerm gens gb m)
+
+  -- non-constant target degrees: msolve applies, and the twists are not
+  -- allowed to enter the order, so it still agrees with Macaulay2
+  mt = map(S^{0,-1}, S^{-2,-3,-2}, matrix{{x^2, y^3, z^2},{x, x*z, y}})
+  Gt = msolveGBMatrix(mt, 0, opts)
+  assert(Gt =!= null)
+  assert(image leadTerm Gt == image leadTerm gens gb mt)
+
+  -- Schreyer order on the target, constant degrees: declined
+  F = source schreyerOrder map(S^1, S^{-3,-3,-3}, matrix{{x^3, y^3, z^3}})
+  assert(null === msolveGBMatrix(
+	  map(F, S^{-5,-5,-5}, matrix{{x^2, y*z, 0_S},{z^2, x^2, y^2},{y^2, 0_S, x*z}}), 0, opts))
+///
+
+TEST ///
+  -- a Groebner basis over a quotient of a two block grevlex ring: the columns
+  -- already accounted for by in(J) are dropped via the quotient ring's own
+  -- monomial table, and the result must still match Macaulay2's
+  debug needsPackage "Msolve"
+  A = ZZ/32003[x,y,z,w, MonomialOrder => {GRevLex => 2, GRevLex => 2}]
+  R0 = A/ideal(x*y - z*w)
+  gens0 = {x^3 + z^3, y^2*w - x*z, w^4}
+  G = gens msolveBlockGB(matrix{gens0}, msolveDefaultOptions)
+  GS = gens gb matrix{gens0}
+  assert(image G == image GS)
+  assert(image leadTerm G == image leadTerm GS)
+///
+
 end
 
 restart

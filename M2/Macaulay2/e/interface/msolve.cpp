@@ -62,6 +62,7 @@ extern "C" {
 #include "matrices/matrix-con.hpp"
 #include "matrices/matrix-stream.hpp"
 #include "matrices/matrix.hpp"
+#include "monomials/montable.hpp"
 #include "rings/geopoly.hpp"
 #include "rings/poly.hpp"
 #include "rings/polyring.hpp"
@@ -70,6 +71,7 @@ extern "C" {
 #include "resolution/comp-res.hpp"
 #include "buffer.hpp"
 #include "text-io.hpp"
+#include "util.hpp"
 
 #include "../../d/interrupt-jump.h"
 
@@ -1486,24 +1488,28 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
 
       clampOptions(nr_threads, info_level);
 
-      // The degrees of the target are handed over so that msolve's degree by
-      // degree strategy sees the true degrees of the generators.  They are
-      // only passed when the grevlex block is unweighted: with weights they
-      // would have to be scaled to match the substitution applied to the
-      // exponents above, and a mismatch would change which pairs msolve
-      // selects first, never the basis it ends up with.  msolve normalizes
-      // the values so only their differences matter.
-      volatile bool unweighted = true;  // volatile as for mord above
-      for (int j = 0; j < nvars; j++)
-        if (wts[j] != 1) unweighted = false;
-
-      std::vector<int32_t> rowdegs;
-      if (unweighted)
-        {
-          rowdegs.reserve(nrows);
-          for (int i = nrows - 1; i >= 0; i--)
-            rowdegs.push_back(static_cast<int32_t>(F->primary_degree(i)));
-        }
+      // No row degrees are handed over, and that is a correctness matter
+      // rather than a missed optimization.  row_degs is not just a hint to
+      // msolve's degree by degree schedule: set_module_exponent_vector in
+      // neogb's res_module.c folds the component's shift into ev[DEG], the
+      // very slot cmp_blocks compares first, so the order msolve computes in
+      // weighs deg(m) + row_degs[i] before breaking ties in the ring.
+      // Macaulay2's order on a free module weighs deg(m) and then the
+      // component; the twists of the target play no part in it, and gb of a
+      // matrix into S^{0,-1} has the same lead terms as gb of the same
+      // entries into S^2.  Passing the twists therefore returns a basis that
+      // is a Groebner basis in a different -- perfectly good, but other --
+      // order, which msolveDeclareGB's forceGB would declare to be one in
+      // Macaulay2's.  Constant row degrees msolve normalizes away, so they
+      // were only ever consequential in exactly the case they got wrong.
+      //
+      // rawMsolveSyzygy and rawMsolveMinimalBetti do hand over a grading, and
+      // rightly so: there the twists are part of the answer being asked for,
+      // not of an order that has to agree with one Macaulay2 already fixed.
+      //
+      // The cost is that a twisted target now looks inhomogeneous to msolve
+      // and its schedule proceeds by monomial degree alone -- which is what
+      // Macaulay2's own engine does on this order in any case.
 
       int32_t bld = 0;
       int32_t* blen = nullptr;
@@ -1527,7 +1533,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                 in.exps.data(),
                 in.comps.data(),
                 in.cfs.data(),
-                unweighted ? rowdegs.data() : nullptr,
+                nullptr /* the row degrees; see above */,
                 static_cast<uint32_t>(charac),
                 mon_order,
                 &gbStrat,
@@ -1932,6 +1938,61 @@ Computation* rawMsolveResolution(const Matrix* M,
 }
 
 #endif  // HAVE_MSOLVE
+
+// Restricts a Groebner basis G of <m> + J*S^r, computed over the ambient ring
+// S of a quotient R0 = S/J (by rawMsolveGB/rawMsolveModuleGB on m0 | rels, as
+// msolveGBMatrix in the Msolve package does), to a Groebner basis of <m> over
+// R0 itself.  Unlike the rest of this file, this needs nothing from msolve: it
+// is plain engine bookkeeping, so it is compiled regardless of HAVE_MSOLVE.
+//
+// A column survives exactly when its lead term -- in the sense of
+// leadTerm(Matrix), i.e. the single term of the vector that is largest in the
+// free module order, at whatever row it falls in -- is not divisible by any
+// lead term of J.  Which row it falls in does not matter: J's initial ideal is
+// the same in every row of S^r, since rels is J's presentation tensored with
+// the identity.  R0 already has that initial ideal as a MonomialTable, built
+// once when R0 was constructed for its own ring arithmetic (normal_form), so
+// this is a membership query against existing data, not a second Groebner
+// basis computation of leadTerm(rels) the way the Msolve package used to do it
+// at the interpreter level.
+//
+// Note the quotient ideal's MonomialTable stores its generators at component
+// 1, not 0 -- see QRingInfo_field::QRingInfo_field in e/rings/qring.cpp.
+const Matrix* rawMsolveGBRestrictToQuotient(const Matrix* G, const Ring* R0)
+{
+  try
+    {
+      const PolyRing* P = G->get_ring()->cast_to_PolyRing();
+      if (P == nullptr)
+        throw exc::engine_error("expected a matrix over a polynomial ring");
+      const PolynomialRing* PR0 = R0->cast_to_PolynomialRing();
+      if (PR0 == nullptr)
+        throw exc::engine_error("expected a polynomial ring");
+
+      MonomialTable* ringtable = PR0->get_quotient_MonomialTable();
+      const Monoid* Mo = P->getMonoid();
+      exponents_t exp = ALLOCATE_EXPONENTS(EXPONENT_BYTE_SIZE(P->n_vars()));
+
+      const Matrix* LT = G->lead_term(-1);
+      Matrix::iterator i(LT);
+      std::vector<int> keep;
+      for (int c = 0; c < G->n_cols(); c++)
+        {
+          i.set(c);
+          if (not i.valid()) continue;  // a zero column is already accounted for
+          Nterm* t = i.entry();
+          Mo->to_expvector(t->monom, exp);
+          if (ringtable == nullptr or ringtable->find_divisor(exp, 1) < 0)
+            keep.push_back(c);
+        }
+      return G->sub_matrix(stdvector_to_M2_arrayint(keep));
+    }
+  catch (const exc::engine_error& e)
+    {
+      ERROR(e.what());
+      return nullptr;
+    }
+}
 
 // Local Variables:
 // indent-tabs-mode: nil

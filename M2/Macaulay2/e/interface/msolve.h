@@ -6,10 +6,12 @@
 #  if defined(__cplusplus)
 class Computation;
 class Matrix;
+class Ring;
 class RingElement;
 #  else
 typedef struct Computation Computation;
 typedef struct Matrix Matrix;
+typedef struct Ring Ring;
 typedef struct RingElement RingElement;
 #  endif
 
@@ -221,6 +223,19 @@ Computation /* or null */ *rawMsolveResolution(const Matrix *M,
                                                int length_limit,
                                                int nr_threads,
                                                int info_level);
+
+/* Restricts a Groebner basis G of <m> + J*S^r, computed over the ambient ring
+   S of a quotient R0 = S/J by rawMsolveGB/rawMsolveModuleGB on m0 | rels (m0
+   lifted to S, rels the presentation of R0 tensored with an identity), to a
+   Groebner basis of <m> over R0 itself.  This needs nothing from msolve --
+   it is plain engine bookkeeping, using the MonomialTable R0 already built
+   for its own ring arithmetic when it was constructed -- so it works whether
+   or not this Macaulay2 was built against libmsolve.
+
+   Returns null, having set an error message, if G is not over a polynomial
+   ring or R0 is not one. */
+const Matrix* /* or null */ rawMsolveGBRestrictToQuotient(const Matrix *G,
+                                                           const Ring *R0);
 
 /* True if this M2 was built against libmsolve, so the routines above work. */
 M2_bool rawMsolvePresent();

@@ -1408,6 +1408,14 @@ const Matrix* rawMsolveGB(const Matrix* M,
 
       clampOptions(nr_threads, info_level);
 
+      // volatile as for gbStrat in rawMsolveModuleGB: both are set before the
+      // setjmp below and read after it, and the compiler cannot see that the
+      // jump path returns without reading either.  Copies rather than the
+      // parameters themselves, since the degree limit's early return above
+      // gives those a use before the setjmp that -Wclobbered will not accept.
+      const volatile int nthreads = nr_threads;
+      const volatile int verbosity = info_level;
+
       int32_t bld = 0;
       int32_t* blen = nullptr;
       int32_t* bexp = nullptr;
@@ -1435,13 +1443,13 @@ const Matrix* rawMsolveGB(const Matrix* M,
                 static_cast<int32_t>(nvars),
                 static_cast<int32_t>(in.lens.size()),
                 ht_size,
-                static_cast<int32_t>(nr_threads),
+                static_cast<int32_t>(nthreads),
                 max_nr_pairs,
                 reset_ht,
                 la_option,
                 reduce_gb,
                 pbm_file,
-                static_cast<int32_t>(info_level));
+                static_cast<int32_t>(verbosity));
       interrupt_jmp.is_set = false;
 
       if (blen == nullptr or bexp == nullptr or bcf == nullptr)
@@ -1541,6 +1549,10 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       // ring's and a ceiling stated in the ring's degrees would cut in the
       // wrong place.  Refusing is the only honest answer -- a silently
       // rescaled ceiling would return the wrong basis without saying so.
+      bool unweighted = true;
+      for (int j = 0; j < nvars; j++)
+        if (wts[j] != 1) unweighted = false;
+
       res_stop_t stop = res_stop_none();
       const int32_t deglimit = static_cast<int32_t>(degree_limit);
       if (degree_limit > 0)
@@ -1695,7 +1707,7 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
         }
       if (syz_limit > 0) stop.syz_limit = static_cast<int32_t>(syz_limit);
       if (syz_rows > 0) stop.syz_rows = static_cast<int32_t>(syz_rows);
-      const bool limited =
+      const volatile bool limited =
           degree_limit > 0 or syz_limit > 0 or syz_rows > 0;
 
       int32_t nlevels = 0;

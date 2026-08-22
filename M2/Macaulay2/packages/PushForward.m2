@@ -369,19 +369,11 @@ end
 -------------------
 
 restart
-<<<<<<< HEAD
-uninstallPackage"PushForward"
-restart
-installPackage"PushForward"
-x = symbol x;y= symbol y;
-check PushForward
-=======
 uninstallPackage "PushForward"
 
 restart
 check needsPackage "PushForward"
 installPackage "PushForward"
->>>>>>> cea21c8a15 (wip)
 viewHelp PushForward
 
 

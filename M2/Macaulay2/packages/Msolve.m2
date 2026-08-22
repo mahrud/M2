@@ -150,6 +150,11 @@ msolveHeftLimit = (R, d) -> (
     if h === {} then 0 else if first h > 0 then first h
     else error "msolve: expected a degree limit of positive heft")
 
+-- A stopping condition is spelled as msolve's 0-means-no-limit int32.
+msolveEngineNat = n -> if n === infinity or n === null then 0 else (
+    if instance(n, ZZ) and n >= 0 then n
+    else error "msolve: expected a nonnegative integer or infinity")
+
 -- A Groebner basis of the columns of m, a matrix of any number of rows,
 -- eliminating the first elim variables. msolve knows nothing of quotient
 -- rings, so over R = S/J the generators are lifted to S^r (r = numrows m) and
@@ -317,10 +322,24 @@ msolveDefaultOptions = new OptionTable from {
 --                              |         | syz_of = RES_SYZ_OF_INPUT and
 --                              |         | max_level = 2; this is msolveSyzygy,
 --                              |         | just not surfaced as a gb option
---   SyzygyLimit                | Engine  | no stop conditions
---   SyzygyRows                 | Partial | free as an output filter, since the rows
---                              |         | are the adjoined components; pruning the
---                              |         | *work* needs those components ordered last
+--   SyzygyLimit                | Done    | res_stop_t's syz_limit, spelled as
+--                              |         | msolveSyzygy's SyzygyLimit. A genuine
+--                              |         | early stop rather than a cap on the
+--                              |         | output: under position over term the
+--                              |         | lead term alone says whether a basis
+--                              |         | element is a syzygy, so the round loop
+--                              |         | counts them for one comparison apiece.
+--                              |         | A round is always finished, so the
+--                              |         | extras of the last one are discarded
+--   SyzygyRows                 | Done    | res_stop_t's syz_rows, spelled as
+--                              |         | msolveSyzygy's SyzygyRows. Free as an
+--                              |         | output filter, since the rows are the
+--                              |         | adjoined components; pruning the *work*
+--                              |         | still needs those components ordered
+--                              |         | last, which is the elimination block
+--                              |         | question the module orders do not yet
+--                              |         | answer. The result is a submatrix of the
+--                              |         | syzygy matrix, so M times it is not zero
 --
 -- res:
 --
@@ -352,7 +371,10 @@ msolveDefaultOptions = new OptionTable from {
 --                              |         | Minimal vs Nonminimal: with minimal = 0
 --                              |         | it reports frame ranks and performs no
 --                              |         | field arithmetic past the Groebner basis
---   SyzygyLimit                | Engine  | no stop conditions
+--   SyzygyLimit                | Partial | res_stop_t's syz_limit counts syzygies
+--                              |         | of the *input*, which is level 2 only;
+--                              |         | res's SyzygyLimit is a bound at every
+--                              |         | level and the frame has no counter yet
 --
 -- msolve also offers three knobs M2's option tables have no name for:
 -- ht_size (initial hash table size, a log2), verify (an exact d o d = 0 check
@@ -479,15 +501,35 @@ msolveSyzygyUsable = m -> (
     and msolveCoefficientsUsable coefficientRing R
     and isGRevLexEngineRing R)
 
-msolveSyzygy = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
+-- SyzygyRows keeps only the first rows of the syzygy matrix, so the result is
+-- a submatrix and M * msolveSyzygy(M, SyzygyRows => n) is not zero; the
+-- dropped rows come back as zero rows, so the target is unchanged. This is
+-- what a caller wants when the columns of M are generators followed by
+-- relations and only the coefficients on the generators matter, which is the
+-- SyzygyRows => numgens source generators M of gb.m2.
+msolveSyzygyOptions = new OptionTable from {
+    Threads => null, Verbosity => null,
+    DegreeLimit => {}, SyzygyLimit => infinity, SyzygyRows => infinity }
+
+msolveSyzygy = method(TypicalValue => Matrix, Options => msolveSyzygyOptions)
 msolveSyzygy Matrix := opts -> M -> (
     if not rawMsolvePresent() then
         error "msolveSyzygy: this Macaulay2 was built without the msolve library";
     if not msolveSyzygyUsable M
     then error "msolveSyzygy: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31";
+    R := ring M;
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
-    map(ring M, rawMsolveSyzygy(raw matrix M, threads, verbosity)))
+    -- msolve spells "all of them" as 0 and Macaulay2 spells it as infinity,
+    -- so an explicit 0 -- gb.m2's gbOnly asks for exactly that -- has to be
+    -- answered here: no rows kept means every column is dropped
+    if opts.SyzygyRows === 0 then return map(source M, R^0, 0);
+    -- a bound at or past the number of columns of M is no bound at all
+    syzrows := msolveEngineNat opts.SyzygyRows;
+    if syzrows >= numcols M then syzrows = 0;
+    map(R, rawMsolveSyzygy(raw matrix M,
+            msolveEngineNat opts.SyzygyLimit, syzrows,
+            msolveHeftLimit(R, opts.DegreeLimit), threads, verbosity)))
 
 ---------------------------------------------------------------------------
 -- Free resolutions, one free module and one differential at a time
@@ -1173,6 +1215,9 @@ Node
        (msolveSyzygy, Matrix)
        [msolveSyzygy, Threads]
        [msolveSyzygy, Verbosity]
+       [msolveSyzygy, DegreeLimit]
+       [msolveSyzygy, SyzygyLimit]
+       [msolveSyzygy, SyzygyRows]
     Headline
         compute syzygies of the columns of a matrix using msolve
     Usage
@@ -1182,6 +1227,9 @@ Node
             over a GRevLex polynomial ring over a prime field of characteristic less than $2^{31}$
         Threads => ZZ -- number of processor threads to use
         Verbosity => ZZ -- level of verbosity between 0, 1, and 2
+        DegreeLimit => List -- stop after this degree; the default @TT "{}"@ computes everything
+        SyzygyLimit => ZZ -- stop after this many syzygies; the default @TO infinity@ computes all of them
+        SyzygyRows => ZZ -- keep only this many rows; the default @TO infinity@ keeps all of them
     Outputs
         S:Matrix
             whose columns generate the syzygy module of the columns of M
@@ -1196,6 +1244,25 @@ Node
             S = msolveSyzygy M
             M * S == 0
             image S == image syz M
+        Text
+            @TO SyzygyLimit@ is a genuine early stop rather than a cap on the
+            output: under the position over term order a basis element is a
+            syzygy exactly when its lead term is, so msolve counts them as it
+            goes and quits.  A degree is always finished, so more relations than
+            asked for can turn up at once, and the extras are discarded.
+        Example
+            N = matrix {{x,y,z}}
+            numcols msolveSyzygy(N, SyzygyLimit => 2)
+            numcols msolveSyzygy N
+        Text
+            @TO SyzygyRows@ keeps only the first rows of the syzygy matrix and
+            drops the columns that become zero.  The result is a submatrix of
+            the syzygy matrix, so it is @EM "not"@ annihilated by M; it is what a
+            caller wants when the columns of M are generators followed by
+            relations and only the coefficients on the generators matter.
+        Example
+            T = msolveSyzygy(N, SyzygyRows => 1)
+            N * T == 0
 Node
     Key
         msolveResolution

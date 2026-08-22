@@ -519,6 +519,42 @@ TEST ///
   assert(msolveGB(gens J, DegreeLimit => {3,0}) == msolveGB(gens J, DegreeLimit => {1,2}))
 ///
 
+TEST ///
+  -- The two stopping conditions msolve honours for syzygies: SyzygyLimit and
+  -- SyzygyRows.  Neither is resumable, so each is checked against a complete
+  -- computation rather than against a continuation of itself.
+  needsPackage "Msolve"
+  S = ZZ/32003[x,y,z]
+
+  -- SyzygyLimit stops early and reports what it asked for, or everything
+  N = matrix {{x,y,z}}
+  full = msolveSyzygy N
+  assert(numcols full == 3)
+  assert(numcols msolveSyzygy(N, SyzygyLimit => 1) == 1)
+  assert(numcols msolveSyzygy(N, SyzygyLimit => 2) == 2)
+  assert(msolveSyzygy(N, SyzygyLimit => 5) == full)
+  assert(N * msolveSyzygy(N, SyzygyLimit => 2) == 0)
+
+  -- SyzygyRows projects onto the first rows and drops the columns that go to
+  -- zero, so the result is a submatrix and is no longer annihilated by N
+  P = msolveSyzygy(N, SyzygyRows => 1)
+  assert(numcols P == 2)
+  assert(target P === source N)
+  assert(all(1 .. numrows P - 1, i -> P^{i} == 0))
+  assert(N * P != 0)
+  assert(msolveSyzygy(N, SyzygyRows => 3) == full)
+  assert(numcols msolveSyzygy(N, SyzygyRows => 0) == 0)
+
+  -- the two compose: a row bound applied to a limited count
+  Q = msolveSyzygy(N, SyzygyLimit => 2, SyzygyRows => 2)
+  assert(numcols Q <= 2)
+
+  -- and a degree ceiling reaches the Groebner basis the syzygies are read off
+  I = ideal(x^2+y*z, y^2+x*z, z^2+x*y)
+  assert(numcols msolveSyzygy(gens I, DegreeLimit => {2})
+      <= numcols msolveSyzygy gens I)
+///
+
 ///
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];

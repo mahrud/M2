@@ -2165,20 +2165,27 @@ setupfun("rawMsolveGB",rawMsolveGB);
 
 export rawMsolveSyzygy(e:Expr):Expr := (
   when e is s:Sequence do (
-  if length(s) == 3 then (
+  if length(s) == 6 then (
   when s.0 is M:RawMatrixCell do
-  when s.1 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(2) else
-  when s.2 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(3) else
+  when s.1 is syzlimit:ZZcell do if !isInt(syzlimit) then WrongArgSmallInteger(2) else
+  when s.2 is syzrows:ZZcell do if !isInt(syzrows) then WrongArgSmallInteger(3) else
+  when s.3 is deglimit:ZZcell do if !isInt(deglimit) then WrongArgSmallInteger(4) else
+  when s.4 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(5) else
+  when s.5 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(6) else
     toExpr(Ccode(RawMatrixOrNull,
       "rawMsolveSyzygy(",
-        M.p, ",", toInt(nthreads), ",", toInt(verbosity),
+        M.p, ",", toInt(syzlimit), ",", toInt(syzrows), ",",
+        toInt(deglimit), ",", toInt(nthreads), ",", toInt(verbosity),
       ")"
     ))
+  else WrongArgZZ(6)
+  else WrongArgZZ(5)
+  else WrongArgZZ(4)
   else WrongArgZZ(3)
   else WrongArgZZ(2)
   else WrongArgMatrix(1)
-  ) else WrongNumArgs(3)
-  ) else WrongNumArgs(3)
+  ) else WrongNumArgs(6)
+  ) else WrongNumArgs(6)
   );
 setupfun("rawMsolveSyzygy",rawMsolveSyzygy);
 

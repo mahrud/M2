@@ -114,6 +114,9 @@ const Matrix* rawMsolveModuleGB(const Matrix* /*M*/,
 }
 
 const Matrix* rawMsolveSyzygy(const Matrix* /*M*/,
+                              int /*syz_limit*/,
+                              int /*syz_rows*/,
+                              int /*degree_limit*/,
                               int /*nr_threads*/,
                               int /*info_level*/)
 {
@@ -1613,6 +1616,9 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
 }
 
 const Matrix* rawMsolveSyzygy(const Matrix* M,
+                              int syz_limit,
+                              int syz_rows,
+                              int degree_limit,
                               int nr_threads,
                               int info_level)
 {
@@ -1672,6 +1678,26 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
 
       clampOptions(nr_threads, info_level);
 
+      // The syzygy matrix has one row per column of M, and the components
+      // come back unreversed on this path -- see buildModuleResult -- so
+      // msolve's first syz_rows components are Macaulay2's first syz_rows
+      // rows, with no translation needed.  The degree limit is refused over
+      // a weighted grevlex block for the reason rawMsolveModuleGB gives.
+      res_stop_t stop = res_stop_none();
+      const int32_t deglimit = static_cast<int32_t>(degree_limit);
+      if (degree_limit > 0)
+        {
+          if (not unweighted)
+            throw exc::engine_error(
+                "msolve cannot honour a degree limit over a ring whose "
+                "grevlex block is weighted");
+          stop.max_degree = &deglimit;
+        }
+      if (syz_limit > 0) stop.syz_limit = static_cast<int32_t>(syz_limit);
+      if (syz_rows > 0) stop.syz_rows = static_cast<int32_t>(syz_rows);
+      const bool limited =
+          degree_limit > 0 or syz_limit > 0 or syz_rows > 0;
+
       int32_t nlevels = 0;
       int32_t* ranks = nullptr;
       int32_t* degs = nullptr;
@@ -1695,6 +1721,7 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
           unweighted ? rowdegs.data() : nullptr,
           static_cast<uint32_t>(charac), mon_order, &resStrat,
           nullptr /* the standard grading, as for rawMsolveModuleGB */,
+          limited ? &stop : nullptr,
           static_cast<int32_t>(nvars), static_cast<int32_t>(nrows),
           static_cast<int32_t>(in.lens.size()), 2, RES_SYZ_OF_INPUT,
           0 /* structural verification is intrinsic to the graph module */,

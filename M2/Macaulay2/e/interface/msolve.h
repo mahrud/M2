@@ -101,8 +101,27 @@ const Matrix* /* or null */ rawMsolveModuleGB(const Matrix *M,
    msolve returns a Groebner basis of the syzygy module, which need not be a
    minimal generating set.  Zero columns are not currently supported.
 
+   syz_limit, when positive, stops once that many syzygies are known and
+   returns that many columns.  It is a genuine early stop rather than a cap on
+   the output, but a whole degree is always finished, so more than syz_limit
+   relations can turn up at once and the extras are discarded.
+
+   syz_rows, when positive, returns only the first syz_rows rows of the syzygy
+   matrix, dropping the columns that become zero.  This is Macaulay2's
+   SyzygyRows: the result is a submatrix of the syzygy matrix, so M times it
+   is *not* zero, and it is what a caller wants when it has computed a basis
+   of generators together with relations and cares only about the coefficients
+   on the generators.  The result's target is still source(M), so the dropped
+   rows come back as zero rows.
+
+   degree_limit is as in rawMsolveGB, applied to the Groebner basis the
+   syzygies are read off, so it truncates the syzygy module by degree.
+
    Returns null, having set an error message, if the input is unsuitable. */
 const Matrix* /* or null */ rawMsolveSyzygy(const Matrix *M,
+                                            int syz_limit,
+                                            int syz_rows,
+                                            int degree_limit,
                                             int nr_threads,
                                             int info_level);
 

@@ -102,7 +102,7 @@ TEST ///
   -- rawMsolveGB dispatches a multi-row matrix to msolve's module F4, using
   -- Macaulay2's default module order: term over position up.
   debug Core
-  needsPackage "Msolve"
+  debug needsPackage "Msolve"
   S = ZZ/32003[x,y,z,w]
   A = matrix {{x,y,z}, {y,z,w}}
   I = minors_2 A

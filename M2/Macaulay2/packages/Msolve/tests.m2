@@ -461,6 +461,37 @@ TEST ///
   assert(syz(B, StopBeforeComputation => true) == refstop)
 ///
 
+TEST ///
+  -- complex MsolveResolution, and minimizing what comes back.  msolve's
+  -- resolution is the nonminimal one, so what has to agree with Macaulay2 is
+  -- not its ranks but the minimal Betti numbers underneath them.
+  R = ZZ/32003[x,y,z,w]
+  I = ideal(x*z-y^2, x*w-y*z, y*w-z^2)
+  C = msolveResolution I
+  D = complex C
+  assert isFree D
+  assert(concentration D === (0, length C))
+  assert all(1 .. length C, i -> D.dd_i == C.dd_i)
+  assert(HH_0 D == coker gens I)
+  assert all(1 .. length C - 1, i -> HH_i D == 0)
+  assert(betti minimize D == minimalBetti I)
+
+  -- the discriminating one: a rank two free module presented so that msolve
+  -- and Macaulay2 disagree about the *nonminimal* resolution, 2,2 against
+  -- 2,3,1.  Minimizing has to reconcile them.
+  S = ZZ/32003[x,y,z]
+  M = map(S^{0,-1}, S^{-2,-2}, {{x^2, y^2}, {z, 0}})
+  CM = msolveResolution M
+  assert(betti minimize complex CM == minimalBetti coker M)
+
+  -- a frame that runs past the number of variables, where minimizing has
+  -- something to cancel at every level
+  J = ideal(z, y^2, x^2*y, x^3)
+  CJ = msolveResolution J
+  assert(length CJ > numgens S)
+  assert(betti minimize complex CJ == minimalBetti J)
+///
+
 ///
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];

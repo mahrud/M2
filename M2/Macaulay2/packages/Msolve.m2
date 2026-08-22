@@ -10,7 +10,7 @@ newPackage(
         },
     Keywords => {"Groebner Basis Algorithms" , "Interfaces"},
     Headline => "interface to the msolve library for solving multivariate polynomial systems using Groebner Bases",
-    PackageImports => { "Elimination", "Saturation" },
+    PackageImports => { "Complexes", "Elimination", "Saturation" },
     AuxiliaryFiles => true,
     DebuggingMode => false
     )
@@ -532,6 +532,22 @@ length MsolveResolution := C -> (
 
 net MsolveResolution := C -> horizontalJoin between(" <-- ",
     apply(1 + length C, i -> net C_i))
+
+-- The whole thing at once, as an ordinary Complex.  This materializes every
+-- differential, which is precisely what the live handle exists to avoid, so it
+-- is something the caller asks for rather than something another method does
+-- behind its back -- C_i and length C stay free.
+--
+-- What it buys is everything the Complexes package knows how to do with a free
+-- resolution, and in particular `minimize`, which turns the nonminimal
+-- resolution msolve computes into the minimal one.  The result resolves
+-- coker of the input matrix, so `betti minimize complex C` is the minimal
+-- Betti table -- the same one rawMsolveMinimalBetti gets from ranks alone,
+-- without materializing anything, and far more cheaply.
+complex MsolveResolution := Complex => {Base => 0} >> opts -> C -> (
+    n := length C;
+    if n === 0 then complex(C_0, Base => opts.Base)
+    else complex(apply(toList(1 .. n), i -> C.dd_i), Base => opts.Base))
 
 importFrom_Core "numallvars"
 msolveLeadMonomials = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
@@ -1130,6 +1146,7 @@ Node
        (length, MsolveResolution)
        (ring, MsolveResolution)
        (net, MsolveResolution)
+       (complex, MsolveResolution)
     Headline
         a free resolution computed by msolve, one differential at a time
     Usage
@@ -1188,6 +1205,25 @@ Node
             S = ZZ/32003[x,y,z]
             msolveResolution ideal(z, y^2, x^2*y, x^3)
             msolveResolution(ideal(z, y^2, x^2*y, x^3), LengthLimit => 2)
+        Text
+            @TT "complex C"@ materializes every differential and hands back an
+            ordinary @TO Complex@, which is the opposite of what the live handle
+            is for and so is never done implicitly.  What it buys is
+            @TO (minimize, Complex)@: the nonminimal resolution msolve computes
+            becomes the minimal one, resolving the cokernel of the input.
+        Example
+            use R
+            D = complex C
+            betti minimize D
+            betti minimize D == minimalBetti I
+        Text
+            That is the expensive way to get a minimal Betti table, and it is
+            here to check the cheap one rather than to compete with it: rank
+            extraction reads the same numbers off the ranks of the scalar parts
+            of the differentials, never building a minimal complex at all.
+            With a @TT "LengthLimit"@ the top level is the exception -- its
+            minimal rank is only correct once the level above it has been seen,
+            so minimizing a truncated complex can overstate the last one.
 Node
     Key
     	msolveLeadMonomials

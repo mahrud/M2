@@ -267,6 +267,7 @@ static void assign(node lhs, node rhs, scope v){
      }
 
 #include <gdbm.h>
+#include <pthread.h>
 
 static char *datumtostring(datum p) {
   char *buf;
@@ -279,33 +280,53 @@ static char *datumtostring(datum p) {
 
 static GDBM_FILE db;
 static int numkeys;
+static pthread_mutex_t typecode_db_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void opendb() {
+static void locktypecodedb(void) {
+  if (pthread_mutex_lock(&typecode_db_mutex) != 0) abort();
+}
+
+static void unlocktypecodedb(void) {
+  if (pthread_mutex_unlock(&typecode_db_mutex) != 0) abort();
+}
+
+static void opendb_locked() {
   datum key;
   int maxn = 0;
+  if (db != NULL) return;
   db = gdbm_open("typecode.db",0,GDBM_WRCREAT|GDBM_SYNC,0644,NULL);
   if (db == NULL) fatal("failed to open typecode.db");
+  numkeys = 0;
   key = gdbm_firstkey(db);
   while (key.dptr != NULL) {
     datum value = gdbm_fetch(db,key);
     int n = atoi(datumtostring(value));
+    datum nextkey;
     if (maxn < n) maxn = n;
     free(value.dptr);
     numkeys++;
-    key = gdbm_nextkey(db,key);
+    nextkey = gdbm_nextkey(db,key);
+    free(key.dptr);
+    key = nextkey;
   }
   assert( numkeys == maxn );
 }
 
 void printtypecodes() {
   datum key;
-  if (db == NULL) opendb();
+  locktypecodedb();
+  opendb_locked();
   key = gdbm_firstkey(db);
   while (key.dptr != NULL) {
     datum value = gdbm_fetch(db,key);
+    datum nextkey;
     printf("#define %s_typecode %s\n",datumtostring(key),datumtostring(value));
-    key = gdbm_nextkey(db,key);
+    free(value.dptr);
+    nextkey = gdbm_nextkey(db,key);
+    free(key.dptr);
+    key = nextkey;
   }
+  unlocktypecodedb();
 }
 
 static int gettypecode(node t) {
@@ -318,12 +339,16 @@ static int gettypecode(node t) {
          //we don't have a position at this point, so there's no way to give the user a line number.
          warning("Unnamed type requiring a typecode encountered, such a type is unlikely to be useful");
          char temp_name[30];
+         locktypecodedb();
+         opendb_locked();
          snprintf(temp_name,sizeof(temp_name),"_%d_unnamed",numkeys+1);
+         unlocktypecodedb();
          t->body.type.name = newsymbol(UniqueString(temp_name),type__T,global_scope,defined_F);
      }
      assert(t->body.type.name->body.symbol.name != NULL);
      assert(tostring(t) != NULL);
-     if (db == NULL) opendb();
+     locktypecodedb();
+     opendb_locked();
      datum key;
      key.dptr = tostring(t);
      key.dsize = strlen(key.dptr);
@@ -343,6 +368,7 @@ static int gettypecode(node t) {
 	  if (0 != gdbm_store(db,key,value,GDBM_INSERT)) fatal("failed to store item in typecode.db");
 	  gdbm_sync(db);
 	  }
+     unlocktypecodedb();
      t->body.type.runtime_type_code = n;
      return n;
      }

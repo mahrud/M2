@@ -20,7 +20,7 @@ YFLAGS := -vdlt
 
 # we don't include @LIBS@ here because including -llapack would make it also
 # necessary to link with the fortran support libraries:
-LOADLIBES += -lgdbm -lm
+LOADLIBES += -lgdbm -lpthread -lm
 
 CNAMES := scc1.c readfile.c error.c dictionary.c list.c cprint.c type.c chk.c compat.c debugging.c
 HFILES := $(CNAMES:.c=.h) scc.h grammar.h keywords.h

@@ -15,6 +15,9 @@
 #include <libnormaliz/cone.h>
 
 #include <algorithm>
+#include <atomic>
+#include <exception>
+#include <mutex>
 #include <numeric>
 #include <random>
 #include <set>
@@ -38,6 +41,34 @@ struct ThreadLimitGuard {
   }
   ~ThreadLimitGuard() { if (active) libnormaliz::set_thread_limit(old); }
 };
+
+libnormaliz::ConeProperties hilbertBasisComputation(int strategy)
+{
+  libnormaliz::ConeProperties computation(
+      libnormaliz::ConeProperty::HilbertBasis);
+  switch (strategy) {
+  case 0:
+    computation.set(libnormaliz::ConeProperty::DefaultMode);
+    break;
+  case 1:
+    computation.set(libnormaliz::ConeProperty::DualMode);
+    break;
+  case 2:
+    computation.set(libnormaliz::ConeProperty::PrimalMode);
+    break;
+  case 3:
+    computation.set(libnormaliz::ConeProperty::PrimalMode);
+    computation.set(libnormaliz::ConeProperty::BottomDecomposition);
+    break;
+  case 4:
+    computation.set(libnormaliz::ConeProperty::PrimalMode);
+    computation.set(libnormaliz::ConeProperty::NoBottomDec);
+    break;
+  default:
+    throw std::invalid_argument("invalid Normaliz strategy");
+  }
+  return computation;
+}
 
 void clearNormalizInterrupt() { libnormaliz::nmz_interrupted = 0; }
 
@@ -386,6 +417,104 @@ bool smoothRefinement(std::vector<Ray>& rays, FanCones& cones,
   return true;
 }
 
+}  // namespace
+
+bool rawNormalizIsVeryAmple(const Matrix* input, int strategy,
+                            int threads, bool verbose)
+{
+  if (input == nullptr || input->get_ring() != globalZZ) {
+    ERROR("polytope must be a matrix over ZZ");
+    return false;
+  }
+  if (input->n_rows() == 0 || input->n_cols() == 0) {
+    ERROR("polytope must have at least one nonzero-dimensional point");
+    return false;
+  }
+
+  const size_t d = input->n_cols();
+  const std::vector<Ray> points = readRays(input);
+  libnormaliz::Matrix<Integer> polytope(points.size(), d);
+  for (size_t i = 0; i < points.size(); ++i)
+    for (size_t j = 0; j < d; ++j)
+      polytope[i][j] = points[i][j];
+
+  try {
+    ThreadLimitGuard guard(threads);
+    clearNormalizInterrupt();
+
+    libnormaliz::Cone<Integer> P(libnormaliz::Type::polytope, polytope);
+    P.setVerbose(verbose);
+    libnormaliz::ConeProperties properties(
+        libnormaliz::ConeProperty::LatticePoints);
+    properties.set(libnormaliz::ConeProperty::VerticesOfPolyhedron);
+    P.compute(properties);
+    const std::vector<Ray> latticePoints(P.getLatticePoints());
+    const std::vector<Ray> vertices(P.getVerticesOfPolyhedron());
+    if (vertices.empty()) return false;
+
+    std::atomic<bool> result(true);
+    std::mutex failure_mutex;
+    std::exception_ptr failure;
+    mtbb::parallel_for(
+        mtbb::blocked_range<int>{0, static_cast<int>(vertices.size())},
+        [&](const mtbb::blocked_range<int>& range) {
+          try {
+            for (int i = range.begin(); i != range.end(); ++i) {
+              if (!result.load() || system_interrupted()) return;
+              const Ray& vertex = vertices[static_cast<size_t>(i)];
+              std::vector<Ray> generators;
+              generators.reserve(latticePoints.size());
+              for (const Ray& point : latticePoints) {
+                Ray translated(d);
+                bool zero = true;
+                for (size_t j = 0; j < d; ++j) {
+                  translated[j] = point[j] - vertex[j];
+                  if (translated[j] != 0) zero = false;
+                }
+                if (!zero) generators.push_back(std::move(translated));
+              }
+              if (generators.empty()) {
+                result.store(false);
+                return;
+              }
+
+              libnormaliz::Matrix<Integer> G(generators);
+              libnormaliz::Cone<Integer> C(libnormaliz::Type::cone, G);
+              C.setVerbose(verbose);
+              libnormaliz::ConeProperties computation =
+                  hilbertBasisComputation(strategy);
+              computation.set(libnormaliz::ConeProperty::IsIntegrallyClosed);
+              C.compute(computation);
+              if (!C.isIntegrallyClosed()) {
+                result.store(false);
+                return;
+              }
+            }
+          } catch (...) {
+            result.store(false);
+            std::lock_guard<std::mutex> lock(failure_mutex);
+            if (!failure) failure = std::current_exception();
+          }
+        });
+    if (failure) std::rethrow_exception(failure);
+    if (system_interrupted()) {
+      ERROR("rawNormalizIsVeryAmple interrupted");
+      return false;
+    }
+    return result.load();
+  }
+  catch (const libnormaliz::InterruptException&) {
+    ERROR("rawNormalizIsVeryAmple interrupted");
+    return false;
+  }
+  catch (const std::exception& e) {
+    ERROR(e.what());
+    return false;
+  }
+}
+
+namespace {
+
 const Matrix* encodeFan(const Matrix* input, const std::vector<Ray>& rays,
                         const FanCones& cones)
 {
@@ -421,7 +550,7 @@ const Matrix* encodeFan(const Matrix* input, const std::vector<Ray>& rays,
   return mat.to_matrix();
 }
 
-const Matrix* run(const Matrix* raysInput, M2_arrayint encoded, bool smooth,
+const Matrix* desingularize(const Matrix* raysInput, M2_arrayint encoded, bool smooth,
                   int strategy, int seed, int limit, int threads, bool verbose)
 {
   FanCones cones;
@@ -463,9 +592,9 @@ const Matrix* run(const Matrix* raysInput, M2_arrayint encoded, bool smooth,
 const Matrix* rawSimplicialFan(const Matrix* rays, M2_arrayint cones,
                                int strategy, int seed, int limit,
                                int threads, bool verbose)
-{ return run(rays, cones, false, strategy, seed, limit, threads, verbose); }
+{ return desingularize(rays, cones, false, strategy, seed, limit, threads, verbose); }
 
 const Matrix* rawSmoothFan(const Matrix* rays, M2_arrayint cones,
                            int strategy, int seed, int limit,
                            int threads, bool verbose)
-{ return run(rays, cones, true, strategy, seed, limit, threads, verbose); }
+{ return desingularize(rays, cones, true, strategy, seed, limit, threads, verbose); }

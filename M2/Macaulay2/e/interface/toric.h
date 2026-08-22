@@ -37,6 +37,18 @@ const Matrix *rawSmoothFan(const Matrix *rays, M2_arrayint cones,
                            int strategy, int seed, int limit,
                            int threads, bool verbose);
 
+/**
+ * Test whether a lattice polytope is very ample.
+ *
+ * The input is a ZZ matrix whose rows are points describing the polytope.
+ * Normaliz computes the lattice points and lattice vertices, then checks the
+ * translated cone at every vertex for integral closure.  The strategy,
+ * thread, and verbosity options have the same meanings as in the raw
+ * Normaliz cone interfaces.
+ */
+bool rawNormalizIsVeryAmple(const Matrix *polytope, int strategy,
+                            int threads, bool verbose);
+
 #ifdef __cplusplus
 }
 #endif

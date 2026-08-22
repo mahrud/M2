@@ -4261,6 +4261,27 @@ export rawSmoothFan(e:Expr):Expr := (
   else WrongNumArgs(7));
 setupfun("rawSmoothFan", rawSmoothFan);
 
+export rawNormalizIsVeryAmple(e:Expr):Expr := (
+  when e is P:RawMatrixCell do
+    toExpr(Ccode(bool, "rawNormalizIsVeryAmple(", P.p, ", 0, 0, false)"))
+  else when e is s:Sequence do (
+    if length(s) != 4 then WrongNumArgs(4) else
+    when s.0 is P:RawMatrixCell do
+    when s.1 is strategy:ZZcell do
+    if !isInt(strategy) then WrongArgSmallInteger(2) else
+    when s.2 is threads:ZZcell do
+    if !isInt(threads) then WrongArgSmallInteger(3) else
+    if isBoolean(s.3) then
+      toExpr(Ccode(bool, "rawNormalizIsVeryAmple(", P.p, ", ",
+                           toInt(strategy.v), ", ", toInt(threads.v), ", ",
+                           toBoolean(s.3), ")"))
+    else WrongArg(4,"a boolean")
+    else WrongArg(3,"an integer")
+    else WrongArg(2,"an integer")
+    else WrongArgMatrix(1))
+  else WrongArgMatrix());
+setupfun("rawNormalizIsVeryAmple", rawNormalizIsVeryAmple);
+
 export rawConeContains(e:Expr):Expr := (
      when e is s:Sequence do if length(s) != 2 then WrongNumArgs(2) else
      when s.0 is C:RawMatrixCell do

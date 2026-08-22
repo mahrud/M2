@@ -492,6 +492,33 @@ TEST ///
   assert(betti minimize complex CJ == minimalBetti J)
 ///
 
+TEST ///
+  -- A DegreeLimit is checked against a complete computation rather than
+  -- against a continuation of itself: msolve cannot resume one.
+  needsPackage "Msolve"
+  S = ZZ/32003[x,y,z]
+  I = ideal(x^2+y*z, y^2+x*z, z^2+x*y)
+
+  -- a ceiling keeps exactly the part of the basis it had reached, and the
+  -- example is one whose basis reaches past the ceiling, so it really cuts
+  -- the Matrix method throughout, so nothing is routed through forceGB
+  G = msolveGB gens I
+  degs = flatten degrees source G
+  assert(max degs > 2)
+  G2 = msolveGB(gens I, DegreeLimit => {2})
+  assert(numcols G2 < numcols G)
+  assert(set flatten entries G2 === set select(flatten entries G, f -> first degree f <= 2))
+  -- and a ceiling past the top of the basis is no ceiling at all
+  assert(msolveGB(gens I, DegreeLimit => {max degs}) == G)
+
+  -- a multidegree is collapsed against the heft vector, so two of the same
+  -- heft ask for the same thing
+  T = ZZ/32003[a,b,c,d, Degrees => {{1,0},{0,1},{1,0},{0,1}}]
+  J = ideal(a*b, c*d, a*d - c*b)
+  assert(msolveGB(gens J, DegreeLimit => {2,1}) == msolveGB(gens J, DegreeLimit => {1,2}))
+  assert(msolveGB(gens J, DegreeLimit => {3,0}) == msolveGB(gens J, DegreeLimit => {1,2}))
+///
+
 ///
 kk = QQ
 R1 = kk[a..f, MonomialSize=>8];

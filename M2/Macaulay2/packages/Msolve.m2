@@ -47,6 +47,7 @@ importFrom_Core {
     "rawResolutionGetFree",
     "rawResolutionGetMatrix",
     "fullgens",
+    "degreeToHeft",
     --
     "ContainmentHooks",
     }
@@ -139,6 +140,16 @@ unpackMsolveBetti = w -> (
 
 ---------------------------------------------------------------------------
 
+-- A DegreeLimit is a degree of the ring and so may be a multidegree, while
+-- msolve schedules its rounds by the single integer heft . deg. Collapsing
+-- the one to the other is exactly what Macaulay2 does to its own DegreeLimit
+-- before the engine ever sees it, so degreeToHeft is borrowed rather than
+-- reimplemented. {} is gb's spelling of "no limit" and 0 is msolve's.
+msolveHeftLimit = (R, d) -> (
+    h := degreeToHeft(first flattenRing R, d);
+    if h === {} then 0 else if first h > 0 then first h
+    else error "msolve: expected a degree limit of positive heft")
+
 -- A Groebner basis of the columns of m, a matrix of any number of rows,
 -- eliminating the first elim variables. msolve knows nothing of quotient
 -- rings, so over R = S/J the generators are lifted to S^r (r = numrows m) and
@@ -161,12 +172,15 @@ msolveGBMatrix = (m, elim, opts) -> (
     if numrows m > 1 and schreyerOrder target m != 0 then return null;
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
+    -- callers that have no DegreeLimit in their option table ask for the whole
+    -- basis, which is what every one of them did before the option existed
+    deglimit := if opts.?DegreeLimit then msolveHeftLimit(ring m, opts.DegreeLimit) else 0;
     (R0, phi) := flattenRing ring m;
     S := ambient R0;
-    if S === R0 then return map(target m, , rawMsolveGB(raw sub(matrix m, S), elim, threads, verbosity));
+    if S === R0 then return map(target m, , rawMsolveGB(raw sub(matrix m, S), elim, deglimit, threads, verbosity));
     m0 := lift(matrix m, S);
     rels := presentation R0 ** id_(target m0);
-    G := rawMsolveGB(raw(m0 | rels), elim, threads, verbosity);
+    G := rawMsolveGB(raw(m0 | rels), elim, deglimit, threads, verbosity);
     -- keep only the columns not already accounted for by in(J*S^r); a column
     -- is accounted for exactly when its lead term is already in R0's own
     -- initial ideal.  R0 already has that as a MonomialTable, built when it
@@ -226,9 +240,18 @@ msolveDefaultOptions = new OptionTable from {
 -- rawMsolveSyzygy, rawMsolveMinimalBetti, rawMsolvePoincare and
 -- rawMsolveResolution. Between them they accept max_level, syz_of, minimal,
 -- verify, ht_size, nr_threads, max_nr_pairs, la_option, reduce_gb and
--- info_level -- and nothing else. In particular msolve's F4 loop has no stop
--- conditions at all: it runs a degree at a time to completion, so every "stop
--- after N of something" option below is engine work rather than plumbing.
+-- info_level, plus the res_stop_t of the entry points that take one -- and
+-- nothing else. res_stop_t holds the three stops msolve has: a degree
+-- ceiling, a syzygy count and a row bound. Every other "stop after N of
+-- something" below is still engine work rather than plumbing.
+--
+-- None of the three makes a computation resumable, and that is not an
+-- oversight to be plumbed around: finalize_f4 frees the pair set and the
+-- hash table, and reduce_final_basis rebuilds and renumbers the basis, so
+-- the reduced basis msolve returns and the basis a continuation would need
+-- are different objects. A truncated answer is therefore never cached as a
+-- complete one -- see msolveGBHook, which still refuses DegreeLimit for
+-- exactly that reason.
 --
 --   Done      forwarded already; see the option it is spelled as
 --   Yes       already reachable; forwarding it is interface work here
@@ -251,10 +274,14 @@ msolveDefaultOptions = new OptionTable from {
 --                              |         | GB and discards exactly the elements a
 --                              |         | change matrix would keep
 --   CodimensionLimit           | Engine  | no stop conditions
---   DegreeLimit                | Engine  | cheapest of the stops to add: the F4
---                              |         | round loop is already degree by degree
---                              |         | (symbol.c selects the minimal degree),
---                              |         | so this is a ceiling on that loop
+--   DegreeLimit                | Done    | res_stop_t's max_degree, a ceiling on
+--                              |         | the F4 round loop, which was already
+--                              |         | degree by degree (symbol.c selects the
+--                              |         | minimal degree). It is a multidegree,
+--                              |         | coarsened to its heft because that is
+--                              |         | what the schedule counts up; spelled as
+--                              |         | msolveGB's DegreeLimit. Not resumable,
+--                              |         | so not offered to the gb hook
 --   GBDegrees                  | Partial | isGRevLexEngineRing passes a weight
 --                              |         | vector, applied as the substitution
 --                              |         | x_i -> x_i^(w_i). The Betti and
@@ -297,8 +324,14 @@ msolveDefaultOptions = new OptionTable from {
 --
 -- res:
 --
---   DegreeLimit                | Engine  | as above; res_diff_compute is already
---                              |         | driven one (level, degree) at a time
+--   DegreeLimit                | Yes     | res_stop_t's max_degree already reaches
+--                              |         | the Groebner basis the frame is built
+--                              |         | on, and res_diff_compute is already
+--                              |         | driven one (level, degree) at a time;
+--                              |         | what is missing is a res_stop_t on
+--                              |         | export_module_betti and res_comp_new,
+--                              |         | plus deciding what a truncated Betti
+--                              |         | table means for the invariants
 --   HardDegreeLimit            | Engine  | as above
 --   LengthLimit                | Done    | max_level, taken by every entry point
 --                              |         | that builds a frame; plumbed as
@@ -407,7 +440,17 @@ readMsolveList = mOutStr -> (
 -- Core msolve algorithm calls
 ---------------------------------------------------------------------------
 
-msolveGB = method(TypicalValue => Matrix, Options => msolveDefaultOptions)
+-- DegreeLimit is not resumable: msolve keeps no state between calls, and its
+-- reduced basis is a different object from the one a continuation would need
+-- (reduce_final_basis renumbers the whole basis and free_meta_data drops the
+-- pair set). Asking again for a larger limit recomputes from the input, and a
+-- truncated basis is never cached as though it were complete -- which is why
+-- msolveGBHook below still refuses the option, and why a limited msolveGB
+-- Ideal returns the matrix rather than forcing a GroebnerBasis object.
+msolveGBOptions = new OptionTable from {
+    Threads => null, Verbosity => null, DegreeLimit => {} }
+
+msolveGB = method(TypicalValue => Matrix, Options => msolveGBOptions)
 msolveGB Matrix := opts -> M -> (
     if (G := msolveGBEngine(M, 0, opts)) =!= null then return G;
     error "msolveGB: expected a matrix over a GRevLex polynomial ring over ZZ/p, with 0 < p < 2^31")
@@ -417,8 +460,11 @@ msolveGB Module := opts -> M -> (
     else msolveGB(generators M, opts))
 msolveGB Ideal := opts -> I0 -> (
     if (G := msolveGBEngine(generators I0, 0, opts)) =!= null
-    then return gens forceGB G;
+    then return if opts.DegreeLimit === {} then gens forceGB G else G;
     --
+    if opts.DegreeLimit =!= {} then error(
+        "msolveGB: a degree limit needs the msolve library; ",
+        "the msolve executable computes a complete basis and nothing less");
     (S, K, I) := toMsolveRing I0;
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
@@ -1060,6 +1106,7 @@ Node
        (msolveGB, Ideal)
        [msolveGB, Threads]
        [msolveGB, Verbosity]
+       [msolveGB, DegreeLimit]
     Headline
 	compute generators of a Groebner basis in GRevLex order
     Usage
@@ -1070,6 +1117,7 @@ Node
 	    @TO2 {"finite fields", TT "ZZ/p"}@ in characteristic less than $2^{31}$
 	Threads => ZZ -- number of processor threads to use
 	Verbosity => ZZ -- level of verbosity between 0, 1, and 2
+	DegreeLimit => List -- stop after this degree; the default @TT "{}"@ computes the whole basis
     Outputs
         GB:Matrix
 	    whose columns form a Groebner basis for the input ideal I, in the GRevLex order
@@ -1100,7 +1148,25 @@ Node
 	    (ideal gB)== ideal(groebnerBasis I)
 	    lT=monomialIdeal leadTerm gB
 	    degree lT
-	    dim lT  
+	    dim lT
+	Text
+	    A @TO DegreeLimit@ stops msolve's degree by degree schedule once every
+	    S-pair of that degree has been handled.  The degree may be a
+	    multidegree, in which case it is collapsed to a single integer against
+	    the ring's heft vector, exactly as @TO gb@ does before Macaulay2's own
+	    engine sees one; everything of no greater heft is computed as well.
+	Example
+	    R = ZZ/32003[x,y,z]
+	    I = ideal(x^2+y*z, y^2+x*z, z^2+x*y)
+	    numcols msolveGB(I, DegreeLimit => {2})
+	    numcols msolveGB I
+	Text
+	    What comes back is a Groebner basis of nothing in particular: it
+	    generates the ideal only in degrees up to the limit.  Nor can it be
+	    continued -- msolve keeps no state between calls, so asking again for a
+	    larger limit recomputes from the input.  For that reason a limited
+	    request returns the matrix rather than a @TO GroebnerBasis@, and
+	    @TO msolveSetup@ does not route @TO gb@'s own @TO DegreeLimit@ here.
 Node
     Key
         msolveSyzygy

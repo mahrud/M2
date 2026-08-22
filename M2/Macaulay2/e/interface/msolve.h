@@ -43,9 +43,24 @@ extern "C" {
    module, since msolve does not combine elimination blocks with module
    orders.  nr_threads and info_level match its `-t` and `-v` options.
 
+   degree_limit, when positive, stops the computation once every S-pair of
+   that degree or less has been handled, and 0 or less asks for the whole
+   basis.  It is a single integer on msolve's own scale, which is the degree
+   the grevlex block measures -- the caller collapses a multidegree to it, as
+   Macaulay2 does with degreeToHeft before its own engine sees a DegreeLimit.
+   What comes back is then a Groebner basis of nothing in particular: it
+   generates the submodule only in degrees up to the limit, so it must not be
+   handed to forceGB or cached as complete.  There is no way to resume it;
+   asking again for a larger limit recomputes from the input.
+
+   A degree limit cannot be combined with an elimination block: msolve's ideal
+   entry point has no ceiling, and the module entry point that does have one
+   has no elimination block.
+
    Returns null, having set an error message, if the input is unsuitable. */
 const Matrix* /* or null */ rawMsolveGB(const Matrix *M,
                                         int elim_block_len,
+                                        int degree_limit,
                                         int nr_threads,
                                         int info_level);
 
@@ -69,9 +84,15 @@ const Matrix* /* or null */ rawMsolveGB(const Matrix *M,
    substitution described in msolve.cpp, and getting that wrong would only
    change the order pairs are selected in, never the answer.
 
+   degree_limit is as in rawMsolveGB, and carries the same warning: a
+   truncated basis is not a basis.  Row degrees are handed to msolve
+   normalized so that the lightest row sits in degree zero, and the limit is
+   normalized with them, so it is on the caller's own scale throughout.
+
    Returns null, having set an error message, if the input is unsuitable. */
 const Matrix* /* or null */ rawMsolveModuleGB(const Matrix *M,
                                               int module_order,
+                                              int degree_limit,
                                               int nr_threads,
                                               int info_level);
 

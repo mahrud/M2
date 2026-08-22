@@ -95,6 +95,7 @@ M2_bool rawMsolvePresent()
 
 const Matrix* rawMsolveGB(const Matrix* /*M*/,
                           int /*elim_block_len*/,
+                          int /*degree_limit*/,
                           int /*nr_threads*/,
                           int /*info_level*/)
 {
@@ -104,6 +105,7 @@ const Matrix* rawMsolveGB(const Matrix* /*M*/,
 
 const Matrix* rawMsolveModuleGB(const Matrix* /*M*/,
                                 int /*module_order*/,
+                                int /*degree_limit*/,
                                 int /*nr_threads*/,
                                 int /*info_level*/)
 {
@@ -1339,6 +1341,7 @@ M2_arrayint MsolveResComputation::get_betti(int type) const
 
 const Matrix* rawMsolveGB(const Matrix* M,
                           int elim_block_len,
+                          int degree_limit,
                           int nr_threads,
                           int info_level)
 {
@@ -1360,7 +1363,23 @@ const Matrix* rawMsolveGB(const Matrix* M,
                 "orders");
           return nullptr;
         }
-      return rawMsolveModuleGB(M, 1, nr_threads, info_level);
+      return rawMsolveModuleGB(M, 1, degree_limit, nr_threads, info_level);
+    }
+
+  // A degree ceiling lives on msolve's module entry point and not on its
+  // ideal one, and a rank one module basis is the ideal basis element for
+  // element -- msolve's own selftest asserts as much -- so a limited request
+  // for an ideal goes the module way round.  The module orders coincide
+  // there too: with one component there is nothing for them to order.
+  if (degree_limit > 0)
+    {
+      if (elim_block_len != 0)
+        {
+          ERROR("msolve does not combine elimination blocks with a degree "
+                "limit");
+          return nullptr;
+        }
+      return rawMsolveModuleGB(M, 1, degree_limit, nr_threads, info_level);
     }
 
   try
@@ -1443,6 +1462,7 @@ const Matrix* rawMsolveGB(const Matrix* M,
 
 const Matrix* rawMsolveModuleGB(const Matrix* M,
                                 int module_order,
+                                int degree_limit,
                                 int nr_threads,
                                 int info_level)
 {
@@ -1511,6 +1531,24 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       // and its schedule proceeds by monomial degree alone -- which is what
       // Macaulay2's own engine does on this order in any case.
 
+      // A degree ceiling is only meaningful once msolve and Macaulay2 agree
+      // on what a degree is, which is the same condition the row degrees are
+      // passed under: with a weighted grevlex block the exponents are
+      // substituted before msolve sees them, so its degrees are not the
+      // ring's and a ceiling stated in the ring's degrees would cut in the
+      // wrong place.  Refusing is the only honest answer -- a silently
+      // rescaled ceiling would return the wrong basis without saying so.
+      res_stop_t stop = res_stop_none();
+      const int32_t deglimit = static_cast<int32_t>(degree_limit);
+      if (degree_limit > 0)
+        {
+          if (not unweighted)
+            throw exc::engine_error(
+                "msolve cannot honour a degree limit over a ring whose "
+                "grevlex block is weighted");
+          stop.max_degree = &deglimit;
+        }
+
       int32_t bld = 0;
       int32_t* blen = nullptr;
       int32_t* bexp = nullptr;
@@ -1541,6 +1579,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                          * the order, and the exponent substitution already
                          * carries a weighted one over -- see collectGrading
                          * for what a graded answer needs beyond that */,
+                degree_limit > 0 ? &stop : nullptr,
                 static_cast<int32_t>(nvars),
                 static_cast<int32_t>(nrows),
                 static_cast<int32_t>(in.lens.size()),

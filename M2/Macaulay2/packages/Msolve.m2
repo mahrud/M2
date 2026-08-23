@@ -156,12 +156,14 @@ msolveEngineNat = n -> if n === infinity or n === null then 0 else (
     else error "msolve: expected a nonnegative integer or infinity")
 
 -- A Groebner basis of the columns of m, a matrix of any number of rows,
--- eliminating the first elim variables. msolve knows nothing of quotient
--- rings, so over R = S/J the generators are lifted to S^r (r = numrows m) and
--- the presentation of R is appended to them once per row, via a tensor with
--- id_(target m0): a Groebner basis of the submodule <m> + J*S^r in S^r
--- restricts to one of <m> in R^r once the elements whose lead term already
--- lies in in(J*S^r) are dropped. Compare with fast-kernel.m2.
+-- eliminating the first elim variables. Over R = S/J the generators of J go to
+-- msolve as ordinary input placed at component 0, the component its module
+-- hash table reserves for the ring: one stored copy of J acts in every
+-- component, so nothing is lifted here and nothing is tensored with
+-- id_(target m0) once per row. What comes back is already a basis of <m> in
+-- R^r, the elements whose lead term lies in in(J) having been dropped inside
+-- the engine by the same redundancy marking that drops every other divisible
+-- lead term. Compare msolveSaturateEngine, which still lifts.
 msolveGBMatrix = (m, elim, opts) -> (
     if not msolveEngineUsable m then return null;
     -- msolve's module F4 offers position over term and term over position on
@@ -181,34 +183,43 @@ msolveGBMatrix = (m, elim, opts) -> (
     -- basis, which is what every one of them did before the option existed
     deglimit := if opts.?DegreeLimit then msolveHeftLimit(ring m, opts.DegreeLimit) else 0;
     (R0, phi) := flattenRing ring m;
-    S := ambient R0;
-    if S === R0 then return map(target m, , rawMsolveGB(raw sub(matrix m, S), elim, deglimit, threads, verbosity));
-    m0 := lift(matrix m, S);
-    rels := presentation R0 ** id_(target m0);
-    G := rawMsolveGB(raw(m0 | rels), elim, deglimit, threads, verbosity);
-    -- keep only the columns not already accounted for by in(J*S^r); a column
-    -- is accounted for exactly when its lead term is already in R0's own
-    -- initial ideal.  R0 already has that as a MonomialTable, built when it
-    -- was constructed for its own ring arithmetic, so this is a membership
-    -- query against existing engine data rather than a second Groebner basis
-    -- computation of leadTerm(rels) done here at the interpreter level.
-    G = map(S, rawMsolveGBRestrictToQuotient(G, raw R0));
-    map(target m, , phi substitute(G, vars R0)))
+    G := rawMsolveGB(raw sub(matrix m, R0), elim, deglimit, threads, verbosity);
+    -- a flat ring needs neither of the two maps back, and asking for them
+    -- would cost a copy of the basis apiece
+    if R0 === ring m then return map(target m, , G);
+    map(target m, , phi map(R0, G)))
 
 msolveGBEngine = (m, elim, opts) -> msolveGBMatrix(m, elim, opts)
 
 -- F4SAT additionally needs the characteristic to be larger than 2^16, see
 -- https://github.com/algebraic-solving/msolve/issues/165
+--
+-- Unlike msolveGBMatrix this still lifts a quotient rather than handing J to
+-- the engine: F4SAT is the ideal engine, whose hash table has no component
+-- slot and so no component 0 for a ring element to live in, and it wants
+-- exactly the polynomials to saturate by as its trailing generators. Lifting
+-- is correct because the preimage in S of saturate(I*R0, f) is (I + J) : f^oo,
+-- so J goes in with the generators and the columns whose lead term already
+-- lies in in(J) come back out again afterwards.
 msolveSaturateEngine = (m, f, opts) -> (
     if not msolveEngineUsable m or char ring m < 2^16 then return null;
     (R0, phi) := flattenRing ring m;
     S := ambient R0;
-    -- saturating in a quotient would need the presentation appended here too,
-    -- but msolve's F4SAT expects exactly the polynomials to saturate by as its
-    -- trailing generators, so quotients are left to the executable for now
-    if S =!= R0 then return null;
-    map(S, rawMsolveSaturate(raw sub(matrix m, S), raw sub(matrix {{f}}, S),
-            opts.Threads ?? allowableThreads, opts.Verbosity ?? gbTrace)))
+    threads := opts.Threads ?? allowableThreads;
+    verbosity := opts.Verbosity ?? gbTrace;
+    if S === R0 then return map(S, rawMsolveSaturate(
+            raw sub(matrix m, S), raw sub(matrix {{f}}, S), threads, verbosity));
+    m0 := lift(sub(matrix m, R0), S);
+    f0 := lift(sub(matrix {{f}}, R0), S);
+    G := rawMsolveSaturate(raw(m0 | presentation R0), raw f0, threads, verbosity);
+    -- keep only the columns not already accounted for by in(J); a column is
+    -- accounted for exactly when its lead term is already in R0's own initial
+    -- ideal.  R0 already has that as a MonomialTable, built when it was
+    -- constructed for its own ring arithmetic, so this is a membership query
+    -- against existing engine data rather than a second Groebner basis
+    -- computation of leadTerm(presentation R0) done at the interpreter level.
+    map(target m, , phi substitute(
+            map(S, rawMsolveGBRestrictToQuotient(G, raw R0)), vars R0)))
 
 -- used in msolveEliminate
 importFrom_Core { "monoidIndices" }
@@ -491,15 +502,18 @@ msolveGB Ideal := opts -> I0 -> (
     mOut := msolve(S, K, I_*, "-g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
 
--- The syzygies come from msolve's module F4, which takes neither a quotient
--- ring nor a block order -- compare msolveEngineUsable, which allows a quotient
--- by flattening it, and msolveBlockGB, which takes the block order but only for
--- one row.
+-- The syzygies come from msolve's module F4, which takes a quotient ring but
+-- not a block order -- compare msolveBlockGB, which takes the block order but
+-- only for one row.  Unlike msolveEngineUsable this does not flatten, nothing
+-- below mapping the result back, so a tower is left to Macaulay2; the ambient
+-- of a tower is a polynomial ring over a polynomial ring and so is refused by
+-- msolveCoefficientsUsable anyway, as is ZZ/p, whose ambient is ZZ.
 msolveSyzygyUsable = m -> (
     rawMsolvePresent()
-    and instance(R := ring m, PolynomialRing)
-    and msolveCoefficientsUsable coefficientRing R
-    and isGRevLexEngineRing R)
+    and (instance(R := ring m, PolynomialRing) or instance(R, QuotientRing))
+    and instance(A := ambient R, PolynomialRing)
+    and msolveCoefficientsUsable coefficientRing A
+    and isGRevLexEngineRing A)
 
 -- SyzygyRows keeps only the first rows of the syzygy matrix, so the result is
 -- a submatrix and M * msolveSyzygy(M, SyzygyRows => n) is not zero; the
@@ -734,7 +748,10 @@ msolveGRevLexRing = R -> (
 -- the ring m comes from -- whether it is the block ordered ring produced by
 -- eliminationRing or by graphIdeal -- carries an order msolve cannot represent,
 -- but msolve does not need it, since it takes the elimination as a block length.
--- A quotient contributes its relations to the generators, as in msolveGBMatrix.
+-- A quotient contributes its relations to the generators here rather than
+-- going to the engine as msolveGBMatrix does, since res.h refuses to combine
+-- an elimination block with the module order that component 0 lives in; the
+-- relations map to zero on the way back, so nothing filters them out.
 -- Returns null when msolve does not apply.
 msolveElimGB = (m, e) -> (
     if not rawMsolvePresent() then return null;
@@ -803,8 +820,10 @@ msolveBlockGB = (m, opts) -> (
     or not msolveCoefficientsUsable coefficientRing A then return null;
     if (a := grevlexBlockLength A) === null then return null;
     -- the relations of a quotient are appended to the generators, and the whole
-    -- thing moved to the plain grevlex ring on the same variables, exactly as in
-    -- msolveGBMatrix; msolveEngineUsable is checked there, of that ring
+    -- thing moved to the plain grevlex ring on the same variables; that ring is
+    -- not a quotient, so msolveGBMatrix below hands the engine no component 0
+    -- and this path keeps the lift, res.h refusing to combine a block length
+    -- with the module order.  msolveEngineUsable is checked there, of that ring
     rels := if A === R0 then null else presentation R0;
     m0 := lift(phi matrix m, A);
     if rels =!= null then m0 = m0 | rels;
@@ -813,8 +832,9 @@ msolveBlockGB = (m, opts) -> (
     -- back in the block ring, whose order is the one msolve computed in
     G = substitute(G, vars A);
     -- keep only what in(J) does not already account for, exactly as in
-    -- msolveGBMatrix: a membership query against R0's existing MonomialTable,
-    -- rather than a second Groebner basis computation of leadTerm(rels) here
+    -- msolveSaturateEngine: a membership query against R0's existing
+    -- MonomialTable, rather than a second Groebner basis computation of
+    -- leadTerm(rels) here
     if rels =!= null then G = map(A, rawMsolveGBRestrictToQuotient(raw G, raw R0));
     msolveDeclareGB map(target m, , psi substitute(G, vars R0)))
 

@@ -237,7 +237,7 @@ struct MsolveInput
 // appends the columns of M, so that several matrices can be concatenated into
 // one input, as msolve's saturation expects
 void collectInput(const Matrix* M,
-                  const PolyRing* P,
+                  const PolyRingFlat* P,
                   const std::vector<int>& wts,
                   MsolveInput& in)
 {
@@ -295,7 +295,7 @@ void collectInput(const Matrix* M,
 // argued above.  With an elimination block msolve orders by the block order
 // instead, which is a different order on the same monomials, so the terms have
 // to be put back in the ring's order before they are handed over.
-void sortTermsDescending(const PolyRing* P,
+void sortTermsDescending(const PolyRingFlat* P,
                          int nterms,
                          int nvars,
                          const std::vector<int32_t>& exps,
@@ -319,7 +319,7 @@ void sortTermsDescending(const PolyRing* P,
   });
 }
 
-const Matrix* buildResult(const PolyRing* P,
+const Matrix* buildResult(const PolyRingFlat* P,
                           const std::vector<int>& wts,
                           bool needsSorting,
                           int32_t bld,
@@ -379,7 +379,7 @@ const Matrix* buildResult(const PolyRing* P,
 // => Up considers a larger row index larger, so components are numbered in
 // reverse at this boundary and mapped back in buildModuleResult.
 void collectModuleInput(const Matrix* M,
-                        const PolyRing* P,
+                        const PolyRingFlat* P,
                         const std::vector<int>& wts,
                         MsolveInput& in)
 {
@@ -439,7 +439,46 @@ void collectModuleInput(const Matrix* M,
 // already sorted that way under both of the module orders offered here --
 // position over term groups by component and sorts within, and term over
 // position sorts globally, of which each component is a subsequence.
-const Matrix* buildModuleResult(const FreeModule* F,
+// The free module over S with the degrees of one over S/J.  MatrixStream
+// builds its terms with PolyRing::new_term and has no quotient of its own to
+// reduce them into, so over a quotient the basis is assembled here, in the
+// ambient ring where its terms already sit -- they came back reduced modulo J,
+// which is what a Groebner basis over S/J means -- and promoted afterwards.
+const FreeModule* ambientFreeModule(const FreeModule* F)
+{
+  const PolynomialRing* P = F->get_ring()->cast_to_PolynomialRing();
+  if (P == nullptr or not P->is_quotient_ring()) return F;
+
+  FreeModule* G = P->getAmbientRing()->make_FreeModule();
+  for (int i = 0; i < F->rank(); i++) G->append(F->degree(i));
+  return G;
+}
+
+// ... and back, one entry at a time, exactly as rawPromote does it.  A
+// quotient promotes from its ambient by normalizing, so this is also where a
+// term that was not already reduced would be reduced; none should be.
+const Matrix* promoteToQuotient(const FreeModule* F, const Matrix* G)
+{
+  if (G->rows() == F) return G;
+
+  const Ring* R = G->get_ring();
+  const Ring* Q = F->get_ring();
+  MatrixConstructor mat(F, G->n_cols());
+  Matrix::iterator i(G);
+  for (int c = 0; c < G->n_cols(); c++)
+    for (i.set(c); i.valid(); i.next())
+      {
+        ring_elem a;
+        if (not Q->promote(R, i.entry(), a))
+          throw exc::engine_error(
+              "could not promote msolve's basis into the quotient ring");
+        mat.set_entry(i.row(), c, a);
+      }
+  mat.compute_column_degrees();
+  return mat.to_matrix();
+}
+
+const Matrix* buildModuleResult(const FreeModule* Fq,
                                 const std::vector<int>& wts,
                                 int32_t bld,
                                 const int32_t* blen,
@@ -448,7 +487,8 @@ const Matrix* buildModuleResult(const FreeModule* F,
                                 const int32_t* bcf,
                                 const bool reverseComponents)
 {
-  const PolyRing* P = F->get_ring()->cast_to_PolyRing();
+  const FreeModule* F = ambientFreeModule(Fq);
+  const PolyRingFlat* P = F->get_ring()->cast_to_PolyRingFlat();
   const int nvars = P->n_vars();
   MatrixStream S(F);
   int64_t ce = 0, cc = 0;
@@ -481,14 +521,19 @@ const Matrix* buildModuleResult(const FreeModule* F,
       S.appendPolynomialDone();
     }
   S.idealDone();
-  return S.value();
+  return promoteToQuotient(Fq, S.value());
 }
 
 // Everything msolve requires of the ring.  The module entry point shares all
 // of it; only the one-row requirement is specific to the ideal ones.
-const PolyRing* checkedRing(const Matrix* M)
+//
+// allowQuotient says whether this caller can compute over S/J.  It is not the
+// default: the entry points that hand msolve a res_quot_t say so explicitly,
+// and every other one keeps refusing, because computing in S and calling the
+// answer a computation in S/J is the one failure mode here that is silent.
+const PolyRingFlat* checkedRing(const Matrix* M, bool allowQuotient = false)
 {
-  const PolyRing* P = M->get_ring()->cast_to_PolyRing();
+  const PolyRingFlat* P = M->get_ring()->cast_to_PolyRingFlat();
   if (P == nullptr)
     throw exc::engine_error("expected a matrix over a polynomial ring");
 
@@ -501,31 +546,82 @@ const PolyRing* checkedRing(const Matrix* M)
 
   // A tower such as (ZZ/p[x,y])[u,v] is a PolyRing whose coefficients are
   // themselves polynomials, which msolve has no way to represent.
-  if (P->getCoefficientRing()->cast_to_PolyRing() != nullptr)
+  if (P->getCoefficientRing()->cast_to_PolyRingFlat() != nullptr)
     throw exc::engine_error(
         "expected a polynomial ring whose coefficient ring is a field");
 
-  // A quotient S/J is a PolyRing here too, but msolve knows nothing of J and
-  // would silently compute in S.  Callers wanting a Groebner basis over a
-  // quotient must lift to S and append the presentation of the quotient to the
-  // generators; msolveGBMatrix in the Msolve package does exactly that.
-  if (P->is_quotient_ring())
+  // A quotient S/J is a PolyRing here too.  msolve's module F4 computes over
+  // one directly, given J's generators as a res_quot_t; the entry points that
+  // do not pass one would silently compute in S instead, so they refuse.
+  if (P->is_quotient_ring() and not allowQuotient)
     throw exc::engine_error(
         "expected a polynomial ring, not a quotient of one");
 
   return P;
 }
 
-const PolyRing* checkedPolyRing(const Matrix* M)
+// The generators of J, in the layout res_quot_t wants: no component array,
+// since J is an ideal of the ring and msolve reads component 0 as the ring.
+// Macaulay2 keeps a reduced Groebner basis of J as the quotient elements of
+// the ring, so this is a Groebner basis already -- msolve does not need it to
+// be one, but it does mean nothing is recomputed.
+//
+// The weight substitution x_i -> x_i^(w_i) applies here exactly as it does to
+// the caller's own generators: the quotient's elements live in the same
+// monoid, and J and the submodule have to be scaled by the same map or the
+// two do not describe the same computation.
+void collectQuotient(const PolyRingFlat* P,
+                     const std::vector<int>& wts,
+                     MsolveInput& in)
 {
-  const PolyRing* P = checkedRing(M);
+  const Ring* KK = P->getCoefficientRing();
+  const int nvars = P->n_vars();
+  const int32_t charac = static_cast<int32_t>(P->characteristic());
+
+  exponents_t exp = ALLOCATE_EXPONENTS(EXPONENT_BYTE_SIZE(nvars));
+
+  for (int i = 0; i < P->n_quotients(); i++)
+    {
+      int32_t nterms = 0;
+      for (Nterm& s : P->quotient_element(i))
+        {
+          P->getMonoid()->to_expvector(s.monom, exp);
+          long deg = 0;
+          for (int j = 0; j < nvars; j++)
+            {
+              long e = static_cast<long>(exp[j]) * wts[j];
+              deg += e;
+              if (e > msolveMaxExponent or deg > msolveMaxExponent)
+                throw exc::engine_error(
+                    "exponent too large for msolve, which stores exponents "
+                    "and degrees in 16 bits");
+              in.exps.push_back(static_cast<int32_t>(e));
+            }
+          std::pair<bool, long> b = KK->coerceToLongInteger(s.coeff);
+          if (not b.first)
+            throw exc::engine_error("expected word size coefficients");
+          int32_t a = static_cast<int32_t>(b.second);
+          if (a < 0) a += charac;
+          in.cfs.push_back(a);
+          nterms++;
+        }
+      if (nterms > 0) in.lens.push_back(nterms);
+    }
+  if (in.lens.empty())
+    throw exc::engine_error(
+        "expected the quotient ideal to have a nonzero generator");
+}
+
+const PolyRingFlat* checkedPolyRing(const Matrix* M)
+{
+  const PolyRingFlat* P = checkedRing(M);
   if (M->n_rows() != 1)
     throw exc::engine_error("expected a matrix with one row");
   return P;
 }
 
 // the grevlex weights of M's ring, refusing any order msolve cannot represent
-std::vector<int> checkedWeights(const PolyRing* P)
+std::vector<int> checkedWeights(const PolyRingFlat* P)
 {
   std::vector<int> wts =
       grevlexWeights(P->getMonoid()->getMonomialOrdering(), P->n_vars());
@@ -626,7 +722,7 @@ struct MsolveGrading
   res_grading_t g = {};
 };
 
-void collectGrading(const PolyRing* P, MsolveGrading& out)
+void collectGrading(const PolyRingFlat* P, MsolveGrading& out)
 {
   const Monoid* M = P->getMonoid();
   const Monoid* D = P->degree_monoid();
@@ -678,7 +774,7 @@ void collectGrading(const PolyRing* P, MsolveGrading& out)
 // differences matter, msolve normalizing them internally and reporting the
 // shift it applied.
 std::vector<int32_t> collectRowDegrees(const FreeModule* F,
-                                       const PolyRing* P,
+                                       const PolyRingFlat* P,
                                        int r)
 {
   const Monoid* D = P->degree_monoid();
@@ -724,7 +820,7 @@ void checkHeftDegrees(const MsolveInput& in,
 // of ints, so that entry point still takes the substitution route and still
 // insists the ring's grading be the one the substitution induces.  The one
 // shot Betti and Hilbert entry points do not; see collectGrading.
-void checkSinglyGradedByWeights(const PolyRing* P, const std::vector<int>& wts)
+void checkSinglyGradedByWeights(const PolyRingFlat* P, const std::vector<int>& wts)
 {
   const Monoid* D = P->degree_monoid();
   if (D->n_vars() != 1)
@@ -785,7 +881,7 @@ bool computeBetti(const Matrix* M,
                   int info_level,
                   MsolveBetti& out)
 {
-  const PolyRing* P = checkedRing(M);
+  const PolyRingFlat* P = checkedRing(M);
   // The order is nothing to these entry points -- msolve computes in the one
   // its grading induces, and what comes back is an invariant of the module --
   // but a ring msolve cannot be handed exponents from at all, a Laurent or
@@ -1089,7 +1185,7 @@ M2_arrayint packMsolveBetti(const MsolveBetti& b)
 // r is 1.  The two carry the same information there, but only the multigraded
 // one carries it as degrees of the ring rather than as heft degrees, and for
 // r > 1 the heft degree does not determine the monomial at all.
-const RingElement* packPoincare(const PolyRing* P, const MsolveBetti& b)
+const RingElement* packPoincare(const PolyRingFlat* P, const MsolveBetti& b)
 {
   const PolynomialRing* D = P->get_degree_ring();
   if (D == nullptr)
@@ -1157,7 +1253,7 @@ class MsolveResComputation : public ResolutionComputation
 {
  public:
   MsolveResComputation(const Matrix* M,
-                       const PolyRing* P,
+                       const PolyRingFlat* P,
                        std::vector<int> wts,
                        res_comp_t* handle)
       : mInput(M),
@@ -1203,7 +1299,7 @@ class MsolveResComputation : public ResolutionComputation
 
  private:
   const Matrix* mInput;
-  const PolyRing* mRing;
+  const PolyRingFlat* mRing;
   std::vector<int> mWeights;
   res_comp_t* mHandle;
   int mNLevels;
@@ -1374,12 +1470,25 @@ const Matrix* rawMsolveGB(const Matrix* M,
   // element -- msolve's own selftest asserts as much -- so a limited request
   // for an ideal goes the module way round.  The module orders coincide
   // there too: with one component there is nothing for them to order.
-  if (degree_limit > 0)
+  //
+  // A quotient goes the same way and for the same reason: res_quot_t lives on
+  // the module entry point, because component 0 is what makes one copy of J
+  // do the work of one copy per row, and an ideal is the rank one case of
+  // that with nothing for the components to do.
+  const Ring* MR = M == nullptr ? nullptr : M->get_ring();
+  const PolyRingFlat* MP =
+      MR == nullptr ? nullptr : MR->cast_to_PolyRingFlat();
+  const bool overQuotient = MP != nullptr and MP->is_quotient_ring();
+
+  if (degree_limit > 0 or overQuotient)
     {
       if (elim_block_len != 0)
         {
-          ERROR("msolve does not combine elimination blocks with a degree "
-                "limit");
+          ERROR(overQuotient
+                    ? "msolve does not combine elimination blocks with a "
+                      "quotient ring"
+                    : "msolve does not combine elimination blocks with a "
+                      "degree limit");
           return nullptr;
         }
       return rawMsolveModuleGB(M, 1, degree_limit, nr_threads, info_level);
@@ -1387,7 +1496,7 @@ const Matrix* rawMsolveGB(const Matrix* M,
 
   try
     {
-      const PolyRing* P = checkedPolyRing(M);
+      const PolyRingFlat* P = checkedPolyRing(M);
       const std::vector<int> wts = checkedWeights(P);
       long charac = static_cast<long>(P->characteristic());
       const int nvars = P->n_vars();
@@ -1479,7 +1588,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
 {
   try
     {
-      const PolyRing* P = checkedRing(M);
+      const PolyRingFlat* P = checkedRing(M, true /* quotients are fine here */);
       const std::vector<int> wts = checkedWeights(P);
       long charac = static_cast<long>(P->characteristic());
       const int nvars = P->n_vars();
@@ -1515,6 +1624,20 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
         {
           MatrixConstructor mat(F, 0);
           return mat.to_matrix();
+        }
+
+      // Over a quotient msolve is handed one copy of J, not one per row: a
+      // component 0 element is a divisor in every component, so the r copies
+      // the lift-and-append route needs never exist.  See res_quot_t.
+      MsolveInput qin;
+      res_quot_t quot = {};
+      if (P->is_quotient_ring())
+        {
+          collectQuotient(P, wts, qin);
+          quot.lens = qin.lens.data();
+          quot.exps = qin.exps.data();
+          quot.cfs = qin.cfs.data();
+          quot.nr_gens = static_cast<int32_t>(qin.lens.size());
         }
 
       clampOptions(nr_threads, info_level);
@@ -1595,6 +1718,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                          * carries a weighted one over -- see collectGrading
                          * for what a graded answer needs beyond that */,
                 degree_limit > 0 ? &stop : nullptr,
+                P->is_quotient_ring() ? &quot : nullptr,
                 static_cast<int32_t>(nvars),
                 static_cast<int32_t>(nrows),
                 static_cast<int32_t>(in.lens.size()),
@@ -1636,7 +1760,7 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
 {
   try
     {
-      const PolyRing* P = checkedRing(M);
+      const PolyRingFlat* P = checkedRing(M, true /* quotients are fine here */);
       const std::vector<int> wts = checkedWeights(P);
       const int nvars = P->n_vars();
       const int nrows = M->rows()->rank();
@@ -1688,6 +1812,21 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
                 static_cast<int32_t>(M->rows()->primary_degree(i)));
         }
 
+      // Over a quotient the syzygies are those of the images of the columns,
+      // which is what a caller asking for syz over S/J means.  A column that
+      // becomes zero there is dropped rather than reported: its lead term
+      // lies in in(J), which is exactly what the engine's own filter removes.
+      MsolveInput qin;
+      res_quot_t quot = {};
+      if (P->is_quotient_ring())
+        {
+          collectQuotient(P, wts, qin);
+          quot.lens = qin.lens.data();
+          quot.exps = qin.exps.data();
+          quot.cfs = qin.cfs.data();
+          quot.nr_gens = static_cast<int32_t>(qin.lens.size());
+        }
+
       clampOptions(nr_threads, info_level);
 
       // The syzygy matrix has one row per column of M, and the components
@@ -1734,6 +1873,7 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
           static_cast<uint32_t>(charac), mon_order, &resStrat,
           nullptr /* the standard grading, as for rawMsolveModuleGB */,
           limited ? &stop : nullptr,
+          P->is_quotient_ring() ? &quot : nullptr,
           static_cast<int32_t>(nvars), static_cast<int32_t>(nrows),
           static_cast<int32_t>(in.lens.size()), 2, RES_SYZ_OF_INPUT,
           0 /* structural verification is intrinsic to the graph module */,
@@ -1787,7 +1927,7 @@ const Matrix* rawMsolveSaturate(const Matrix* M,
   md_t* st = nullptr;
   try
     {
-      const PolyRing* P = checkedPolyRing(M);
+      const PolyRingFlat* P = checkedPolyRing(M);
       const std::vector<int> wts = checkedWeights(P);
       if (F->get_ring() != M->get_ring())
         throw exc::engine_error("expected both matrices over the same ring");
@@ -1923,7 +2063,7 @@ const RingElement* rawMsolvePoincare(const Matrix* M,
 {
   try
     {
-      const PolyRing* P = checkedRing(M);
+      const PolyRingFlat* P = checkedRing(M);
       MsolveBetti b;
       if (not computeBetti(M, 0 /* no length limit */, false /* betti */,
                            true /* hilbert */, nr_threads, info_level, b))
@@ -1943,7 +2083,7 @@ Computation* rawMsolveResolution(const Matrix* M,
 {
   try
     {
-      const PolyRing* P = checkedRing(M);
+      const PolyRingFlat* P = checkedRing(M);
       const std::vector<int> wts = checkedWeights(P);
       // the free modules of a resolution are graded objects, so this needs
       // what a graded answer needs of the grading, not merely what a Groebner

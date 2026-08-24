@@ -1,6 +1,7 @@
 debug Core
 
-assert(map(ZZ, rawFourierMotzkin raw matrix {{1, 0}, {1, 0}, {-2, 1}, {0, 1}}) == matrix {{-1, -2}, {0, -1}})
+Braw = map(ZZ, rawFourierMotzkin(raw matrix {{1, 0}, {1, 0}, {-2, 1}, {0, 1}}, raw map(ZZ^0, ZZ^2, 0)))
+assert(Braw^{0..Braw_(numRows Braw - 1, 0) - 1} == matrix {{-1, -2}, {0, -1}})
 
 (A, B) = (map(ZZ^2, ZZ^4, {{1, -3, 1, 0}, {0, 1, 0, 1}}), map(ZZ^2, ZZ^0, 0))
 o = transpose map(ZZ, rawFourierMotzkin(raw transpose A, raw transpose B))

@@ -395,16 +395,22 @@ degrees MultiprojectiveVariety := (cacheValue "degreesGensIdeal") (X -> sort pai
 
 shape MultiprojectiveVariety := X -> X#"dimAmbientSpaces";
 
-singularLocus MultiprojectiveVariety := (cacheValue "singularLocus") (X -> (
+-- note: singularLocus is a method with options (see quotring.m2), so the
+-- installed function has to take the option table; without the opts layer the
+-- option table itself is passed in as X and cacheValue tries to write to it.
+singularLocus MultiprojectiveVariety := opts -> (cacheValue "singularLocus") (X -> (
     if X.cache#?"top" then if X != top X then error "expected an equidimensional projective variety";
     if instance(X,EmbeddedProjectiveVariety) and X.cache#?"nonSaturatedSingularLocus" then return projectiveVariety(saturate ideal singularLocus(X,Saturate=>false),MinimalGenerators=>false,Saturate=>false);
     I := ideal X;
     projectiveVariety(I + minors(codim X,jacobian I,Strategy=>Cofactor),MinimalGenerators=>true,Saturate=>true)
 ));
 
-singularLocus (EmbeddedProjectiveVariety,Option) := (X,opt) -> (
-    if first toList opt =!= Saturate then error "Saturate is the only available option for singularLocus(EmbeddedProjectiveVariety)";
-    if (last opt) or X.cache#?"singularLocus" then return singularLocus X;        
+-- note: this used to be spelled singularLocus(X, Saturate => false), but an
+-- Option argument can no longer reach a method that has an option table of its
+-- own: the option processing consumes it and fails on the unknown key Saturate.
+nonSaturatedSingularLocus = method();
+nonSaturatedSingularLocus EmbeddedProjectiveVariety := X -> (
+    if X.cache#?"singularLocus" then return singularLocus X;
     if X.cache#?"nonSaturatedSingularLocus" then return X.cache#"nonSaturatedSingularLocus";
     if X.cache#?"top" then if X != top X then error "expected an equidimensional projective variety";
     I := ideal X;
@@ -453,7 +459,7 @@ SchubertCycle22OnLinearSectionOfG14 = X -> (
         V := coneOfLines(X,p);
         j := parametrize linearSpan V;
         h := (rationalMap(j^^ p))|(j^^ V);
-        return j h^* dual top singularLocus(projectiveVariety(dualVariety ideal image h,MinimalGenerators=>false,Saturate=>false),Saturate=>false);
+        return j h^* dual top nonSaturatedSingularLocus projectiveVariety(dualVariety ideal image h,MinimalGenerators=>false,Saturate=>false);
     );
     if dim X == 4 then ( -- Todd's result: a quintic del Pezzo fourfold contains exactly one rho-plane (Roth, "Algebraic varieties with canonical curve section", p. 95)
         planes := Fano(2,X); Y := null;
@@ -512,7 +518,7 @@ parametrize MultiprojectiveVariety := (cacheValue "rationalParametrization") (X 
     -- cubic scrolls (this makes the function "===>" work with del Pezzo fivefolds and del Pezzo sixfolds in every characteristic)
     if codim X == 2 and degree X == 3 and sectionalGenus X == 0 then (
         if dim X == 2 then (
-            dirLine := dual top singularLocus(projectiveVariety(dualVariety ideal X,MinimalGenerators=>false,Saturate=>false),Saturate=>false);
+            dirLine := dual top nonSaturatedSingularLocus projectiveVariety(dualVariety ideal X,MinimalGenerators=>false,Saturate=>false);
             rulLine := (X * tangentSpace(X,point dirLine))\dirLine;
             hX2 := inv(multirationalMap rationalMap sub(ideal rulLine,ring X),Verify=>-1);
             return sendFewPoints(projectiveVariety ideal submatrix(vars ring source hX2,{0,1}),baseLocus hX2) * hX2;
@@ -633,7 +639,7 @@ pointOnLinearSectionOfG14 = X -> (
    S := j^^ X;
    T := random({{2},{2},{2}},S) \ S;
    i := parametrize linearSpan T;
-   L := i dual top singularLocus(projectiveVariety(dualVariety ideal(i^^ T),MinimalGenerators=>false,Saturate=>false),Saturate=>false);
+   L := i dual top nonSaturatedSingularLocus projectiveVariety(dualVariety ideal(i^^ T),MinimalGenerators=>false,Saturate=>false);
    j(L * S)
 );
 
@@ -4159,7 +4165,6 @@ undocumented {
 (point,WeightedProjectiveVariety),
 (point,WeightedProjectiveVariety,VisibleList),
 (euler,MultiprojectiveVariety,Option),
-(singularLocus,EmbeddedProjectiveVariety,Option),
 (symbol *,ZZ,MultiprojectiveVariety), -- hidden to the user, since it returns non-reduced varieties
 (symbol _,MultiprojectiveVariety,MultiprojectiveVariety), -- this returns a new type which is too rudimentary yet
 (projectiveVariety,List,MultiprojectiveVariety),(projectiveVariety,ZZ,MultiprojectiveVariety),

@@ -478,6 +478,10 @@ inverse' = g -> (
     N := ZZ^r;
     h := try inverse g;
     if h =!= null then return (h, toList(r : -infinity));
+    -- d = e + 1 is the safe starting degree, and it has to be tried here: the
+    -- loop below only ever tries d - e_i, so without this h would still be
+    -- null whenever the very first step down already fails to be invertible.
+    h = try inverse truncate(d, g, MinimalGenerators => false);
     for i to r - 1 do (
 	g0 := null;
 	d' := null;

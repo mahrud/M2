@@ -16,6 +16,7 @@ TEST ///
 
 TEST ///
   -- c.f. https://github.com/algebraic-solving/msolve/issues/165
+  msolveSetup() -- Strategy => Msolve below needs the saturate hook installed
   K = ZZ/65537 -- > 2^16
   R = K[x_(0,0), x_(0,1)]
   I = ideal(2*x_(0,0)+3*x_(0,1))

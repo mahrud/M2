@@ -404,6 +404,14 @@ assert Equation(matrix(QQ, 1), matrix 1_QQ)
 assert Equation(matrix(RR, 1), matrix 1.0)
 assert Equation(matrix(R, 1), matrix 1_R)
 
+-- block matrices whose zero blocks are given as the scalar 0, whose shape has
+-- to be inferred from the neighbouring blocks
+assert Equation(matrix {{id_(ZZ^2), 0}, {0, id_(ZZ^2)}}, id_(ZZ^4))
+assert Equation(matrix {{id_(ZZ^2), map(ZZ^2, ZZ^0, 0)}, {map(ZZ^0, ZZ^2, 0), 0}}, id_(ZZ^2))
+assert Equation(matrix {{id_(ZZ^2), 0}, {0, id_(ZZ^1)}}, id_(ZZ^3))
+assert Equation(matrix {{0, id_(ZZ^2)}, {id_(ZZ^2), 0}},
+    matrix {{0, 0, 1, 0}, {0, 0, 0, 1}, {1, 0, 0, 0}, {0, 1, 0, 0}})
+
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages/Macaulay2Doc/test matrix.out"
 -- End:

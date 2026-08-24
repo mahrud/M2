@@ -188,7 +188,7 @@ resolutionObjectInEngine = (opts, M, matM) -> (
     R := ring M;
     if RO.?RawComputation then error "internal error: our logic is wrong";
 
-    lengthlimit := defaultLengthLimit'(M, opts.LengthLimit);
+    hardLengthLimit := defaultLengthLimit'(M, opts.LengthLimit);
 
     RO.RawComputation = rawResolution(
         raw matM,         -- the matrix
@@ -221,7 +221,13 @@ resolutionObjectInEngine = (opts, M, matM) -> (
         rawStartComputation RO.RawComputation;
         RO.returnCode = rawStatus1 RO.RawComputation;
         RO.DegreeLimit = degreelimit;
-        RO.LengthLimit = lengthlimit;
+        -- note: record what this computation can actually deliver rather than what
+        -- was asked for.  hardLengthLimit is baked into rawResolution above and no
+        -- stop condition can raise it, but LengthLimit => infinity is clamped to
+        -- numgens of the flattened ring on the way in, so storing the unclamped
+        -- request here made isComputable approve a later, larger limit that the
+        -- engine then rejected with "resolution: cannot increase maximum level".
+        RO.LengthLimit = if lengthlimit > hardLengthLimit then hardLengthLimit else lengthlimit;
         );
 
     RO.isComputable = (lengthlimit, degreelimit) -> ( -- this does not mutate RO.

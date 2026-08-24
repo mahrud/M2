@@ -7,11 +7,19 @@ debug Core
 ------------------------------------------------------------
 -- rawFourierMotzkin
 -- Input: rows of A are inequalities of the cone {x : A x <= 0}.
--- Output: rows are the extreme rays of that cone.
+-- Output: rows are the extreme rays, then the maximal subspace, then a final
+-- row whose first entry is the number of extreme rays.
 ------------------------------------------------------------
 A = matrix {{1,1,1}, {-1,1,0}, {-1,0,1}, {1,2,3}}
-B = map(ZZ, rawFourierMotzkin raw A)
+-- The result packs the extreme rays, then the maximal subspace, then a final
+-- row whose first entry is the number of rays; see FourierMotzkin.m2 for the
+-- same unpacking in the dual convention.
+Braw = map(ZZ, rawFourierMotzkin(raw A, raw map(ZZ^0, ZZ^3, 0)))
+m = Braw_(numRows Braw - 1, 0)
+B = Braw^{0..m-1}
 assert(set entries B === set {{-1,-1,-1}, {1,-2,1}, {1,1,-2}})
+-- The cone is pointed here, so there is no maximal subspace.
+assert(numRows Braw == m + 1)
 -- Sanity: every ray r satisfies A r <= 0.
 assert all(flatten entries (A * transpose B), x -> x <= 0)
 

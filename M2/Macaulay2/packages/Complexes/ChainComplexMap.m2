@@ -1433,7 +1433,10 @@ horseshoeResolution Complex := Sequence => opts -> ses -> (
     HS := complex hashTable for i from 1 to length FM list (
       i => map(FN_(i-1) ++ FM_(i-1), 
              FN_i ++ FM_i, 
-             matrix{{dd^FN_i, g_i},{0,dd^FM_i}})
+             -- the zero block is written out because its shape cannot always
+             -- be inferred from the neighbouring blocks, e.g. when one of the
+             -- two resolutions is zero in this homological degree.
+             matrix{{dd^FN_i, g_i},{map(FM_(i-1), FN_i, 0), dd^FM_i}})
       );
     alpha := map(HS, FN, i -> map(HS_i, FN_i, (HS_i)_[0]));
     beta := map(FM, HS, i -> map(FM_i, HS_i, (HS_i)^[1]));

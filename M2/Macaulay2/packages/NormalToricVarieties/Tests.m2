@@ -208,7 +208,11 @@ Y = makeSmooth X;
 assert isWellDefined Y
 assert isSmooth Y
 assert (set rays Y === set {{-2,-3},{1,0},{0,1},{-1,-2},{-1,-1},{0,-1}})
-assert (sort max Y === sort {{0,3},{0,4},{1,2},{1,5},{2,4},{3,5}})
+-- makeSmooth may add its new rays in any order, so the ray indices appearing
+-- in max Y are strategy dependent; compare the maximal cones as sets of rays.
+assert (sort apply(max Y, sigma -> sort (rays Y)_sigma) === sort apply(
+	{{0,3},{0,4},{1,2},{1,5},{2,4},{3,5}},
+	sigma -> sort {{-2,-3},{1,0},{0,1},{-1,-2},{-1,-1},{0,-1}}_sigma))
 ///
 
 -- test 5

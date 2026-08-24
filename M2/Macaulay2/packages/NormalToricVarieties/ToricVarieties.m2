@@ -567,7 +567,11 @@ orbits(NormalToricVariety, ZZ) := List => (X,i) -> (
     d := dim X;
     if d < i or i < 0 then error "orbits expected a nonnegative integer that is at most the dimension";
     if X.cache.?orbits or not isSimplicial X or isDegenerate X then return (orbits X)#i;
-    X.cache#(symbol orbits, i) ??= sort unique flatten for sigma in max X list subsets(sigma, #sigma - i))
+    -- i is the dimension of the orbit, i.e. the codimension of the cone in the
+    -- ambient lattice, so a face of a simplicial cone qualifies when it has
+    -- d - i rays.  Note this is not #sigma - i: the maximal cones of an
+    -- incomplete fan need not have dimension d.
+    X.cache#(symbol orbits, i) ??= sort unique flatten for sigma in max X list subsets(sigma, d - i))
 orbits NormalToricVariety := HashTable => X -> X.cache.orbits ??= (
     hTable := new MutableHashTable; -- tau => codim(tau)
     raysMatrix := transpose matrix rays X;

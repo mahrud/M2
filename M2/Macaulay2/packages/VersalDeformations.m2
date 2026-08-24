@@ -2147,7 +2147,7 @@ document {
 	 [(versalDeformation, Matrix, Matrix, Matrix), DefParam] }, 
    Headline => "deformation parameter", 
    PARA {TT "DefParam", ", ", TT "DefParamX", ", ", TT "DefParamY", " are the names of optional arguments.
-Their  value are ", ofClass Symbol, ", which specifies the name of the deformation parameter.
+Their  value are ", ofClass String, ", which specifies the name of the deformation parameter.
 	Their default values is determined by the loadtime configuration ", TO Option, " ", TT "DefaultDefParam, DelfaultDefParamX, DefaultDefParamY", ", which
 	 have default values ", TT "t, s, t", "."
 	}, 
@@ -2155,7 +2155,7 @@ Their  value are ", ofClass Symbol, ", which specifies the name of the deformati
      EXAMPLE {"S = QQ[x_0..x_4];", 
 	  "I = minors(2, matrix {{x_0, x_1, x_2, x_3}, {x_1, x_2, x_3, x_4}});", 
 	  "F0 = gens I", 
-	  "(F, R, G, C)= versalDeformation(F0, DefParam => s);", 
+	  "(F, R, G, C)= versalDeformation(F0, DefParam => \"s\");", 
 	  "sum F"
 	  }, 
   SeeAlso => {firstOrderDeformations, versalDeformation, localHilbertScheme}, 

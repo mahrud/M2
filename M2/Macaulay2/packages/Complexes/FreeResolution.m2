@@ -118,7 +118,19 @@ freeResolution Module := Complex => opts -> M -> (
     M.cache.ResolutionObject = RO;
 
     -- the following will return a complex (or null), 
-    C = runHooks((freeResolution, Module), (opts, M), Strategy => opts.Strategy);
+    -- A hook may raise instead of returning, and M2 has no finally clause, so
+    -- the mutex has to be released here as well: leaving it locked deadlocks
+    -- every later freeResolution call on M.  The call is repeated outside the
+    -- lock so that the hook's own error message is the one reported.
+    C = try runHooks((freeResolution, Module), (opts, M), Strategy => opts.Strategy)
+    else (
+	unlock M.cache#"ResolutionMutex";
+	-- an erroring hook may have removed the ResolutionObject as part of its
+	-- own cleanup, so put it back first, or the repeat would fail on that
+	-- remove rather than reach the error we want reported.
+	M.cache.ResolutionObject = RO;
+	runHooks((freeResolution, Module), (opts, M), Strategy => opts.Strategy);
+	error "freeResolution: computation failed");
     
     if C =!= null then (
         assert(instance(C, Complex));
@@ -181,7 +193,7 @@ resolutionObjectInEngine = (opts, M, matM) -> (
     RO.RawComputation = rawResolution(
         raw matM,         -- the matrix
         true,             -- whether to resolve the cokernel of the matrix
-        lengthlimit,      -- how long a resolution to make, (hard : cannot be increased by stop conditions below)
+        hardLengthLimit,  -- how long a resolution to make, (hard : cannot be increased by stop conditions below)
         false,            -- useMaxSlantedDegree
         0,                -- maxSlantedDegree (is this the same as harddegreelimit?)
         RO.Strategy,      -- algorithm number, 0, 1, 2 or 3...

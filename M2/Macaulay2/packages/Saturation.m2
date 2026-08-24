@@ -78,7 +78,14 @@ isGRevLexRing = (R) -> (
      -- vector in the ring.
      mo := (options monoid R).MonomialOrder;
      if #mo === 0 then return false;
-     mo = select(mo, x -> x#0 =!= MonomialSize and x#0 =!= Position and x#0 =!= Weights);
+     -- note: MonomialSize and Position do not affect the order on monomials, but
+     -- Weights does, so a leading weight vector must not be filtered out here:
+     -- doing so also made the check for Weights below vacuously true, and hence
+     -- claimed every ring whose order begins with a weight block -- including
+     -- Eliminate n, which expands to Weights => {1,...} -- was graded reverse
+     -- lexicographic.  saturate then took a grevlex-only shortcut and returned
+     -- an ideal that was too small (see saturate5.m2).
+     mo = select(mo, x -> x#0 =!= MonomialSize and x#0 =!= Position);
      isgrevlex := #mo > 0 and mo#0#0 === GRevLex and mo#0#1 === flatten degrees R;
      #mo === 1 and isgrevlex and all(mo, x -> x#0 =!= Weights and x#0 =!= Lex))
 

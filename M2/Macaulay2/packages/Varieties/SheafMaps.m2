@@ -414,7 +414,9 @@ tensor(SheafMap, SheafMap) := SheafMap => (f, g) -> (
     map(target f ** target g,
 	source f ** source g,
 	matrix f ** matrix g,
-	Degree => degree f + degree g))
+	-- note this is f.degree, the degree the representative lives in, and not
+	-- degree f, which is the internal degree of the matrix f.map.
+	Degree => f.degree + g.degree))
 
 --possible fix for ill-definedness of tensor product
 -*tensor(SheafMap, SheafMap) := SheafMap => (phi, psi) -> (

@@ -657,6 +657,10 @@ makeSimplicial = method (
     Options => {Strategy => 0}
     )
 makeSimplicial NormalToricVariety := opts -> X -> (
+    -- documented contract: an already simplicial X is returned as is.  The
+    -- Greedy loop below does this on its own by never entering its body, but
+    -- the engine path always rebuilds, so short circuit here for both.
+    if isSimplicial X then return X;
     if opts.Strategy =!= "Greedy" then (
         M := map(ZZ, rawSimplicialFan(raw matrix rays X,
             packEngineCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));
@@ -749,6 +753,9 @@ makeSmooth = method(
     Options => {Strategy => 0}
     )
 makeSmooth NormalToricVariety := opts -> X -> (
+    -- documented contract: an already smooth X is returned as is; cf. the
+    -- same short circuit in makeSimplicial.
+    if isSmooth X then return X;
     if opts.Strategy =!= "Greedy" then (
         M := map(ZZ, rawSmoothFan(raw matrix rays X,
             packEngineCones max X, opts.Strategy, 0, 0, 0, debugLevel > 2));

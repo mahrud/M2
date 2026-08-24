@@ -422,7 +422,11 @@ determinantalWitness = (k, M, M', P, minorsStrategy) -> (
     R := ring M;
     B := quotient P;
     kk := coefficientRing B; -- TODO: ultimate
-    for ctr to 1000 do (
+    -- The random point below lies in the ambient affine space, not on V(P), so
+    -- its rank profile carries no information about P: it names the first k
+    -- independent rows and columns and hence keeps proposing the same minor.
+    -- Treat it only as a cheap first guess, and fall through to an exact search.
+    for ctr to 10 do (
         -- this is not the same as working over the
         -- fraction field, but it is much, much faster!
         ev := map(kk, B, random(kk^1, kk^(numgens B)));
@@ -438,8 +442,24 @@ determinantalWitness = (k, M, M', P, minorsStrategy) -> (
         --
         witness := det(submatrix(M', rows, cols), Strategy => minorsStrategy);
         if witness == 0 then continue;
-        return lift(witness, R))
-    )
+        -- note: the witness has to be nonzero modulo P, not merely modulo J.
+        -- The random point above is a point of the ambient affine space rather
+        -- than of V(P), so the rank profile it yields can name a minor that
+        -- happens to lie in P; returning that one makes P + witness == P and
+        -- decomposeMinors below loops forever re-refining the same branch.
+        witness = lift(witness, R);
+        if witness % P == 0 then continue;
+        return witness);
+    -- Exact search over k-subsets.  Returning null here means every k-minor of
+    -- M lies in P, which is exactly the certification condition; anything less
+    -- than an exhaustive check can certify a branch that is not yet final.
+    for rows in subsets(numRows M, k) do
+    for cols in subsets(numColumns M, k) do (
+        witness := det(submatrix(M', rows, cols), Strategy => minorsStrategy);
+        if witness == 0 then continue;
+        witness = lift(witness, R);
+        if witness % P != 0 then return witness);
+    null)
 
 decomposeMinors = method(
     Options => {

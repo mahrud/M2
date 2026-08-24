@@ -712,6 +712,9 @@ ExtLongExactSequence(CoherentSheaf, SheafMap, SheafMap) := Matrix => opts -> (F,
     reg := 1 + max(regularity coker matrix f, regularity ker matrix g);
     -- TODO: verify the Base of the complex
     -- TODO: should lo be used somewhere?
+    -- both maps have to be truncated on the target as well as the source:
+    -- longExactSequence needs target g = source f, and subtruncate would leave
+    -- g's target untruncated while f's source is truncated.
     part_0 ExtLES(M,
 	truncate(reg,    matrix f, MinimalGenerators => false),
 	subtruncate(reg, matrix g, MinimalGenerators => false),

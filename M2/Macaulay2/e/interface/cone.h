@@ -29,9 +29,10 @@ extern "C" {
 
 /** \brief Extreme rays of a polyhedral cone given by inequalities, via libnormaliz.
  *
- * Computes the extreme rays of the cone `{ x in QQ^c : C * x <= 0 }`
- * defined by linear inequalities. The implementation negates `C` on the
- * way in because libnormaliz uses the opposite convention `A * x >= 0`.
+ * Computes the extreme rays of the cone `{ x in QQ^c : A * x <= 0 }`
+ * defined by linear inequalities, cut by the equations `B * x == 0`. The
+ * implementation negates `A` on the way in because libnormaliz uses the
+ * opposite convention `A * x >= 0`.
  *
  * \param C An $r \times c$ matrix over ZZ.
  * \return An $n \times c$ matrix over ZZ whose **rows** are the extremal rays
@@ -40,11 +41,13 @@ extern "C" {
  * \par Example (M2 top level)
  * \code{.unparsed}
  *   A = matrix {{1,1,1}, {-1,1,0}, {-1,0,1}, {1,2,3}}
- *   map(ZZ, rawFourierMotzkin raw A)
- *     -- matrix {{-1, -1, -1}, {1, -2, 1}, {1, 1, -2}}
+ *   R = map(ZZ, rawFourierMotzkin(raw A, raw map(ZZ^0, ZZ^3, 0)))
+ *     -- matrix {{-1, -1, -1}, {1, -2, 1}, {1, 1, -2}, {3, 0, 0}}
+ *   m = R_(numRows R - 1, 0)     -- 3, the number of extremal rays
+ *   R^{0..m-1}                   -- the extremal rays themselves
  * \endcode
- * The three rows of the result are the extremal rays of the cone
- * `{x in QQ^3 : A x <= 0}`.
+ * The cone `{x in QQ^3 : A x <= 0}` is pointed, so its maximal subspace is
+ * trivial and the ray block is followed directly by the count row.
  *
  * \ingroup cones
  */

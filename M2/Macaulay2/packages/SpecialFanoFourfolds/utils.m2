@@ -299,7 +299,7 @@ isSmooth EmbeddedProjectiveVariety := {} >> o -> (cacheValue "isSmooth") (Y -> (
 ));
 
 singLocus = method();
-singLocus EmbeddedProjectiveVariety := X -> singularLocus(X,Saturate=>false);
+singLocus EmbeddedProjectiveVariety := X -> nonSaturatedSingularLocus X;
 
 numberNodes = method(Options => {Verbose => false});
 numberNodes EmbeddedProjectiveVariety := o -> Y -> (

@@ -226,7 +226,7 @@ min'pq := d -> (p,q) -> min{(p,q), (q,p), (d-p,d-q), (d-q,d-p)}
 
 -- The Hodge numbers of a projective variety.
 -- hh^(p,q) X = dim HH^p(X, Omega^q)
-hh(Sequence, ProjectiveVariety) := ZZ => (pq, X) -> (
+hh(Sequence, ProjectiveVariety) := ZZ => opts -> (pq, X) -> (
     -- p and q are swapped here, because cotangentSheaf seems to be the
     -- slowest part of this algorithm, so we minimize the exterior powers
     (q,p) := (min'pq dim X) pq;

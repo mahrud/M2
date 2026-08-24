@@ -14,7 +14,7 @@ newPackage(
 	"WeilDivisors",
     },
     Keywords => { "Commutative Algebra", "Projective Algebraic Geometry" },
-    DebuggingMode => true,
+    DebuggingMode => false,
 )
 
 export{

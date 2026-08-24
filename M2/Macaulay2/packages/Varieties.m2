@@ -380,8 +380,10 @@ singularLocus ProjectiveVariety := ProjectiveVariety => opts -> X -> (
     -- For a subspace X of a weighted projective space, this describes the locus
     -- where X is not smooth as a stack over k. Thus, the coarse moduli space of X is "quasi-smooth" outside
     -- singularLocus X, and in particular it has at most cyclic quotient singularities there.
-    checkRing ring presentation(R := ring X); -- We check that the ring is singly graded.
-    Proj(R / saturate jacobianIdeal(opts, R)))
+    checkRing(S := ring presentation(R := ring X)); -- We check that the ring is singly graded.
+    -- jacobianIdeal lives in the ambient polynomial ring S and already
+    -- contains the presentation ideal of R, so the quotient is taken over S.
+    Proj(S / saturate jacobianIdeal(opts, R)))
 
 isSmooth     AffineVariety := options singularLocus >> o -> X -> 1 == ideal singularLocus(X, o)
 isSmooth ProjectiveVariety := options singularLocus >> o -> X -> (

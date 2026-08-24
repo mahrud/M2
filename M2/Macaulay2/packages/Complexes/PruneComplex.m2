@@ -382,7 +382,11 @@ isQuasiIsomorphismOf(Complex, Module) := Boolean => opts -> (C, N) -> (
     R := ring N;
     D := complex N;
     if C == 0 then return D == 0;
-    M := {map(D_0, C_0, 1)} | for i from 1 to max(length C, length D) list map(D_i, C_i, 0);
+    -- the upper end of the concentration, rather than length, for the same
+    -- reason as in isMinimal above: length would prune C and D first.  Any
+    -- extra zero maps this includes are harmless.
+    M := {map(D_0, C_0, 1)} | for i from 1 to max(last concentration C,
+	last concentration D) list map(D_i, C_i, 0);
     isQuasiIsomorphism(map(D, C, i -> M#i), opts)
     )
 
@@ -398,7 +402,10 @@ isMinimal = method(Options => options findUnit)
 isMinimal Matrix        :=
 isMinimal MutableMatrix := Boolean => opts -> M -> 0 == #findAllUnits(M, opts)
 isMinimal Complex  := Boolean => opts -> C -> (
-    if any(length C + 1, i -> not isMinimal(matrix (C.dd_i), opts)) then false else true
+    -- iterate over the concentration rather than length C: the latter prunes C
+    -- first, which is wasted work here and is not supported over a local ring.
+    (lo, hi) := concentration C;
+    all(lo..hi, i -> isMinimal(matrix (C.dd_i), opts))
     )
 
 -*

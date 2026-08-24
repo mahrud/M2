@@ -697,6 +697,20 @@ prune Complex := Complex => opts -> C -> C.cache.minimalPresentation ??= (
     -- opts is ignored here
     -- to be cached: in the input C: cache the result D
     --               in the result: cache pruningMap: D --> C
+    -- a zero complex is excluded because pruneComplex leaves it with a spurious
+    -- extra spot (concentration (0,1) rather than (0,0), so length 1 not 0);
+    -- the general branch below already handles that case over a local ring.
+    if instance(ring C, LocalRing) and C != 0 then (
+	-- note: minimalPresentation of a module over a local ring wants a Groebner
+	-- basis, which the engine does not implement there ("GB computation for
+	-- non-polynomial rings not yet re-implemented"), so the branch below fails
+	-- outright -- and with it length, since length prunes.  pruneComplex is
+	-- local-ring aware and sets up the same pruningMap : D --> C contract.
+	D' := pruneComplex C;
+	D'.cache.pruningMap.cache.isCommutative = true;
+	-- returning early skips the ??= assignment, so cache the result by hand
+	C.cache.minimalPresentation = D';
+	return D');
     (lo,hi) := C.concentration;
     -- TODO: make parallel
     -- TODO: if zero differentials, should be easier?

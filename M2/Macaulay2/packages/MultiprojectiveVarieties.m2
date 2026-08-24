@@ -400,7 +400,7 @@ shape MultiprojectiveVariety := X -> X#"dimAmbientSpaces";
 -- option table itself is passed in as X and cacheValue tries to write to it.
 singularLocus MultiprojectiveVariety := opts -> (cacheValue "singularLocus") (X -> (
     if X.cache#?"top" then if X != top X then error "expected an equidimensional projective variety";
-    if instance(X,EmbeddedProjectiveVariety) and X.cache#?"nonSaturatedSingularLocus" then return projectiveVariety(saturate ideal singularLocus(X,Saturate=>false),MinimalGenerators=>false,Saturate=>false);
+    if instance(X,EmbeddedProjectiveVariety) and X.cache#?"nonSaturatedSingularLocus" then return projectiveVariety(saturate ideal nonSaturatedSingularLocus X,MinimalGenerators=>false,Saturate=>false);
     I := ideal X;
     projectiveVariety(I + minors(codim X,jacobian I,Strategy=>Cofactor),MinimalGenerators=>true,Saturate=>true)
 ));

@@ -168,7 +168,15 @@ fourierMotzkin (Matrix, Matrix) := Sequence => (Z, H) -> (
 	 (Z ** QQ, H ** QQ))
      else if R === QQ then (Z, H)
      else error ("expected a matrix over 'ZZ' or 'QQ'");
-     (A, E) := if Z == 0 and H == 0 then (map(target Z, ZZ^0, 0), id_(target Z)) else (
+     -- rawFourierMotzkin computes over ZZ, so denominators have to be cleared
+     -- first; scaling a generator by a positive rational leaves the cone, and
+     -- hence the polar cone, unchanged.
+     clearDenominators := M -> (
+	 if ring M === ZZ then M else if numcols M == 0
+	 then map(ZZ^(numrows M), ZZ^0, 0)
+	 else lift(M * diagonalMatrix(ring M, apply(entries transpose M,
+		     col -> lcm apply(col, denominator))), ZZ));
+     (A, E) := if Z == 0 and H == 0 then (map(target Z, (ring target Z)^0, 0), id_(target Z)) else (
 	-- TODO: add as a strategy?
 	if debugLevel > 1 then printerr "Calling rawFourierMotzkin";
 	ret := dual map(ZZ, rawFourierMotzkin(raw dual Z, raw dual H));

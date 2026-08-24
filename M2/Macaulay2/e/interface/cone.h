@@ -34,9 +34,14 @@ extern "C" {
  * implementation negates `A` on the way in because libnormaliz uses the
  * opposite convention `A * x >= 0`.
  *
- * \param C An $r \times c$ matrix over ZZ.
- * \return An $n \times c$ matrix over ZZ whose **rows** are the extremal rays
- *         of the cone, or `nullptr` on engine error.
+ * \param A An $r \times c$ matrix over ZZ giving the inequalities.
+ * \param B An $s \times c$ matrix over ZZ giving the equations; pass a
+ *         matrix with no rows for none.
+ * \return An $(m + n + 1) \times c$ matrix over ZZ, or `nullptr` on engine
+ *         error. Its first $m$ **rows** are the extremal rays of the cone and
+ *         the next $n$ are generators of its maximal subspace; the extra last
+ *         row exists only to carry $m$ in its first entry, since a single
+ *         Matrix has to return both blocks at once.
  *
  * \par Example (M2 top level)
  * \code{.unparsed}

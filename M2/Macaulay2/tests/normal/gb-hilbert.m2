@@ -1,5 +1,4 @@
 -- test of canUseHilbertHint, Hilbert hint code with M2.
-restart
 R1 = ZZ/101[x,y,z, Degrees => {1,2,3}];
 assert canUseHilbertHint R1
 R2 = ZZ[x,y,z];

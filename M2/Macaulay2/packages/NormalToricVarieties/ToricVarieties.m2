@@ -639,14 +639,16 @@ regularSubdivisionLocal (NormalToricVariety, List, List) := (X,s,w) -> (
 
 packEngineCones = cones -> {#cones} | flatten apply(cones, sigma -> {#sigma} | sigma)
 unpackEngineFan = M -> (
+    -- note: rows of M are zero padded out to a common width, so the range
+    -- passed to take must be exact; {2, 1+row#1} is row#1 entries, inclusive.
     rows := entries M;
     raylist  := new MutableList;
     conelist := new MutableList;
     for row in rows do (
         -- [0, dimension, coordinates of rho]
-        if row#0 == 0 then  raylist##raylist  = take(row, {2, 2+row#1});
+        if row#0 == 0 then  raylist##raylist  = take(row, {2, 1+row#1});
         -- [1, numgens, ray indices in sigma]
-        if row#0 == 1 then conelist##conelist = take(row, {2, 2+row#1});
+        if row#0 == 1 then conelist##conelist = take(row, {2, 1+row#1});
         );
     (toList raylist, toList conelist))
 

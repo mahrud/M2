@@ -565,16 +565,24 @@ facesOfCone (Matrix, List) := HashTable => (R, s) -> (
 orbits = method()
 orbits(NormalToricVariety, ZZ) := List => (X,i) -> (
     d := dim X;
-    if d < i and i < 0 then error "orbits expected a nonnegative integer that is at most the dimension";
+    if d < i or i < 0 then error "orbits expected a nonnegative integer that is at most the dimension";
     if X.cache.?orbits or not isSimplicial X or isDegenerate X then return (orbits X)#i;
     X.cache#(symbol orbits, i) ??= sort unique flatten for sigma in max X list subsets(sigma, #sigma - i))
 orbits NormalToricVariety := HashTable => X -> X.cache.orbits ??= (
     hTable := new MutableHashTable; -- tau => codim(tau)
     raysMatrix := transpose matrix rays X;
     if isSimplicial X and not isDegenerate X
-    then for sigma in max X do apply(subsets sigma, tau -> hTable#tau ??= #sigma - #tau)
-    else for sigma in max X do hTable = merge(hTable, facesOfCone(raysMatrix_sigma, sigma), first);
-    partition(tau -> hTable#tau, keys hTable, toList(0..dim X)))
+    then for sigma in max X do apply(subsets sigma, tau -> hTable#tau ??= dim X - #tau)
+    else (
+	for sigma in max X do hTable = merge(hTable, facesOfCone(raysMatrix_sigma, sigma), first);
+	-- facesOfCone walks down from the facets and stops before the empty
+	-- intersection, so it never reports the empty face; but the empty cone is
+	-- a face of every fan and is the dense torus orbit, of dimension dim X.
+	-- The simplicial branch above already gets it from subsets sigma.
+	hTable = merge(hTable, hashTable {{} => dim X}, first));
+    -- sort: keys of a MutableHashTable come out in an unspecified order, and
+    -- the (NormalToricVariety, ZZ) branch above returns its cones sorted.
+    partition(tau -> hTable#tau, sort keys hTable, toList(0..dim X)))
 
 
 ------------------------------------------------------------------------------

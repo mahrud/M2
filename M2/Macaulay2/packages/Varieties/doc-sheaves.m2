@@ -1026,7 +1026,7 @@ Node
       one might want to consider the full cotangent complex of $X$,
       or at least its truncation to degrees $\geq -1$ rather than $\geq 0$.
     Example
-      X1 = WP(ZZ/5,1,3,5);
+      X1 = Proj(ZZ/5[x_0..x_2, Degrees => {1,3,5}]);
       C1 = naiveCotangentComplex X1;
       S0 = sheaf HH^0 C1; -- Note that C1 is a complex of modules, whereas the associated complex of sheaves is really what we want.
       S1 = sheaf HH^1 C1;
@@ -1084,7 +1084,7 @@ Node
       @TT "naiveCotangentComplex (m, X)"@ should be considered as more natural
       than its cohomology sheaf in degree 0.
     Example
-      X1 = WP(ZZ/5,1,3,5);
+      X1 = Proj(ZZ/5[x_0..x_2, Degrees => {1,3,5}]);
       C1 = naiveCotangentComplex(1, X1);
       S0 = sheaf HH^0 C1; -- Note that C1 is a complex of modules, whereas the associated complex of sheaves is really what we want.
       S1 = sheaf HH^1 C1;

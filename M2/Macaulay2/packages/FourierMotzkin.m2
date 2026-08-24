@@ -179,7 +179,8 @@ fourierMotzkin (Matrix, Matrix) := Sequence => (Z, H) -> (
      (A, E) := if Z == 0 and H == 0 then (map(target Z, (ring target Z)^0, 0), id_(target Z)) else (
 	-- TODO: add as a strategy?
 	if debugLevel > 1 then printerr "Calling rawFourierMotzkin";
-	ret := dual map(ZZ, rawFourierMotzkin(raw dual Z, raw dual H));
+	ret := dual map(ZZ, rawFourierMotzkin(
+		raw dual clearDenominators Z, raw dual clearDenominators H));
 	m := ret_(0, numcols ret-1); -- FIXME: this is a hack to return two matrices at once
 	(ret_{0..m-1}, ret_{m..numcols ret-2}));
      -*

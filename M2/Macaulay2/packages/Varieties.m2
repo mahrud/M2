@@ -101,7 +101,7 @@ export {
     "TorsionFreeMap",
     "TorsionFreeBaseRing",
     "SaturationBaseRing",
-    "twist",
+    "Twist",
     "NonPrint",
     "Direct",
     "DirectNonPrint",

@@ -1055,8 +1055,10 @@ Complex ** RingMap := Complex => (C, phi) -> tensor(phi, C)
 
 -- See [Gelfand, Kapranov, Zelevinsky, pp. 489]
 determinant Module := Module => o -> M -> exteriorPower(rank M, M, o)
-determinant Complex := Module => o -> C -> tensor apply(C.module,
-    (i, M) -> (if odd i then dual else identity) determinant(M, o))
+-- C.module is a HashTable, so iterate over its keys in a fixed order:
+-- apply cannot take a HashTable, and hash order would not be reproducible.
+determinant Complex := Module => o -> C -> tensor apply(sort keys C.module,
+    i -> (if odd i then dual else identity) determinant(C.module#i, o))
 
 --------------------------------------------------------------------
 -- resolutions -----------------------------------------------------

@@ -181,7 +181,11 @@ matrixTable = opts -> (f) -> (
      if not havemat then return map(R^#f, , f, opts);
      types := unique apply(L, class);
      -- Note: we use Matrix.matrix here, which is different from Matrix#matrix
-     if # types === 1 and types#0 .?matrix then return ( types#0 .matrix opts)(f);
+     -- Note: types is computed from L, which drops the literal zero entries, so
+     -- the shortcut also has to check that there were none: it concatenates the
+     -- blocks directly and cannot infer the shape of a scalar entry.
+     if # types === 1 and types#0 .?matrix and #L === #flatten f
+     then return ( types#0 .matrix opts)(f);
      f = apply(f, row -> new MutableList from row);
      m := #f;
      n := #f#0;

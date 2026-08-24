@@ -757,7 +757,9 @@ restart
   E = Hom(C,D)
   -- the next test makes sure that Hom is being cached in the youngest complex (here that is C).
   homs = select(keys C.cache, x -> instance(x, Sequence) and first x === Hom)
-  assert(#homs === 1 and homs#0 === (Hom, C, D))
+  -- the cache key also records the options Hom was called with, since those
+  -- change the result and so must not collide.
+  assert(#homs === 1 and take(homs#0, 3) === (Hom, C, D))
 
   -- f|g, f||g
   f = homomorphism(1,E_1_{2},E)

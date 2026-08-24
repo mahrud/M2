@@ -716,8 +716,8 @@ ExtLongExactSequence(CoherentSheaf, SheafMap, SheafMap) := Matrix => opts -> (F,
     -- longExactSequence needs target g = source f, and subtruncate would leave
     -- g's target untruncated while f's source is truncated.
     part_0 ExtLES(M,
-	truncate(reg,    matrix f, MinimalGenerators => false),
-	subtruncate(reg, matrix g, MinimalGenerators => false),
+	truncate(reg, matrix f, MinimalGenerators => false),
+	truncate(reg, matrix g, MinimalGenerators => false),
 	LengthLimit => hi + 1))
 
 -- Given f: G -> H, leading to SES 0 -> ker f -> G -> im f -> 0 and F a sheaf,

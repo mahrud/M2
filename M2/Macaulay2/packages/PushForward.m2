@@ -140,7 +140,16 @@ pushforward(Module, Vector) := Matrix => opts -> (M, v) -> pushforward(M, matrix
 pushforward(Module, Matrix) := Matrix => opts -> (M, n) -> (
     N := module target n;
     if not N.cache#?(pushforward, M) then error "expected an element of a module of the form pushFwd(N)"
-    else N.cache#(pushforward, M)(n)
+    else (
+	result := N.cache#(pushforward, M)(n);
+	-- note: the cached map can rebuild its target -- inverting the pruning
+	-- map does -- giving a module equal to but not identical with M.  Modules
+	-- are immutable hash tables and === ignores their cache, so the rebuilt
+	-- copy compares equal to M while its empty cache hides the pushforward'
+	-- entry that pushforward' then fails to find.  Put the result back on M.
+	-- === cannot tell the copy from M (it ignores the cache), so re-target
+	-- unconditionally rather than testing whether it is needed.
+	try map(M, , result) else map(M, , matrix entries result))
 );
 
 ------------------

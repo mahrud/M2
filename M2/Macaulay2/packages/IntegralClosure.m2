@@ -669,6 +669,8 @@ isNormal Ring := Boolean => R -> R.cache.isNormal ??= (
      if all(test, j -> (codim Ext^(j+n+1)(M,ring M)) >= j+n+3) 
      then ( 
 	  Jac := minors(n,jacobian R);
+          -- TODO: dim computes a gb for Jac, but using FastMinors
+          -- we can use isDimAtMost(dim R - 2, Jac, Verbose => true)
 	  d := dim Jac;
 	  if d < 0 then d = -infinity;
 	  dim R - d >=2)

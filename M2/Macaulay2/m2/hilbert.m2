@@ -191,6 +191,10 @@ ZZ - ProjectiveHilbertPolynomial := ProjectiveHilbertPolynomial => (n, h) -> -h 
 ProjectiveHilbertPolynomial == ZZ := Boolean => (h, n) -> h === n * P0
 ZZ == ProjectiveHilbertPolynomial := Boolean => (n, h) -> h === n * P0
 
+-- so we can compare projective and non-projective Hilbert polynomials
+ProjectiveHilbertPolynomial == RingElement := (p, q) -> p == projectiveHilbertPolynomial q
+RingElement == ProjectiveHilbertPolynomial := (p, q) -> projectiveHilbertPolynomial p == q
+
 -- evaluation
 ProjectiveHilbertPolynomial ZZ := (P, i) -> sum(pairs P, (n, c) -> c * binomial(n + i, n))
 

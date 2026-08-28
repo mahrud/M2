@@ -317,11 +317,11 @@ checkTangentSpace Matrix := F -> (checkTangentSpace(ideal F, normalMatrix(0, F))
 ----------------------------------------------------------------------------
 --forces GB in a way that works with quotients etc
 fixGB := A -> (
-    forceGB A;
-    key := new GroebnerBasisOptions from {HardDegreeLimit => null, Syzygies => false, SyzygyRows => infinity};
-    A.cache#key = gb A;
+    key := new GroebnerBasisOptions from {
+        HardDegreeLimit => null, Syzygies => false, SyzygyRows => infinity};
+    A.cache#key = forceGB A;
     A.cache#(symbol isHomogeneous)= true;
-    )
+    A)
 
 --Caching of data that does not depend on the order of the lift.  Every cache
 --below hangs off the CacheTable of an object that lives exactly as long as the

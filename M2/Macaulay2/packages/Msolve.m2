@@ -1058,9 +1058,10 @@ msolveSetup = arg -> (
 
             -- Find classes in M / m*M
             f := M.generators;
+            G := msolveGBHook(m ** f);
             -- msolve may decline the generators of m ** f even when it
             -- accepts f itself, in which case the hook defers to Macaulay2
-            if (G := msolveGBHook(m ** f)) === null then return null;
+            if G === null then return null;
             B := f % G;
 
             -- Select a kk-basis of the classes
@@ -1068,7 +1069,7 @@ msolveSetup = arg -> (
             -- TODO: this should be embarrasingly degree parallelized
             (N, C) := coefficients B;
             cols := columnRankProfile mutableMatrix lift(C, kk);
-            N * C_cols));
+            if #cols == numcols B then B else N * C_cols));
 
     if member(trim, install) then
     addHook((trim, Module), Strategy => Msolve, (opts, M) -> (

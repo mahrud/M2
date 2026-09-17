@@ -53,7 +53,7 @@ addHook((Hom, Module, Module), Strategy => Syzygies, (opts, M, N) -> (
     if e === null then return null;
     A := presentation M; (G, F) := (target A, source A); -- M <-- G <-- F
     B := presentation N; (L, K) := (target B, source B); -- N <-- L <-- K
-    piN := inducedMap(N, L, generators N);
+    piN := inducedMap(N, L, generators N, Verify => false);
     psi := (Hom(A, N) * Hom(G, piN)) // Hom(F, piN);
     p := id_(basicHom(G, L)) | map(basicHom(G, L), basicHom(F, K), 0);
     r := syz(psi | -Hom(F, B), DegreeLimit => e);

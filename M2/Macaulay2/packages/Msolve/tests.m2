@@ -616,6 +616,10 @@ TEST ///
   assert(null === msolveGBMatrix(md, 0, opts))
   assert(image map(target md, , rawMsolveGB(raw md, 0, 0, 1, 0)) != image md)
 
+  -- a component index is a 16-bit field in msolve, so 2^16 rows are declined
+  assert(null === msolveGBMatrix(
+	  map(S^(2^16), S^{-1,-1}, {(0,0) => x, (2^16-1,1) => y}), 0, opts))
+
   -- Schreyer order on the target, constant degrees: declined
   F = source schreyerOrder map(S^1, S^{-3,-3,-3}, matrix{{x^3, y^3, z^3}})
   assert(null === msolveGBMatrix(

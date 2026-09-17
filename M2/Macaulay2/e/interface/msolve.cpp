@@ -433,6 +433,20 @@ void collectModuleInput(const Matrix* M,
     }
 }
 
+// The rows a module entry point can take.  A component index reaches msolve's
+// hash table in the same 16-bit slot an exponent lives in, and components are
+// numbered from 1, so at 2^16 rows two of them would share a component and the
+// answer would be for a different module, with nothing said.
+void checkedRowCount(int nrows)
+{
+  if (nrows < 1)
+    throw exc::engine_error("expected a matrix with at least one row");
+  if (nrows > 65535)
+    throw exc::engine_error(
+        "msolve stores a component index in 16 bits, so it cannot take a "
+        "matrix with 65536 or more rows");
+}
+
 // The module counterpart of buildResult.  No sorting is needed: MatrixStream
 // buckets terms by component and only requires each bucket to arrive in
 // descending order of the ring's monomials, and msolve's basis elements are
@@ -897,8 +911,7 @@ bool computeBetti(const Matrix* M,
   const int nrows = F->rank();
   const long charac = static_cast<long>(P->characteristic());
 
-  if (nrows < 1)
-    throw exc::engine_error("expected a matrix with at least one row");
+  checkedRowCount(nrows);
   if (length_limit < 0)
     throw exc::engine_error("expected a non-negative length limit");
   if (wantHilb and length_limit != 0)
@@ -1595,8 +1608,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       const FreeModule* F = M->rows();
       const int nrows = F->rank();
 
-      if (nrows < 1)
-        throw exc::engine_error("expected a matrix with at least one row");
+      checkedRowCount(nrows);
 
       // res.h numbers the module orders SCHREYER, POT, TOP.  Components are
       // reversed at the interface boundary, so both choices below have
@@ -1822,8 +1834,7 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
       const int ncols = M->cols()->rank();
       const long charac = static_cast<long>(P->characteristic());
 
-      if (nrows < 1)
-        throw exc::engine_error("expected a matrix with at least one row");
+      checkedRowCount(nrows);
 
       // NOTE: unlike rawMsolveGB, which routes modules through Macaulay2's
       // default term over position up order and reproduces gens gb exactly,
@@ -2149,8 +2160,7 @@ Computation* rawMsolveResolution(const Matrix* M,
       const int nrows = M->rows()->rank();
       const long charac = static_cast<long>(P->characteristic());
 
-      if (nrows < 1)
-        throw exc::engine_error("expected a matrix with at least one row");
+      checkedRowCount(nrows);
       if (length_limit < 0)
         throw exc::engine_error("expected a nonnegative length limit");
 

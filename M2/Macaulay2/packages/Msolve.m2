@@ -188,6 +188,9 @@ msolveGBMatrix = (m, elim, opts) -> (
     -- msolveDeclareGB's forceGB would declare a non-Groebner basis to be one,
     -- silently corrupting poincare, %, and everything else lead term based.
     if numrows m > 1 and schreyerOrder target m != 0 then return null;
+    -- A component index reaches msolve in a 16-bit field, so a matrix of 2^16
+    -- rows or more would have its components silently folded together.
+    if numrows m >= 2^16 then return null;
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
     -- callers that have no DegreeLimit in their option table ask for the whole

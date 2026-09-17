@@ -39,10 +39,16 @@ endforeach()
 string(REPLACE ";" " " COMPILEFLAGS "${COMPILE_OPTIONS}")
 
 # C compiler flags
-set(CFLAGS   "${CMAKE_C_FLAGS}")
+# NOTE: CMAKE_C_FLAGS/CMAKE_CXX_FLAGS are empty under multi-config-style
+# CMAKE_BUILD_TYPE values (e.g. RelWithDebInfo) since the optimization flags
+# live in CMAKE_C_FLAGS_<BUILD_TYPE> instead. Autoconf treats an explicit
+# empty CFLAGS= as user-supplied and skips its own -g -O2 default, so without
+# this, ExternalProject-built libraries silently end up compiled at -O0.
+string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+string(STRIP "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}" CFLAGS)
 
 # C++ compiler flags
-set(CXXFLAGS "${CMAKE_CXX_FLAGS}")
+string(STRIP "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}" CXXFLAGS)
 
 # Linker flags
 string(REPLACE ";" " " LDFLAGS "${LINK_OPTIONS}")

@@ -608,6 +608,40 @@ TEST ///
   assert(image leadTerm G == image leadTerm GS)
 ///
 
+TEST ///
+  -- An Eliminate n order is spelled with a leading weight vector, so it is not
+  -- a grevlex order and msolve implements no other; but it is not a two block
+  -- grevlex order either, so msolveBlockGB is not a route to it: over this ring
+  -- the lead term of a*c + b*d^3 is b*d^3, while under {GRevLex => 2, GRevLex
+  -- => 2} it is a*c.  Both entry points must therefore decline, leaving the
+  -- caller to fall back, rather than let the engine throw.
+  debug needsPackage "Msolve"
+  E = ZZ/32003[a,b,c,d, MonomialOrder => Eliminate 2]
+  assert not isGRevLexEngineRing E
+  assert(leadTerm(a*c + b*d^3) == b*d^3)
+  m = matrix {{a*c + b*d^3, c^3 - a*b}, {d^2, a^2 - c*d}}
+  assert not msolveEngineUsable m
+  assert(null === msolveGBMatrix(m, 0, msolveDefaultOptions))
+  assert(null === msolveBlockGB(m, msolveDefaultOptions))
+  assert(null === msolveGBHook(options gb, m))
+  -- so gb falls back to Macaulay2's own engine and still gives an answer
+  assert(m % forceGB gens gb m == 0)
+
+  -- even a weight vector that merely repeats the grevlex weights is refused,
+  -- because the engine refuses it: a weight block is not one of the blocks its
+  -- grevlexWeights knows how to read
+  W = ZZ/32003[a,b,c,d, Degrees => {1,2,3,4},
+      MonomialOrder => {Weights => {1,2,3,4}, GRevLex => {1,2,3,4}}]
+  assert not isGRevLexEngineRing W
+
+  -- but a weighted grevlex order, which is how Macaulay2 spells a ring whose
+  -- variables have degrees, stays usable
+  V = ZZ/32003[a,b,c,d, Degrees => {1,2,3,4}]
+  assert isGRevLexEngineRing V
+  assert(image leadTerm msolveGBMatrix(matrix {{a*c + b*d, c^3 - a*b}}, 0, msolveDefaultOptions)
+      == image leadTerm gens gb matrix {{a*c + b*d, c^3 - a*b}})
+///
+
 end
 
 restart

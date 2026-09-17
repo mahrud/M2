@@ -60,13 +60,26 @@ importFrom_Core {
 -- all the variables, with positive weights. A weighted order is fine because
 -- the engine applies the substitution x_i -> x_i^(w_i) to the exponents as it
 -- marshals them, which carries the order over to msolve's exactly.
+-- The engine takes a grevlex order, possibly weighted, and nothing else: its
+-- grevlexWeights reads a grevlex block and a position block and refuses the
+-- rest, including a weight block, even one whose vector merely repeats the
+-- grevlex weights.  So a Weights block has to be refused here too, or
+-- msolveEngineUsable says yes and the engine throws where the caller wanted a
+-- fallback.  Eliminate n is the case that turns up, since Macaulay2 spells it
+-- Weights => n:1 zero-extended, which makes the degree in the first n
+-- variables a genuine primary key.  Nor is msolveBlockGB a route to it: an
+-- Eliminate n order is a different order from the two grevlex blocks that
+-- grevlexBlockLength looks for, not another spelling of one -- over
+-- kk[a,b,c,d] the lead term of a*c + b*d^3 is b*d^3 under Eliminate 2 and a*c
+-- under {GRevLex => 2, GRevLex => 2}.  Both routes therefore decline, and the
+-- caller falls back to Macaulay2's own engine.
 isGRevLexEngineRing = R -> (
     mo := toList (options monoid R).MonomialOrder;
     blocks := select(mo, x -> x#0 === GRevLex);
     #blocks === 1
     and #(blocks#0#1) === numgens R
     and all(blocks#0#1, w -> w >= 1)
-    and all(mo, x -> member(x#0, {GRevLex, MonomialSize, Position})))
+    and all(mo, x -> member(x#0, {MonomialSize, GRevLex, Position})))
 
 -- The one order msolve implements beyond plain grevlex is a two block degree
 -- reverse lexicographic order, and it takes it as the length of the leading

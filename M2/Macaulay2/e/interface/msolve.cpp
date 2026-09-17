@@ -1642,32 +1642,80 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
 
       clampOptions(nr_threads, info_level);
 
-      // No row degrees are handed over, and that is a correctness matter
-      // rather than a missed optimization.  row_degs is not just a hint to
-      // msolve's degree by degree schedule: set_module_exponent_vector in
-      // neogb's res_module.c folds the component's shift into ev[DEG], the
-      // very slot cmp_blocks compares first, so the order msolve computes in
-      // weighs deg(m) + row_degs[i] before breaking ties in the ring.
-      // Macaulay2's order on a free module weighs deg(m) and then the
-      // component; the twists of the target play no part in it, and gb of a
-      // matrix into S^{0,-1} has the same lead terms as gb of the same
-      // entries into S^2.  Passing the twists therefore returns a basis that
-      // is a Groebner basis in a different -- perfectly good, but other --
-      // order, which msolveDeclareGB's forceGB would declare to be one in
-      // Macaulay2's.  Constant row degrees msolve normalizes away, so they
-      // were only ever consequential in exactly the case they got wrong.
+      // The row degrees, as heft degrees in the order msolve numbers
+      // components in, handed over for the schedule and withheld from the
+      // order.  That split is what res_strat_t's ungraded_order asks for and
+      // it is the whole reason they can be handed over at all.
       //
-      // rawMsolveSyzygy and rawMsolveMinimalBetti do hand over a grading, and
-      // rightly so: there the twists are part of the answer being asked for,
-      // not of an order that has to agree with one Macaulay2 already fixed.
+      // msolve's own use of row degrees folds a component's shift into
+      // ev[DEG], the slot cmp_blocks compares first, so the basis it returns
+      // is a Groebner basis of the twisted module in the twisted order.
+      // Macaulay2's order on a free module is the untwisted one: it weighs
+      // deg(m) and then the component, the twists of the target play no part
+      // in it, and gb of a matrix into S^{0,-1} has the same lead terms as gb
+      // of the same entries into S^2.  A basis in the twisted order is
+      // therefore one that msolveDeclareGB's forceGB would declare to be one
+      // in Macaulay2's, which is why the degrees were withheld entirely
+      // before ungraded_order existed.
       //
-      // The cost is that a twisted target now looks inhomogeneous to msolve
-      // and its schedule proceeds by monomial degree alone -- which is what
-      // Macaulay2's own engine does on this order in any case.
+      // Withholding them was expensive, and not in a way the order was worth.
+      // A matrix homogeneous over a twisted target looks inhomogeneous to
+      // msolve, whose F4 then schedules a graded problem as an ungraded one.
+      // On a 275x274 pushforward matrix over Grassmannian(1,3) in
+      // characteristic 3 that was 0.30s against Macaulay2's 0.025s -- and
+      // Macaulay2 asked to be just as blind, the same entries into an
+      // untwisted target, took 0.16s, so most of the gap was the schedule and
+      // not msolve.  It could also return a set that is not a basis at all:
+      // on the untwisted view of a pushforward matrix of 8019 rows whose
+      // target degrees run 0..19 msolve stopped after the single degree 1
+      // round and gave 8033 elements where a basis has 37065, saying nothing,
+      // the truncated set still generating the submodule.  msolveGBMatrix
+      // checks the result for that reason and still does.
+      //
+      // ungraded_order gives the schedule without the order: the shift
+      // reaches ht->dshift and so the degree S-pair selection counts in, and
+      // reaches nothing else.  It is correct for the same reason the twisted
+      // schedule is -- the input is homogeneous for the twisted grading, so
+      // every reduction stays inside one twisted degree, and which lead term
+      // a degree has is settled there by whatever order is in force.
+      //
+      // rawMsolveSyzygy and rawMsolveMinimalBetti hand over a grading and
+      // keep the twisted order, and rightly so: there the twists are part of
+      // the answer being asked for, not of an order that has to agree with
+      // one Macaulay2 already fixed.
+      //
+      // msolve keeps a degree in the same 16 bits as an exponent and adds the
+      // shift to a term's own degree, so a wide spread of row degrees can
+      // overflow where collectModuleInput's per term check did not.  Here the
+      // degrees are an optimization and nothing else -- the answer does not
+      // depend on them -- so that case drops them rather than refusing.
+      std::vector<int32_t> rowheft(nrows);
+      int32_t minRowHeft = 0;
+      for (int i = 0; i < nrows; i++)
+        {
+          rowheft[i] = static_cast<int32_t>(F->primary_degree(nrows - 1 - i));
+          if (i == 0 or rowheft[i] < minRowHeft) minRowHeft = rowheft[i];
+        }
+      {
+        long maxTermDeg = 0, maxShift = 0;
+        const size_t nterms = in.exps.size() / static_cast<size_t>(nvars);
+        for (size_t t = 0; t < nterms; t++)
+          {
+            long d = 0;
+            for (int j = 0; j < nvars; j++)
+              d += static_cast<long>(in.exps[t * nvars + j]);
+            if (d > maxTermDeg) maxTermDeg = d;
+          }
+        for (int i = 0; i < nrows; i++)
+          if (rowheft[i] - minRowHeft > maxShift)
+            maxShift = rowheft[i] - minRowHeft;
+        if (maxTermDeg + maxShift > msolveMaxExponent) rowheft.clear();
+      }
+      const bool useRowDegrees = not rowheft.empty();
+      if (useRowDegrees) gbStrat.ungraded_order = 1;
 
       // A degree ceiling is only meaningful once msolve and Macaulay2 agree
-      // on what a degree is, which is the same condition the row degrees are
-      // passed under: with a weighted grevlex block the exponents are
+      // on what a degree is: with a weighted grevlex block the exponents are
       // substituted before msolve sees them, so its degrees are not the
       // ring's and a ceiling stated in the ring's degrees would cut in the
       // wrong place.  Refusing is the only honest answer -- a silently
@@ -1677,6 +1725,13 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
         if (wts[j] != 1) unweighted = false;
 
       res_stop_t stop = res_stop_none();
+      // The ceiling goes over on Macaulay2's own scale: msolve normalizes the
+      // row degrees by subtracting the lightest row and takes that off the
+      // ceiling itself, so nothing is adjusted here.  Passing the row degrees
+      // is what makes the ceiling mean what it says, twice over -- msolve
+      // subtracts nothing when it has no degshift to subtract, and it refuses
+      // a ceiling on inhomogeneous input, which is what a matrix over a
+      // twisted target looks like until the twists are handed over.
       const int32_t deglimit = static_cast<int32_t>(degree_limit);
       if (degree_limit > 0)
         {
@@ -1709,7 +1764,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                 in.exps.data(),
                 in.comps.data(),
                 in.cfs.data(),
-                nullptr /* the row degrees; see above */,
+                useRowDegrees ? rowheft.data() : nullptr,
                 static_cast<uint32_t>(charac),
                 mon_order,
                 &gbStrat,

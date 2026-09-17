@@ -569,8 +569,11 @@ TEST ///
   -- msolve's module F4 has no induced (Schreyer) order, so it must not be
   -- used when the target free module carries one: the result generates the
   -- right submodule but is not a Groebner basis in Macaulay2's order, and
-  -- forceGB would declare it one.  Twists of the target are fine, as long as
-  -- rawMsolveModuleGB keeps them out of the order it asks msolve for.
+  -- forceGB would declare it one.  The twists of the target are kept out of
+  -- the order rawMsolveModuleGB asks msolve for, since Macaulay2's own order
+  -- ignores them, so what msolve is given is the untwisted matrix; where its
+  -- degree by degree schedule truncates on that, msolveGBMatrix catches it by
+  -- reducing the generators against what came back.
   debug needsPackage "Msolve"
   S = ZZ/32003[x,y,z]
   opts = msolveDefaultOptions
@@ -581,12 +584,37 @@ TEST ///
   assert(G =!= null)
   assert(image leadTerm G == image leadTerm gens gb m)
 
-  -- non-constant target degrees: msolve applies, and the twists are not
-  -- allowed to enter the order, so it still agrees with Macaulay2
+  -- non-constant target degrees, whose columns are still of one degree each
+  -- once the target is untwisted: msolve applies, and agrees with Macaulay2
+  mh = map(S^{0,-1}, S^{-2,-2,-2}, matrix{{x^2, y*z, z^2},{y^2, x*z, x^2}})
+  Gh = msolveGBMatrix(mh, 0, opts)
+  assert(Gh =!= null)
+  assert(image leadTerm Gh == image leadTerm gens gb mh)
+
+  -- non-constant target degrees whose columns mix degrees once the target is
+  -- untwisted, which is the view msolve computes in: homogeneous to Macaulay2,
+  -- inhomogeneous to msolve.  It answers this one correctly and so it is used;
+  -- at the scale of a pushforward it does not, and the check on the way out
+  -- declines it there.  Either way what comes back is a Groebner basis.
   mt = map(S^{0,-1}, S^{-2,-3,-2}, matrix{{x^2, y^3, z^2},{x, x*z, y}})
+  assert isHomogeneous mt
   Gt = msolveGBMatrix(mt, 0, opts)
-  assert(Gt =!= null)
-  assert(image leadTerm Gt == image leadTerm gens gb mt)
+  assert(Gt === null or image leadTerm Gt == image leadTerm gens gb mt)
+
+  -- whatever msolveGBMatrix returns for a module, the generators reduce to
+  -- zero against it -- the property the check on the way out enforces
+  for mm in {m, mh, mt} do (
+      Gm := msolveGBMatrix(mm, 0, opts);
+      if Gm =!= null then assert(matrix mm % forceGB Gm == 0))
+
+  -- msolve's module F4 drops a generator on some inhomogeneous input, which
+  -- is what the check on the way out is there for.  Minimal case: the module
+  -- <x*e_1 + e_2, x*e_0 + e_1, x*e_0> is <x*e_0, e_1, e_2>, of Groebner basis
+  -- three elements, and msolve returns two -- losing e_2, so a wrong submodule
+  -- and not merely wrong lead terms.  msolveGBMatrix must decline it.
+  md = matrix {{0_S, x, x}, {x, 1_S, 0_S}, {1_S, 0_S, 0_S}}
+  assert(null === msolveGBMatrix(md, 0, opts))
+  assert(image map(target md, , rawMsolveGB(raw md, 0, 0, 1, 0)) != image md)
 
   -- Schreyer order on the target, constant degrees: declined
   F = source schreyerOrder map(S^1, S^{-3,-3,-3}, matrix{{x^3, y^3, z^3}})

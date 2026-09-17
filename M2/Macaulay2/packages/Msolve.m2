@@ -187,8 +187,6 @@ msolveGBMatrix = (m, elim, opts) -> (
     -- right submodule, but with the lead terms of the wrong order, and
     -- msolveDeclareGB's forceGB would declare a non-Groebner basis to be one,
     -- silently corrupting poincare, %, and everything else lead term based.
-    -- Twists of the target are fine: rawMsolveModuleGB passes no row degrees,
-    -- so its order compares deg(m) and then the component, as Macaulay2 does.
     if numrows m > 1 and schreyerOrder target m != 0 then return null;
     threads := opts.Threads ?? allowableThreads;
     verbosity := opts.Verbosity ?? gbTrace;
@@ -199,8 +197,39 @@ msolveGBMatrix = (m, elim, opts) -> (
     G := rawMsolveGB(raw sub(matrix m, R0), elim, deglimit, threads, verbosity);
     -- a flat ring needs neither of the two maps back, and asking for them
     -- would cost a copy of the basis apiece
-    if R0 === ring m then return map(target m, , G);
-    map(target m, , phi map(R0, G)))
+    G = if R0 === ring m then map(target m, , G) else map(target m, , phi map(R0, G));
+    -- msolve's module F4 used to be able to return a basis that is not one,
+    -- and the check below is what caught it.  The twists of the target play no
+    -- part in the order on either side -- Macaulay2 compares deg(m) and then
+    -- the component -- and rawMsolveModuleGB used to match that by handing
+    -- over no row degrees at all, which left msolve looking at the *untwisted*
+    -- matrix: inhomogeneous for a twisted target, and its schedule is by
+    -- degree.  On the untwisted view of a pushforward matrix of 8019 rows
+    -- whose target degrees run 0..19 it stopped after the single degree 1
+    -- round and returned 8033 elements where a basis has 37065.  Nothing said
+    -- so: the truncated set still generates the submodule, so msolveDeclareGB's
+    -- forceGB declared it a Groebner basis, poincare read a Hilbert numerator
+    -- off it that over-predicted, and pushNonLinear met "incorrect Hilbert
+    -- function given".
+    --
+    -- rawMsolveModuleGB now hands the row degrees over under res_strat_t's
+    -- ungraded_order, which puts them in the schedule and keeps them out of
+    -- the order, so the input msolve sees is homogeneous again and the basis
+    -- is complete.  The check stays anyway: it is verification rather than
+    -- prediction, every generator reducing to zero against what came back is
+    -- something no Groebner basis of the submodule can fail, and it costs a
+    -- reduction against a basis already computed -- 1% of the time the basis
+    -- itself took on the matrix above.  Returning null falls the caller back
+    -- on Macaulay2's own gb, which is what a matrix msolve declines outright
+    -- gets.
+    --
+    -- Only for a module: msolve's plain F4 takes an inhomogeneous ideal in its
+    -- stride, that being the case it was written for.  And only without a
+    -- degree limit, a basis cut off at a degree having no reason to reduce the
+    -- generators above it to zero.
+    if numrows m > 1 and deglimit === 0 and matrix m % forceGB G != 0
+    then return null;
+    G)
 
 msolveGBEngine = (m, elim, opts) -> msolveGBMatrix(m, elim, opts)
 

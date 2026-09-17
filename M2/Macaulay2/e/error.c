@@ -40,7 +40,9 @@ void ERROR(const char *s, ...)
   if (iserror) fprintf(stderr, "--error message bumped: %s\n", errmsg);
   iserror = 1;
   va_start(ap, s);
-  vsprintf(errmsg, s, ap);
+  // bounded: the buffer is fixed and a caller's message is not, and the one
+  // that overruns it is a message long enough to be worth reading
+  vsnprintf(errmsg, MAXERROR, s, ap);
   va_end(ap);
 }
 
@@ -50,7 +52,7 @@ void INTERNAL_ERROR(const char *s, ...)
   buf[0] = 0;
   va_list ap;
   va_start(ap, s);
-  vsprintf(buf, s, ap);
+  vsnprintf(buf, MAXERROR, s, ap);
   va_end(ap);
   fprintf(stderr, "--internal error: %s\n", buf);
   abort(); /* we should exit after an internal error, to avoid crashing */

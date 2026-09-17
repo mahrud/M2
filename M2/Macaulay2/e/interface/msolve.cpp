@@ -1861,9 +1861,14 @@ const Matrix* rawMsolveSyzygy(const Matrix* M,
           MatrixConstructor mat(M->cols(), 0);
           return mat.to_matrix();
         }
+      // A zero column carries no terms, so collectModuleInput drops it, and
+      // the rows here are indexed by the columns of M: answering anyway would
+      // shift every row past the gap.  The zero column is a free syzygy and
+      // the module splits along it, which msolveSyzygy does before calling in.
       if (static_cast<int>(in.lens.size()) != ncols)
         throw exc::engine_error(
-            "msolve syzygies do not yet support zero input columns");
+            "expected a matrix with no zero columns; a zero column is a free "
+            "syzygy, split off by msolveSyzygy in the Msolve package");
 
       volatile bool unweighted = true;  // volatile as for mord above
       for (int j = 0; j < nvars; j++)

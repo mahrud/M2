@@ -674,6 +674,49 @@ TEST ///
       == image leadTerm gens gb matrix {{a*c + b*d, c^3 - a*b}})
 ///
 
+TEST ///
+  -- A zero column of M is a syzygy of M all by itself, so the syzygy module
+  -- splits, syz M = syz M' (+) sum of R e_j over the zero columns j.  msolve's
+  -- input has no generator with no terms, so the columns are separated first
+  -- and the free part put back; what comes out must match Macaulay2's.
+  debug needsPackage "Msolve"
+  S = ZZ/32003[x,y,z]
+  -- no msolveSetup here, so syz is Macaulay2's own
+  check1 = M -> (
+      A := msolveSyzygy M;
+      assert(M * A == 0);
+      assert(image A == image syz M);
+      assert isHomogeneous A;
+      assert(sort degrees source A == sort degrees source syz M))
+  check1 matrix {{x^2, y^2, 0}, {x*y, z^2, 0}}
+  check1 matrix {{x^2, 0, y^2}, {x*y, 0, z^2}}
+  check1 matrix {{0, x^2, y^2}, {0, x*y, z^2}}
+  check1 matrix {{x^2, 0, 0, y^2}, {x*y, 0, 0, z^2}}
+  -- twisted source and target, so the padded inclusion has to carry degrees
+  check1 map(S^{0,-1}, S^{-2,-3,-2,-4,-3}, {{x^2, 0, y^2, 0, x*y*z}, {x, 0, z, 0, y^2}})
+
+  -- every column zero: the syzygy module is free on the whole source
+  Z = map(S^2, S^{-1,-2,-3}, 0)
+  assert(msolveSyzygy Z == id_(source Z))
+
+  -- SyzygyRows keeps the first rows, which is the projection onto the
+  -- coefficients on the first columns; a free e_j past the cut is a zero
+  -- column of the answer and is dropped as one
+  M = matrix {{0, x^2, y^2, 0, x*y, z^2, 0}, {0, x*y, z^2, 0, y^2, x*z, 0}}
+  F = source M
+  B = syz M
+  for r from 1 to numcols M do assert(
+      image msolveSyzygy(M, SyzygyRows => r)
+      == image(map(F, F, (i,j) -> if i == j and i < r then 1 else 0) * B))
+  assert(numcols msolveSyzygy(M, SyzygyRows => 0) == 0)
+
+  -- SyzygyLimit counts the free generators too, so it is never overshot
+  for L from 1 to 4 do (
+      A := msolveSyzygy(M, SyzygyLimit => L);
+      assert(numcols A <= L);
+      assert(M * A == 0))
+///
+
 end
 
 restart

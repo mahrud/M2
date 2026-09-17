@@ -583,6 +583,46 @@ msolveSyzygy Matrix := opts -> M -> (
     -- so an explicit 0 -- gb.m2's gbOnly asks for exactly that -- has to be
     -- answered here: no rows kept means every column is dropped
     if opts.SyzygyRows === 0 then return map(source M, R^0, 0);
+    -- A zero column of M is a syzygy of M all by itself, so the syzygy module
+    -- splits along the zero columns,
+    --     syz M = syz M' (+) sum over j with M_j = 0 of R e_j,
+    -- with M' the nonzero columns and the first summand included by padding a
+    -- zero into every slot that was dropped.  The splitting has to happen
+    -- somewhere: msolve's input format has no way to spell a generator with no
+    -- terms, so collectModuleInput drops such a column outright, and since the
+    -- rows of a syzygy matrix are indexed by the columns of M, a dropped column
+    -- shifts every later row -- which is why rawMsolveSyzygy refuses a matrix
+    -- with one rather than answer for a different input.  compress is a single
+    -- pass in the engine, so the column scan below runs only when there is in
+    -- fact something to split off.
+    if numcols compress M =!= numcols M then return (
+	cols := partition(j -> M_{j} != 0, toList(0 ..< numcols M));
+	keep := if cols#?true then cols#true else {};
+	-- the free generators are put first, so a SyzygyLimit keeps the ones
+	-- already in hand and spends what is left of its budget on msolve
+	free := if cols#?false then cols#false else {};
+	-- SyzygyRows keeps the first rows of the answer, which are the
+	-- syzygies' coefficients on the first columns of M.  Both lists are
+	-- ascending, so the kept columns below the cut are a prefix of keep and
+	-- their count is the cut for M'; a free e_j above the cut would come
+	-- back a zero column, and is dropped as one.  The columns above the cut
+	-- stay in M': the cut projects their coefficients away, it does not
+	-- remove them from the computation.
+	subrows := if opts.SyzygyRows === infinity then infinity
+	    else #select(keep, j -> j < opts.SyzygyRows);
+	if opts.SyzygyRows =!= infinity
+	then free = select(free, j -> j < opts.SyzygyRows);
+	syzlimit := opts.SyzygyLimit;
+	if syzlimit =!= infinity then (
+	    if #free > syzlimit then free = take(free, syzlimit);
+	    syzlimit = syzlimit - #free);
+	S := if #keep == 0 or syzlimit === 0 then map(source M, R^0, 0)
+	    else submatrix(id_(source M), keep) * msolveSyzygy(
+		submatrix(M, keep),
+		Threads => opts.Threads, Verbosity => opts.Verbosity,
+		DegreeLimit => opts.DegreeLimit,
+		SyzygyLimit => syzlimit, SyzygyRows => subrows);
+	submatrix(id_(source M), free) | S);
     -- a bound at or past the number of columns of M is no bound at all
     syzrows := msolveEngineNat opts.SyzygyRows;
     if syzrows >= numcols M then syzrows = 0;

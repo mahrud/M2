@@ -33,15 +33,21 @@ extern "C" {
    one-rowed matrix this is an ideal basis; for a multi-rowed matrix it is a
    module basis in Macaulay2's default term-over-position-up order, returned
    with the same target.
-   M must be over a polynomial ring with a degree-reverse-lexicographic order
-   and characteristic p with 0 < p < 2^31; msolve implements no other monomial
-   order, and its finite field arithmetic is limited to word-size primes.  It
-   is the caller's responsibility to check the monomial order.
+   M must be over a polynomial ring whose order is one or more
+   degree-reverse-lexicographic blocks, and whose characteristic p satisfies
+   0 < p < 2^31; msolve implements no other monomial order, and its finite
+   field arithmetic is limited to word-size primes.  It is the caller's
+   responsibility to check the monomial order.
 
    elim_block_len is the number of leading variables forming an elimination
-   block (0 for none), matching msolve's `-e` option.  It must be zero for a
-   module, since msolve does not combine elimination blocks with module
-   orders.  nr_threads and info_level match its `-t` and `-v` options.
+   block (0 for none), matching msolve's `-e` option.  It is the way to ask
+   for a block order over a ring that does not have one, which is what
+   Macaulay2's own elimination rings arrange: the computation runs in the
+   plain grevlex ring and the result is sorted back into it.  A ring whose
+   order already has several blocks says so itself and needs no argument; the
+   two spellings are refused together.  elim_block_len must be zero for a
+   module for the same reason: the blocks of a module computation come from
+   its ring.  nr_threads and info_level match msolve's `-t` and `-v` options.
 
    degree_limit, when positive, stops the computation once every S-pair of
    that degree or less has been handled, and 0 or less asks for the whole
@@ -53,9 +59,9 @@ extern "C" {
    handed to forceGB or cached as complete.  There is no way to resume it;
    asking again for a larger limit recomputes from the input.
 
-   A degree limit cannot be combined with an elimination block: msolve's ideal
-   entry point has no ceiling, and the module entry point that does have one
-   has no elimination block.
+   A degree limit cannot be combined with an elimination block length: msolve's
+   ideal entry point has no ceiling, and the module entry point that does have
+   one takes its blocks from the ring.
 
    Returns null, having set an error message, if the input is unsuitable. */
 const Matrix* /* or null */ rawMsolveGB(const Matrix *M,
@@ -69,9 +75,14 @@ const Matrix* /* or null */ rawMsolveGB(const Matrix *M,
    with the same target.  This is the module counterpart of rawMsolveGB, which
    is the special case r = 1.
 
-   The ring is subject to the same restrictions as above, except that no
-   elimination block is allowed: msolve does not combine block orders with
-   module orders.
+   The ring is subject to the same restrictions as above, except that its
+   order may have several grevlex blocks: msolve takes such an order as a
+   partition of the variables, compared left to right, and this is the entry
+   point that can hand it one.  The blocks come from the ring, so the basis is
+   a Groebner basis in the ring's own order -- unlike rawMsolveGB's
+   elimination block length, which is a block order imposed on a plain grevlex
+   ring from outside.  rawMsolveGB routes a matrix over such a ring here
+   whatever its number of rows.
 
    module_order selects the order on R^r refining the ring's own:
      0  position up over term, comparing components before monomials,

@@ -56,58 +56,63 @@ importFrom_Core {
 -- string conversion in either direction. Everything the engine cannot take
 -- still goes through the executable; these routines return null in that case.
 
--- mirrors grevlexWeights in e/interface/msolve.cpp: a single GRevLex block over
--- all the variables, with positive weights. A weighted order is fine because
--- the engine applies the substitution x_i -> x_i^(w_i) to the exponents as it
--- marshals them, which carries the order over to msolve's exactly.
--- The engine takes a grevlex order, possibly weighted, and nothing else: its
--- grevlexWeights reads a grevlex block and a position block and refuses the
--- rest, including a weight block, even one whose vector merely repeats the
--- grevlex weights.  So a Weights block has to be refused here too, or
--- msolveEngineUsable says yes and the engine throws where the caller wanted a
--- fallback.  Eliminate n is the case that turns up, since Macaulay2 spells it
--- Weights => n:1 zero-extended, which makes the degree in the first n
--- variables a genuine primary key.  Nor is msolveBlockGB a route to it: an
--- Eliminate n order is a different order from the two grevlex blocks that
--- grevlexBlockLength looks for, not another spelling of one -- over
+-- mirrors grevlexWeights in e/interface/msolve.cpp: consecutive GRevLex blocks
+-- covering all the variables, with positive weights. A weighted order is fine
+-- because the engine applies the substitution x_i -> x_i^(w_i) to the
+-- exponents as it marshals them, which carries the order over to msolve's
+-- exactly, one block at a time.
+--
+-- Returns the sizes of the blocks in variable order, or null if the order is
+-- not of that shape.  Several blocks are msolve's own block order, a
+-- mo_block_t in its order.h: each block ordered by degree reverse
+-- lexicographic, the blocks compared left to right.  That is exactly what
+-- Macaulay2 means by MonomialOrder => {GRevLex => a, GRevLex => b}, which for
+-- two blocks is the classical elimination order.
+--
+-- The engine takes those blocks and nothing else: grevlexWeights reads grevlex
+-- blocks and a position block and refuses the rest, including a weight block,
+-- even one whose vector merely repeats the grevlex weights.  So a Weights
+-- block has to be refused here too, or msolveGBEngineUsable says yes and the
+-- engine throws where the caller wanted a fallback.  Eliminate n is the case
+-- that turns up, since Macaulay2 spells it Weights => n:1 zero-extended, which
+-- makes the degree in the first n variables a genuine primary key.  And that
+-- is a different order from the blocks here, not another spelling of one: over
 -- kk[a,b,c,d] the lead term of a*c + b*d^3 is b*d^3 under Eliminate 2 and a*c
--- under {GRevLex => 2, GRevLex => 2}.  Both routes therefore decline, and the
+-- under {GRevLex => 2, GRevLex => 2}, and the two disagree on homogeneous
+-- input of one degree as well, a*e + b*d having lead term b*d under Eliminate
+-- 2 and a*e under the blocks.  Such a ring is therefore declined and the
 -- caller falls back to Macaulay2's own engine.
-isGRevLexEngineRing = R -> (
+grevlexBlockSizes = R -> (
     mo := toList (options monoid R).MonomialOrder;
     blocks := select(mo, x -> x#0 === GRevLex);
-    #blocks === 1
-    and #(blocks#0#1) === numgens R
-    and all(blocks#0#1, w -> w >= 1)
-    and all(mo, x -> member(x#0, {MonomialSize, GRevLex, Position})))
+    if #blocks >= 1
+    and sum(blocks, b -> #(b#1)) === numgens R
+    and all(blocks, b -> all(b#1, w -> w >= 1))
+    and all(mo, x -> member(x#0, {MonomialSize, GRevLex, Position}))
+    then apply(blocks, b -> #(b#1)))
 
--- The one order msolve implements beyond plain grevlex is a two block degree
--- reverse lexicographic order, and it takes it as the length of the leading
--- block rather than as an order: this is rawMsolveGB's elimination block
--- length, and it makes msolve compare by the degree of the first block, then
--- reverse lexicographically within it, then likewise for the second (the _be
--- comparators in order.c in msolve's neogb).  That is exactly Macaulay2's
--- MonomialOrder => {GRevLex => a, GRevLex => b}: the reduced bases agree
--- element for element, not merely up to a change of order.  So such a ring is
--- usable after all -- not by handing msolve the order, which it cannot
--- represent, but by computing in the plain grevlex ring on the same variables
--- and telling it where the blocks are split.  See msolveBlockGB.  Weights are
--- fine for the same reason as above, the substitution being order preserving
--- one block at a time, and the block degrees msolve accumulates from the
--- scaled exponents being the weighted ones.
+-- A single grevlex block, which is what every entry point but the Groebner
+-- basis one takes: a block order reaches msolve as an argument of
+-- export_module_f4_blocks, and the syzygy, resolution, Betti and saturation
+-- entry points have no such argument.
+isGRevLexEngineRing = R -> (
+    sizes := grevlexBlockSizes R;
+    sizes =!= null and #sizes === 1)
+
+-- The same two block order, said the other way round: as the length of the
+-- leading block over a ring that does not carry the order at all.  That is
+-- rawMsolveGB's elimination block length, which msolve's export_f4 takes, and
+-- it is how a caller computing in a plain grevlex ring asks for the block
+-- order anyway -- see msolveElimGB, where the elimination is the caller's
+-- own and no ring has been built for it.  A ring that does carry the order
+-- needs none of that: grevlexBlockSizes above reads it off and the engine
+-- hands msolve the blocks themselves.
 --
 -- Returns the length of the leading block, or null if the order is not two
--- positively weighted grevlex blocks covering the variables.  Note an
--- Eliminate n order is *not* one of these: Macaulay2 spells it with a weight
--- vector, and the basis it asks for is a different one.
+-- positively weighted grevlex blocks covering the variables.
 grevlexBlockLength = R -> (
-    mo := toList (options monoid R).MonomialOrder;
-    blocks := select(mo, x -> x#0 === GRevLex);
-    if #blocks === 2
-    and #(blocks#0#1) + #(blocks#1#1) === numgens R
-    and all(join(blocks#0#1, blocks#1#1), w -> w >= 1)
-    and all(mo, x -> member(x#0, {GRevLex, MonomialSize, Position}))
-    then #(blocks#0#1))
+    sizes := grevlexBlockSizes R;
+    if sizes =!= null and #sizes === 2 then sizes#0)
 
 -- the coefficients msolve can represent: a prime field of positive
 -- characteristic below 2^31.  Note isField excludes the coefficients of an
@@ -126,6 +131,34 @@ msolveEngineUsable = m -> (
     instance(R, PolynomialRing)
     and msolveCoefficientsUsable coefficientRing R
     and isGRevLexEngineRing R)
+
+-- The same for the Groebner basis entry point, which is the one that can hand
+-- msolve a block order: rawMsolveGB reads the blocks off the ring and routes
+-- such a matrix to export_module_f4_blocks whatever its number of rows, so
+-- what comes back is a basis in the ring's own order.  This is where an
+-- elimination ring arrives -- Macaulay2's own {GRevLex => a, GRevLex => b} and
+-- the block order a tower flattens to alike.
+-- msolve compares the component either before the whole ring order or after
+-- it, which is what Macaulay2 spells as the Position part of the order coming
+-- first or last.  The engine passes term over position up, so that is the
+-- placement to insist on; the others it refuses, and refusing them here too is
+-- what turns an engine error into a fallback.  A tower is the case that turns
+-- up: it flattens to {GRevLex => a, Position => Up, GRevLex => b}, comparing
+-- the component in the middle of the ring order, which is not an order msolve
+-- can represent at all.  None of this applies to one row, where there is
+-- nothing for the component key to order.
+msolveModuleOrderUsable = R -> (
+    mo := select(toList (options monoid R).MonomialOrder,
+	x -> member(x#0, {GRevLex, Position}));
+    pos := positions(mo, x -> x#0 === Position);
+    #pos === 0 or (#pos === 1 and pos#0 === #mo - 1 and mo#(pos#0)#1 === Up))
+
+msolveGBEngineUsable = m -> (
+    if not rawMsolvePresent() then return false;
+    R := ambient first flattenRing ring m;
+    instance(R, PolynomialRing)
+    and msolveCoefficientsUsable coefficientRing R
+    and grevlexBlockSizes R =!= null)
 
 ---------------------------------------------------------------------------
 
@@ -178,7 +211,14 @@ msolveEngineNat = n -> if n === infinity or n === null then 0 else (
 -- the engine by the same redundancy marking that drops every other divisible
 -- lead term. Compare msolveSaturateEngine, which still lifts.
 msolveGBMatrix = (m, elim, opts) -> (
-    if not msolveEngineUsable m then return null;
+    if not msolveGBEngineUsable m then return null;
+    -- the two ways of asking for a block order are exclusive, and the engine
+    -- refuses them together: elim is the caller's own elimination over a ring
+    -- whose order does not carry one, while a ring whose order does carry one
+    -- hands the engine its blocks instead
+    if elim =!= 0
+    and #grevlexBlockSizes ambient first flattenRing ring m > 1
+    then return null;
     -- msolve's module F4 offers position over term and term over position on
     -- the components, but not an induced (Schreyer) order: res.h's
     -- RES_MORD_SCHREYER wants per component base monomials that only its
@@ -188,6 +228,10 @@ msolveGBMatrix = (m, elim, opts) -> (
     -- msolveDeclareGB's forceGB would declare a non-Groebner basis to be one,
     -- silently corrupting poincare, %, and everything else lead term based.
     if numrows m > 1 and schreyerOrder target m != 0 then return null;
+    -- and only the module order msolve is handed here; see above
+    if numrows m > 1
+    and not msolveModuleOrderUsable ambient first flattenRing ring m
+    then return null;
     -- A component index reaches msolve in a 16-bit field, so a matrix of 2^16
     -- rows or more would have its components silently folded together.
     if numrows m >= 2^16 then return null;
@@ -196,11 +240,13 @@ msolveGBMatrix = (m, elim, opts) -> (
     -- callers that have no DegreeLimit in their option table ask for the whole
     -- basis, which is what every one of them did before the option existed
     deglimit := if opts.?DegreeLimit then msolveHeftLimit(ring m, opts.DegreeLimit) else 0;
-    (R0, phi) := flattenRing ring m;
+    -- psi is the inverse of the flattening, which is what brings the basis
+    -- home; a tower is the case where the two rings differ
+    (R0, phi, psi) := flattenRing(ring m, Result => (Ring, RingMap, RingMap));
     G := rawMsolveGB(raw sub(matrix m, R0), elim, deglimit, threads, verbosity);
     -- a flat ring needs neither of the two maps back, and asking for them
     -- would cost a copy of the basis apiece
-    G = if R0 === ring m then map(target m, , G) else map(target m, , phi map(R0, G));
+    G = if R0 === ring m then map(target m, , G) else map(target m, , psi map(R0, G));
     -- msolve's module F4 used to be able to return a basis that is not one,
     -- and the check below is what caught it.  The twists of the target play no
     -- part in the order on either side -- Macaulay2 compares deg(m) and then
@@ -267,7 +313,7 @@ msolveSaturateEngine = (m, f, opts) -> (
             map(S, rawMsolveGBRestrictToQuotient(G, raw R0)), vars R0)))
 
 -- used in msolveEliminate
-importFrom_Core { "monoidIndices" }
+importFrom_Core { "monoidIndices", "Hooks", "HookAlgorithms" }
 importFrom_Elimination { "eliminationRing" }
 
 ---------------------------------------------------------------------------
@@ -801,6 +847,7 @@ M2DefaultMinimalBetti = lookup(minimalBetti, Module)
 
 -- true if msolve is applicable to the one-rowed matrix m
 msolveApplicable = m -> m != 0 and msolveEngineUsable m
+msolveGBApplicable = m -> m != 0 and msolveGBEngineUsable m
 
 -- Declares the columns of G a Groebner basis.  Note forceGB caches the
 -- declaration on G itself, whereas `generators forceGB G` rebuilds the matrix
@@ -815,7 +862,7 @@ msolveDeclareGB = G -> (
 -- A GroebnerBasis object for m, computed by msolve and declared with forceGB.
 -- Returns null when msolve does not apply, so callers can fall back.
 msolveForceGB = (m, elim, opts) -> (
-    if not msolveApplicable m then return null;
+    if not msolveGBApplicable m then return null;
     if (G := msolveGBMatrix(m, elim, opts)) === null then return null;
     msolveDeclareGB G)
 
@@ -868,6 +915,49 @@ msolveEliminationGB = (I, v) -> (
     if result === null then return null;
     (S1, G) := result;
     ideal toR substitute(G, vars ring J))
+
+-- The elimination msolveElimGB performs, for a matrix of several rows.
+--
+-- msolveElimGB says the elimination outside the monomial order, as the length
+-- of a leading block of variables, which is what export_f4 takes.
+-- export_module_f4_blocks takes no such length: a module over a quotient
+-- reaches the engine with the relations of the quotient at component 0, and an
+-- elimination block has nowhere to go beside them.  So here the elimination is
+-- said the other way, inside the order -- two grevlex blocks, which the module
+-- entry point does take -- over the same variables with the same degrees.
+--
+-- Neither detour computes a Groebner basis of m for the order of m's own ring.
+-- That order is typically Eliminate e, which is a different order from the two
+-- block one and not one msolve can express, so neither basis may be declared a
+-- basis of m with forceGB.  Only the filtered part is used, and an element lies
+-- in it exactly when its lead term avoids the first e variables -- a condition
+-- every order eliminating those variables answers the same way, so which one
+-- computed it does not matter.
+--
+-- Returns the elimination part as a matrix over ring m, or null when msolve
+-- does not apply.
+msolveElimModuleGB = (m, e, opts) -> (
+    if not rawMsolvePresent() or m == 0 then return null;
+    R1 := ring m;
+    if not isCommutative R1 then return null;
+    A1 := ambient R1;
+    -- checked before the two block ring is built below, so that a request msolve
+    -- has no use for does not construct one on every call
+    if not instance(A1, PolynomialRing)
+    or not msolveCoefficientsUsable coefficientRing A1 then return null;
+    n := numgens A1;
+    if e < 1 or e >= n then return null;
+    -- the same variables and degrees, but an order msolve can express
+    P2 := (coefficientRing A1)(monoid [Variables => n, Degrees => degrees A1,
+	    MonomialOrder => ProductOrder{e, n - e}]);
+    -- the quotient is kept a quotient: its relations go to the engine at
+    -- component 0 rather than being lifted into the generators, which is the
+    -- whole reason this path exists rather than msolveElimGB's
+    R2 := if A1 === R1 then P2 else P2 / substitute(ideal presentation R1, vars P2);
+    G := msolveGBMatrix(substitute(matrix m, vars R2), 0, opts);
+    if G === null then return null;
+    -- selectInSubring reads "lead term avoids the first block" off the order
+    substitute(selectInSubring(1, G), vars R1))
 
 -- A Groebner basis of the one rowed matrix m for the two block grevlex order of
 -- its own ring, computed by msolve and declared with forceGB.  Nothing is
@@ -991,12 +1081,93 @@ msolveMinimalBettiHook = options minimalBetti >> opts -> M -> (
     if w === null then return null;
     betti(unpackMsolveBetti w, Weights => opts.Weights))
 
+ordertab := new HashTable from {
+    Eliminate    => (nR, nS) -> Eliminate nR,
+    ProductOrder => (nR, nS) -> ProductOrder{nR, nS},
+    Lex          => (nR, nS) -> Lex,
+    }
+
+msolvePushForwardHook = (opts, f0, M) -> (
+    -- given f: R --> S, and M an S-module, finite over R,
+    -- returns R-presentation matrix for the pushforward of M
+    -- written by Mike Stillman and David Eisenbud
+
+    -- first flatten source and target of f so that this computation works for towers.
+    -- note this forces us to unflatten the return value when we are done.
+    (R, phiR) := flattenRing target f0;
+    (S, phiS) := flattenRing source f0;
+    m := phiR presentation M;
+    f := phiR * f0 * phiS^-1;
+
+    -- making sure that homogeneity isn't broken
+    if isHomogeneous M  then assert isHomogeneous m;
+    if isHomogeneous f0 then assert isHomogeneous f;
+
+    -- set up some variables that are used throughout
+    deglenS := degreeLength S;
+    numgensS := numgens S;
+    numgensR := numgens R;
+
+    monorder := opts.MonomialOrder;
+    monorder  = if ordertab#?monorder then (ordertab#monorder)(numgensR, numgensS)
+    else error("pushForward: MonomialOrder option expected one of ",
+	demark_", " \\ toString \ keys ordertab);
+
+    J := graphIdeal(f, MonomialOrder => monorder, VariableBaseName => local X);
+    G := ring J;
+    xvars := map(G, R, submatrix(vars G, toList(0..numgensR - 1)));
+    m1 := presentation (cokernel xvars m  **  cokernel generators J);
+
+    if opts.UseHilbertFunction and all({f, m}, isHomogeneous) then (
+	-- compare with kernel RingMap
+	hf := poincare cokernel m;
+	T := degreesRing G;
+	hf = hf * product(degrees source generators J, d -> 1 - T_d);
+	-- cache poincare
+	poincare cokernel m1 = hf);
+
+    mapbackdeg := d -> take(d, -deglenS);
+    -- that choice of degree map was chosen to make the symmetricPower functor homogeneous, but it doesn't have much
+    -- else to recommend it.
+    -- we should really be *lifting* the result to S along the natural map S ---> G
+    mapback := map(S, G, map(S^1, S^numgensR, 0) | vars S, DegreeMap => mapbackdeg );
+
+    -- let's at least check it splits f's degree map:
+    -- for i from 0 to deglenS-1 do (
+    --     e := for j from 0 to deglenS-1 list if i === j then 1 else 0;
+    for i from 0 to numgens S - 1 do (
+	e := degree S_i;
+	if mapbackdeg f.cache.DegreeMap e =!= e
+	then error "not implemented yet: unexpected degree map of ring map");
+
+    -- Only the part of the basis that avoids the variables of R is used, so
+    -- msolve is handed the elimination rather than the Groebner basis: that
+    -- part is the same for every order eliminating them, and so does not have
+    -- to be computed in the order of G -- which graphIdeal makes Eliminate
+    -- numgensR whatever monorder says, an order msolve cannot express.  What is
+    -- given up is the Hilbert function hint cached above, which none of msolve's
+    -- entry points takes; see the option table.
+    sel := if opts.StopBeforeComputation
+    or opts.DegreeLimit =!= {} or opts.PairLimit =!= infinity then null
+    else msolveElimModuleGB(m1, numgensR, msolveDefaultOptions);
+
+    -- msolve declined: Macaulay2's own basis in the order of G, as before
+    if sel === null then (
+	g := gb(m1,
+	    StopBeforeComputation => opts.StopBeforeComputation,
+	    DegreeLimit           => opts.DegreeLimit,
+	    PairLimit             => opts.PairLimit);
+	-- MES: check if the monomial order restricts to R.  If so, then do `` forceGB result ''
+	sel = selectInSubring(if numgensR > 0 then 1 else 0, generators g));
+
+    phiS^-1 mapback sel)
+
 -- msolveSetup() installs all of them; msolveSetup {gb, eliminate} a selection
 msolveSetup = arg -> (
     install := if instance(arg, VisibleList) then toList arg else {arg};
     if #install == 0 then install = {
         gb, groebnerBasis, -* syz, *- mingens, trim,
-        eliminate, kernel, saturate,
+        eliminate, kernel, saturate, pushForward,
         ContainmentHooks, minimalBetti};
     printerr("installing msolve hooks for ", install);
 
@@ -1050,7 +1221,7 @@ msolveSetup = arg -> (
     if member(mingens, install) then
     addHook((mingens, Module), Strategy => Msolve, (opts, M) -> (
             if M.?relations or not M.?generators
-            or not msolveApplicable M.generators
+            or not msolveGBApplicable M.generators
             then return null;
 
             R := ring M;
@@ -1074,7 +1245,7 @@ msolveSetup = arg -> (
     if member(trim, install) then
     addHook((trim, Module), Strategy => Msolve, (opts, M) -> (
             if M.?relations or not M.?generators
-            or not msolveApplicable M.generators
+            or not msolveGBApplicable M.generators
             then return null;
 
             if (g := mingens M) === M.generators
@@ -1084,6 +1255,25 @@ msolveSetup = arg -> (
     minimalBetti Module := opts -> M -> (
         msolveMinimalBettiHook(opts, M) ?? (M2DefaultMinimalBetti opts)(M));
 
+    if member(pushForward, install) then
+    RingMap.Hooks#(pushForward, RingMap, Module).HookAlgorithms.Default = (opts, f, M) -> (
+        if not isHomogeneous f
+        or not isHomogeneous M
+        then return null;
+        M = cokernel presentation M;
+        M1 := M / ideal f.matrix;
+        M2 := subquotient(matrix basis M1, relations M);
+        cokernel msolvePushForwardHook(opts, f, M2));
+
+    if member(pushForward, install) and member(kernel, install) then
+    addHook((kernel, Matrix), Strategy => Msolve,
+        (opts, m) -> if m.?RingMap then m.cache#(symbol kernel => opts) ??= (
+            N := source m;
+            P := target m;
+            f := m.RingMap;
+            M := coimage map(target m, f ** source m, raw m);
+            image msolvePushForwardHook(options pushForward, f, M)));
+
     ///
     -- TODO: what other rawGB... compiled functions can use msolve?
     -- TODO: try out pushforward using msolve?
@@ -1091,7 +1281,6 @@ msolveSetup = arg -> (
     if member(ReduceHooks, install) then
     if member(length, install) then
     if member(prune, install) then
-    if member(pushForward, install) then
     if member(quotient, install) then
     if member(quotientRemainder, install) then
     if member(remainder, install) then

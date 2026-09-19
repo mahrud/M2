@@ -163,8 +163,12 @@ Computation* rawMsolveResolution(const Matrix* /*M*/,
 
 namespace {
 
-// msolve implements exactly one monomial order, standard degree reverse
-// lexicographic.  A ring whose GRevLex block carries weights w is still usable,
+// msolve implements degree reverse lexicographic order, in one block or in
+// several: mo_block_t in its order.h partitions the variables into consecutive
+// blocks, each ordered by degree reverse lexicographic and compared left to
+// right, of which the one block case is plain DRL and the two block case is
+// the classical elimination order.  A ring whose GRevLex blocks carry weights
+// w is still usable,
 // because substituting x_i -> x_i^(w_i) carries its order over to msolve's
 // exactly: a monomial's weighted degree sum(e_i w_i) becomes the image's total
 // degree, and scaling coordinates by positive w_i changes neither which
@@ -174,11 +178,18 @@ namespace {
 // interpreter speed, and then undo term by term on the (much larger) result --
 // it is applied to the exponents while they are marshalled in and out below.
 //
-// Returns the weight vector of the GRevLex block, or an empty vector if the
-// order is not one msolve can be handed at all.
-std::vector<int> grevlexWeights(const MonomialOrdering* mo, int nvars)
+// Returns the weight vector of the GRevLex blocks, in variable order, or an
+// empty vector if the order is not one msolve can be handed at all.  bsz, when
+// given, collects the sizes of those blocks and is what makes more than one of
+// them acceptable: an entry point that cannot pass a block description on has
+// nowhere to put a second block and refuses the ring outright, rather than
+// computing in an order that is not the ring's.
+std::vector<int> grevlexWeights(const MonomialOrdering* mo,
+                                int nvars,
+                                std::vector<int32_t>* bsz = nullptr)
 {
   std::vector<int> none;
+  if (bsz != nullptr) bsz->clear();
   if (mo == nullptr) return none;
   std::vector<int> wts;
   for (unsigned int i = 0; i < mo->len; i++)
@@ -189,22 +200,27 @@ std::vector<int> grevlexWeights(const MonomialOrdering* mo, int nvars)
           case MO_GREVLEX:
           case MO_GREVLEX2:
           case MO_GREVLEX4:
-            if (not wts.empty()) return none;  // at most one grevlex block
-            wts.assign(p->nvars, 1);
-            break;
           case MO_GREVLEX_WTS:
           case MO_GREVLEX2_WTS:
           case MO_GREVLEX4_WTS:
-            if (not wts.empty()) return none;
-            wts.assign(p->nvars, 1);
-            if (p->wts != nullptr)
+            {
+              // a second grevlex block is a block order, which is msolve's
+              // own and which only a caller that asked for the block sizes
+              // has anywhere to put
+              if (not wts.empty() and bsz == nullptr) return none;
+              const bool weighted = p->type == MO_GREVLEX_WTS
+                                    or p->type == MO_GREVLEX2_WTS
+                                    or p->type == MO_GREVLEX4_WTS;
               for (int j = 0; j < p->nvars; j++)
                 {
+                  int w = weighted and p->wts != nullptr ? p->wts[j] : 1;
                   // grevlex needs strictly positive weights; a zero or negative
                   // one would make the substitution non-invertible
-                  if (p->wts[j] < 1) return none;
-                  wts[j] = p->wts[j];
+                  if (w < 1) return none;
+                  wts.push_back(w);
                 }
+              if (bsz != nullptr) bsz->push_back(p->nvars);
+            }
             break;
           case MO_POSITION_UP:
           case MO_POSITION_DOWN:
@@ -433,6 +449,51 @@ void collectModuleInput(const Matrix* M,
     }
 }
 
+// Where the component is compared, which Macaulay2 spells as the placement of
+// the Position part of the monomial order relative to the grevlex blocks.
+// Before all of them is position over term, after all of them is term over
+// position, and between two of them is neither: the component is compared in
+// the middle of the ring order, which is what a tower flattens to and which
+// msolve's res_mord_t has no way to say.
+//
+// up reports the direction, Macaulay2's Position => Up or Down, and is only
+// meaningful when there is a Position part at all.
+enum class PositionPlacement { None, First, Last, Middle };
+
+PositionPlacement positionPlacement(const MonomialOrdering* mo, bool& up)
+{
+  up = true;
+  if (mo == nullptr) return PositionPlacement::None;
+  bool seen = false, blockBefore = false, blockAfter = false;
+  for (unsigned int i = 0; i < mo->len; i++)
+    {
+      switch (mo->array[i]->type)
+        {
+          case MO_GREVLEX:
+          case MO_GREVLEX2:
+          case MO_GREVLEX4:
+          case MO_GREVLEX_WTS:
+          case MO_GREVLEX2_WTS:
+          case MO_GREVLEX4_WTS:
+            (seen ? blockAfter : blockBefore) = true;
+            break;
+          case MO_POSITION_UP:
+          case MO_POSITION_DOWN:
+            // a second Position part is an order nobody means; the first one
+            // is the one that decides, and reporting Middle refuses both
+            if (seen) return PositionPlacement::Middle;
+            seen = true;
+            up = mo->array[i]->type == MO_POSITION_UP;
+            break;
+          default:
+            break;
+        }
+    }
+  if (not seen) return PositionPlacement::None;
+  if (blockBefore and blockAfter) return PositionPlacement::Middle;
+  return blockBefore ? PositionPlacement::Last : PositionPlacement::First;
+}
+
 // The rows a module entry point can take.  A component index reaches msolve's
 // hash table in the same 16-bit slot an exponent lives in, and components are
 // numbered from 1, so at 2^16 rows two of them would share a component and the
@@ -644,6 +705,36 @@ std::vector<int> checkedWeights(const PolyRingFlat* P)
         "expected a ring with a degree reverse lexicographic order, possibly "
         "weighted; msolve implements no other monomial order");
   return wts;
+}
+
+// The same, for the entry point that can also pass msolve a block order: the
+// blocks come from the ring rather than from an argument, so what is computed
+// is the ring's own order and nothing has to be reordered on the way back.
+std::vector<int> checkedBlockWeights(const PolyRingFlat* P,
+                                     std::vector<int32_t>& bsz)
+{
+  std::vector<int> wts = grevlexWeights(
+      P->getMonoid()->getMonomialOrdering(), P->n_vars(), &bsz);
+  if (wts.empty())
+    throw exc::engine_error(
+        "expected a ring ordered by one or more degree reverse lexicographic "
+        "blocks, possibly weighted; msolve implements no other monomial "
+        "order");
+  return wts;
+}
+
+// Whether the ring's order has more than one grevlex block, asked before any
+// of the checks that would throw: rawMsolveGB routes such a ring to the module
+// entry point, the only one that can hand msolve a block order.
+bool hasBlockOrder(const Matrix* M)
+{
+  const PolyRingFlat* P =
+      M == nullptr ? nullptr : M->get_ring()->cast_to_PolyRingFlat();
+  if (P == nullptr) return false;
+  std::vector<int32_t> bsz;
+  const std::vector<int> wts = grevlexWeights(
+      P->getMonoid()->getMonomialOrdering(), P->n_vars(), &bsz);
+  return not wts.empty() and bsz.size() > 1;
 }
 
 // The order strategy the resolution entry points run in.
@@ -1467,12 +1558,28 @@ const Matrix* rawMsolveGB(const Matrix* M,
   // position up/down over term and term over position up/down.  msolve
   // currently has POT/TOP with one component direction; reversing component
   // numbering here supplies Up, and the unreversed numbering supplies Down.
-  if (M != nullptr and M->n_rows() != 1)
+
+  // There are two ways to ask msolve for a block order and they are mutually
+  // exclusive.  elim_block_len is the one export_f4 takes: the caller computes
+  // in a plain grevlex ring and says how long the leading block is, and the
+  // basis comes back in an order that is not that ring's, so buildResult sorts
+  // it.  The other is the ring's own order having several grevlex blocks,
+  // which the module entry point passes to msolve as a mo_block_t; there
+  // msolve computes in the ring's order and nothing needs reordering.  A ring
+  // of the second kind therefore goes to the module entry point whatever its
+  // number of rows -- with one component there is nothing for the module order
+  // to do, and a rank one module basis is the ideal basis element for element.
+  const bool blockRing = hasBlockOrder(M);
+
+  if (M != nullptr and (M->n_rows() != 1 or blockRing))
     {
       if (elim_block_len != 0)
         {
-          ERROR("msolve does not combine elimination blocks with module "
-                "orders");
+          ERROR(blockRing
+                    ? "msolve does not combine an elimination block length "
+                      "with a ring whose monomial order already has blocks"
+                    : "msolve does not combine elimination blocks with module "
+                      "orders; give the ring the block order instead");
           return nullptr;
         }
       return rawMsolveModuleGB(M, 1, degree_limit, nr_threads, info_level);
@@ -1602,13 +1709,59 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
   try
     {
       const PolyRingFlat* P = checkedRing(M, true /* quotients are fine here */);
-      const std::vector<int> wts = checkedWeights(P);
+      // The block structure of the ring's order, which msolve takes as a
+      // partition of the variables and compares left to right.  It is read off
+      // the ring rather than passed in, so the order msolve computes in is the
+      // ring's own: an elimination order arrives here as two blocks and the
+      // basis that comes back needs no reordering, unlike the route through
+      // export_f4's elim_block_len, which computes in a plain grevlex ring and
+      // has to be sorted back into the ring's order term by term.
+      std::vector<int32_t> bsz;
+      const std::vector<int> wts = checkedBlockWeights(P, bsz);
+      const mo_block_t blk = {static_cast<int32_t>(bsz.size()), bsz.data(),
+                              nullptr /* the weights are in the exponents
+                                       * already, by the substitution
+                                       * grevlexWeights describes */};
       long charac = static_cast<long>(P->characteristic());
       const int nvars = P->n_vars();
       const FreeModule* F = M->rows();
       const int nrows = F->rank();
 
       checkedRowCount(nrows);
+
+      // Which order on R^r the ring is asking for.  With one component there
+      // is nothing for the component key to order, so a one row matrix -- what
+      // rawMsolveGB sends here for a block order, a quotient or a degree limit
+      // -- takes whatever placement the ring has.
+      //
+      // TODO: position over term is RES_MORD_POT and the other direction is
+      // res_strat_t's pos, so three of the four could be passed through rather
+      // than refused; what cannot is the component compared in the middle of
+      // the ring order.  Until they are, refusing is the only honest answer:
+      // the basis msolve returns for a module under any of them generates the
+      // right submodule with the lead terms of another order, which is what
+      // msolveDeclareGB's forceGB would go on to declare a Groebner basis.
+      if (nrows > 1)
+        {
+          bool positionUp = true;
+          const PositionPlacement where = positionPlacement(
+              P->getMonoid()->getMonomialOrdering(), positionUp);
+          if (where == PositionPlacement::Middle)
+            throw exc::engine_error(
+                "msolve compares the component before or after the ring's "
+                "order, not in the middle of it, so it cannot take a module "
+                "over a ring whose Position part sits between two grevlex "
+                "blocks");
+          if (where == PositionPlacement::First)
+            throw exc::engine_error(
+                "msolve's position over term order is not passed through "
+                "here yet; expected a ring whose Position part comes after "
+                "its grevlex blocks");
+          if (where != PositionPlacement::None and not positionUp)
+            throw exc::engine_error(
+                "expected a ring with Position => Up, the direction the "
+                "component numbering here supplies");
+        }
 
       // res.h numbers the module orders SCHREYER, POT, TOP.  Components are
       // reversed at the interface boundary, so both choices below have
@@ -1770,7 +1923,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
           interrupt_jmp.is_set = false;
           return nullptr;
         }
-      int64_t nterms = export_module_f4(malloc,
+      int64_t nterms = export_module_f4_blocks(malloc,
                 &bld, &blen, &bexp, &bcomp, &bcf,
                 in.lens.data(),
                 in.exps.data(),
@@ -1779,6 +1932,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                 useRowDegrees ? rowheft.data() : nullptr,
                 static_cast<uint32_t>(charac),
                 mon_order,
+                bsz.size() > 1 ? &blk : nullptr,
                 &gbStrat,
                 nullptr /* the standard grading; a Groebner basis needs only
                          * the order, and the exponent substitution already
@@ -1797,7 +1951,7 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
                 static_cast<int32_t>(info_level));
       interrupt_jmp.is_set = false;
 
-      // export_module_f4 reports every rejection on stderr and returns 0
+      // export_module_f4_blocks reports every rejection on stderr and returns 0
       // without allocating anything, rather than calling exit as export_f4
       // does on bad input
       if (nterms == 0 or blen == nullptr or bexp == nullptr

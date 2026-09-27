@@ -46,8 +46,12 @@ threadRWLockFinalizer(p:ThreadRWLockPtr,cd:null):void :=
 export newThreadRWLock():ThreadRWLockPtr := (
     p := GCmalloc(ThreadRWLockPtr);
     Ccode(void, "if (pthread_rwlock_init(",p,",NULL)) abort()");
-    Ccode(void, "GC_REGISTER_FINALIZER(",p,",(GC_finalization_proc)",threadRWLockFinalizer,
-	",NULL,NULL,NULL)");
+    -- Linux/glibc rwlock destruction is a no-op; avoid GC finalizer contention.
+    Ccode(void, "
+        #if !(defined(__linux__) && defined(__GLIBC__))
+        GC_REGISTER_FINALIZER(",p,",(GC_finalization_proc)",threadRWLockFinalizer,",NULL,NULL,NULL);
+        #endif
+    ");
     p);
 export lockRead(p:ThreadRWLockPtr) ::= Ccode(void, "if (pthread_rwlock_rdlock(",p,")) abort()");
 export lockWrite(p:ThreadRWLockPtr) ::= Ccode(void, "if (pthread_rwlock_wrlock(",p,")) abort()");

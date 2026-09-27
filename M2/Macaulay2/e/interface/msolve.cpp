@@ -133,6 +133,16 @@ const Matrix* rawMsolveSaturate(const Matrix* /*M*/,
   return nullptr;
 }
 
+const Matrix* rawMsolveModuleSaturate(const Matrix* /*M*/,
+                                      const Matrix* /*F*/,
+                                      int /*module_order*/,
+                                      int /*nr_threads*/,
+                                      int /*info_level*/)
+{
+  ERROR("this Macaulay2 was built without the msolve library");
+  return nullptr;
+}
+
 M2_arrayint rawMsolveMinimalBetti(const Matrix* /*M*/,
                                   int /*length_limit*/,
                                   int /*nr_threads*/,
@@ -1700,11 +1710,18 @@ const Matrix* rawMsolveGB(const Matrix* M,
 }
 
 
-const Matrix* rawMsolveModuleGB(const Matrix* M,
-                                int module_order,
-                                int degree_limit,
-                                int nr_threads,
-                                int info_level)
+// The module Groebner basis and the module saturation differ in their input
+// by one polynomial and in their output not at all, so they share a body:
+// Fsat is the element to saturate by, or nullptr for a plain basis.  What the
+// saturation refuses beyond the basis -- a block order, a degree limit, a
+// small characteristic, a second thread -- is refused where that argument is
+// read, next to the reason.
+static const Matrix* msolveModuleGBOrSaturate(const Matrix* M,
+                                              const Matrix* Fsat,
+                                              int module_order,
+                                              int degree_limit,
+                                              int nr_threads,
+                                              int info_level)
 {
   try
     {
@@ -1718,6 +1735,14 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       // has to be sorted back into the ring's order term by term.
       std::vector<int32_t> bsz;
       const std::vector<int> wts = checkedBlockWeights(P, bsz);
+      // The quotient basis F4SAT multiplies by would have to be enumerated
+      // against per block degrees, and the degree its saturation steps are
+      // scheduled by is the one an elimination order deliberately does not
+      // refine.  See res_sat_t.
+      if (Fsat != nullptr and bsz.size() > 1)
+        throw exc::engine_error(
+            "msolve's F4SAT does not take a block order; expected a ring "
+            "with a single grevlex block");
       const mo_block_t blk = {static_cast<int32_t>(bsz.size()), bsz.data(),
                               nullptr /* the weights are in the exponents
                                        * already, by the substitution
@@ -1805,7 +1830,35 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
           quot.nr_gens = static_cast<int32_t>(qin.lens.size());
         }
 
+      // The element to saturate by is an element of the ring, so it is
+      // collected without components exactly as a quotient's generators are.
+      MsolveInput satin;
+      res_sat_t sat = {};
+      if (Fsat != nullptr)
+        {
+          if (Fsat->get_ring() != M->get_ring())
+            throw exc::engine_error("expected both matrices over the same ring");
+          if (Fsat->n_rows() != 1)
+            throw exc::engine_error("expected a matrix with one row");
+          // https://github.com/algebraic-solving/msolve/issues/165
+          if (static_cast<long>(P->characteristic()) < (1L << 16))
+            throw exc::engine_error(
+                "expected characteristic larger than 2^16 for msolve's F4SAT");
+          collectInput(Fsat, P, wts, satin);
+          if (satin.lens.size() != 1)
+            throw exc::engine_error(
+                "expected one nonzero polynomial to saturate by; saturating "
+                "by several is saturating by their product");
+          sat.lens = satin.lens.data();
+          sat.exps = satin.exps.data();
+          sat.cfs = satin.cfs.data();
+          sat.nr_gens = 1;
+        }
+
       clampOptions(nr_threads, info_level);
+      // msolve's F4SAT corrupts the heap when run with more than one thread
+      // in process; see rawMsolveSaturate, where the same applies.
+      if (Fsat != nullptr) nr_threads = 1;
 
       // The row degrees, as heft degrees in the order msolve numbers
       // components in, handed over for the schedule and withheld from the
@@ -1923,7 +1976,31 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
           interrupt_jmp.is_set = false;
           return nullptr;
         }
-      int64_t nterms = export_module_f4_blocks(malloc,
+      int64_t nterms = Fsat != nullptr
+          ? export_module_f4sat(malloc,
+                &bld, &blen, &bexp, &bcomp, &bcf,
+                in.lens.data(),
+                in.exps.data(),
+                in.comps.data(),
+                in.cfs.data(),
+                useRowDegrees ? rowheft.data() : nullptr,
+                static_cast<uint32_t>(charac),
+                mon_order,
+                &gbStrat,
+                nullptr /* the standard grading, as below */,
+                nullptr /* a degree limit is refused for a saturation */,
+                P->is_quotient_ring() ? &quot : nullptr,
+                &sat,
+                static_cast<int32_t>(nvars),
+                static_cast<int32_t>(nrows),
+                static_cast<int32_t>(in.lens.size()),
+                ht_size,
+                static_cast<int32_t>(nr_threads),
+                max_nr_pairs,
+                la_option,
+                reduce_gb,
+                static_cast<int32_t>(info_level))
+          : export_module_f4_blocks(malloc,
                 &bld, &blen, &bexp, &bcomp, &bcf,
                 in.lens.data(),
                 in.exps.data(),
@@ -1956,7 +2033,9 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       // does on bad input
       if (nterms == 0 or blen == nullptr or bexp == nullptr
           or bcomp == nullptr or bcf == nullptr)
-        throw exc::engine_error("msolve returned no module basis");
+        throw exc::engine_error(Fsat != nullptr
+            ? "msolve returned no saturation"
+            : "msolve returned no module basis");
 
       const Matrix* result = buildModuleResult(
           F, wts, bld, blen, bexp, bcomp, static_cast<const int32_t*>(bcf),
@@ -1970,6 +2049,33 @@ const Matrix* rawMsolveModuleGB(const Matrix* M,
       ERROR(e.what());
       return nullptr;
     }
+}
+
+const Matrix* rawMsolveModuleGB(const Matrix* M,
+                                int module_order,
+                                int degree_limit,
+                                int nr_threads,
+                                int info_level)
+{
+  return msolveModuleGBOrSaturate(M, nullptr /* no saturation */, module_order,
+                                  degree_limit, nr_threads, info_level);
+}
+
+// A Groebner basis of M : f^oo, with msolve's F4SAT rather than an iterated
+// colon or an elimination.  The multipliers F4SAT tries are the standard
+// monomials of each component of the current lead term module, so this is the
+// module algorithm and not the ideal one applied to a trivial extension; see
+// res_sat_t for what it computes and what it refuses.
+const Matrix* rawMsolveModuleSaturate(const Matrix* M,
+                                      const Matrix* F,
+                                      int module_order,
+                                      int nr_threads,
+                                      int info_level)
+{
+  return msolveModuleGBOrSaturate(M, F, module_order,
+                                  0 /* a degree limit does not apply to a
+                                     * saturation; see res_sat_t */,
+                                  nr_threads, info_level);
 }
 
 const Matrix* rawMsolveSyzygy(const Matrix* M,

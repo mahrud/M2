@@ -2,7 +2,7 @@ TEST ///
   -- the msolve hooks must not drop the grading of the target: msolve is handed
   -- bare polynomials, so a basis returned as if the target were S^r shifts every
   -- degree read off `gens gb` -- poincare, hilbertFunction and basis included.
-  msolveSetup()
+  setupMsolve()
   R = ZZ/3[q]
   N = coker map(R^{-6}, R^{-9}, matrix{{q^3}}) -- generated in degree 6, length 3
   assert(degrees N == {{6}})
@@ -16,7 +16,7 @@ TEST ///
 
 TEST ///
   -- c.f. https://github.com/algebraic-solving/msolve/issues/165
-  msolveSetup() -- Strategy => Msolve below needs the saturate hook installed
+  setupMsolve() -- Strategy => Msolve below needs the saturate hook installed
   K = ZZ/65537 -- > 2^16
   R = K[x_(0,0), x_(0,1)]
   I = ideal(2*x_(0,0)+3*x_(0,1))
@@ -181,6 +181,42 @@ TEST ///
 ///
 
 TEST ///
+  -- saturation of a submodule of a free module, which msolve's F4SAT computes
+  -- as a module: the multipliers are the standard monomials of each component
+  setupMsolve() -- Strategy => Msolve below needs the saturate hook installed
+  R = ZZ/65537[x,y,z]
+  M = image matrix {{x*y, z^2, 0}, {x*z, 0, y^3}}
+  assert(msolveSaturate(M, x) == saturate(M, x, Strategy => Iterate))
+  assert(saturate(M, x, Strategy => Msolve) == saturate(M, x, Strategy => Iterate))
+  -- F4SAT can stop short of the saturation, homogeneous input included: this
+  -- is such a case, coming back without z^3*e_2, so what is being checked here
+  -- is that the hook notices and falls back rather than returning a submodule
+  -- of the saturation
+  assert(saturate(M, x+y) == saturate(M, x+y, Strategy => Iterate))
+
+  -- the grading of the target is carried by the new variables, so a homogeneous
+  -- module gives a homogeneous ideal and comes back homogeneous
+  N = image map(R^{0,-1}, , {{x*y, z^2}, {x, y}})
+  assert(msolveSaturate(N, x) == saturate(N, x, Strategy => Iterate))
+  assert isHomogeneous msolveSaturate(N, x)
+
+  -- a subquotient keeps its relations
+  P = subquotient(matrix {{x*y, z^2}, {x*z, y*z}}, matrix {{x^3, 0}, {0, y^3}})
+  assert(msolveSaturate(P, x) == saturate(P, x, Strategy => Iterate))
+
+  -- over a quotient ring whose own relations are not saturated, so that the
+  -- component 0 part of what msolve computes is J : f^oo rather than J and
+  -- contributes generators of its own, one copy per component
+  Q = R/ideal(x^2*y, x^2*z)
+  M' = image matrix {{Q_0*Q_1, Q_2^2}, {Q_0*Q_2, Q_1*Q_2}}
+  assert(msolveSaturate(M', Q_0) == saturate(M', Q_0, Strategy => Iterate))
+
+  -- and the edge cases
+  assert(msolveSaturate(R^2, x) == R^2)
+  assert(msolveSaturate(image map(R^2, R^0, 0), x) == image map(R^2, R^0, 0))
+///
+
+TEST ///
   S = ZZ/1073741827[t12,t13,t14,t23,t24,t34];
   I = ideal(
       (t13*t12-t23)*(1-t14)+(t14*t12-t24)*(1-t13) - (t12+1)*(1-t13)*(1-t14),
@@ -227,7 +263,7 @@ TEST ///
 
 TEST ///
   -- genus 6, 14th semigroup
-  msolveSetup()
+  setupMsolve()
   kk = ZZ/32003
   R = kk[x_0..x_7]/(x_5^2-x_4*x_6,x_4*x_5-x_3*x_7,x_3*x_5-x_2*x_6,x_4^2-x_2*x_7,x_3*x_4-x_2*x_5,
       x_2*x_4-x_1*x_7,x_3^2-x_1*x_6,x_2*x_3-x_1*x_5,x_1*x_3-x_0*x_6,x_0*x_3-5*x_6^2+5*x_5*x_7,
@@ -359,7 +395,7 @@ TEST ///
   f = a^3*b + c*d*e^2
   nf = f % gens gb ideal gensI
 
-  msolveSetup {gb}
+  setupMsolve {gb}
   I = ideal gensI
   G = gb I
   assert(toString raw G == "declared GB") -- i.e. msolve's, not recomputed
@@ -388,7 +424,7 @@ TEST ///
   f = a^2*b*x + c^3*z
   nf = f % gens gb ideal gensI
 
-  msolveSetup {gb}
+  setupMsolve {gb}
   I = ideal gensI
   G = gb I
   assert(toString raw G == "declared GB") -- i.e. msolve's, not recomputed
@@ -435,7 +471,7 @@ TEST ///
   refpair = syz(B, PairLimit => 3)
   refstop = syz(B, StopBeforeComputation => true)
 
-  msolveSetup {syz}
+  setupMsolve {syz}
   assert(syz A == refA)
   assert(syz B == refB)
   assert(syz C == refC)
@@ -607,14 +643,20 @@ TEST ///
       Gm := msolveGBMatrix(mm, 0, opts);
       if Gm =!= null then assert(matrix mm % forceGB Gm == 0))
 
-  -- msolve's module F4 drops a generator on some inhomogeneous input, which
-  -- is what the check on the way out is there for.  Minimal case: the module
-  -- <x*e_1 + e_2, x*e_0 + e_1, x*e_0> is <x*e_0, e_1, e_2>, of Groebner basis
-  -- three elements, and msolve returns two -- losing e_2, so a wrong submodule
-  -- and not merely wrong lead terms.  msolveGBMatrix must decline it.
+  -- msolve's module F4 used to drop a generator here, which is one of the
+  -- things the check on the way out is there for.  The module
+  -- <x*e_1 + e_2, x*e_0 + e_1, x*e_0> is <x*e_0, e_1, e_2>, and e_1 and e_2
+  -- are of degree 0 in a component other than 0 -- which convert.c read as a
+  -- constant, i.e. as a unit of the ring, and stopped the round loop at,
+  -- returning two elements of the three.  A unit in a component is a
+  -- generator of the free module and not a constant; with that distinction
+  -- made in msolve the basis comes back complete, and msolveGBMatrix has
+  -- nothing to decline.
   md = matrix {{0_S, x, x}, {x, 1_S, 0_S}, {1_S, 0_S, 0_S}}
-  assert(null === msolveGBMatrix(md, 0, opts))
-  assert(image map(target md, , rawMsolveGB(raw md, 0, 0, 1, 0)) != image md)
+  Gd = msolveGBMatrix(md, 0, opts)
+  assert(Gd =!= null)
+  assert(image leadTerm Gd == image leadTerm gens gb md)
+  assert(image map(target md, , rawMsolveGB(raw md, 0, 0, 1, 0)) == image md)
 
   -- a component index is a 16-bit field in msolve, so 2^16 rows are declined
   assert(null === msolveGBMatrix(
@@ -681,7 +723,7 @@ TEST ///
   -- and the free part put back; what comes out must match Macaulay2's.
   debug needsPackage "Msolve"
   S = ZZ/32003[x,y,z]
-  -- no msolveSetup here, so syz is Macaulay2's own
+  -- no setupMsolve here, so syz is Macaulay2's own
   check1 = M -> (
       A := msolveSyzygy M;
       assert(M * A == 0);

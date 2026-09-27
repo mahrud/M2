@@ -2276,6 +2276,30 @@ export rawMsolveSaturate(e:Expr):Expr := (
   );
 setupfun("rawMsolveSaturate",rawMsolveSaturate);
 
+export rawMsolveModuleSaturate(e:Expr):Expr := (
+  when e is s:Sequence do (
+  if length(s) == 5 then (
+  when s.0 is M:RawMatrixCell do
+  when s.1 is F:RawMatrixCell do
+  when s.2 is mord:ZZcell do if !isInt(mord) then WrongArgSmallInteger(3) else
+  when s.3 is nthreads:ZZcell do if !isInt(nthreads) then WrongArgSmallInteger(4) else
+  when s.4 is verbosity:ZZcell do if !isInt(verbosity) then WrongArgSmallInteger(5) else
+    toExpr(Ccode(RawMatrixOrNull,
+      "rawMsolveModuleSaturate(",
+        M.p, ",", F.p, ",", toInt(mord), ",", toInt(nthreads), ",",
+        toInt(verbosity),
+      ")"
+    ))
+  else WrongArgZZ(5)
+  else WrongArgZZ(4)
+  else WrongArgZZ(3)
+  else WrongArgMatrix(2)
+  else WrongArgMatrix(1)
+  ) else WrongNumArgs(5)
+  ) else WrongNumArgs(5)
+  );
+setupfun("rawMsolveModuleSaturate",rawMsolveModuleSaturate);
+
 export rawMsolveGBRestrictToQuotient(e:Expr):Expr := (
   when e is s:Sequence do (
   if length(s) == 2 then (

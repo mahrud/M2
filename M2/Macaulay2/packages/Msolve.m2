@@ -28,7 +28,7 @@ export{
     "msolveRUR",
     "msolveLeadMonomials",
     "msolveRealSolutions",
-    "msolveSetup",
+    "setupMsolve",
     "QQi",
     }
 
@@ -42,6 +42,7 @@ importFrom_Core {
     "rawMsolveSyzygy",
     "rawMsolveResolution",
     "rawMsolveSaturate",
+    "rawMsolveModuleSaturate",
     "rawMsolveMinimalBetti",
     "rawMsolvePresent",
     "rawResolutionGetFree",
@@ -831,11 +832,89 @@ msolveSaturate(Ideal, RingElement) := opts -> (I0, f0) -> (
     mOut := msolve(S, K, I_* | {f}, "-S -g 2", opts);
     gens forceGB readMsolveOutputFile(ring I0, mOut))
 
+-- msolve's F4SAT takes a submodule of a free module directly.  The multipliers
+-- it multiplies f by are the standard monomials of each component of the
+-- current lead term module, read off component by component, so this is the
+-- module algorithm and not the ideal one applied to a presentation of the
+-- module as an ideal of a trivial extension: no extra variables, and none of
+-- the r(r+1)/2 quadrics such a presentation needs.  See res_sat_t in msolve's
+-- res.h for what it computes and what it refuses.
+--
+-- What it refuses does not reach here.  A block order is already out, since
+-- msolveEngineUsable asks for a single grevlex block, and a degree limit is
+-- not an option a saturation has: its steps add elements in whatever degree
+-- the kernel of the multiplication map turns up.
+--
+-- A quotient is handed over as J rather than lifted, exactly as msolveGBMatrix
+-- hands it over and for the same reason -- a component 0 element reduces in
+-- every component, so the r copies never exist.  The one thing a saturation
+-- adds is that its component 0 part is J : f^oo and not J, which is larger
+-- exactly when f is a zero divisor somewhere on the quotient; each element of
+-- it is in the saturation in every component, and the engine writes out all r
+-- copies rather than dropping them as it drops J.
+msolveSaturateModuleEngine = (M, f, opts) -> (
+    m := generators M;
+    if M.?relations then m = m | relations M;
+    -- F4SAT additionally needs the characteristic to be larger than 2^16, see
+    -- https://github.com/algebraic-solving/msolve/issues/165
+    if not msolveEngineUsable m or char ring m < 2^16 then return null;
+    -- as in msolveGBMatrix: a component index reaches msolve in a 16-bit
+    -- field, and the module order has to be one msolve compares the same way
+    if numrows m === 0 or numrows m >= 2^16 then return null;
+    if numrows m > 1 and schreyerOrder target m != 0 then return null;
+    if numrows m > 1
+    and not msolveModuleOrderUsable ambient first flattenRing ring m
+    then return null;
+    threads := opts.Threads ?? allowableThreads;
+    verbosity := opts.Verbosity ?? gbTrace;
+    (R0, phi, psi) := flattenRing(ring M, Result => (Ring, RingMap, RingMap));
+    -- 1 is term over position up, the order rawMsolveGB asks the module entry
+    -- point for and the one Macaulay2 puts on a free module
+    G := rawMsolveModuleSaturate(raw sub(m, R0), raw sub(matrix {{f}}, R0),
+	1, threads, verbosity);
+    if G === null then return null;
+    g := if R0 === ring M then map(target m, , G)
+    else map(target m, , psi map(R0, G));
+    if M.?relations then subquotient(g % relations M, relations M) else image g)
+
+msolveSaturate(Module, RingElement) := Module => opts -> (M, f) -> (
+    if (N := msolveSaturateModuleEngine(M, f, opts)) =!= null then return N;
+    error("msolveSaturate: msolve cannot take this module; it wants a single "
+	| "grevlex block over a field of characteristic between 2^16 and 2^31, "
+	| "a target of fewer than 2^16 generators and no Schreyer order"))
+
+-- F4SAT can stop short of the saturation, and the ideal entry point above
+-- inherits whatever the module one does, since both are core_f4sat.  Two ways
+-- it did so are fixed in msolve rather than here: it ran no saturation step at
+-- all when the input was already a Groebner basis, the saturation step living
+-- inside the round loop and the round loop never being entered, and its last
+-- step stopped one degree below the top lead monomial degree it had just
+-- scheduled itself by.  What is left is the degree bound itself: the last
+-- saturation step runs up to the largest degree of a lead monomial in the
+-- basis so far, which is a heuristic and not a bound on the degree a kernel
+-- element can appear in.  Homogeneous input is no protection -- the module
+-- <x*y*e_1 + x*z*e_2, z^2*e_1, y^3*e_2> over ZZ/65537[x,y,z] saturated by
+-- x + y is homogeneous and comes back missing z^3*e_2 -- and on random
+-- submodules of a free module over four variables a few percent of the
+-- saturations still come back short.
+--
+-- Whatever comes back is a submodule of the saturation containing M, so the
+-- failure is caught by asking whether the answer is saturated: N : f = N holds
+-- for the saturation and fails for anything msolve stopped short at, since a
+-- saturated N between M and M : f^oo is M : f^oo.  That is one quotient, which
+-- is one round of what Iterate would have done anyway, against a saturation
+-- msolve has already computed.  Returning null on a failed check sends the
+-- caller to Macaulay2's own strategies rather than handing back a submodule of
+-- the answer.
+msolveSaturateVerify = (M, f) -> (
+    N := msolveSaturate(M, f);
+    if quotient(N, f) == N then N)
+
 --------------------------------------------------------------------------------
 -- Routing Macaulay2's own commands through msolve
 --------------------------------------------------------------------------------
 
--- Everything below is opt in: calling msolveSetup() redirects gb,
+-- Everything below is opt in: calling setupMsolve() redirects gb,
 -- groebnerBasis, eliminate and kernel to msolve whenever msolve can handle the
 -- input, and leaves Macaulay2's own implementation in charge otherwise.
 -- Compare with fast-kernel.m2, which this generalizes.
@@ -1162,8 +1241,8 @@ msolvePushForwardHook = (opts, f0, M) -> (
 
     phiS^-1 mapback sel)
 
--- msolveSetup() installs all of them; msolveSetup {gb, eliminate} a selection
-msolveSetup = arg -> (
+-- setupMsolve() installs all of them; setupMsolve {gb, eliminate} a selection
+setupMsolve = arg -> (
     install := if instance(arg, VisibleList) then toList arg else {arg};
     if #install == 0 then install = {
         gb, groebnerBasis, -* syz, *- mingens, trim,
@@ -1173,7 +1252,7 @@ msolveSetup = arg -> (
 
     if not rawMsolvePresent() then printerr(
 	"warning: this Macaulay2 was not built against the msolve library; ",
-	"msolveSetup will route through the msolve executable instead");
+	"setupMsolve will route through the msolve executable instead");
 
     if member(gb, install) then
     gb Matrix := opts -> m -> (
@@ -1209,9 +1288,11 @@ msolveSetup = arg -> (
 	    mapback := map(R, ring g, map(R^1, R^n1, 0) | vars R);
 	    ideal mapback substitute(G, vars ring g)));
 
-    if member(saturate, install) then
+    if member(saturate, install) then (
     addHook((saturate, Ideal, RingElement), Strategy => Msolve,
 	(opts, I, f) -> try ideal msolveSaturate(I, f));
+    addHook((saturate, Module, RingElement), Strategy => Msolve,
+	(opts, M, f) -> try msolveSaturateVerify(M, f)));
 
     -- by default, Ideal == ZZ calls rawGBContains
     if member(ContainmentHooks, install) then
@@ -1503,7 +1584,7 @@ Node
 	    continued -- msolve keeps no state between calls, so asking again for a
 	    larger limit recomputes from the input.  For that reason a limited
 	    request returns the matrix rather than a @TO GroebnerBasis@, and
-	    @TO msolveSetup@ does not route @TO gb@'s own @TO DegreeLimit@ here.
+	    @TO setupMsolve@ does not route @TO gb@'s own @TO DegreeLimit@ here.
 Node
     Key
         msolveSyzygy
@@ -1873,6 +1954,56 @@ Node
 	    Note that the ring must be a polynomial ring over a finite field.
     Caveat
 	Currently the F4SAT algorithm is only implemented over prime fields in characteristic between $2^{16}$ and $2^{31}$.
+    SeeAlso
+        (msolveSaturate, Module, RingElement)
+
+Node
+    Key
+       (msolveSaturate, Module, RingElement)
+    Headline
+	compute the saturation of a submodule of a free module by a single polynomial
+    Usage
+    	msolveSaturate(M, f)
+    Inputs
+    	M:Module
+	    a submodule or subquotient of a free module over a polynomial ring with
+	    @TO GRevLex@ order and coefficients over
+	    @TO2 {"finite fields", TT "ZZ/p"}@ in characteristic more than $2^16$ and less than $2^{31}$
+	f:RingElement
+	    a polynomial in the same ring as M
+	Threads => ZZ -- number of processor threads to use
+	Verbosity => ZZ -- level of verbosity between 0, 1, and 2
+    Outputs
+        :Module
+	    the saturation $M:f^\infty$
+    Description
+        Text
+	    This is msolve's F4SAT algorithm applied to the submodule itself: the
+	    multipliers it multiplies $f$ by are the standard monomials of each
+	    component of the current lead term module, read off component by
+	    component. No extra variables are introduced, and the rank of the free
+	    module costs nothing beyond the components themselves.
+	Example
+	    R = ZZ/1073741827[x,y,z]
+	    M = image matrix {{x*y, z^2}, {x*z, y*z}}
+	    satMsolve = msolveSaturate(M, x)
+	    satM2 = saturate(M, x, Strategy => Iterate)
+	    satMsolve == satM2
+	Text
+	    Over a quotient ring $S/J$ the saturation also picks up $J:f^\infty$,
+	    which is larger than $J$ exactly when $f$ is a zero divisor somewhere on
+	    $S/J$, and each of its elements lies in $M:f^\infty$ in every component.
+	    @TO setupMsolve@ installs this as a strategy for
+	    @TO "Saturation::saturate"@.
+    Caveat
+	Currently the F4SAT algorithm is only implemented over prime fields in characteristic between $2^{16}$ and $2^{31}$.
+
+	F4SAT can stop short of the saturation, in which case what this method
+	returns is a submodule of $M:f^\infty$ rather than the saturation. The strategy installed by @TO setupMsolve@ checks the result and
+	falls back on Macaulay2's own strategies when the check fails, but this
+	method returns whatever msolve computed.
+    SeeAlso
+        (msolveSaturate, Ideal, RingElement)
 
 Node 
     Key

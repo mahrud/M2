@@ -350,11 +350,11 @@ KeyNotFound(object:string, key:Expr):Expr := (
 	    msg = msg + ":\n" + info));
     buildErrorPacket(msg));
 
-export lookup1(object:HashTable,key:Expr,keyhash:hash_t):Expr := (
+-- Method lookup assumes no concurrent mutation of the searched tables,
+-- including method installation, removal, and other class-table updates.
+lookup1Unlocked(object:HashTable,key:Expr,keyhash:hash_t):Expr := (
      -- warning: can return notfoundE, which should not be given to the user
      res := notfoundE;
-     lockit := object.Mutable && !object.beingInitialized;
-     if lockit then lockRead(object.mutex);
      keymod := int(keyhash & (length(object.table)-1));
      bucket := object.table.keymod;
      while bucket != bucket.next do (
@@ -363,6 +363,12 @@ export lookup1(object:HashTable,key:Expr,keyhash:hash_t):Expr := (
 	       break);
 	  bucket = bucket.next;
 	  );
+     res);
+lookup1Unlocked(object:HashTable,key:Expr):Expr := lookup1Unlocked(object,key,hash(key));
+export lookup1(object:HashTable,key:Expr,keyhash:hash_t):Expr := (
+     lockit := object.Mutable && !object.beingInitialized;
+     if lockit then lockRead(object.mutex);
+     res := lookup1Unlocked(object,key,keyhash);
      if lockit then unlock(object.mutex);
      res);
 export lookup1(object:HashTable,key:Expr):Expr := lookup1(object,key,hash(key));
@@ -383,7 +389,7 @@ export lookup1Q(object:HashTable,key:Expr):bool := lookup1Q(object,key,hash(key)
 -- lookup a key in the hash table or its parent until it is found, otherwise return null
 export lookup(object:HashTable,key:Expr,keyhash:hash_t):Expr := (
     while true do (
-	result := lookup1(object, key, keyhash);
+	result := lookup1Unlocked(object, key, keyhash);
 	if result != notfoundE  then return result;
 	if object == thingClass then break;
 	object = object.parent);
@@ -481,11 +487,11 @@ installIt(numtypes:int,assgnmt:bool,h:HashTable,key:Expr,value:Expr):Expr := (
 export NullaryMethods := newHashTableWithHash(mutableHashTableClass,nothingClass);
 setupconst("nullaryMethods",Expr(NullaryMethods));
 export lookup(e:Expr):Expr := (
-     r := lookup1(NullaryMethods,Expr(Sequence(e)));
+     r := lookup1Unlocked(NullaryMethods,Expr(Sequence(e)));
      if r == notfoundE then r = nullE;
      r);
 export lookup0(e:Expr):Expr := (			    -- should be a length 1 sequence
-     r := lookup1(NullaryMethods,e);
+     r := lookup1Unlocked(NullaryMethods,e);
      if r == notfoundE then r = nullE;
      r);
 export installMethod(meth:Expr,value:Expr):Expr := (
@@ -516,7 +522,7 @@ export lookupUnaryValue(s:HashTable,meth:Expr,methhash:hash_t):Expr := (
      key1 := Key1;
      key1.0 = Expr(s);
      key1.1 = meth;
-     lookup1(s, Expr(key1), (seqHashSeed * seqHashMult + s.hash) * seqHashMult + methhash));
+     lookup1Unlocked(s, Expr(key1), (seqHashSeed * seqHashMult + s.hash) * seqHashMult + methhash));
 -----------------------------------------------------------------------------
 -- binary methods
 export installMethod(meth:Expr,lhs:HashTable,rhs:HashTable,value:Expr):Expr := (
@@ -546,7 +552,7 @@ export lookupBinaryMethod(lhs:HashTable,rhs:HashTable,meth:Expr,methhash:hash_t)
 	       key2.2 = Expr(rhsptr);
      	       righthash := rhsptr.hash;
 	       keyhash := keyhash1 * seqHashMult + righthash;
-	       s := lookup1(
+	       s := lookup1Unlocked(
 		    if lefthash > righthash then lhs else rhsptr,
 		    Expr(key2), keyhash);
 	       if s != notfoundE then return s;
@@ -564,7 +570,7 @@ export lookupBinaryValue(lhs:HashTable,rhs:HashTable,meth:Expr,methhash:hash_t):
      key2.1 = Expr(rhs);
      key2.2 = meth;
      keyhash := ((seqHashSeed * seqHashMult + lhs.hash) * seqHashMult + rhs.hash) * seqHashMult + methhash;
-     lookup1(if lhs.hash > rhs.hash then lhs else rhs, Expr(key2), keyhash));
+     lookup1Unlocked(if lhs.hash > rhs.hash then lhs else rhs, Expr(key2), keyhash));
 export lookupBinaryMethod(lhs:HashTable,rhs:HashTable,meth:Expr):Expr := (
      lookupBinaryMethod(lhs,rhs,meth,hash(meth)));
 export lookupBinaryMethod(lhs:HashTable,rhs:HashTable,meth:SymbolClosure):Expr := (
@@ -604,7 +610,7 @@ export lookupTernaryMethod(s1:HashTable,s2:HashTable,s3:HashTable,meth:Expr,meth
 		    key3.3 = Expr(s3ptr);
 		    s3hash := s3ptr.hash;
 		    keyhash3 := keyhash2 * seqHashMult + s3hash;
-	       	    s := lookup1(
+		    s := lookup1Unlocked(
 			 if s1hash > s2hash then (
 			      if s1hash > s3hash then s1 else s3ptr
 			      )
@@ -673,7 +679,7 @@ export lookupQuaternaryMethod(s1:HashTable,s2:HashTable,s3:HashTable,s4:HashTabl
 			 key4.4 = Expr(s4ptr);
 			 s4hash := s4ptr.hash;
 			 keyhash4 := keyhash3 * seqHashMult + s4hash;
-			 s := lookup1(
+			 s := lookup1Unlocked(
 			      if s1hash > s2hash then (
 				   if s1hash > s3hash 
 				   then if s4hash > s1hash then s4ptr else s1 

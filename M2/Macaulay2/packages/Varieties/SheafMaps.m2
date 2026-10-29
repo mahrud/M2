@@ -839,14 +839,12 @@ trans := (C,v) -> (
 	apply(w, i -> if Ci#?i then Ci#i else error "expected an index of a component of the direct sum"))
     else try C.cache.components_w then v else error "expected an index of a component of the direct sum")
 
-CoherentSheaf _ Array := SheafMap => (F, v) -> (
+CoherentSheaf _ Array := SheafMap => (F, v) -> F.cache#(symbol _, v) ??= (
     v = trans(F,v);
     G := directSum apply(toList v, j -> F.cache.components#j);
-    -- TODO: is cover required here? if so, set the source
-    -- and target modules, otherwise the map is not well-defined
     map(F, G, (module F)_v))
 
-CoherentSheaf ^ Array := SheafMap => (F, v) -> (
+CoherentSheaf ^ Array := SheafMap => (F, v) -> F.cache#(symbol ^, v) ??= (
     v = trans(F,v);
     G := directSum apply(toList v, j -> F.cache.components#j);
     map(G, F, (module F)^v))

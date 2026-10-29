@@ -963,8 +963,23 @@ minimalPresentation CoherentSheaf := prune CoherentSheaf := CoherentSheaf => opt
 	    G)))
 
 addHook((minimalPresentation, CoherentSheaf), Strategy => "LocallyFree",
-    (opts, F) -> if F.cache.?isLocallyFree and F.cache.isLocallyFree
-    then sheaf(variety F, prune dual dual module F))
+    (opts, F) -> if F.cache.?isLocallyFree and F.cache.isLocallyFree then (
+        M := module F;
+        N := dual dual M;
+        -- Evaluate M in its double dual, then pass to the minimal presentation.
+        ev := map(N, M, transpose generators dual M // generators N);
+        G := sheaf(variety F, P := prune N);
+        G.cache.pruningMap = map(G, F, inverse P.cache.pruningMap * ev);
+        G))
+
+addHook((minimalPresentation, CoherentSheaf), Strategy => zero,
+    (opts, F) -> if isProjective variety F and hilbertPolynomial F == 0 then (
+        -- The entire module is irrelevant torsion, so the sheaf is zero.
+        M := module F;
+        F.cache.TorsionFree = M.cache.TorsionFree = M / M;
+        G := sheaf(variety F, (ring M)^0);
+        G.cache.pruningMap = sheaf(variety F, map(module G, M, 0));
+        G))
 
 -----------------------------------------------------------------------------
 -- Projective bundles

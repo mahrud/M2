@@ -1,0 +1,361 @@
+-- msolve benchmarks: modules
+--
+-- What this measures, how it was measured, and what came out.  The subject is
+-- the module entry points -- saturation of a module by a ring element, and
+-- elimination of variables from a submodule of a free module -- against the
+-- strategies Macaulay2 uses for the same input.  Ideal elimination is included
+-- only as a scale reference, since msolve's ideal path is long established and
+-- says what the engine can do when the module machinery is out of the way.
+--
+-- Files here:
+--   cases.m2      input builders and the case and method tables
+--   runone.m2     one measurement per process; reads CASE, METHOD from the
+--                 environment and prints one CSV line
+--   verify.m2     runs every method for a case in one process and compares the
+--                 answers mathematically
+--   drive.sh      runs a spec file, one process per measurement
+--   bench.sbatch  one Slurm array task per family
+--   report.py     turns the CSV lines into the tables below
+--   specs/        which (case, method) pairs to run
+--   out/          results, not checked in
+--
+-- To rerun:
+--   mkdir -p out && M2=/path/to/M2 sbatch --account=<account> bench.sbatch
+--   python3 report.py
+--
+---------------------------------------------------------------------------
+-- Method
+---------------------------------------------------------------------------
+--
+-- Every measurement runs in its own Macaulay2 process.  This is not tidiness:
+-- Macaulay2 caches a Groebner basis on the module it computed it for, and
+-- saturate caches its answer, so two strategies timed in one session do not
+-- measure the same thing -- whichever runs second is handed work the first one
+-- already paid for.  An earlier version of this benchmark timed both in one
+-- session and reported a 5.4 second Iterate that no isolated run reproduces.
+--
+-- For the same reason the timeout is imposed from outside, by timeout(1)
+-- around the process.  msolve does not poll for interrupts inside its own C
+-- loops, so an in-process alarm cannot stop it.
+--
+-- Single core throughout.  Macaulay2's Groebner engine is serial, so msolve is
+-- held to one thread and the comparison is like for like.  msolve accepts a
+-- Threads option and would gain from more.
+--
+-- Correctness is checked separately, in one process per case, because for
+-- elimination the two methods return their answers in different rings and
+-- comparing printed forms would only report that the rings differ.  Ideals are
+-- compared in the original ring; module elimination is compared over the
+-- subring on the remaining variables, after checking that no entry of either
+-- answer involves an eliminated variable.
+--
+---------------------------------------------------------------------------
+-- Module saturation
+---------------------------------------------------------------------------
+--
+-- msolve is the native module entry point (rawMsolveModuleSaturate), guarded
+-- is that plus the N : f == N check that catches F4SAT stopping short, and the
+-- two Macaulay2 columns are saturate with Strategy => Iterate and with no
+-- strategy given.  Seconds, single thread, ">" means the 120 second timeout.
+--
+--   case      msolve  guarded  iterate  default   speedup
+--   rank1      0.017    0.011    0.069    0.070      4.0x
+--   ds2        0.013    0.017    0.078    0.076      5.8x
+--   ds4        0.027    0.032    0.079    0.089      2.9x
+--   ds8        0.080    0.097    0.097    0.096      1.2x
+--   ds16       0.225    0.249    0.144    0.120      0.6x
+--   ds32       0.740    0.723    0.230    0.221      0.3x
+--   dense2     0.612    0.622    0.092    0.094      0.2x
+--   dense3      1.09     1.13    0.105    0.098      0.1x
+--   dense4      1.66     1.64    0.110    0.104      0.1x
+--   deg5r2     0.058    0.066    0.103    0.106      1.8x
+--   deg6r2     0.236    0.238    0.178    0.166      0.8x
+--   deg5r4     0.145    0.155    0.099    0.107      0.7x
+--   var5r2     0.035    0.029    0.072    0.075      2.1x
+--   var6r2     0.050    0.054    0.063    0.063      1.2x
+--   rand4r2    0.018    0.137    0.100    0.121      5.7x
+--   rand4r3    0.103    0.651    0.416    0.420      4.0x
+--   rand5r2    0.094    0.651    0.485    0.490      5.2x
+--   mono4r3    0.070    0.066    0.738    0.759     10.6x
+--   mono5r4     15.5     16.6     >120     >120      7.7x+
+--   quot2      0.005    0.008    0.066    0.068     12.7x
+--   quot4      0.006    0.010    0.070    0.067     12.2x
+--   subq2      0.014    0.099    0.167    0.169     12.2x
+--   subq4      0.034    0.109    0.174    0.185      5.1x
+--
+--   median 2.9x, min 0.1x, max 12.7x
+--
+-- Where the native path wins: monomial input (mono5r4, 15.5s against a >120s
+-- timeout), quotient rings (12x, because the relations go to the engine at
+-- component 0 instead of being lifted into the generators), subquotients, and
+-- random submodules.  Those are the shapes the trivial extension handled
+-- worst, so the module entry point is earning its place on them.
+--
+-- Where it loses, and why it is this code's fault rather than msolve's:
+-- compare ds4 at 0.027s with dense4 at 1.66s.  Same rank, same number of
+-- generators, sixty times apart.  ds4 is block diagonal, so its components
+-- never interact; dense4 puts entries in two components per generator.
+-- Macaulay2 is flat at about 0.1s across both.  That points at quotient_basis,
+-- which enumerates standard monomials per component: the multiplier list grows
+-- with the rank and every saturation step pays for it.  The ds column shows
+-- the same curve more slowly, crossing over between rank 8 and rank 16, which
+-- fits -- there only the multiplier list grows, not the reduction work.
+--
+-- The guard is nearly free on structured input and expensive on random input
+-- (rand4r2 0.018 -> 0.137, rand5r2 0.094 -> 0.651).  In this suite it never
+-- once declined: 22 of 22 verified cases were accepted and correct.  An
+-- earlier 264 case random sweep did catch 4 F4SAT shortfalls, so the check is
+-- not redundant, but on anything structured it is pure overhead.
+--
+---------------------------------------------------------------------------
+-- Module elimination
+---------------------------------------------------------------------------
+--
+-- msolveElimModuleGB against a Macaulay2 Groebner basis in an order
+-- eliminating the same variables, filtered with selectInSubring.
+--
+--   case      msolve       m2   speedup
+--   m4r2e1     0.061    0.003      0.1x
+--   m4r2e2     0.083    0.211      2.5x
+--   m4r3e2     0.015    0.066      4.3x
+--   m5r2e2      >120     >120       --
+--   m5r3e2      14.6     >120      8.2x+
+--   m5r4e3     0.027    0.274     10.1x
+--   m6r2e3       111     >120      1.1x+
+--   m6r3e3      >120     >120       --
+--
+-- Same crossover as everywhere else: msolve loses the trivial case on fixed
+-- overhead and wins from there.  Three of the eight are uninformative -- two
+-- timed out on both sides and one only says msolve finished at 111s where
+-- Macaulay2 had not by 120s.  These random sizes were chosen without
+-- calibrating and overshot; see the homogeneous section for sizes picked to
+-- land in a measurable range.
+--
+---------------------------------------------------------------------------
+-- Ideal elimination (scale reference)
+---------------------------------------------------------------------------
+--
+-- msolve is msolveEliminationGB, the path setupMsolve installs for eliminate.
+-- msolve-exp is the exported msolveEliminate; see the note below.
+--
+--   case          msolve  msolve-exp       m2   speedup
+--   elimdoc        0.014       0.018    0.002      0.1x
+--   katsura5e2     0.009       0.018    0.010      1.0x
+--   katsura6e2     0.015       0.021    0.069      4.7x
+--   katsura7e2     0.036       0.037    0.616     16.9x
+--   katsura8e2     0.131       0.119     6.24     47.6x
+--   katsura6e4     0.018       0.025    0.131      7.5x
+--   katsura7e4     0.050       0.050     1.24     24.7x
+--   cyclic5e2      0.009       0.016    0.005      0.5x
+--   cyclic6e2      0.018       0.024    0.065      3.6x
+--   cyclic7e2      0.261       0.231     9.73     37.3x
+--   cyclic6e3      0.019       0.022    0.049      2.5x
+--   surf3          0.008       0.021    0.002      0.3x
+--   surf4          0.010       0.019    0.002      0.2x
+--   rand4d3        0.008       0.019    0.006      0.7x
+--   rand5d3        0.075       0.025    0.054      0.7x
+--   rand5d4        0.183       0.352     1.07      5.8x
+--
+--   median 3.6x, min 0.1x, max 47.6x
+--
+-- The speedup grows monotonically with size -- 4.7x, 16.9x, 47.6x across
+-- katsura 6, 7, 8 -- so the ideal path scales the way the module path does not
+-- yet.  Below about 10ms of real work msolve's fixed marshalling cost, roughly
+-- 8ms to hand the matrix to the engine and take it back, dominates and
+-- Macaulay2 wins.  msolve returns an unreduced generating set (213 generators
+-- against Macaulay2's 82 on cyclic7), so part of what Macaulay2 spends its
+-- time on is producing a smaller answer.
+--
+---------------------------------------------------------------------------
+-- A bug found while building this
+---------------------------------------------------------------------------
+--
+-- msolveEliminate over ZZ/p returns the whole block Groebner basis rather than
+-- the elimination ideal.  On the example in msolve's own input_files/elim-31.ms,
+-- eliminating t from (w^4, x^4, w*y^3 - x*z^3, t*z - 1):
+--
+--   msolve: {w*y^3-x*z^3, x^4, w*x^3, w^2*x^2, w^3*x, w^4, t*z-1}
+--   m2:     {w*y^3-x*z^3, x^4, w*x^3, w^2*x^2, w^3*x, w^4}
+--
+-- t*z-1 involves the variable that was supposed to be eliminated.  The engine
+-- branch substitutes G into a ring that still has every variable and does not
+-- filter.  Over QQ the binary path maps into K[keepvars] and is correct.
+--
+-- This is confined to the exported function.  msolveElimGB does filter, and
+-- msolveEliminationGB is what the eliminate hook installs, so setupMsolve
+-- users get correct answers.  The msolve-exp column above times it: the same
+-- Groebner work, just missing the filter, which its generator counts give away
+-- (466 against 23 on rand5d4, 21 against 1 on surf3).
+--
+---------------------------------------------------------------------------
+-- Verification
+---------------------------------------------------------------------------
+--
+--   agree with Macaulay2 : 42
+--   disagree             :  0
+--   not decided (timeout):  5
+--
+-- No disagreement anywhere.  The five undecided are cases where the 240 second
+-- verification budget ran out before both methods finished.
+
+---------------------------------------------------------------------------
+-- Homogeneous modules
+---------------------------------------------------------------------------
+--
+-- The tables above mix graded and ungraded input and are dominated by cases
+-- finishing in well under a second, where msolve's fixed cost of handing the
+-- matrix to the engine and taking it back is most of the measurement.  The
+-- families below are all graded -- every generator a form of one degree, the
+-- target free module in degree zero, checked with isHomogeneous -- and their
+-- sizes come from a calibration sweep rather than from guessing, so that the
+-- work rather than the overhead is what is being timed.
+--
+-- Two things the calibration taught, both the opposite of what was assumed:
+-- adding generators of the same degree makes the saturation *easier*, not
+-- harder, since the module moves closer to the whole free module (k10, k12,
+-- k14 at n5-r3-d5 run 1.89s, 0.37s, 0.24s), and the rank is the sharp knob
+-- (n5-r3 to n5-r4 goes 1.9s to 58s).  Sizes are named in the case itself:
+-- hsat-n5-r3-k6-d4-s1 is five variables, three components, six generators of
+-- degree four, seed one.
+--
+-- Random forms, saturated by a linear form:
+--
+--   case                    msolve  guarded  iterate   speedup
+--   hsat-n5-r2-k5-d4-s1      2.581    101.9     83.5     32.3x
+--   hsat-n5-r2-k5-d4-s2      2.611    103.9     82.0     31.4x
+--   hsat-n5-r2-k6-d4-s1      2.543    2.531    360.5    141.8x
+--   hsat-n5-r2-k6-d4-s2      2.556    2.543    362.8    141.9x
+--   hsat-n5-r2-k7-d4-s1      1.006    1.002    128.0    127.2x
+--   hsat-n6-r2-k6-d3-s1      3.639     >400     >400    109.9x+
+--   hsat-n6-r2-k6-d3-s2      3.645     >400     >400    109.7x+
+--   hsat-n6-r2-k7-d3-s1      2.873    2.882     >400    139.2x+
+--   hsat-n6-r2-k8-d3-s1      1.129    1.123    218.6    193.6x
+--   hsat-n5-r3-k5-d4-s1       10.2     79.0     53.0      5.2x
+--
+--   median 127.2x, min 5.2x, max 193.6x
+--
+-- Monomials, saturated by a variable:
+--
+--   case                    msolve  guarded  iterate   speedup
+--   hmon-n5-r3-k10-d5-s1     1.892    1.920     18.9     10.0x
+--   hmon-n5-r3-k12-d5-s1     0.371    0.379     17.2     46.3x
+--   hmon-n5-r3-k14-d5-s1     0.239    0.245     12.8     53.8x
+--   hmon-n5-r3-k10-d6-s1     3.722    3.764    167.0     44.9x
+--   hmon-n6-r2-k12-d5-s1     1.601    1.639    0.247      0.2x
+--   hmon-n6-r2-k14-d5-s1     0.692    0.688    0.165      0.2x
+--   hmon-n6-r3-k10-d5-s1      99.3     98.9     >400      4.0x+
+--   hmon-n5-r4-k8-d5-s1       57.7     62.5     >400      6.9x+
+--
+--   median 10.0x, min 0.2x, max 53.8x
+--
+-- Module elimination:
+--
+--   case                        msolve       m2   speedup
+--   hmel-n5-r2-k5-d4-e2-s1        18.4     >400     21.8x+
+--   hmel-n5-r2-k6-d4-e2-s1       2.649     54.3     20.5x
+--   hmel-n5-r2-k6-d4-e2-s2       2.644     54.2     20.5x
+--   hmel-n5-r2-k7-d4-e2-s1       0.904     18.7     20.6x
+--   hmel-n5-r3-k5-d3-e2-s1        >400     >400        --
+--   hmel-n5-r3-k6-d3-e2-s1        10.3    348.2     33.7x
+--   hmel-n5-r3-k6-d3-e2-s2        10.7    349.9     32.6x
+--   hmel-n6-r2-k7-d2-e3-s1       0.026    0.518     19.6x
+--
+--   median 20.6x, min 1.0x, max 33.7x
+--
+-- On graded input the module entry points win, and win by much more than the
+-- first sweep suggested: a median of 127x on random forms and 21x on
+-- elimination, against a median of 2.9x ungraded.  Module elimination has no
+-- crossover at all -- even the 26 millisecond case is 19.6x -- where the
+-- ungraded version lost 10x on its smallest input.  Grading the input removes
+-- the regime where the fixed marshalling cost decides the answer.
+--
+-- The dense* result from the first sweep does not survive.  Those inputs mixed
+-- degree four and degree five entries in one column, so they were not graded
+-- at all; nothing here reproduces a 10x loss from components interacting.  The
+-- one place msolve still loses is hmon at n6 rank 2, by 5x, where Macaulay2
+-- finishes a monomial saturation in a quarter second.
+--
+-- The seed pairs are a check on the method rather than on msolve: s1 and s2 of
+-- one shape agree to three significant figures across independent random
+-- inputs and separate processes (2.649/2.644 and 54.3/54.2; 10.3/10.7 and
+-- 348.2/349.9).  The per process isolation produces stable numbers.
+--
+---------------------------------------------------------------------------
+-- The guard is the problem, not the engine
+---------------------------------------------------------------------------
+--
+-- The guard column above is bimodal.  On six of the ten random form cases it
+-- is free -- 2.543 against 2.531, 1.129 against 1.123 -- and on the other four
+-- it is a catastrophe:
+--
+--   hsat-n5-r2-k5-d4-s1   msolve 2.581   guarded 101.9   iterate 83.5
+--   hsat-n5-r2-k5-d4-s2   msolve 2.611   guarded 103.9   iterate 82.0
+--   hsat-n5-r3-k5-d4-s1   msolve  10.2   guarded  79.0   iterate 53.0
+--   hsat-n6-r2-k6-d3-s1   msolve 3.639   guarded  >400   iterate  >400
+--
+-- On the first three the guarded path is slower than not using msolve at all:
+-- 101.9 seconds to verify a 2.6 second answer, against 83.5 seconds for
+-- Macaulay2 to compute it outright.  On the fourth a 3.6 second win becomes a
+-- timeout.  This is what setupMsolve installs -- the (saturate, Module,
+-- RingElement) hook calls msolveSaturateVerify -- so it is what a user gets.
+--
+-- The check is one quotient, N : f == N, which is one round of what Iterate
+-- would have done; on these inputs that single round costs as much as the
+-- whole saturation.  It is not redundant -- an earlier 264 case random sweep
+-- caught 4 F4SAT shortfalls, and 29 of 29 verified cases here were accepted
+-- and correct -- but paying it unconditionally gives back the entire win on
+-- almost half of this family.  Making it optional, or cheaper, is worth more
+-- than any further engine work.
+--
+-- Verification: 7 agree, 0 disagree, 4 not decided within 500 seconds.
+--
+---------------------------------------------------------------------------
+-- What these numbers do not predict: pushFwd
+---------------------------------------------------------------------------
+--
+-- Module elimination being 20-34x faster does not make pushforward faster,
+-- because DirectSummands' frobeniusPushforward does not reach that code.  It
+-- calls myPushForward, which calls pushFwd from the PushForward package;
+-- msolveElimModuleGB is reached only from msolvePushForwardHook, which hooks
+-- Macaulay2's own pushForward in m2/pushforward.m2, a different function that
+-- pushFwd never calls.
+--
+-- What pushFwd routes through msolve is leadTerm in pushFwdRingHelper and
+-- kernel in makeModule.  On Grassmannian(1,3), frobeniusPushforward(1, OO_X):
+--
+--   char  route     leadTerm   kernel   total
+--   2     m2         0.00051   0.0169   0.265
+--   2     msolve     0.00439   0.0572   0.264
+--   3     m2         0.00158   0.197    0.532
+--   3     msolve     0.00799   0.692    1.137
+--   5     m2         0.0136    22.80    33.86
+--   5     msolve     0.0301    OOM at 16G
+--
+-- kernel is called on a Matrix, so it goes to syz and msolveSyzygyHook rather
+-- than to the (kernel, RingMap) hook.  Timing the pieces of that hook:
+--
+--   char 3, matrix 1x275     native syz      0.0590 -> 274 generators
+--                            hooked syz      0.3245 -> 274
+--                              msolveSyzygy  0.0204 -> 306
+--                              mingens       0.2847 -> 274
+--   char 5, matrix 1x3541    native syz      1.8848 -> 3540
+--                              msolveSyzygy  1.3871 -> 3604
+--                              mingens       1.9729 -> 3540
+--
+-- msolve's syzygy engine is the faster of the two.  The loss is entirely the
+-- mingens the hook runs on its output: 88 percent of the hooked time at char
+-- 3, and by itself 4.8x Macaulay2's whole native syz.  msolve returns 3604
+-- generators where 3540 are needed, already 98.2 percent minimal, and removing
+-- that last 1.8 percent costs more than computing the syzygies did -- and at
+-- char 5 it is what exhausts 16GB on a computation Macaulay2 finishes in 22.8
+-- seconds.
+--
+-- So the fix is in the hook, not in msolve: do not minimalize when the caller
+-- does not need a minimal generating set (pushFwd forms source mp / kernel mp,
+-- where extra generators of the same submodule are harmless), or have msolve
+-- return a reduced basis so there is nothing to minimalize.
+--
+-- One loose end: msolveSyzygy raised "msolve returned no syzygy computation"
+-- (Msolve.m2:676) on a matrix msolveSyzygyUsable had accepted.  A hook that
+-- errors rather than returning null cannot fall back, so this is worth
+-- checking separately.
